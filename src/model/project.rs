@@ -4,8 +4,10 @@ use super::sample::Sample;
 use super::section::Section;
 use super::song::Song;
 use super::state::State;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Project {
     pub id: ID,
     pub state: State,
@@ -16,7 +18,8 @@ pub struct Project {
     pub samples: Vec<Sample>,
 }
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct ProjectInfo {
     pub name: String,
     pub version: String,

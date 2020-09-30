@@ -1,7 +1,9 @@
 use super::id::ID;
 use super::state::State;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Channel {
     pub id: ID,
     pub state: State,

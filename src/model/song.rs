@@ -1,7 +1,9 @@
 use super::id::ID;
 use super::state::State;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Song {
     pub id: ID,
     pub state: State,
@@ -11,7 +13,8 @@ pub struct Song {
     pub section_ids: Vec<ID>,
 }
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub enum Metronome {
     Default,
     // CountIn,
@@ -19,7 +22,7 @@ pub enum Metronome {
     // Off,
 }
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Tempo {
     pub bpm: f64,
 }

@@ -7,5 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-uuid = { version = "0.8", features = ["serde", "v4"] }
-rand = "0.7.3"
+uuid = { version = "*", features = ["serde", "v4"] }
+rand = "*"
+serde = "*"
+serde_json = "*"
+serde_derive = "*"
