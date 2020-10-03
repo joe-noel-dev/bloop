@@ -33,14 +33,8 @@ pub struct AddRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub enum Payload {
+#[serde(tag = "method", content = "payload")]
+pub enum Request {
   Get(GetRequest),
   Add(AddRequest),
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Request {
-  method: Method,
-  payload: Payload,
 }
