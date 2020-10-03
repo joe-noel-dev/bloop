@@ -1,16 +1,15 @@
 use super::error;
-use crate::api;
-use futures_util::StreamExt;
-use std::error::Error;
+use crate::api::{request, response};
+use futures_util::{SinkExt, StreamExt};
 use std::format;
 use tokio::net::TcpStream;
+use tokio::sync::{broadcast, mpsc};
 use tungstenite::protocol::Message;
-
-type RequestDestination = tokio::sync::mpsc::Sender<api::request::Request>;
 
 pub async fn run(
     socket: TcpStream,
-    mut request_destination: RequestDestination,
+    mut request_tx: mpsc::Sender<request::Request>,
+    mut response_rx: broadcast::Receiver<response::Response>,
 ) {
     let addr = socket
         .peer_addr()
@@ -24,8 +23,14 @@ pub async fn run(
 
     println!("Web socket established: {}", addr);
 
-    let (_, mut incoming) = ws_stream.split();
-    let tx_task = tokio::spawn(async move {});
+    let (mut outgoing, mut incoming) = ws_stream.split();
+    let tx_task = tokio::spawn(async move {
+        while let Ok(response) = response_rx.recv().await {
+            let message = serde_json::to_string(&response).unwrap();
+            let message = Message::from(message);
+            outgoing.send(message).await.unwrap();
+        }
+    });
 
     let rx_task = tokio::spawn(async move {
         while let Some(message) = incoming.next().await {
@@ -38,7 +43,7 @@ pub async fn run(
                 }
             };
 
-            request_destination.send(api_request).await.unwrap();
+            request_tx.send(api_request).await.unwrap();
         }
     });
 
@@ -56,8 +61,8 @@ pub async fn run(
 
 fn handle_message(
     message: Message,
-) -> Result<api::request::Request, error::NetworkError> {
-    let request: api::request::Request =
+) -> Result<request::Request, error::NetworkError> {
+    let request: request::Request =
         match serde_json::from_str(message.to_text().unwrap()) {
             Ok(request) => request,
             Err(error) => {

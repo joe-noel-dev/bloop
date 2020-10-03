@@ -11,6 +11,6 @@ use std::io::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    network::server::run().await;
+    network::manager::run().await;
     Ok(())
 }

@@ -1,7 +1,7 @@
 use crate::model::{channel, project, sample, section, song};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Response {
     pub project: Option<project::Project>,
