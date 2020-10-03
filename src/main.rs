@@ -1,7 +1,7 @@
 mod api;
 mod generators;
 mod model;
-mod server;
+mod network;
 
 extern crate serde;
 extern crate serde_derive;
@@ -11,6 +11,6 @@ use std::io::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    server::server::run().await;
+    network::server::run().await;
     Ok(())
 }
