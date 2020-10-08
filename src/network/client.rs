@@ -7,17 +7,14 @@ use tokio::sync::{broadcast, mpsc};
 use tokio_tungstenite::WebSocketStream;
 use tungstenite::protocol::Message;
 
-type MessageSink =
-    futures_util::stream::SplitSink<WebSocketStream<TcpStream>, Message>;
+type MessageSink = futures_util::stream::SplitSink<WebSocketStream<TcpStream>, Message>;
 
 pub async fn run(
     socket: TcpStream,
     mut request_tx: mpsc::Sender<request::Request>,
     mut response_rx: broadcast::Receiver<response::Response>,
 ) {
-    let addr = socket
-        .peer_addr()
-        .expect("Couldn't get peer address from connection");
+    let addr = socket.peer_addr().expect("Couldn't get peer address from connection");
 
     println!("New connection: {}", addr);
 
@@ -51,25 +48,19 @@ pub async fn run(
     println!("{} disconnected", addr);
 }
 
-async fn send_response(
-    response: response::Response,
-    outgoing: &mut MessageSink,
-) {
+async fn send_response(response: response::Response, outgoing: &mut MessageSink) {
     let message = serde_json::to_string(&response).unwrap();
     let message = Message::from(message);
     outgoing.send(message).await.unwrap();
 }
 
-fn handle_message(
-    message: Message,
-) -> Result<request::Request, error::NetworkError> {
-    let request: request::Request =
-        match serde_json::from_str(message.to_text().unwrap()) {
-            Ok(request) => request,
-            Err(error) => {
-                let message = format!("Failed to parse JSON: {}", error);
-                return Err(error::NetworkError::new(&message));
-            }
-        };
+fn handle_message(message: Message) -> Result<request::Request, error::NetworkError> {
+    let request: request::Request = match serde_json::from_str(message.to_text().unwrap()) {
+        Ok(request) => request,
+        Err(error) => {
+            let message = format!("Failed to parse JSON: {}", error);
+            return Err(error::NetworkError::new(&message));
+        }
+    };
     Ok(request)
 }

@@ -2,10 +2,7 @@ use crate::model::{id, sample, state};
 use rand::Rng;
 
 pub fn generate_samples(sample_ids: &[id::ID]) -> Vec<sample::Sample> {
-    return sample_ids
-        .iter()
-        .map(|sample_id| generate_sample(sample_id))
-        .collect();
+    return sample_ids.iter().map(|sample_id| generate_sample(sample_id)).collect();
 }
 
 pub fn generate_sample(id: &id::ID) -> sample::Sample {

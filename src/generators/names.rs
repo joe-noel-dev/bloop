@@ -9,7 +9,5 @@ pub fn random_name() -> String {
     );
 }
 
-const ADJECTIVES: &'static [&'static str] =
-    &["Huge", "Weird", "Zany", "Amazing", "Mellow", "Soft"];
-const NOUNS: &'static [&'static str] =
-    &["vibes", "beat", "tune", "symphony", "chops"];
+const ADJECTIVES: &'static [&'static str] = &["Huge", "Weird", "Zany", "Amazing", "Mellow", "Soft"];
+const NOUNS: &'static [&'static str] = &["vibes", "beat", "tune", "symphony", "chops"];

@@ -59,12 +59,6 @@ impl Response {
         response
     }
 
-    pub fn with_samples(&self, samples: &[sample::Sample]) -> Self {
-        let mut response = self.clone();
-        response.samples = Some(Vec::from(samples));
-        response
-    }
-
     pub fn with_channels(&self, channels: &[channel::Channel]) -> Self {
         let mut response = self.clone();
         response.channels = Some(Vec::from(channels));

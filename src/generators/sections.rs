@@ -10,12 +10,10 @@ pub fn generate_sections(
 ) -> Vec<section::Section> {
     let mut sections: Vec<section::Section> = vec![];
     for song in songs.iter_mut() {
-        let mut song_sections: Vec<section::Section> = (0
-            ..num_sections_per_song)
+        let mut song_sections: Vec<section::Section> = (0..num_sections_per_song)
             .map(|_| generate_section(&channel_ids))
             .collect();
-        song.section_ids =
-            song_sections.iter().map(|section| section.id).collect();
+        song.section_ids = song_sections.iter().map(|section| section.id).collect();
         sections.append(&mut song_sections);
     }
 
@@ -46,21 +44,12 @@ pub fn generate_section(channel_ids: &[id::ID]) -> section::Section {
 pub fn get_sample_ids(sections: &[section::Section]) -> Vec<id::ID> {
     let mut sample_ids: Vec<id::ID> = vec![];
     for section in sections.iter() {
-        sample_ids = [
-            sample_ids,
-            section.samples.iter().map(|pair| pair.sample_id).collect(),
-        ]
-        .concat();
+        sample_ids = [sample_ids, section.samples.iter().map(|pair| pair.sample_id).collect()].concat();
     }
     return sample_ids;
 }
 
 fn random_section_name() -> String {
-    return format!(
-        "{}",
-        SECTION_NAMES.choose(&mut rand::thread_rng()).unwrap()
-    );
+    return format!("{}", SECTION_NAMES.choose(&mut rand::thread_rng()).unwrap());
 }
-const SECTION_NAMES: &'static [&'static str] = &[
-    "Verse", "Chorus", "Intro", "Outro", "Break", "Middle", "Hook",
-];
+const SECTION_NAMES: &'static [&'static str] = &["Verse", "Chorus", "Intro", "Outro", "Break", "Middle", "Hook"];

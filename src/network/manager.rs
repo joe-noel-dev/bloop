@@ -18,16 +18,13 @@ pub async fn run() {
     tokio::spawn(async move {
         server::run(request_tx.clone(), server_response_tx).await;
     });
-
     while let Some(message) = request_rx.recv().await {
-        let response = match message {
-            request::Request::Get(get_request) => {
-                handlers::handle_get(&database, get_request)
-            }
-            request::Request::Add(add_request) => {
-                handlers::handle_add(&mut database, add_request)
-            }
+        let (new_db, response) = match message {
+            request::Request::Get(get_request) => handlers::handle_get(database, get_request),
+            request::Request::Add(add_request) => handlers::handle_add(database, add_request),
         };
+
+        database = new_db;
         response_tx.send(response).unwrap();
     }
 }
