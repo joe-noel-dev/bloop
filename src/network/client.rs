@@ -32,14 +32,29 @@ pub async fn run(
                 send_response(response, &mut outgoing).await;
             },
             Some(message) = incoming.next() => {
-                let api_request = match handle_message(message.unwrap()) {
+
+                let message = match message {
+                    Ok(message) => message,
+                    Err(_) => {
+                        println!("Error receiving from client: {}", addr);
+                        break;
+                    }
+                };
+
+                let api_request = match handle_message(message) {
                     Ok(request) => request,
                     Err(error) => {
                         send_response(response::Response::new().with_error(&error.to_string()), &mut outgoing).await;
                         continue;
                     }
                 };
-                request_tx.send(api_request).await.unwrap();
+                match request_tx.send(api_request).await {
+                    Ok(_) => continue,
+                    Err(_) => {
+                        println!("Client disconnected: {}", addr);
+                        break;
+                    }
+                }
             },
             else => { break }
         }
@@ -51,7 +66,7 @@ pub async fn run(
 async fn send_response(response: response::Response, outgoing: &mut MessageSink) {
     let message = serde_json::to_string(&response).unwrap();
     let message = Message::from(message);
-    outgoing.send(message).await.unwrap();
+    let _ = outgoing.send(message).await;
 }
 
 fn handle_message(message: Message) -> Result<request::Request, error::NetworkError> {
