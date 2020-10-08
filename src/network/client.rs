@@ -14,15 +14,23 @@ pub async fn run(
     mut request_tx: mpsc::Sender<request::Request>,
     mut response_rx: broadcast::Receiver<response::Response>,
 ) {
-    let addr = socket.peer_addr().expect("Couldn't get peer address from connection");
+    let addr = match socket.peer_addr() {
+        Ok(addr) => addr,
+        Err(_) => {
+            println!("Error getting peer address");
+            return;
+        }
+    };
 
     println!("New connection: {}", addr);
 
-    let ws_stream = tokio_tungstenite::accept_async(socket)
-        .await
-        .expect("Error in handshake");
-
-    println!("Web socket established: {}", addr);
+    let ws_stream = match tokio_tungstenite::accept_async(socket).await {
+        Ok(stream) => stream,
+        Err(_) => {
+            println!("Error during WebSocket handshake");
+            return;
+        }
+    };
 
     let (mut outgoing, mut incoming) = ws_stream.split();
 
@@ -41,7 +49,12 @@ pub async fn run(
                     }
                 };
 
-                let api_request = match handle_message(message) {
+                let message = match message {
+                    Message::Text(message) => message,
+                    _ => continue
+                };
+
+                let api_request = match handle_message(&message) {
                     Ok(request) => request,
                     Err(error) => {
                         send_response(response::Response::new().with_error(&error.to_string()), &mut outgoing).await;
@@ -64,13 +77,19 @@ pub async fn run(
 }
 
 async fn send_response(response: response::Response, outgoing: &mut MessageSink) {
-    let message = serde_json::to_string(&response).unwrap();
+    let message = match serde_json::to_string(&response) {
+        Ok(message) => message,
+        Err(_) => {
+            println!("Failed to convert response to string");
+            return;
+        }
+    };
     let message = Message::from(message);
     let _ = outgoing.send(message).await;
 }
 
-fn handle_message(message: Message) -> Result<request::Request, error::NetworkError> {
-    let request: request::Request = match serde_json::from_str(message.to_text().unwrap()) {
+fn handle_message(message: &str) -> Result<request::Request, error::NetworkError> {
+    let request: request::Request = match serde_json::from_str(message) {
         Ok(request) => request,
         Err(error) => {
             let message = format!("Failed to parse JSON: {}", error);
