@@ -40,4 +40,34 @@ impl Response {
         response.error = Some(message.to_string());
         response
     }
+
+    pub fn with_project(&self, project: &project::Project) -> Self {
+        let mut response = self.clone();
+        response.project = Some(project.clone());
+        response
+    }
+
+    pub fn with_songs(&self, songs: &[song::Song]) -> Self {
+        let mut response = self.clone();
+        response.songs = Some(Vec::from(songs));
+        response
+    }
+
+    pub fn with_sections(&self, sections: &[section::Section]) -> Self {
+        let mut response = self.clone();
+        response.sections = Some(Vec::from(sections));
+        response
+    }
+
+    pub fn with_samples(&self, samples: &[sample::Sample]) -> Self {
+        let mut response = self.clone();
+        response.samples = Some(Vec::from(samples));
+        response
+    }
+
+    pub fn with_channels(&self, channels: &[channel::Channel]) -> Self {
+        let mut response = self.clone();
+        response.channels = Some(Vec::from(channels));
+        response
+    }
 }

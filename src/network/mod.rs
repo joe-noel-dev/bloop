@@ -1,5 +1,6 @@
-pub mod client;
 pub mod manager;
-pub mod server;
 
+mod client;
 mod error;
+mod handlers;
+mod server;
