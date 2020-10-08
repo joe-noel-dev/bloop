@@ -9,6 +9,10 @@ fn unhandled_error() -> response::Response {
     response::Response::new().with_error("Unsupported method")
 }
 
+fn error_response(message: &str) -> response::Response {
+    response::Response::new().with_error(message)
+}
+
 pub fn handle_get(
     database: database::Database,
     request: request::GetRequest,
@@ -22,9 +26,29 @@ pub fn handle_get(
 
 fn handle_get_channel(
     database: database::Database,
-    _request: request::GetRequest,
+    request: request::GetRequest,
 ) -> (database::Database, response::Response) {
-    (database, unhandled_error())
+    let channel_id = match request.id {
+        Some(id) => id,
+        None => return (database, error_response("Missing channel ID")),
+    };
+
+    let channel = match database
+        .project
+        .channels
+        .iter()
+        .find(|c| c.id.to_string() == channel_id)
+    {
+        Some(channel) => channel,
+        None => {
+            return (
+                database,
+                error_response(&format!("Couldn't find channel {}", channel_id)),
+            )
+        }
+    };
+    let response = response::Response::new().with_channels(&vec![channel.clone()]);
+    (database, response)
 }
 
 fn handle_get_all(database: database::Database) -> (database::Database, response::Response) {
@@ -58,19 +82,15 @@ fn handle_add_section(
     mut database: database::Database,
     request: request::AddRequest,
 ) -> (database::Database, response::Response) {
-    if request.parent_id.is_none() {
-        return (database, response::Response::new().with_error("Missing parent ID"));
-    }
+    let song_id = match request.parent_id {
+        Some(id) => id,
+        None => return (database, error_response("Missing parent ID")),
+    };
 
-    let song_id = request.parent_id.unwrap();
-
-    let song = database.project.songs.iter_mut().find(|s| s.id.to_string() == song_id);
-
-    if song.is_none() {
-        return (database, response::Response::new().with_error("Couldn't find song"));
-    }
-
-    let song = song.unwrap();
+    let song = match database.project.songs.iter_mut().find(|s| s.id.to_string() == song_id) {
+        Some(song) => song,
+        None => return (database, error_response("Couldn't find song")),
+    };
 
     let channel_ids = database
         .project
