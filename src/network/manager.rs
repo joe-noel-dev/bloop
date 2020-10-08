@@ -1,7 +1,7 @@
 use super::handlers;
 use super::server;
 use crate::api::request;
-use crate::database::database::Database;
+use crate::database::database;
 use crate::generators;
 
 use tokio::sync::{broadcast, mpsc};
@@ -10,7 +10,7 @@ pub async fn run() {
     let (request_tx, mut request_rx) = mpsc::channel(100);
     let (response_tx, _) = broadcast::channel(100);
 
-    let mut database = Database {
+    let mut database = database::Database {
         project: generators::projects::generate_project(4, 3, 3),
     };
 

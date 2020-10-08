@@ -6,7 +6,7 @@ use crate::model::project;
 use uuid;
 
 fn unhandled_error() -> response::Response {
-    response::Response::new().with_error("Unsupported method")
+    error_response("Unsupported method")
 }
 
 fn error_response(message: &str) -> response::Response {
@@ -89,7 +89,12 @@ fn handle_add_section(
 
     let song = match database.project.songs.iter_mut().find(|s| s.id.to_string() == song_id) {
         Some(song) => song,
-        None => return (database, error_response("Couldn't find song")),
+        None => {
+            return (
+                database,
+                error_response(&format!("Couldn't find song with ID: {}", song_id)),
+            )
+        }
     };
 
     let channel_ids = database
