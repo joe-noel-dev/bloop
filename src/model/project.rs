@@ -6,6 +6,8 @@ use super::song::Song;
 use super::state::State;
 use serde::{Deserialize, Serialize};
 
+pub const MAX_CHANNELS: usize = 8;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Project {

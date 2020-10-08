@@ -1,4 +1,5 @@
 mod api;
+mod database;
 mod generators;
 mod model;
 mod network;
