@@ -1,13 +1,12 @@
 use super::error;
 use crate::api::{request, response};
+use futures::Sink;
 use futures_util::{SinkExt, StreamExt};
 use std::format;
+use std::marker::Unpin;
 use tokio::net::TcpStream;
 use tokio::sync::{broadcast, mpsc};
-use tokio_tungstenite::WebSocketStream;
 use tungstenite::protocol::Message;
-
-type MessageSink = futures_util::stream::SplitSink<WebSocketStream<TcpStream>, Message>;
 
 pub async fn run(
     socket: TcpStream,
@@ -76,7 +75,7 @@ pub async fn run(
     println!("{} disconnected", addr);
 }
 
-async fn send_response(response: response::Response, outgoing: &mut MessageSink) {
+async fn send_response(response: response::Response, mut outgoing: impl Sink<Message> + Unpin) {
     let message = match serde_json::to_string(&response) {
         Ok(message) => message,
         Err(_) => {
