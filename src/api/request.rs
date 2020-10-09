@@ -15,6 +15,7 @@ pub enum Entity {
   Channel,
   Section,
   Song,
+  Project,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

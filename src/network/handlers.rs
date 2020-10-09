@@ -64,6 +64,7 @@ pub fn handle_add(
         request::Entity::Channel => handle_add_channel(database),
         request::Entity::Section => handle_add_section(database, request),
         request::Entity::Song => handle_add_song(database),
+        request::Entity::Project => handle_add_project(database),
         _ => (database, unhandled_error()),
     }
 }
@@ -116,4 +117,10 @@ fn handle_add_song(mut database: database::Database) -> (database::Database, res
     let song = generators::songs::generate_song();
     database.project.songs.push(song.clone());
     (database, response::Response::new().with_songs(&vec![song]))
+}
+
+fn handle_add_project(mut database: database::Database) -> (database::Database, response::Response) {
+    let project = generators::projects::generate_project(0, 0, 0);
+    database.project = project.clone();
+    (database, response::Response::new().with_project(&project))
 }
