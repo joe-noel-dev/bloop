@@ -115,7 +115,17 @@ fn handle_add_section(
 fn handle_add_song(mut database: database::Database) -> (database::Database, response::Response) {
     let song = generators::songs::generate_song();
     database.project.songs.push(song.clone());
-    (database, response::Response::new().with_songs(&vec![song]))
+
+    database.project.selections = selections::Selections {
+        song: Some(song.id),
+        section: None,
+        channel: None,
+    };
+
+    let response = response::Response::new()
+        .with_songs(&vec![song])
+        .with_selections(&database.project.selections);
+    (database, response)
 }
 
 fn handle_add_project(mut database: database::Database) -> (database::Database, response::Response) {
