@@ -1,5 +1,5 @@
-use crate::model::project::Project;
+use crate::model::project;
 
 pub struct Database {
-    pub project: Project,
+    pub project: project::Project,
 }

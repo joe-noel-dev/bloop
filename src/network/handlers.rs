@@ -1,9 +1,7 @@
 use crate::api::{request, response};
 use crate::database::database;
 use crate::generators;
-use crate::model::channel;
-use crate::model::project;
-use uuid;
+use crate::model::{channel, project, selections};
 
 fn unhandled_error() -> response::Response {
     error_response("Unsupported method")
@@ -33,12 +31,7 @@ fn handle_get_channel(
         None => return (database, error_response("Missing channel ID")),
     };
 
-    let channel = match database
-        .project
-        .channels
-        .iter()
-        .find(|c| c.id.to_string() == channel_id)
-    {
+    let channel = match database.project.channels.iter().find(|c| c.id == channel_id) {
         Some(channel) => channel,
         None => {
             return (
@@ -88,7 +81,12 @@ fn handle_add_section(
         None => return (database, error_response("Missing parent ID")),
     };
 
-    let song = match database.project.songs.iter_mut().find(|s| s.id.to_string() == song_id) {
+    let section_id = match database.project.add_section_to_song(song_id) {
+        Some(id) => id,
+        None => return (database, error_response("Failed to add section")),
+    };
+
+    let song = match database.project.song_with_id(song_id) {
         Some(song) => song,
         None => {
             return (
@@ -98,17 +96,18 @@ fn handle_add_section(
         }
     };
 
-    let channel_ids = database
-        .project
-        .channels
-        .iter()
-        .map(|c| c.id.clone())
-        .collect::<Vec<uuid::Uuid>>();
-    let section = generators::sections::generate_section(&channel_ids);
-    database.project.sections.push(section.clone());
-    song.section_ids.push(section.id);
+    let section = match database.project.section_with_id(section_id) {
+        Some(section) => section,
+        None => {
+            return (
+                database,
+                error_response(&format!("Couldn't find new section with ID: {}", section_id)),
+            )
+        }
+    };
+
     let response = response::Response::new()
-        .with_sections(&vec![section])
+        .with_sections(&vec![section.clone()])
         .with_songs(&vec![song.clone()]);
     (database, response)
 }
@@ -123,4 +122,37 @@ fn handle_add_project(mut database: database::Database) -> (database::Database, 
     let project = generators::projects::generate_project(0, 0, 0);
     database.project = project.clone();
     (database, response::Response::new().with_project(&project))
+}
+
+pub fn handle_select(
+    database: database::Database,
+    select_request: request::SelectRequest,
+) -> (database::Database, response::Response) {
+    match select_request.entity {
+        request::Entity::Song => handle_select_song(database, select_request),
+        _ => (database, unhandled_error()),
+    }
+}
+
+pub fn handle_select_song(
+    mut database: database::Database,
+    select_request: request::SelectRequest,
+) -> (database::Database, response::Response) {
+    let song_id = select_request.id;
+
+    if !database.project.contains_song(song_id) {
+        return (
+            database,
+            error_response(&format!("Song ID not found to select - {}", song_id)),
+        );
+    }
+
+    database.project.selections = selections::Selections {
+        song: Some(song_id),
+        section: None,
+        channel: None,
+    };
+
+    let response = response::Response::new().with_selections(&database.project.selections);
+    (database, response)
 }

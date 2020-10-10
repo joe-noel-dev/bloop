@@ -34,3 +34,19 @@ pub enum LoopMode {
     Fixed,
     Indefinite,
 }
+
+impl Section {
+    pub fn new() -> Self {
+        Section {
+            id: ID::new_v4(),
+            state: State::Active,
+            name: String::new(),
+            beat_length: 0.0,
+            loop_properties: LoopProperties {
+                mode: LoopMode::Fixed,
+                count: 1,
+            },
+            samples: vec![],
+        }
+    }
+}
