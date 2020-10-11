@@ -6,10 +6,11 @@ use super::selections::Selections;
 use super::song::Song;
 use super::state::State;
 use serde::{Deserialize, Serialize};
+use std::cmp::PartialEq;
 
 pub const MAX_CHANNELS: usize = 8;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Project {
     pub id: ID,
@@ -22,7 +23,7 @@ pub struct Project {
     pub selections: Selections,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectInfo {
     pub name: String,
@@ -59,6 +60,10 @@ impl Project {
         self.sections.iter().find(|s| s.id == id)
     }
 
+    pub fn section_with_id_mut(&mut self, id: ID) -> Option<&mut Section> {
+        self.sections.iter_mut().find(|s| s.id == id)
+    }
+
     pub fn add_section_to_song(&mut self, song_id: ID) -> Option<ID> {
         let section = Section::new();
 
@@ -74,6 +79,25 @@ impl Project {
 
     pub fn contains_song(&self, song_id: ID) -> bool {
         self.songs.iter().find(|s| s.id == song_id).is_some()
+    }
+
+    pub fn remove_sections_for_song(&mut self, song: &mut Song) {
+        song.section_ids
+            .iter()
+            .map(|section_id| self.section_with_id_mut(section_id.clone()))
+            .filter(|section| section.is_some())
+            .map(|section| section.unwrap().state = State::Deleted);
+    }
+
+    pub fn remove_song(&mut self, song_id: ID) -> Result<(), String> {
+        let song = match self.song_with_id_mut(song_id) {
+            Some(song) => song,
+            None => return Err(format!("Song not found with ID {}", song_id)),
+        };
+
+        self.remove_sections_for_song(song);
+        song.state = State::Deleted;
+        Ok(())
     }
 }
 

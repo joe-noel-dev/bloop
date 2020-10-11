@@ -38,9 +38,17 @@ pub struct SelectRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct RemoveRequest {
+  pub entity: Entity,
+  pub id: id::ID,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 #[serde(tag = "method", content = "payload")]
 pub enum Request {
   Get(GetRequest),
   Add(AddRequest),
   Select(SelectRequest),
+  Remove(RemoveRequest),
 }

@@ -1,6 +1,6 @@
 use super::handlers;
 use super::server;
-use crate::api::request;
+use crate::api::{request, response};
 use crate::database::database;
 use crate::generators;
 
@@ -19,13 +19,22 @@ pub async fn run() {
         server::run(request_tx.clone(), server_response_tx).await;
     });
     while let Some(message) = request_rx.recv().await {
-        let (new_db, response) = match message {
-            request::Request::Get(get_request) => handlers::handle_get(database, get_request),
-            request::Request::Add(add_request) => handlers::handle_add(database, add_request),
-            request::Request::Select(select_request) => handlers::handle_select(database, select_request),
+        let new_db = match message {
+            request::Request::Get(_) => Ok(database.clone()),
+            request::Request::Add(add_request) => handlers::handle_add(database.clone(), add_request),
+            request::Request::Select(select_request) => handlers::handle_select(database.clone(), select_request),
+            request::Request::Remove(remove_request) => handlers::handle_remove(database.clone(), remove_request),
         };
 
-        database = new_db;
+        let response = match new_db {
+            Ok(db) => {
+                let response = response::Response::new().with_project(&db.project);
+                database = db;
+                response
+            }
+            Err(message) => response::Response::new().with_error(&message),
+        };
+
         response_tx.send(response).unwrap();
     }
 }
