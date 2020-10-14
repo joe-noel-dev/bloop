@@ -1,5 +1,4 @@
 use super::id::ID;
-use super::state::State;
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 
@@ -7,7 +6,6 @@ use std::cmp::PartialEq;
 #[serde(rename_all = "camelCase")]
 pub struct Section {
     pub id: ID,
-    pub state: State,
     pub name: String,
     pub beat_length: f64,
     #[serde(rename = "loop")]
@@ -40,7 +38,6 @@ impl Section {
     pub fn new() -> Self {
         Section {
             id: ID::new_v4(),
-            state: State::Active,
             name: "Section".to_string(),
             beat_length: 0.0,
             loop_properties: LoopProperties {

@@ -1,5 +1,5 @@
 use super::names;
-use crate::model::{song, state};
+use crate::model::song;
 use rand::Rng;
 use uuid::Uuid;
 
@@ -7,7 +7,6 @@ pub fn generate_song() -> song::Song {
     let mut rng = rand::thread_rng();
     song::Song {
         id: Uuid::new_v4(),
-        state: state::State::Active,
         name: names::random_name(),
         tempo: song::Tempo {
             bpm: rng.gen_range(30.0, 300.0),

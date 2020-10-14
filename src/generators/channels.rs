@@ -1,4 +1,4 @@
-use crate::model::{channel, id, state};
+use crate::model::{channel, id};
 use rand::seq::SliceRandom;
 use uuid::Uuid;
 
@@ -9,7 +9,6 @@ pub fn generate_channels(num_channels: u32) -> Vec<channel::Channel> {
 pub fn generate_channel() -> channel::Channel {
     channel::Channel {
         id: Uuid::new_v4(),
-        state: state::State::Active,
         name: random_channel_name(),
         mute: false,
         solo: false,

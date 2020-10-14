@@ -49,23 +49,23 @@ impl Response {
         self
     }
 
-    pub fn with_songs(self, songs: &[song::Song]) -> Self {
+    pub fn _with_songs(self, songs: &[song::Song]) -> Self {
         let mut response = self.clone();
         response.songs = Some(Vec::from(songs));
         response
     }
 
-    pub fn with_sections(mut self, sections: &[section::Section]) -> Self {
+    pub fn _with_sections(mut self, sections: &[section::Section]) -> Self {
         self.sections = Some(Vec::from(sections));
         self
     }
 
-    pub fn with_channels(mut self, channels: &[channel::Channel]) -> Self {
+    pub fn _with_channels(mut self, channels: &[channel::Channel]) -> Self {
         self.channels = Some(Vec::from(channels));
         self
     }
 
-    pub fn with_selections(mut self, selections: &selections::Selections) -> Self {
+    pub fn _with_selections(mut self, selections: &selections::Selections) -> Self {
         self.selections = Some(selections.clone());
         self
     }

@@ -9,10 +9,6 @@ fn unhandled_error() -> HandlerError {
     "Unsupported method".to_string()
 }
 
-fn error_response(message: &str) -> response::Response {
-    response::Response::new().with_error(message)
-}
-
 pub fn handle_add(
     database: database::Database,
     request: request::AddRequest,
@@ -45,9 +41,10 @@ fn handle_add_section(
         None => return Err("Missing parent ID".to_string()),
     };
 
-    if let None = database.project.add_section_to_song(song_id) {
-        return Err("Failed to add section".to_string());
-    }
+    database.project = match database.project.add_section_to_song(&song_id) {
+        Ok(project) => project,
+        Err(error) => return Err(error),
+    };
 
     Ok(database)
 }
@@ -120,7 +117,10 @@ pub fn handle_remove_song(
         return Err(format!("Song ID not found to remove - {}", song_id));
     }
 
-    database.project.remove_song(song_id);
+    database.project = match database.project.remove_song(&song_id) {
+        Ok(project) => project,
+        Err(error) => return Err(error),
+    };
 
     Ok(database)
 }

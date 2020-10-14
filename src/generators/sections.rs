@@ -1,4 +1,4 @@
-use crate::model::{id, section, song, state};
+use crate::model::{id, section, song};
 use rand::seq::SliceRandom;
 use rand::Rng;
 use uuid::Uuid;
@@ -24,7 +24,6 @@ pub fn generate_section(channel_ids: &[id::ID]) -> section::Section {
     let mut rng = rand::thread_rng();
     section::Section {
         id: Uuid::new_v4(),
-        state: state::State::Active,
         name: random_section_name(),
         beat_length: rng.gen_range(4.0, 24.0),
         loop_properties: section::LoopProperties {

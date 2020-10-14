@@ -4,7 +4,6 @@ use super::sample::Sample;
 use super::section::Section;
 use super::selections::Selections;
 use super::song::Song;
-use super::state::State;
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 
@@ -14,7 +13,6 @@ pub const MAX_CHANNELS: usize = 8;
 #[serde(rename_all = "camelCase")]
 pub struct Project {
     pub id: ID,
-    pub state: State,
     pub info: ProjectInfo,
     pub songs: Vec<Song>,
     pub sections: Vec<Section>,
@@ -34,7 +32,6 @@ impl Project {
     pub fn _new() -> Self {
         Self {
             id: ID::new_v4(),
-            state: State::Active,
             info: ProjectInfo::new(),
             songs: vec![],
             sections: vec![],
@@ -48,56 +45,113 @@ impl Project {
         return self.channels.iter().map(|c| c.id.clone()).collect::<Vec<uuid::Uuid>>();
     }
 
-    pub fn song_with_id(&self, id: ID) -> Option<&Song> {
-        self.songs.iter().find(|s| s.id == id)
+    pub fn song_with_id(&self, id: &ID) -> Option<&Song> {
+        self.songs.iter().find(|s| s.id == *id)
     }
 
-    fn song_with_id_mut(&mut self, id: ID) -> Option<&mut Song> {
-        self.songs.iter_mut().find(|s| s.id == id)
+    pub fn _section_with_id(&self, id: &ID) -> Option<&Section> {
+        self.sections.iter().find(|s| s.id == *id)
     }
 
-    pub fn section_with_id(&self, id: ID) -> Option<&Section> {
-        self.sections.iter().find(|s| s.id == id)
+    pub fn replace_song(mut self, song: Song) -> Self {
+        let old_song = match self.songs.iter_mut().find(|s| s.id == song.id) {
+            Some(song) => song,
+            None => return self,
+        };
+
+        *old_song = song;
+
+        self
     }
 
-    pub fn section_with_id_mut(&mut self, id: ID) -> Option<&mut Section> {
-        self.sections.iter_mut().find(|s| s.id == id)
-    }
-
-    pub fn add_section_to_song(&mut self, song_id: ID) -> Option<ID> {
+    pub fn add_section_to_song(mut self, song_id: &ID) -> Result<Self, String> {
         let section = Section::new();
 
-        let song = match self.song_with_id_mut(song_id) {
-            Some(song) => song,
-            None => return None,
+        let mut song = match self.song_with_id(song_id) {
+            Some(song) => song.clone(),
+            None => return Err(format!("Couldn't find song ID {}", song_id)),
         };
 
         song.section_ids.push(section.id);
-        self.sections.push(section.clone());
-        Some(section.id)
+
+        self.sections.push(section);
+
+        self = self.replace_song(song);
+        Ok(self)
     }
 
     pub fn contains_song(&self, song_id: ID) -> bool {
         self.songs.iter().find(|s| s.id == song_id).is_some()
     }
 
-    pub fn remove_sections_for_song(&mut self, song: &mut Song) {
-        song.section_ids
-            .iter()
-            .map(|section_id| self.section_with_id_mut(section_id.clone()))
-            .filter(|section| section.is_some())
-            .map(|section| section.unwrap().state = State::Deleted);
+    pub fn remove_sections_for_song(mut self, song: &Song) -> Self {
+        self.sections = self
+            .sections
+            .iter_mut()
+            .filter(|section| !song.section_ids.contains(&section.id))
+            .map(|section| section.clone())
+            .collect();
+        self
     }
 
-    pub fn remove_song(&mut self, song_id: ID) -> Result<(), String> {
-        let song = match self.song_with_id_mut(song_id) {
-            Some(song) => song,
+    pub fn selected_song_index(&self) -> Option<usize> {
+        let song_id = match self.selections.song {
+            Some(song_id) => song_id,
+            None => return None,
+        };
+
+        match self.songs.iter().position(|song| song.id == song_id) {
+            Some(index) => Some(index),
+            None => return None,
+        }
+    }
+
+    pub fn song_with_index(&self, index: usize) -> Option<&Song> {
+        if index >= self.songs.len() {
+            return None;
+        } else {
+            return Some(&self.songs[index]);
+        }
+    }
+
+    pub fn select_song_index(mut self, song_index: usize) -> Self {
+        if self.songs.len() == 0 {
+            return self;
+        }
+        let song_index = std::cmp::min(song_index, self.songs.len() - 1);
+        if let Some(new_selected_song) = self.song_with_index(song_index) {
+            self.selections = Selections {
+                song: Some(new_selected_song.id),
+                section: None,
+                channel: None,
+            }
+        }
+
+        self
+    }
+
+    pub fn remove_song(mut self, song_id: &ID) -> Result<Self, String> {
+        let selected_song_index = self.selected_song_index();
+
+        let song = match self.song_with_id(song_id) {
+            Some(song) => song.clone(),
             None => return Err(format!("Song not found with ID {}", song_id)),
         };
 
-        self.remove_sections_for_song(song);
-        song.state = State::Deleted;
-        Ok(())
+        self = self.remove_sections_for_song(&song);
+
+        self.songs = self
+            .songs
+            .iter_mut()
+            .filter(|song| &song.id != song_id)
+            .map(|song| song.clone())
+            .collect();
+
+        if let Some(selected_song_index) = selected_song_index {
+            self = self.select_song_index(selected_song_index);
+        }
+
+        Ok(self)
     }
 }
 

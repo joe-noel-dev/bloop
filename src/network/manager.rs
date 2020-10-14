@@ -19,6 +19,8 @@ pub async fn run() {
         server::run(request_tx.clone(), server_response_tx).await;
     });
     while let Some(message) = request_rx.recv().await {
+        println!("Received message: {:?}", message);
+
         let new_db = match message {
             request::Request::Get(_) => Ok(database.clone()),
             request::Request::Add(add_request) => handlers::handle_add(database.clone(), add_request),
