@@ -1,4 +1,4 @@
-use crate::api::{request, response};
+use crate::api::request;
 use crate::database::database;
 use crate::generators;
 use crate::model::{channel, project, selections};
@@ -103,6 +103,8 @@ pub fn handle_remove(
 ) -> Result<database::Database, HandlerError> {
     match remove_request.entity {
         request::Entity::Song => handle_remove_song(database, remove_request),
+        request::Entity::Section => handle_remove_section(database, remove_request),
+        request::Entity::Channel => handle_remove_channel(database, remove_request),
         _ => Err(unhandled_error()),
     }
 }
@@ -121,6 +123,39 @@ pub fn handle_remove_song(
         Ok(project) => project,
         Err(error) => return Err(error),
     };
+
+    Ok(database)
+}
+
+pub fn handle_remove_section(
+    mut database: database::Database,
+    remove_request: request::RemoveRequest,
+) -> Result<database::Database, HandlerError> {
+    let section_id = remove_request.id;
+
+    if !database.project.contains_section(section_id) {
+        return Err(format!("Section ID not found to remove - {}", section_id));
+    }
+
+    database.project = match database.project.remove_section(&section_id) {
+        Ok(project) => project,
+        Err(error) => return Err(error),
+    };
+
+    Ok(database)
+}
+
+pub fn handle_remove_channel(
+    mut database: database::Database,
+    remove_request: request::RemoveRequest,
+) -> Result<database::Database, HandlerError> {
+    let channel_id = remove_request.id;
+
+    if !database.project.contains_channel(channel_id) {
+        return Err(format!("Channel ID not found to remove - {}", channel_id));
+    }
+
+    database.project = database.project.remove_channel(&channel_id);
 
     Ok(database)
 }

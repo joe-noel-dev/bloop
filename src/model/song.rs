@@ -25,3 +25,16 @@ pub enum Metronome {
 pub struct Tempo {
     pub bpm: f64,
 }
+
+impl Song {
+    pub fn remove_section_id(mut self, section_id: &ID) -> Self {
+        self.section_ids = self
+            .section_ids
+            .iter()
+            .filter(|id| id != &section_id)
+            .map(|id| id.clone())
+            .collect();
+
+        self
+    }
+}

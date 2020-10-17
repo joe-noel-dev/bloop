@@ -84,6 +84,14 @@ impl Project {
         self.songs.iter().find(|s| s.id == song_id).is_some()
     }
 
+    pub fn contains_section(&self, section_id: ID) -> bool {
+        self.sections.iter().find(|section| section.id == section_id).is_some()
+    }
+
+    pub fn contains_channel(&self, channel_id: ID) -> bool {
+        self.channels.iter().find(|channel| channel.id == channel_id).is_some()
+    }
+
     pub fn remove_sections_for_song(mut self, song: &Song) -> Self {
         self.sections = self
             .sections
@@ -126,6 +134,36 @@ impl Project {
                 channel: None,
             }
         }
+
+        self
+    }
+
+    pub fn remove_section(mut self, section_id: &ID) -> Result<Self, String> {
+        self.sections = self
+            .sections
+            .iter()
+            .filter(|section| &section.id != section_id)
+            .map(|section| section.clone())
+            .collect();
+
+        self.songs = self
+            .songs
+            .iter()
+            .map(|song| song.clone().remove_section_id(section_id))
+            .collect();
+
+        Ok(self)
+    }
+
+    pub fn remove_channel(mut self, channel_id: &ID) -> Self {
+        self.channels = self
+            .channels
+            .iter()
+            .filter(|channel| &channel.id != channel_id)
+            .map(|channel| channel.clone())
+            .collect();
+
+        // TODO: Remove channels in sections
 
         self
     }
