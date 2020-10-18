@@ -27,6 +27,21 @@ pub struct Tempo {
 }
 
 impl Song {
+    pub fn new() -> Self {
+        Self {
+            id: ID::new_v4(),
+            name: "Song".to_string(),
+            tempo: Tempo { bpm: 120.0 },
+            metronome: Metronome::Default,
+            section_ids: vec![],
+        }
+    }
+
+    pub fn with_section_ids(mut self, section_ids: Vec<ID>) -> Self {
+        self.section_ids = section_ids;
+        self
+    }
+
     pub fn remove_section_id(mut self, section_id: &ID) -> Self {
         self.section_ids = self
             .section_ids

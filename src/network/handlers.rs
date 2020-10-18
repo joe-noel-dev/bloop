@@ -1,7 +1,7 @@
 use crate::api::request;
 use crate::database::database;
 use crate::generators;
-use crate::model::{channel, project, selections};
+use crate::model::selections;
 
 type HandlerError = String;
 
@@ -23,12 +23,11 @@ pub fn handle_add(
 }
 
 fn handle_add_channel(mut database: database::Database) -> Result<database::Database, HandlerError> {
-    if database.project.channels.len() >= project::MAX_CHANNELS {
-        return Err(unhandled_error());
-    }
+    database.project = match database.project.add_channel() {
+        Ok(project) => project,
+        Err(error) => return Err(error),
+    };
 
-    let channel: channel::Channel = generators::channels::generate_channel();
-    database.project.channels.push(channel.clone());
     Ok(database)
 }
 
@@ -50,11 +49,10 @@ fn handle_add_section(
 }
 
 fn handle_add_song(mut database: database::Database) -> Result<database::Database, HandlerError> {
-    let song = generators::songs::generate_song();
-    database.project.songs.push(song.clone());
+    database.project = database.project.add_song();
 
     database.project.selections = selections::Selections {
-        song: Some(song.id),
+        song: Some(database.project.songs.last().unwrap().id),
         section: None,
         channel: None,
     };
@@ -63,7 +61,7 @@ fn handle_add_song(mut database: database::Database) -> Result<database::Databas
 }
 
 fn handle_add_project(mut database: database::Database) -> Result<database::Database, HandlerError> {
-    let project = generators::projects::generate_project(0, 0, 0);
+    let project = generators::projects::generate_project(1, 1, 1);
     database.project = project.clone();
     Ok(database)
 }
@@ -84,7 +82,7 @@ pub fn handle_select_song(
 ) -> Result<database::Database, HandlerError> {
     let song_id = select_request.id;
 
-    if !database.project.contains_song(song_id) {
+    if !database.project.contains_song(&song_id) {
         return Err(format!("Song ID not found to select - {}", song_id));
     }
 
@@ -115,10 +113,6 @@ pub fn handle_remove_song(
 ) -> Result<database::Database, HandlerError> {
     let song_id = remove_request.id;
 
-    if !database.project.contains_song(song_id) {
-        return Err(format!("Song ID not found to remove - {}", song_id));
-    }
-
     database.project = match database.project.remove_song(&song_id) {
         Ok(project) => project,
         Err(error) => return Err(error),
@@ -131,13 +125,7 @@ pub fn handle_remove_section(
     mut database: database::Database,
     remove_request: request::RemoveRequest,
 ) -> Result<database::Database, HandlerError> {
-    let section_id = remove_request.id;
-
-    if !database.project.contains_section(section_id) {
-        return Err(format!("Section ID not found to remove - {}", section_id));
-    }
-
-    database.project = match database.project.remove_section(&section_id) {
+    database.project = match database.project.remove_section(&remove_request.id) {
         Ok(project) => project,
         Err(error) => return Err(error),
     };
@@ -149,13 +137,10 @@ pub fn handle_remove_channel(
     mut database: database::Database,
     remove_request: request::RemoveRequest,
 ) -> Result<database::Database, HandlerError> {
-    let channel_id = remove_request.id;
-
-    if !database.project.contains_channel(channel_id) {
-        return Err(format!("Channel ID not found to remove - {}", channel_id));
-    }
-
-    database.project = database.project.remove_channel(&channel_id);
+    database.project = match database.project.remove_channel(&remove_request.id) {
+        Ok(project) => project,
+        Err(error) => return Err(error),
+    };
 
     Ok(database)
 }

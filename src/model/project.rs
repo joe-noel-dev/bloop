@@ -80,16 +80,27 @@ impl Project {
         Ok(self)
     }
 
-    pub fn contains_song(&self, song_id: ID) -> bool {
-        self.songs.iter().find(|s| s.id == song_id).is_some()
+    pub fn add_channel(mut self) -> Result<Self, String> {
+        if self.channels.len() >= MAX_CHANNELS {
+            return Err("Max channels reached".to_string());
+        }
+
+        let channel = Channel::new();
+        self.channels.push(channel);
+
+        Ok(self)
     }
 
-    pub fn contains_section(&self, section_id: ID) -> bool {
-        self.sections.iter().find(|section| section.id == section_id).is_some()
+    pub fn contains_song(&self, song_id: &ID) -> bool {
+        self.songs.iter().find(|s| s.id == *song_id).is_some()
     }
 
-    pub fn contains_channel(&self, channel_id: ID) -> bool {
-        self.channels.iter().find(|channel| channel.id == channel_id).is_some()
+    pub fn contains_section(&self, section_id: &ID) -> bool {
+        self.sections.iter().find(|section| section.id == *section_id).is_some()
+    }
+
+    pub fn contains_channel(&self, channel_id: &ID) -> bool {
+        self.channels.iter().find(|channel| channel.id == *channel_id).is_some()
     }
 
     pub fn remove_sections_for_song(mut self, song: &Song) -> Self {
@@ -138,37 +149,68 @@ impl Project {
         self
     }
 
-    pub fn remove_section(mut self, section_id: &ID) -> Result<Self, String> {
-        self.sections = self
-            .sections
-            .iter()
-            .filter(|section| &section.id != section_id)
-            .map(|section| section.clone())
-            .collect();
+    pub fn song_with_section(&self, section_id: &ID) -> Option<Song> {
+        match self.songs.iter().find(|song| song.section_ids.contains(&section_id)) {
+            Some(song) => Some(song.clone()),
+            None => None,
+        }
+    }
 
-        self.songs = self
-            .songs
-            .iter()
-            .map(|song| song.clone().remove_section_id(section_id))
-            .collect();
+    pub fn remove_section(mut self, section_id: &ID) -> Result<Self, String> {
+        if !self.contains_section(section_id) {
+            return Err(format!("Section ID not found to remove - {}", section_id));
+        }
+
+        let mut song = match self.song_with_section(&section_id) {
+            Some(song) => song,
+            None => return Err(format!("Couldn't find containing song for section - {}", section_id)),
+        };
+
+        if song.section_ids.len() < 2 {
+            return Err("Can't remove last section".to_string());
+        }
+
+        song = song.remove_section_id(section_id);
+        self = self.replace_song(song);
+
+        self.sections.retain(|section| &section.id != section_id);
 
         Ok(self)
     }
 
-    pub fn remove_channel(mut self, channel_id: &ID) -> Self {
-        self.channels = self
-            .channels
-            .iter()
-            .filter(|channel| &channel.id != channel_id)
-            .map(|channel| channel.clone())
-            .collect();
+    pub fn remove_channel(mut self, channel_id: &ID) -> Result<Self, String> {
+        if self.channels.len() < 2 {
+            return Err(format!("Can't remove last channel"));
+        }
+
+        if !self.contains_channel(channel_id) {
+            return Err(format!("Channel ID not found to remove - {}", channel_id));
+        }
+
+        self.channels.retain(|channel| &channel.id != channel_id);
 
         // TODO: Remove channels in sections
 
+        Ok(self)
+    }
+
+    pub fn add_song(mut self) -> Self {
+        let section = Section::new();
+        let song = Song::new().with_section_ids(vec![section.id]);
+        self.songs.push(song);
+        self.sections.push(section);
         self
     }
 
     pub fn remove_song(mut self, song_id: &ID) -> Result<Self, String> {
+        if self.songs.len() < 2 {
+            return Err("Can't remove last song".to_string());
+        }
+
+        if !self.contains_song(&song_id) {
+            return Err(format!("Song ID not found to remove - {}", song_id));
+        }
+
         let selected_song_index = self.selected_song_index();
 
         let song = match self.song_with_id(song_id) {
@@ -178,12 +220,7 @@ impl Project {
 
         self = self.remove_sections_for_song(&song);
 
-        self.songs = self
-            .songs
-            .iter_mut()
-            .filter(|song| &song.id != song_id)
-            .map(|song| song.clone())
-            .collect();
+        self.songs.retain(|song| &song.id != song_id);
 
         if let Some(selected_song_index) = selected_song_index {
             self = self.select_song_index(selected_song_index);
