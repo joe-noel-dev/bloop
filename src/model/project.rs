@@ -29,7 +29,7 @@ pub struct ProjectInfo {
 }
 
 impl Project {
-    pub fn _new() -> Self {
+    pub fn empty() -> Self {
         Self {
             id: ID::new_v4(),
             info: ProjectInfo::new(),
@@ -39,6 +39,28 @@ impl Project {
             samples: vec![],
             selections: Selections::new(),
         }
+    }
+
+    pub fn with_songs(mut self, num_songs: usize) -> Self {
+        self.songs.clear();
+        for _ in 0..num_songs {
+            self = self.add_song();
+        }
+
+        self = self.select_song_index(0);
+        self
+    }
+
+    pub fn with_channels(mut self, num_channels: usize) -> Self {
+        self.channels.clear();
+        for _ in 0..std::cmp::min(num_channels, MAX_CHANNELS) {
+            self = self.add_channel().unwrap()
+        }
+        self
+    }
+
+    pub fn new() -> Self {
+        Self::empty().with_songs(1).with_channels(1)
     }
 
     pub fn _get_channel_ids(&self) -> Vec<ID> {
@@ -60,7 +82,6 @@ impl Project {
         };
 
         *old_song = song;
-
         self
     }
 
@@ -104,12 +125,7 @@ impl Project {
     }
 
     pub fn remove_sections_for_song(mut self, song: &Song) -> Self {
-        self.sections = self
-            .sections
-            .iter_mut()
-            .filter(|section| !song.section_ids.contains(&section.id))
-            .map(|section| section.clone())
-            .collect();
+        self.sections.retain(|section| !song.section_ids.contains(&section.id));
         self
     }
 
@@ -233,7 +249,7 @@ impl Project {
 impl ProjectInfo {
     pub fn new() -> Self {
         Self {
-            name: String::new(),
+            name: "Project".to_string(),
             version: "1".to_string(),
         }
     }

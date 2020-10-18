@@ -1,7 +1,6 @@
 use crate::api::request;
 use crate::database::database;
-use crate::generators;
-use crate::model::selections;
+use crate::model::{project, selections};
 
 type HandlerError = String;
 
@@ -61,8 +60,7 @@ fn handle_add_song(mut database: database::Database) -> Result<database::Databas
 }
 
 fn handle_add_project(mut database: database::Database) -> Result<database::Database, HandlerError> {
-    let project = generators::projects::generate_project(1, 1, 1);
-    database.project = project.clone();
+    database.project = project::Project::new();
     Ok(database)
 }
 

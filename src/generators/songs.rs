@@ -17,5 +17,5 @@ pub fn generate_song() -> song::Song {
 }
 
 pub fn generate_songs(num_songs: u32) -> Vec<song::Song> {
-    return (0..num_songs).map(|_| generate_song()).collect();
+    (0..num_songs).map(|_| generate_song()).collect()
 }

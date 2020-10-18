@@ -12,6 +12,14 @@ fn random_colour() -> String {
     return format!("{}", DEFAULT_COLOURS.choose(&mut rng).unwrap());
 }
 
+const CHANNEL_NANES: &'static [&'static str] = &[
+    "Bass", "Guitar", "Vox", "Drums", "Click", "Keys", "Synth", "Pad", "Shaker", "Perc",
+];
+
+fn random_channel_name() -> String {
+    return format!("{}", CHANNEL_NANES.choose(&mut rand::thread_rng()).unwrap());
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Channel {
@@ -31,5 +39,14 @@ impl Channel {
             solo: false,
             colour: random_colour(),
         }
+    }
+    pub fn with_random_name(mut self) -> Self {
+        self.name = random_channel_name();
+        self
+    }
+
+    pub fn _with_name(mut self, name: &str) -> Self {
+        self.name = name.to_string();
+        self
     }
 }
