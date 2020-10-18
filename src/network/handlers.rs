@@ -48,7 +48,7 @@ fn handle_add_section(
 }
 
 fn handle_add_song(mut database: database::Database) -> Result<database::Database, HandlerError> {
-    database.project = database.project.add_song();
+    database.project = database.project.add_song(1);
 
     database.project.selections = selections::Selections {
         song: Some(database.project.songs.last().unwrap().id),

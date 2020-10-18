@@ -41,10 +41,12 @@ impl Project {
         }
     }
 
-    pub fn with_songs(mut self, num_songs: usize) -> Self {
+    pub fn with_songs(mut self, num_songs: usize, num_sections: usize) -> Self {
+        assert!(num_songs >= 1);
         self.songs.clear();
+        self.sections.clear();
         for _ in 0..num_songs {
-            self = self.add_song();
+            self = self.add_song(num_sections);
         }
 
         self = self.select_song_index(0);
@@ -52,15 +54,16 @@ impl Project {
     }
 
     pub fn with_channels(mut self, num_channels: usize) -> Self {
+        assert!(1 <= num_channels && num_channels <= MAX_CHANNELS);
         self.channels.clear();
-        for _ in 0..std::cmp::min(num_channels, MAX_CHANNELS) {
+        for _ in 0..num_channels {
             self = self.add_channel().unwrap()
         }
         self
     }
 
     pub fn new() -> Self {
-        Self::empty().with_songs(1).with_channels(1)
+        Self::empty().with_songs(1, 1).with_channels(1)
     }
 
     pub fn _get_channel_ids(&self) -> Vec<ID> {
@@ -205,16 +208,19 @@ impl Project {
 
         self.channels.retain(|channel| &channel.id != channel_id);
 
-        // TODO: Remove channels in sections
+        for section in &mut self.sections {
+            section.samples.retain(|pair| &pair.channel_id != channel_id);
+        }
 
         Ok(self)
     }
 
-    pub fn add_song(mut self) -> Self {
-        let section = Section::new();
-        let song = Song::new().with_section_ids(vec![section.id]);
+    pub fn add_song(mut self, num_sections: usize) -> Self {
+        assert!(num_sections >= 1);
+        let mut sections: Vec<Section> = (0..num_sections).map(|_| Section::new()).collect();
+        let song = Song::new().with_section_ids(sections.iter().map(|section| section.id).collect());
         self.songs.push(song);
-        self.sections.push(section);
+        self.sections.append(&mut sections);
         self
     }
 
@@ -252,5 +258,36 @@ impl ProjectInfo {
             name: "Project".to_string(),
             version: "1".to_string(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn create_with_songs() {
+        let num_songs = 10;
+        let num_sections = 10;
+        let project = Project::new().with_songs(num_songs, num_sections);
+        assert_eq!(project.songs.len(), num_songs);
+        assert_eq!(project.sections.len(), num_songs * num_sections);
+    }
+
+    #[test]
+    fn get_song_by_id() {
+        let project = Project::new().with_songs(5, 5);
+        let song = &project.songs[2];
+        let retrieved_song = match project.song_with_id(&song.id) {
+            Some(song) => song,
+            None => return assert!(false),
+        };
+        assert_eq!(retrieved_song, song);
+    }
+
+    #[test]
+    fn get_missing_song_by_id() {
+        let project = Project::new().with_songs(5, 5);
+        let retrieved_song = project.song_with_id(&ID::new_v4());
+        assert!(retrieved_song.is_none());
     }
 }
