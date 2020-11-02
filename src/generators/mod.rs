@@ -1,6 +1,3 @@
-pub mod channels;
+pub mod colours;
 pub mod names;
 pub mod projects;
-pub mod samples;
-pub mod sections;
-pub mod songs;

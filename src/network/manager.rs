@@ -26,6 +26,7 @@ pub async fn run() {
             request::Request::Add(add_request) => handlers::handle_add(database.clone(), add_request),
             request::Request::Select(select_request) => handlers::handle_select(database.clone(), select_request),
             request::Request::Remove(remove_request) => handlers::handle_remove(database.clone(), remove_request),
+            request::Request::Update(update_request) => handlers::handle_update(database.clone(), update_request),
         };
 
         let response = match new_db {

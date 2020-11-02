@@ -1,4 +1,4 @@
-use crate::model::id;
+use crate::model::{id, song};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -45,10 +45,18 @@ pub struct RemoveRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+#[serde(tag = "entity", content = "value")]
+pub enum UpdateRequest {
+  Song(song::Song),
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 #[serde(tag = "method", content = "payload")]
 pub enum Request {
   Get(GetRequest),
   Add(AddRequest),
   Select(SelectRequest),
   Remove(RemoveRequest),
+  Update(UpdateRequest),
 }

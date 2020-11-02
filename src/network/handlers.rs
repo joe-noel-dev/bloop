@@ -1,6 +1,6 @@
 use crate::api::request;
 use crate::database::database;
-use crate::model::{project, selections};
+use crate::model::{project, selections, song};
 
 type HandlerError = String;
 
@@ -140,5 +140,22 @@ pub fn handle_remove_channel(
         Err(error) => return Err(error),
     };
 
+    Ok(database)
+}
+
+pub fn handle_update(
+    database: database::Database,
+    update_request: request::UpdateRequest,
+) -> Result<database::Database, HandlerError> {
+    match update_request {
+        request::UpdateRequest::Song(song) => handle_update_song(database, song),
+    }
+}
+
+pub fn handle_update_song(
+    mut database: database::Database,
+    song: song::Song,
+) -> Result<database::Database, HandlerError> {
+    database.project = database.project.replace_song(song)?;
     Ok(database)
 }

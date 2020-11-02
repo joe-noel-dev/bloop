@@ -52,4 +52,22 @@ impl Song {
 
         self
     }
+
+    pub fn is_valid(&self) -> bool {
+        !self.id.is_nil() && self.tempo.is_valid()
+    }
+}
+
+impl Tempo {
+    pub fn min() -> f64 {
+        30.0
+    }
+
+    pub fn max() -> f64 {
+        300.0
+    }
+
+    pub fn is_valid(&self) -> bool {
+        Self::min() <= self.bpm && self.bpm <= Self::max()
+    }
 }

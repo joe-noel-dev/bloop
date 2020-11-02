@@ -78,14 +78,18 @@ impl Project {
         self.sections.iter().find(|s| s.id == *id)
     }
 
-    pub fn replace_song(mut self, song: Song) -> Self {
+    pub fn replace_song(mut self, song: Song) -> Result<Self, String> {
+        if !song.is_valid() {
+            return Err("Invalid song".to_string());
+        }
+
         let old_song = match self.songs.iter_mut().find(|s| s.id == song.id) {
             Some(song) => song,
-            None => return self,
+            None => return Err("Song not found".to_string()),
         };
 
         *old_song = song;
-        self
+        Ok(self)
     }
 
     pub fn add_section_to_song(mut self, song_id: &ID) -> Result<Self, String> {
@@ -100,7 +104,7 @@ impl Project {
 
         self.sections.push(section);
 
-        self = self.replace_song(song);
+        self = self.replace_song(song)?;
         Ok(self)
     }
 
@@ -190,7 +194,7 @@ impl Project {
         }
 
         song = song.remove_section_id(section_id);
-        self = self.replace_song(song);
+        self = self.replace_song(song)?;
 
         self.sections.retain(|section| &section.id != section_id);
 
