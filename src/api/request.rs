@@ -60,3 +60,7 @@ pub enum Request {
   Remove(RemoveRequest),
   Update(UpdateRequest),
 }
+
+pub trait RequestHandler {
+  fn handle_request(&self, request: Request);
+}

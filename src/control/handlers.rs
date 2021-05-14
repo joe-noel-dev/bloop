@@ -53,7 +53,6 @@ fn handle_add_song(mut database: database::Database) -> Result<database::Databas
     database.project.selections = selections::Selections {
         song: Some(database.project.songs.last().unwrap().id),
         section: None,
-        channel: None,
     };
 
     Ok(database)
@@ -87,7 +86,6 @@ pub fn handle_select_song(
     database.project.selections = selections::Selections {
         song: Some(song_id),
         section: None,
-        channel: None,
     };
 
     Ok(database)

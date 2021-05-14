@@ -7,7 +7,6 @@ use std::cmp::PartialEq;
 pub struct Selections {
     pub song: Option<ID>,
     pub section: Option<ID>,
-    pub channel: Option<ID>,
 }
 
 impl Selections {
@@ -15,7 +14,6 @@ impl Selections {
         Self {
             song: None,
             section: None,
-            channel: None,
         }
     }
 }

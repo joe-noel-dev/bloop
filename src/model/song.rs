@@ -10,6 +10,7 @@ pub struct Song {
     pub tempo: Tempo,
     pub metronome: Metronome,
     pub section_ids: Vec<ID>,
+    pub sample_id: Option<ID>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -34,6 +35,7 @@ impl Song {
             tempo: Tempo { bpm: 120.0 },
             metronome: Metronome::Default,
             section_ids: vec![],
+            sample_id: None,
         }
     }
 

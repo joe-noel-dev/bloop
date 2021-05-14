@@ -12,7 +12,6 @@ pub const MAX_CHANNELS: usize = 8;
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Project {
-    pub id: ID,
     pub info: ProjectInfo,
     pub songs: Vec<Song>,
     pub sections: Vec<Section>,
@@ -24,14 +23,15 @@ pub struct Project {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectInfo {
+    pub id: ID,
     pub name: String,
     pub version: String,
+    pub last_saved: u64,
 }
 
 impl Project {
     pub fn empty() -> Self {
         Self {
-            id: ID::new_v4(),
             info: ProjectInfo::new(),
             songs: vec![],
             sections: vec![],
@@ -165,7 +165,6 @@ impl Project {
             self.selections = Selections {
                 song: Some(new_selected_song.id),
                 section: None,
-                channel: None,
             }
         }
 
@@ -259,8 +258,10 @@ impl Project {
 impl ProjectInfo {
     pub fn new() -> Self {
         Self {
+            id: ID::new_v4(),
             name: "Project".to_string(),
             version: "1".to_string(),
+            last_saved: 0,
         }
     }
 }
