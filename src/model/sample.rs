@@ -1,4 +1,4 @@
-use super::id::ID;
+use super::{id::ID, tempo::Tempo};
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 
@@ -6,6 +6,26 @@ use std::cmp::PartialEq;
 #[serde(rename_all = "camelCase")]
 pub struct Sample {
     pub id: ID,
-    pub path: String,
-    pub tempo: f64,
+    pub name: String,
+    pub tempo: Tempo,
+    pub sample_rate: f32,
+    pub sample_count: i64,
+    pub channel_count: i32,
+}
+
+impl Sample {
+    pub fn new() -> Self {
+        Sample {
+            id: ID::new_v4(),
+            name: "".to_string(),
+            tempo: Tempo { bpm: 120.0 },
+            sample_rate: 0.0,
+            sample_count: 0,
+            channel_count: 0,
+        }
+    }
+
+    pub fn is_valid(&self) -> bool {
+        true
+    }
 }
