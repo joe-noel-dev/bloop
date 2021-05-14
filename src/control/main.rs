@@ -1,41 +1,41 @@
 use super::handlers;
-use crate::api::request;
-use crate::api::response;
-use crate::database::database;
+use crate::api;
 use crate::generators;
+use crate::model;
 
 use tokio::sync::{broadcast, mpsc};
 
 pub async fn run(
-    request_rx: &mut mpsc::Receiver<request::Request>,
-    response_tx: broadcast::Sender<response::Response>,
+    request_rx: &mut mpsc::Receiver<api::request::Request>,
+    response_tx: broadcast::Sender<api::response::Response>,
 ) {
-    let mut database = database::Database {
-        project: generators::projects::generate_project(4, 3, 3),
-    };
+    let mut project = generators::projects::generate_project(4, 3, 3);
 
     while let Some(request) = request_rx.recv().await {
-        let response = match handle_request(request, database.clone()) {
-            Ok(db) => {
-                let response = response::Response::new().with_project(&db.project);
-                database = db;
+        let response = match handle_request(request, project.clone()) {
+            Ok(new_project) => {
+                let response = api::response::Response::new().with_project(&new_project);
+                project = new_project;
                 response
             }
-            Err(message) => response::Response::new().with_error(&message),
+            Err(message) => api::response::Response::new().with_error(&message),
         };
 
         response_tx.send(response).unwrap();
     }
 }
 
-fn handle_request(request: request::Request, database: database::Database) -> Result<database::Database, String> {
+fn handle_request(
+    request: api::request::Request,
+    project: model::project::Project,
+) -> Result<model::project::Project, String> {
     println!("Received message: {:?}", request);
 
     return match request {
-        request::Request::Get(_) => Ok(database.clone()),
-        request::Request::Add(add_request) => handlers::handle_add(database, add_request),
-        request::Request::Select(select_request) => handlers::handle_select(database, select_request),
-        request::Request::Remove(remove_request) => handlers::handle_remove(database, remove_request),
-        request::Request::Update(update_request) => handlers::handle_update(database, update_request),
+        api::request::Request::Get(_) => Ok(project),
+        api::request::Request::Add(add_request) => handlers::handle_add(project, add_request),
+        api::request::Request::Select(select_request) => handlers::handle_select(project, select_request),
+        api::request::Request::Remove(remove_request) => handlers::handle_remove(project, remove_request),
+        api::request::Request::Update(update_request) => handlers::handle_update(project, update_request),
     };
 }
