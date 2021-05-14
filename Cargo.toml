@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 uuid = { version = "*", features = ["serde", "v4"] }
 rand = "*"
-serde = "*"
+serde = { version= "*", features = ["derive"] }
 serde_json = "*"
 serde_derive = "*"
 tungstenite = "*"

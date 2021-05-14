@@ -10,7 +10,7 @@ use tungstenite::protocol::Message;
 
 pub async fn run(
     socket: TcpStream,
-    mut request_tx: mpsc::Sender<request::Request>,
+    request_tx: mpsc::Sender<request::Request>,
     mut response_rx: broadcast::Receiver<response::Response>,
 ) {
     let addr = match socket.peer_addr() {
