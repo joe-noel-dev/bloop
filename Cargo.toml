@@ -7,14 +7,15 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-uuid = { version = "*", features = ["serde", "v4"] }
+"futures" = "*"
+bson = "1.2.0"
+futures-channel = "*"
+futures-util = "*"
 rand = "*"
 serde = { version= "*", features = ["derive"] }
-serde_json = "*"
 serde_derive = "*"
-tungstenite = "*"
+serde_json = "*"
 tokio = { version = "*", features = ["full"] }
 tokio-tungstenite = "*"
-futures-util = "*"
-futures-channel = "*"
-"futures" = "*"
+tungstenite = "*"
+uuid = { version = "*", features = ["serde", "v4"] }

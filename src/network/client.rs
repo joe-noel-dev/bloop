@@ -1,12 +1,15 @@
 use super::error;
 use crate::api::{request, response};
-use futures::Sink;
-use futures_util::{SinkExt, StreamExt};
-use std::format;
+use futures::{Sink, SinkExt};
+use futures_util::StreamExt;
 use std::marker::Unpin;
 use tokio::net::TcpStream;
 use tokio::sync::{broadcast, mpsc};
 use tungstenite::protocol::Message;
+
+extern crate bson;
+extern crate serde;
+extern crate serde_derive;
 
 pub async fn run(
     socket: TcpStream,
@@ -49,7 +52,7 @@ pub async fn run(
                 };
 
                 let message = match message {
-                    Message::Text(message) => message,
+                    Message::Binary(message) => message,
                     _ => continue
                 };
 
@@ -76,24 +79,36 @@ pub async fn run(
 }
 
 async fn send_response(response: response::Response, mut outgoing: impl Sink<Message> + Unpin) {
-    let message = match serde_json::to_string(&response) {
-        Ok(message) => message,
-        Err(_) => {
-            println!("Failed to convert response to string");
+    let document = match bson::to_document(&response) {
+        Ok(doc) => doc,
+        Err(error) => {
+            println!("Error serialising response: {}", error);
             return;
         }
     };
-    let message = Message::from(message);
-    let _ = outgoing.send(message).await;
+
+    let mut data: Vec<u8> = vec![];
+    document.to_writer(&mut data).unwrap();
+
+    let _ = outgoing.send(Message::binary(data)).await;
 }
 
-fn handle_message(message: &str) -> Result<request::Request, error::NetworkError> {
-    let request: request::Request = match serde_json::from_str(message) {
-        Ok(request) => request,
+fn handle_message(message: &Vec<u8>) -> Result<request::Request, error::NetworkError> {
+    let document = match bson::Document::from_reader(&mut message.as_slice()) {
+        Ok(doc) => doc,
         Err(error) => {
             let message = format!("Failed to parse JSON: {}", error);
             return Err(error::NetworkError::new(&message));
         }
     };
+
+    let request: request::Request = match bson::from_document(document) {
+        Ok(request) => request,
+        Err(error) => {
+            let message = format!("Error parsing request: {}", error);
+            return Err(error::NetworkError::new(&message));
+        }
+    };
+
     Ok(request)
 }

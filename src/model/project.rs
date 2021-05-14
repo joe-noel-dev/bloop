@@ -26,7 +26,7 @@ pub struct ProjectInfo {
     pub id: ID,
     pub name: String,
     pub version: String,
-    pub last_saved: u64,
+    pub last_saved: i64,
 }
 
 impl Project {

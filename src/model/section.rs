@@ -17,7 +17,7 @@ pub struct Section {
 #[serde(rename_all = "camelCase")]
 pub struct LoopProperties {
     pub mode: LoopMode,
-    pub count: u32,
+    pub count: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
