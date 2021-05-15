@@ -1,2 +1,2 @@
-mod handlers;
 pub mod main;
+mod project_handlers;

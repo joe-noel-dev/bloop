@@ -1,4 +1,4 @@
-use crate::model::{id, song};
+use crate::model::{id, sample, section, song};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -51,6 +51,8 @@ pub struct RemoveRequest {
 #[serde(tag = "entity", content = "value")]
 pub enum UpdateRequest {
     Song(song::Song),
+    Section(section::Section),
+    Sample(sample::Sample),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
