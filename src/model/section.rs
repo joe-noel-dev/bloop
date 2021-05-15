@@ -10,7 +10,7 @@ pub struct Section {
     pub start: f64,
     pub beat_length: f64,
     #[serde(rename = "loop")]
-    pub loop_properties: LoopProperties,
+    pub looping: bool,
     pub samples: Vec<ChannelSamplePair>,
 }
 
@@ -42,10 +42,7 @@ impl Section {
             name: "Section".to_string(),
             start: 0.0,
             beat_length: 0.0,
-            loop_properties: LoopProperties {
-                mode: LoopMode::Fixed,
-                count: 1,
-            },
+            looping: false,
             samples: vec![],
         }
     }

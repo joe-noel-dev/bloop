@@ -33,7 +33,7 @@ fn handle_add_section(
     project: project::Project,
     request: request::AddRequest,
 ) -> Result<project::Project, HandlerError> {
-    let song_id = match request.parent_id {
+    let song_id = match request.id {
         Some(id) => id,
         None => return Err("Missing parent ID".to_string()),
     };

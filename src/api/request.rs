@@ -29,7 +29,7 @@ pub struct AddRequest {
     pub entity: Entity,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub parent_id: Option<id::ID>,
+    pub id: Option<id::ID>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
