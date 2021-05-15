@@ -15,6 +15,7 @@ rand = "*"
 serde = { version= "*", features = ["derive"] }
 serde_derive = "*"
 serde_json = "*"
+tempfile = "*"
 tokio = { version = "*", features = ["full"] }
 tokio-tungstenite = "*"
 tungstenite = "*"
