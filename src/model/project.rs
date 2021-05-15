@@ -5,11 +5,7 @@ use super::section::Section;
 use super::selections::Selections;
 use super::song::Song;
 use serde::{Deserialize, Serialize};
-use std::{
-    cmp::PartialEq,
-    collections::{self, HashSet},
-    fmt::format,
-};
+use std::{cmp::PartialEq, collections::HashSet};
 
 use std::iter::FromIterator;
 
@@ -70,10 +66,6 @@ impl Project {
 
     pub fn new() -> Self {
         Self::empty().with_songs(1, 1).with_channels(1)
-    }
-
-    pub fn _get_channel_ids(&self) -> Vec<ID> {
-        return self.channels.iter().map(|c| c.id.clone()).collect::<Vec<uuid::Uuid>>();
     }
 
     pub fn song_with_id(&self, id: &ID) -> Option<&Song> {
@@ -545,6 +537,7 @@ impl ProjectInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn create_with_songs() {
         let num_songs = 10;
@@ -570,5 +563,73 @@ mod tests {
         let project = Project::new().with_songs(5, 5);
         let retrieved_song = project.song_with_id(&ID::new_v4());
         assert!(retrieved_song.is_none());
+    }
+
+    #[test]
+    fn replace_song() {
+        let mut project = Project::new().with_songs(5, 5);
+        let mut song = project.songs[3].clone();
+        song.name = "New song name".to_string();
+        project = project.replace_song(song).expect("Couldn't replace song");
+        assert_eq!(project.songs[3].name, "New song name");
+    }
+
+    #[test]
+    fn select_next_song() {
+        let mut project = Project::new().with_songs(5, 5);
+        let song_id = project.songs[1].id;
+        project = project.select_next_song();
+        let selected_song_id = project.selections.song.expect("No song selected");
+        assert_eq!(selected_song_id, song_id);
+    }
+
+    #[test]
+    fn select_next_song_from_end() {
+        let mut project = Project::new().with_songs(5, 5);
+        project = project.select_last_song();
+        let song_id = project.songs[4].id;
+        project = project.select_next_song();
+        let selected_song_id = project.selections.song.expect("No song selected");
+        assert_eq!(selected_song_id, song_id);
+    }
+
+    #[test]
+    fn select_previous_song() {
+        let mut project = Project::new().with_songs(5, 5);
+        project = project.select_last_song();
+        let song_id = project.songs[3].id;
+        project = project.select_previous_song();
+        let selected_song_id = project.selections.song.expect("No song selected");
+        assert_eq!(selected_song_id, song_id);
+    }
+
+    #[test]
+    fn select_previous_song_from_start() {
+        let mut project = Project::new().with_songs(5, 5);
+        let song_id = project.songs[0].id;
+        project = project.select_previous_song();
+        let selected_song_id = project.selections.song.expect("No song selected");
+        assert_eq!(selected_song_id, song_id);
+    }
+
+    #[test]
+    fn select_next_section() {
+        let mut project = Project::new().with_songs(5, 5);
+        let section_id = project.songs[0].section_ids[1];
+        project = project.select_next_section().expect("Couldn't select next section");
+        let selected_section_id = project.selections.section.expect("No section selected");
+        assert_eq!(selected_section_id, section_id);
+    }
+
+    #[test]
+    fn select_previous_section() {
+        let mut project = Project::new().with_songs(5, 5);
+        let initial_section_id = project.songs[0].section_ids[4];
+        project = project
+            .select_section(&initial_section_id)
+            .expect("Couldn't select initial section");
+        project = project.select_previous_section().expect("Couldn't select next section");
+        let selected_section_id = project.selections.section.expect("No section selected");
+        assert_eq!(selected_section_id, project.songs[0].section_ids[3]);
     }
 }

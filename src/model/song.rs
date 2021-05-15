@@ -1,4 +1,5 @@
 use super::id::ID;
+use super::tempo::Tempo;
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 
@@ -20,11 +21,6 @@ pub enum Metronome {
     CountIn,
     On,
     Off,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct Tempo {
-    pub bpm: f64,
 }
 
 impl Song {
