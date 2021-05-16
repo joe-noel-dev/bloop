@@ -116,8 +116,7 @@ impl Project {
 
         self.sections.push(section);
 
-        self = self.replace_song(&song)?;
-        Ok(self)
+        self.replace_song(&song)
     }
 
     pub fn add_channel(mut self) -> Result<Self, String> {
@@ -148,29 +147,15 @@ impl Project {
     }
 
     pub fn selected_song_index(&self) -> Option<usize> {
-        let song_id = match self.selections.song {
-            Some(song_id) => song_id,
-            None => return None,
-        };
-
-        match self.songs.iter().position(|song| song.id == song_id) {
-            Some(index) => Some(index),
-            None => return None,
-        }
+        let song_id = self.selections.song?;
+        self.songs.iter().position(|song| song.id == song_id)
     }
 
     pub fn song_with_index(&self, index: usize) -> Option<&Song> {
-        if index >= self.songs.len() {
-            return None;
-        } else {
-            return Some(&self.songs[index]);
-        }
+        self.songs.get(index)
     }
 
     pub fn select_song_index(self, song_index: usize) -> Self {
-        if self.songs.len() == 0 {
-            return self;
-        }
         let song_index = std::cmp::min(song_index, self.songs.len() - 1);
 
         let selected_song_id = match self.song_with_index(song_index) {
@@ -348,8 +333,7 @@ impl Project {
 
         song.sample_id = Some(sample_id.clone());
 
-        self = self.remove_unused_samples();
-        Ok(self)
+        Ok(self.remove_unused_samples())
     }
 
     pub fn select_last_song(self) -> Self {
@@ -510,16 +494,8 @@ impl Project {
 
         song.sample_id = None;
 
-        self = match self.replace_song(&song) {
-            Ok(project) => project,
-            Err(error) => {
-                return Err(error);
-            }
-        };
-
-        self = self.remove_unused_samples();
-
-        Ok(self)
+        self = self.replace_song(&song)?;
+        Ok(self.remove_unused_samples())
     }
 }
 
