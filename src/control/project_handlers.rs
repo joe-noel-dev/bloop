@@ -11,12 +11,6 @@ use crate::{
 
 use crate::model::project;
 
-type HandlerError = String;
-
-fn unhandled_error() -> HandlerError {
-    "Unsupported method".to_string()
-}
-
 pub fn handle_request(
     request: &Request,
     project_proxy: &mut dyn Proxy<Project>,
@@ -39,17 +33,17 @@ pub fn handle_request(
     };
 }
 
-fn handle_add(project: project::Project, request: &AddRequest) -> Result<Project, HandlerError> {
+fn handle_add(project: project::Project, request: &AddRequest) -> Result<Project, String> {
     match request.entity {
         Entity::Channel => project.add_channel(),
         Entity::Section => handle_add_section(project, request),
         Entity::Song => Ok(project.add_song(1)),
         Entity::Project => Ok(project::Project::new()),
-        _ => Err(unhandled_error()),
+        _ => Ok(project),
     }
 }
 
-fn handle_add_section(project: project::Project, request: &AddRequest) -> Result<Project, HandlerError> {
+fn handle_add_section(project: project::Project, request: &AddRequest) -> Result<Project, String> {
     let song_id = match request.id {
         Some(id) => id,
         None => return Err("Missing parent ID".to_string()),
@@ -58,24 +52,24 @@ fn handle_add_section(project: project::Project, request: &AddRequest) -> Result
     project.add_section_to_song(&song_id)
 }
 
-fn handle_select(project: project::Project, select_request: &SelectRequest) -> Result<Project, HandlerError> {
+fn handle_select(project: project::Project, select_request: &SelectRequest) -> Result<Project, String> {
     match select_request.entity {
         Entity::Song => Ok(project.select_song_with_id(&select_request.id)),
         Entity::Section => project.select_section(&select_request.id),
-        _ => Err(unhandled_error()),
+        _ => Ok(project),
     }
 }
 
-fn handle_remove(project: Project, remove_request: &RemoveRequest) -> Result<Project, HandlerError> {
+fn handle_remove(project: Project, remove_request: &RemoveRequest) -> Result<Project, String> {
     match remove_request.entity {
         Entity::Song => project.remove_song(&remove_request.id),
         Entity::Section => project.remove_section(&remove_request.id),
         Entity::Channel => project.remove_channel(&remove_request.id),
-        _ => Err(unhandled_error()),
+        _ => Ok(project),
     }
 }
 
-fn handle_update(project: Project, update_request: &UpdateRequest) -> Result<Project, HandlerError> {
+fn handle_update(project: Project, update_request: &UpdateRequest) -> Result<Project, String> {
     match update_request {
         UpdateRequest::Song(song) => project.replace_song(song),
         UpdateRequest::Section(section) => project.replace_section(section),
@@ -83,7 +77,7 @@ fn handle_update(project: Project, update_request: &UpdateRequest) -> Result<Pro
     }
 }
 
-fn handle_rename(project: Project, rename_request: &RenameRequest) -> Result<Project, HandlerError> {
+fn handle_rename(project: Project, rename_request: &RenameRequest) -> Result<Project, String> {
     match rename_request.entity {
         Entity::Project => Ok(project.with_name(&rename_request.name)),
         _ => Ok(project),
