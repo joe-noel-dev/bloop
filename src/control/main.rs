@@ -25,7 +25,7 @@ pub async fn run(
     while let Some(request) = request_rx.recv().await {
         println!("Received message: {:?}", request);
 
-        project_store_handlers::handle_request(&request, project_proxy.get(), &project_store, &send_response);
+        project_store_handlers::handle_request(&request, &mut project_proxy, &project_store, &send_response);
         project_handlers::handle_request(&request, &mut project_proxy, &send_response);
     }
 }
