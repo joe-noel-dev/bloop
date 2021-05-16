@@ -43,6 +43,11 @@ impl Project {
         }
     }
 
+    pub fn with_name(mut self, name: &str) -> Self {
+        self.info.name = String::from(name);
+        self
+    }
+
     pub fn with_songs(mut self, num_songs: usize, num_sections: usize) -> Self {
         assert!(num_songs >= 1);
         self.songs.clear();

@@ -63,6 +63,15 @@ pub struct LoadRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct RenameRequest {
+    pub entity: Entity,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<id::ID>,
+    pub name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 #[serde(tag = "method", content = "payload")]
 pub enum Request {
     Get(GetRequest),
@@ -72,4 +81,5 @@ pub enum Request {
     Update(UpdateRequest),
     Save,
     Load(LoadRequest),
+    Rename(RenameRequest),
 }

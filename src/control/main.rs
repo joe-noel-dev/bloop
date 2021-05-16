@@ -1,6 +1,12 @@
 use super::{directories::Directories, project_handlers, project_store::ProjectStore, project_store_handlers};
-use crate::generators::projects;
-use crate::model::project::Project;
+use crate::{
+    api::request::Entity,
+    model::{project::Project, proxy::Proxy},
+};
+use crate::{
+    api::{request::GetRequest, response::ResponseBroadcaster},
+    generators::projects,
+};
 use crate::{
     api::{request::Request, response::Response},
     model::proxy::NotifyingProxy,
@@ -20,9 +26,22 @@ pub async fn run(request_rx: &mut mpsc::Receiver<Request>, response_tx: broadcas
 
     while let Some(request) = request_rx.recv().await {
         println!("Received message: {:?}", request);
-
         project_store_handlers::handle_request(&request, &mut project_proxy, &project_store, &send_response);
         project_handlers::handle_request(&request, &mut project_proxy, &send_response);
+
+        if let Request::Get(get_request) = request {
+            handle_get(&get_request, &project_proxy, &send_response);
+        }
+    }
+}
+
+fn handle_get(
+    get_request: &GetRequest,
+    project_proxy: &dyn Proxy<Project>,
+    response_broadcaster: &dyn ResponseBroadcaster,
+) {
+    if let Entity::All = get_request.entity {
+        response_broadcaster.broadcast(Response::new().with_project(&project_proxy.get()))
     }
 }
 
