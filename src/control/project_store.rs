@@ -1,6 +1,6 @@
 use crate::model::{
     id::ID,
-    project::{self, ProjectInfo},
+    project::{Project, ProjectInfo},
 };
 use std::convert::TryInto;
 use std::path::PathBuf;
@@ -31,7 +31,7 @@ impl ProjectStore {
         }
     }
 
-    pub fn save(&self, mut project: project::Project) -> Result<(), String> {
+    pub fn save(&self, mut project: Project) -> Result<(), String> {
         project.info.last_saved = current_time();
         self.create_project_directory(&project.info.id)?;
         self.create_samples_directory(&project.info.id)?;
@@ -40,7 +40,7 @@ impl ProjectStore {
         Ok(())
     }
 
-    pub fn load(&self, project_id: &ID) -> Result<project::Project, String> {
+    pub fn load(&self, project_id: &ID) -> Result<Project, String> {
         self.read_project_json(project_id)
         // TODO:load samples into cache
     }
@@ -83,6 +83,18 @@ impl ProjectStore {
         Ok(project_infos)
     }
 
+    pub fn remove_project(&self, project_id: &ID) -> Result<(), String> {
+        let directory = self.directory_for_project(project_id);
+        if !directory.is_dir() {
+            return Ok(());
+        }
+
+        match fs::remove_dir_all(directory) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(error.to_string()),
+        }
+    }
+
     fn create_project_directory(&self, project_id: &ID) -> Result<(), String> {
         let project_directory = self.directory_for_project(project_id);
         if !project_directory.exists() {
@@ -119,7 +131,7 @@ impl ProjectStore {
         json_path
     }
 
-    fn write_project_json(&self, project: project::Project) -> Result<(), String> {
+    fn write_project_json(&self, project: Project) -> Result<(), String> {
         let json_path = self.project_json_path(&project.info.id);
 
         let file = match fs::File::create(json_path) {
@@ -135,7 +147,7 @@ impl ProjectStore {
         Ok(())
     }
 
-    fn read_project_json(&self, project_id: &ID) -> Result<project::Project, String> {
+    fn read_project_json(&self, project_id: &ID) -> Result<Project, String> {
         let json_path = self.project_json_path(project_id);
         let file = match fs::File::open(json_path) {
             Ok(file) => file,
