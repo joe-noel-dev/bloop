@@ -1,26 +1,8 @@
-use std::path::PathBuf;
-
-use super::{project_handlers, project_store, project_store_handlers};
+use super::{directories::Directories, project_handlers, project_store::ProjectStore, project_store_handlers};
 use crate::api::{request, response};
 use crate::generators::projects;
 use crate::model::{project, proxy};
 use tokio::sync::{broadcast, mpsc};
-
-pub struct Directories {
-    projects: PathBuf,
-}
-
-impl Directories {
-    pub fn new() -> Self {
-        let mut root = home::home_dir().unwrap();
-        root.push("Bloop");
-
-        let mut projects = root.clone();
-        projects.push("Projects");
-
-        Self { projects }
-    }
-}
 
 pub async fn run(
     request_rx: &mut mpsc::Receiver<request::Request>,
@@ -32,15 +14,15 @@ pub async fn run(
     });
 
     let directories = Directories::new();
-    let project_store = project_store::ProjectStore::new(&directories.projects);
+    let project_store = ProjectStore::new(&directories.projects);
 
     while let Some(request) = request_rx.recv().await {
-        match project_store_handlers::handle_request(&request, project_proxy.get().clone(), &project_store) {
+        match project_store_handlers::handle_request(&request, project_proxy.get(), &project_store) {
             Ok(project) => project_proxy.set(project),
             Err(message) => send_error_response(&message, &response_tx),
         };
 
-        match project_handlers::handle_request(&request, project_proxy.get().clone()) {
+        match project_handlers::handle_request(&request, project_proxy.get()) {
             Ok(project) => project_proxy.set(project),
             Err(message) => send_error_response(&message, &response_tx),
         };
