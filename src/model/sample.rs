@@ -8,7 +8,7 @@ pub struct Sample {
     pub id: ID,
     pub name: String,
     pub tempo: Tempo,
-    pub sample_rate: f32,
+    pub sample_rate: i32,
     pub sample_count: i64,
     pub channel_count: i32,
 }
@@ -19,7 +19,7 @@ impl Sample {
             id: ID::new_v4(),
             name: "".to_string(),
             tempo: Tempo { bpm: 120.0 },
-            sample_rate: 0.0,
+            sample_rate: 0,
             sample_count: 0,
             channel_count: 0,
         }

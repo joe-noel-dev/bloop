@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 pub struct Directories {
     pub projects: PathBuf,
+    pub samples: PathBuf,
 }
 
 impl Directories {
@@ -10,8 +11,11 @@ impl Directories {
         root.push("Bloop");
 
         let mut projects = root.clone();
-        projects.push("Projects");
+        projects.push("projects");
 
-        Self { projects }
+        let mut samples = root.clone();
+        samples.push("samples");
+
+        Self { projects, samples }
     }
 }

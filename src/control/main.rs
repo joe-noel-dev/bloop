@@ -1,7 +1,9 @@
 use super::{directories::Directories, project_handlers, project_store::ProjectStore, project_store_handlers};
 use crate::{
     api::request::Entity,
+    control::sample_handlers,
     model::{project::Project, proxy::Proxy},
+    samples::cache::SamplesCache,
 };
 use crate::{
     api::{request::GetRequest, response::ResponseBroadcaster},
@@ -22,11 +24,13 @@ pub async fn run(request_rx: &mut mpsc::Receiver<Request>, response_tx: broadcas
     let directories = Directories::new();
     let project_store = ProjectStore::new(&directories.projects);
 
+    let mut samples_cache = SamplesCache::new(&directories.samples);
+
     let send_response = |response| send_response(response, &response_tx);
 
     while let Some(request) = request_rx.recv().await {
-        println!("Received message: {:?}", request);
         project_store_handlers::handle_request(&request, &mut project_proxy, &project_store, &send_response);
+        sample_handlers::handle_request(&request, &mut project_proxy, &mut samples_cache, &send_response);
         project_handlers::handle_request(&request, &mut project_proxy, &send_response);
 
         if let Request::Get(get_request) = request {

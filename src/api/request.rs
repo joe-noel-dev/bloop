@@ -1,4 +1,7 @@
-use crate::model::{id, sample, section, song};
+use crate::{
+    model::{id, sample, section, song},
+    types::audio_file_format::AudioFileFormat,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -70,6 +73,22 @@ pub struct RenameRequest {
     pub name: String,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+struct Foo {
+    bytes: Vec<u8>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct UploadSampleRequest {
+    pub song_id: id::ID,
+    pub name: String,
+    pub format: AudioFileFormat,
+
+    #[serde(with = "serde_bytes")]
+    pub file_data: Vec<u8>,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "method", content = "payload")]
@@ -82,4 +101,5 @@ pub enum Request {
     Save,
     Load(LoadRequest),
     Rename(RenameRequest),
+    Upload(UploadSampleRequest),
 }

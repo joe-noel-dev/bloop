@@ -3,6 +3,8 @@ mod control;
 mod generators;
 mod model;
 mod network;
+mod samples;
+mod types;
 
 use std::io::Error;
 

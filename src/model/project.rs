@@ -277,11 +277,6 @@ impl Project {
         Ok(self)
     }
 
-    pub fn _add_sample(mut self) -> Self {
-        self.samples.push(Sample::new());
-        self
-    }
-
     pub fn replace_section(mut self, section: &Section) -> Result<Self, String> {
         if !section.is_valid() {
             return Err("Invalid section".to_string());
@@ -326,19 +321,15 @@ impl Project {
         self
     }
 
-    pub fn add_sample_to_song(mut self, song_id: &ID, sample_id: &ID) -> Result<Self, String> {
-        if self.sample_with_id(sample_id).is_none() {
-            return Err(format!("Couldn't find sample with ID: {}", sample_id));
-        }
-
-        let mut song = match self.song_with_id_mut(song_id) {
+    pub fn add_sample_to_song(mut self, sample: Sample, song_id: &ID) -> Result<Self, String> {
+        let song = match self.song_with_id_mut(song_id) {
             Some(song) => song,
             None => return Err(format!("Couldn't find song with ID: {}", song_id)),
         };
 
-        song.sample_id = Some(sample_id.clone());
-
-        Ok(self.remove_unused_samples())
+        song.sample_id = Some(sample.id);
+        self.samples.push(sample);
+        Ok(self)
     }
 
     pub fn select_last_song(self) -> Self {
