@@ -1,9 +1,9 @@
+use super::channel::Channel;
 use super::id::ID;
 use super::sample::Sample;
 use super::section::Section;
 use super::selections::Selections;
 use super::song::Song;
-use super::{channel::Channel, proxy};
 use serde::{Deserialize, Serialize};
 use std::{cmp::PartialEq, collections::HashSet};
 
@@ -167,7 +167,7 @@ impl Project {
         }
     }
 
-    pub fn select_song_index(mut self, song_index: usize) -> Self {
+    pub fn select_song_index(self, song_index: usize) -> Self {
         if self.songs.len() == 0 {
             return self;
         }
@@ -352,7 +352,7 @@ impl Project {
         Ok(self)
     }
 
-    pub fn select_last_song(mut self) -> Self {
+    pub fn select_last_song(self) -> Self {
         let last_song_id = match self.songs.last() {
             Some(song) => song.id,
             None => {
@@ -422,7 +422,7 @@ impl Project {
         self
     }
 
-    pub fn select_next_section(mut self) -> Result<Self, String> {
+    pub fn select_next_section(self) -> Result<Self, String> {
         let song_id = match self.selections.song {
             Some(id) => id,
             None => {
@@ -459,7 +459,7 @@ impl Project {
         self.select_section(&next_section_id)
     }
 
-    pub fn select_previous_section(mut self) -> Result<Self, String> {
+    pub fn select_previous_section(self) -> Result<Self, String> {
         let song_id = match self.selections.song {
             Some(id) => id,
             None => {

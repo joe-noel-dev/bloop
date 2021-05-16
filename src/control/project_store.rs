@@ -1,4 +1,7 @@
-use crate::model::{id::ID, project};
+use crate::model::{
+    id::ID,
+    project::{self, ProjectInfo},
+};
 use std::convert::TryInto;
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -40,6 +43,44 @@ impl ProjectStore {
     pub fn load(&self, project_id: &ID) -> Result<project::Project, String> {
         self.read_project_json(project_id)
         // TODO:load samples into cache
+    }
+
+    pub fn projects(&self) -> Result<Vec<ProjectInfo>, String> {
+        let mut project_infos = vec![];
+
+        for entry in match fs::read_dir(&self.root_directory) {
+            Ok(read_dir) => read_dir,
+            Err(_) => return Err("Failed to read projects directory".to_string()),
+        } {
+            let entry = match entry {
+                Ok(entry) => entry,
+                Err(_) => continue,
+            };
+
+            let path = entry.path();
+            if !path.is_dir() {
+                continue;
+            }
+
+            let directory_name = match path.file_name() {
+                Some(path) => path.to_str().unwrap(),
+                None => continue,
+            };
+
+            let id = match ID::parse_str(directory_name) {
+                Ok(id) => id,
+                Err(_) => continue,
+            };
+
+            let project = match self.read_project_json(&id) {
+                Ok(project) => project,
+                Err(_) => continue,
+            };
+
+            project_infos.push(project.info);
+        }
+
+        Ok(project_infos)
     }
 
     fn create_project_directory(&self, project_id: &ID) -> Result<(), String> {
@@ -142,5 +183,39 @@ mod tests {
         assert_eq!(project2.sections.len(), 20);
 
         fs::remove_dir_all(temp_dir).unwrap();
+    }
+
+    #[test]
+    fn list_projects() {
+        let project1 = generators::projects::generate_project(3, 4, 5);
+        let project2 = generators::projects::generate_project(3, 4, 5);
+        let project3 = generators::projects::generate_project(3, 4, 5);
+
+        let project1_id = project1.info.id;
+        let project2_id = project1.info.id;
+        let project3_id = project1.info.id;
+
+        let temp_dir = tempfile::TempDir::new().unwrap().into_path();
+        let project_store = ProjectStore::new(&temp_dir);
+
+        project_store.save(project1).unwrap();
+        project_store.save(project2).unwrap();
+        project_store.save(project3).unwrap();
+
+        let projects = project_store.projects().unwrap();
+
+        assert_eq!(projects.len(), 3, "Should be 3 projects on disk");
+        assert!(
+            projects.iter().any(|info| info.id == project1_id),
+            "Project 1 not found"
+        );
+        assert!(
+            projects.iter().any(|info| info.id == project2_id),
+            "Project 2 not found"
+        );
+        assert!(
+            projects.iter().any(|info| info.id == project3_id),
+            "Project 3 not found"
+        );
     }
 }

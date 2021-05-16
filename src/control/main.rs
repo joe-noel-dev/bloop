@@ -16,11 +16,10 @@ pub async fn run(
     let directories = Directories::new();
     let project_store = ProjectStore::new(&directories.projects);
 
+    let send_response = |response| send_response(response, &response_tx);
+
     while let Some(request) = request_rx.recv().await {
-        match project_store_handlers::handle_request(&request, project_proxy.get(), &project_store) {
-            Ok(project) => project_proxy.set(project),
-            Err(message) => send_error_response(&message, &response_tx),
-        };
+        project_store_handlers::handle_request(&request, project_proxy.get(), &project_store, &send_response);
 
         match project_handlers::handle_request(&request, project_proxy.get()) {
             Ok(project) => project_proxy.set(project),

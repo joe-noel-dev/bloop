@@ -23,7 +23,23 @@ pub struct Response {
     pub samples: Option<Vec<sample::Sample>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub projects: Option<Vec<project::ProjectInfo>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
+}
+
+pub trait ResponseBroadcaster {
+    fn broadcast(&self, response: Response);
+}
+
+impl<F> ResponseBroadcaster for F
+where
+    F: Fn(Response),
+{
+    fn broadcast(&self, response: Response) {
+        self(response);
+    }
 }
 
 impl Response {
@@ -35,6 +51,7 @@ impl Response {
             sections: None,
             selections: None,
             samples: None,
+            projects: None,
             error: None,
         }
     }
@@ -46,6 +63,11 @@ impl Response {
 
     pub fn with_project(mut self, project: &project::Project) -> Self {
         self.project = Some(project.clone());
+        self
+    }
+
+    pub fn with_projects(mut self, projects: &[project::ProjectInfo]) -> Self {
+        self.projects = Some(Vec::from(projects));
         self
     }
 
