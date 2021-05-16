@@ -1,4 +1,9 @@
-pub struct Proxy<T, U>
+pub trait Proxy<T> {
+    fn get(&self) -> T;
+    fn set(&mut self, object: T);
+}
+
+pub struct NotifyingProxy<T, U>
 where
     T: Clone,
     U: Fn(&T) -> (),
@@ -7,7 +12,7 @@ where
     on_change: U,
 }
 
-impl<T, U> Proxy<T, U>
+impl<T, U> NotifyingProxy<T, U>
 where
     T: Clone + PartialEq,
     U: Fn(&T) -> (),
@@ -18,12 +23,18 @@ where
             on_change,
         }
     }
+}
 
-    pub fn get(&self) -> T {
+impl<T, U> Proxy<T> for NotifyingProxy<T, U>
+where
+    T: Clone + PartialEq,
+    U: Fn(&T) -> (),
+{
+    fn get(&self) -> T {
         self.object.clone()
     }
 
-    pub fn set(&mut self, object: T) {
+    fn set(&mut self, object: T) {
         if self.object != object {
             self.object = object;
             (self.on_change)(&self.object);

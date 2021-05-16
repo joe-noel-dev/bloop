@@ -1,4 +1,10 @@
-use crate::api::request;
+use crate::{
+    api::request,
+    api::response::Response,
+    api::response::ResponseBroadcaster,
+    model::{project::Project, proxy::Proxy},
+};
+
 use crate::model::project;
 
 type HandlerError = String;
@@ -7,16 +13,25 @@ fn unhandled_error() -> HandlerError {
     "Unsupported method".to_string()
 }
 
-pub fn handle_request(request: &request::Request, project: project::Project) -> Result<project::Project, String> {
-    println!("Received message: {:?}", request);
+pub fn handle_request(
+    request: &request::Request,
+    project_proxy: &mut dyn Proxy<Project>,
+    response_broadcaster: &dyn ResponseBroadcaster,
+) {
+    let existing_project = project_proxy.get();
 
-    match request {
-        request::Request::Add(add_request) => handle_add(project, add_request),
-        request::Request::Select(select_request) => handle_select(project, select_request),
-        request::Request::Remove(remove_request) => handle_remove(project, remove_request),
-        request::Request::Update(update_request) => handle_update(project, update_request),
-        _ => Ok(project),
-    }
+    let result = match request {
+        request::Request::Add(add_request) => handle_add(existing_project, add_request),
+        request::Request::Select(select_request) => handle_select(existing_project, select_request),
+        request::Request::Remove(remove_request) => handle_remove(existing_project, remove_request),
+        request::Request::Update(update_request) => handle_update(existing_project, update_request),
+        _ => Ok(existing_project),
+    };
+
+    match result {
+        Ok(project) => project_proxy.set(project),
+        Err(error) => response_broadcaster.broadcast(Response::new().with_error(&error)),
+    };
 }
 
 fn handle_add(project: project::Project, request: &request::AddRequest) -> Result<project::Project, HandlerError> {

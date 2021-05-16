@@ -1,7 +1,11 @@
 use super::{directories::Directories, project_handlers, project_store::ProjectStore, project_store_handlers};
-use crate::api::{request, response};
 use crate::generators::projects;
-use crate::model::{project, proxy};
+use crate::model::project;
+use crate::{
+    api::{request, response},
+    model::proxy::NotifyingProxy,
+    model::proxy::Proxy,
+};
 use tokio::sync::{broadcast, mpsc};
 
 pub async fn run(
@@ -9,7 +13,7 @@ pub async fn run(
     response_tx: broadcast::Sender<response::Response>,
 ) {
     let project = projects::generate_project(4, 3, 3);
-    let mut project_proxy = proxy::Proxy::new(project, |new_project: &project::Project| {
+    let mut project_proxy = NotifyingProxy::new(project, |new_project: &project::Project| {
         send_project_response(&new_project, &response_tx)
     });
 
@@ -19,22 +23,15 @@ pub async fn run(
     let send_response = |response| send_response(response, &response_tx);
 
     while let Some(request) = request_rx.recv().await {
-        project_store_handlers::handle_request(&request, project_proxy.get(), &project_store, &send_response);
+        println!("Received message: {:?}", request);
 
-        match project_handlers::handle_request(&request, project_proxy.get()) {
-            Ok(project) => project_proxy.set(project),
-            Err(message) => send_error_response(&message, &response_tx),
-        };
+        project_store_handlers::handle_request(&request, project_proxy.get(), &project_store, &send_response);
+        project_handlers::handle_request(&request, &mut project_proxy, &send_response);
     }
 }
 
 fn send_project_response(project: &project::Project, response_tx: &broadcast::Sender<response::Response>) {
     let response = response::Response::new().with_project(project);
-    send_response(response, response_tx);
-}
-
-fn send_error_response(error: &str, response_tx: &broadcast::Sender<response::Response>) {
-    let response = response::Response::new().with_error(error);
     send_response(response, response_tx);
 }
 
