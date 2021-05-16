@@ -57,6 +57,12 @@ pub enum UpdateRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct LoadRequest {
+    pub id: id::ID,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 #[serde(tag = "method", content = "payload")]
 pub enum Request {
     Get(GetRequest),
@@ -64,4 +70,6 @@ pub enum Request {
     Select(SelectRequest),
     Remove(RemoveRequest),
     Update(UpdateRequest),
+    Save,
+    Load(LoadRequest),
 }

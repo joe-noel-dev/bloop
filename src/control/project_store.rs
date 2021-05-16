@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{fs, io::BufReader};
 
-struct ProjectStore {
+pub struct ProjectStore {
     root_directory: PathBuf,
 }
 

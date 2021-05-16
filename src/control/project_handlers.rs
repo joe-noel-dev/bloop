@@ -7,19 +7,19 @@ fn unhandled_error() -> HandlerError {
     "Unsupported method".to_string()
 }
 
-pub fn handle_request(request: request::Request, project: project::Project) -> Result<project::Project, String> {
+pub fn handle_request(request: &request::Request, project: project::Project) -> Result<project::Project, String> {
     println!("Received message: {:?}", request);
 
-    return match request {
-        request::Request::Get(_) => Ok(project),
+    match request {
         request::Request::Add(add_request) => handle_add(project, add_request),
         request::Request::Select(select_request) => handle_select(project, select_request),
         request::Request::Remove(remove_request) => handle_remove(project, remove_request),
         request::Request::Update(update_request) => handle_update(project, update_request),
-    };
+        _ => Ok(project),
+    }
 }
 
-fn handle_add(project: project::Project, request: request::AddRequest) -> Result<project::Project, HandlerError> {
+fn handle_add(project: project::Project, request: &request::AddRequest) -> Result<project::Project, HandlerError> {
     match request.entity {
         request::Entity::Channel => project.add_channel(),
         request::Entity::Section => handle_add_section(project, request),
@@ -31,7 +31,7 @@ fn handle_add(project: project::Project, request: request::AddRequest) -> Result
 
 fn handle_add_section(
     project: project::Project,
-    request: request::AddRequest,
+    request: &request::AddRequest,
 ) -> Result<project::Project, HandlerError> {
     let song_id = match request.id {
         Some(id) => id,
@@ -43,7 +43,7 @@ fn handle_add_section(
 
 fn handle_select(
     project: project::Project,
-    select_request: request::SelectRequest,
+    select_request: &request::SelectRequest,
 ) -> Result<project::Project, HandlerError> {
     match select_request.entity {
         request::Entity::Song => Ok(project.select_song_with_id(&select_request.id)),
@@ -54,7 +54,7 @@ fn handle_select(
 
 fn handle_remove(
     project: project::Project,
-    remove_request: request::RemoveRequest,
+    remove_request: &request::RemoveRequest,
 ) -> Result<project::Project, HandlerError> {
     match remove_request.entity {
         request::Entity::Song => project.remove_song(&remove_request.id),
@@ -66,7 +66,7 @@ fn handle_remove(
 
 fn handle_update(
     project: project::Project,
-    update_request: request::UpdateRequest,
+    update_request: &request::UpdateRequest,
 ) -> Result<project::Project, HandlerError> {
     match update_request {
         request::UpdateRequest::Song(song) => project.replace_song(song),

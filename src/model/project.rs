@@ -1,9 +1,9 @@
-use super::channel::Channel;
 use super::id::ID;
 use super::sample::Sample;
 use super::section::Section;
 use super::selections::Selections;
 use super::song::Song;
+use super::{channel::Channel, proxy};
 use serde::{Deserialize, Serialize};
 use std::{cmp::PartialEq, collections::HashSet};
 
@@ -80,7 +80,7 @@ impl Project {
         self.sections.iter().find(|s| s.id == *id)
     }
 
-    pub fn replace_song(mut self, song: Song) -> Result<Self, String> {
+    pub fn replace_song(mut self, song: &Song) -> Result<Self, String> {
         if !song.is_valid() {
             return Err("Invalid song".to_string());
         }
@@ -90,7 +90,7 @@ impl Project {
             None => return Err("Song not found".to_string()),
         };
 
-        *old_song = song;
+        *old_song = song.clone();
         Ok(self)
     }
 
@@ -116,7 +116,7 @@ impl Project {
 
         self.sections.push(section);
 
-        self = self.replace_song(song)?;
+        self = self.replace_song(&song)?;
         Ok(self)
     }
 
@@ -224,7 +224,7 @@ impl Project {
         }
 
         song = song.remove_section_id(section_id);
-        self = self.replace_song(song)?;
+        self = self.replace_song(&song)?;
 
         self.sections.retain(|section| &section.id != section_id);
 
@@ -292,7 +292,7 @@ impl Project {
         self
     }
 
-    pub fn replace_section(mut self, section: Section) -> Result<Self, String> {
+    pub fn replace_section(mut self, section: &Section) -> Result<Self, String> {
         if !section.is_valid() {
             return Err("Invalid section".to_string());
         }
@@ -302,11 +302,11 @@ impl Project {
             None => return Err(format!("Section not found: {}", section.id)),
         };
 
-        *old_section = section;
+        *old_section = section.clone();
         Ok(self)
     }
 
-    pub fn replace_sample(mut self, sample: Sample) -> Result<Self, String> {
+    pub fn replace_sample(mut self, sample: &Sample) -> Result<Self, String> {
         if !sample.is_valid() {
             return Err("Invalid sample".to_string());
         }
@@ -316,7 +316,7 @@ impl Project {
             None => return Err(format!("Sample not found: {}", sample.id)),
         };
 
-        *old_sample = sample;
+        *old_sample = sample.clone();
         Ok(self)
     }
 
@@ -510,7 +510,7 @@ impl Project {
 
         song.sample_id = None;
 
-        self = match self.replace_song(song) {
+        self = match self.replace_song(&song) {
             Ok(project) => project,
             Err(error) => {
                 return Err(error);
@@ -570,7 +570,7 @@ mod tests {
         let mut project = Project::new().with_songs(5, 5);
         let mut song = project.songs[3].clone();
         song.name = "New song name".to_string();
-        project = project.replace_song(song).expect("Couldn't replace song");
+        project = project.replace_song(&song).expect("Couldn't replace song");
         assert_eq!(project.songs[3].name, "New song name");
     }
 
