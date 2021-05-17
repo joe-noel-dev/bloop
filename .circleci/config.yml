@@ -5,5 +5,6 @@ jobs:
       - image: cimg/rust:1.52.1
     steps:
       - checkout
+      - run: sudo apt-get install openssl openssl-dev
       - run: cargo build --release
       - run: cargo test --release
