@@ -41,7 +41,16 @@ pub async fn run(
             Ok(response) = response_rx.recv() => {
                 send_response(response, &mut outgoing).await;
             },
-            Some(message) = incoming.next() => {
+            message = incoming.next() => {
+
+                let message = match message {
+                    Some(message) => message,
+                    None => {
+                        println!("Connection closed to clinet: {}", addr);
+                        break;
+                    }
+                };
+
 
                 let message = match message {
                     Ok(message) => message,
@@ -71,7 +80,8 @@ pub async fn run(
                     }
                 }
             },
-            else => { break }
+            else => { break },
+
         }
     }
 
