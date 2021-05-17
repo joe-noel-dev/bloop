@@ -1,0 +1,14 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: cimg/rust:1.52.1
+    steps:
+      - checkout
+      - run: 
+          command: |
+            sudo apt-get update
+            sudo apt-get install libssl-dev
+          name: install dependencies
+      - run: cargo build --release
+      - run: cargo test --release
