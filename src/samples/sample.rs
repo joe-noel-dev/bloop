@@ -1,7 +1,5 @@
 use std::path::{Path, PathBuf};
 
-use crate::model::id::ID;
-
 #[derive(PartialEq)]
 pub enum CacheState {
     Init,
@@ -9,27 +7,16 @@ pub enum CacheState {
 }
 
 pub struct Sample {
-    id: ID,
     cache_state: CacheState,
     path: PathBuf,
 }
 
 impl Sample {
-    pub fn new(id: &ID) -> Self {
+    pub fn new() -> Self {
         Self {
-            id: *id,
             cache_state: CacheState::Init,
             path: PathBuf::new(),
         }
-    }
-
-    pub fn reset(&mut self) {
-        self.delete_sample_on_disk();
-        self.set_cache_location(&PathBuf::new());
-    }
-
-    pub fn get_id(&self) -> &ID {
-        &self.id
     }
 
     pub fn get_cache_state(&self) -> &CacheState {

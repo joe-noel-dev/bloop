@@ -193,12 +193,6 @@ impl Project {
         self.songs.iter().find(|song| song.section_ids.contains(&section_id))
     }
 
-    pub fn song_with_section_mut(&mut self, section_id: &ID) -> Option<&mut Song> {
-        self.songs
-            .iter_mut()
-            .find(|song| song.section_ids.contains(&section_id))
-    }
-
     pub fn remove_section(mut self, section_id: &ID) -> Result<Self, String> {
         if !self.contains_section(section_id) {
             return Err(format!("Section ID not found to remove - {}", section_id));
@@ -247,7 +241,7 @@ impl Project {
         let song = Song::new().with_section_ids(sections.iter().map(|section| section.id).collect());
         self.songs.push(song);
         self.sections.append(&mut sections);
-        self
+        self.select_last_song()
     }
 
     pub fn remove_song(mut self, song_id: &ID) -> Result<Self, String> {
@@ -361,17 +355,7 @@ impl Project {
         Ok(self)
     }
 
-    pub fn selected_song(&self) -> Option<&Song> {
-        let selected_song_id = match self.selections.song {
-            Some(id) => id,
-            None => {
-                return None;
-            }
-        };
-
-        self.song_with_id(&selected_song_id)
-    }
-
+    #[allow(dead_code)]
     pub fn select_next_song(mut self) -> Self {
         let selected_song_index = match self.selected_song_index() {
             Some(index) => index,
@@ -387,6 +371,7 @@ impl Project {
         self
     }
 
+    #[allow(dead_code)]
     pub fn select_previous_song(mut self) -> Self {
         let selected_song_index = match self.selected_song_index() {
             Some(index) => index,
@@ -402,6 +387,7 @@ impl Project {
         self
     }
 
+    #[allow(dead_code)]
     pub fn select_next_section(self) -> Result<Self, String> {
         let song_id = match self.selections.song {
             Some(id) => id,
@@ -439,6 +425,7 @@ impl Project {
         self.select_section(&next_section_id)
     }
 
+    #[allow(dead_code)]
     pub fn select_previous_section(self) -> Result<Self, String> {
         let song_id = match self.selections.song {
             Some(id) => id,

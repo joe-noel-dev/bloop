@@ -45,7 +45,7 @@ impl SamplesCache {
         format: &AudioFileFormat,
         data: &[u8],
     ) -> Result<SampleMetadata, String> {
-        let mut sample = Sample::new(id);
+        let mut sample = Sample::new();
         let path = self.path_for_sample(id, &format);
 
         self.write_file(data, &path)?;
@@ -67,7 +67,7 @@ impl SamplesCache {
     }
 
     pub fn add_sample_from_file(&mut self, id: &ID, format: &AudioFileFormat, from_path: &Path) -> Result<(), String> {
-        let mut sample = Sample::new(id);
+        let mut sample = Sample::new();
         let path = self.path_for_sample(id, &format);
 
         if path.is_file() {

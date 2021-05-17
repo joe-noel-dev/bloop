@@ -267,8 +267,6 @@ mod tests {
         let temp_dir = tempfile::TempDir::new().unwrap();
         let root_dir = temp_dir.into_path();
         let project_directory: PathBuf = [root_dir.to_str().unwrap(), "projects"].iter().collect();
-        let samples_directory: PathBuf = [root_dir.to_str().unwrap(), "samples"].iter().collect();
-        let mut samples_cache = SamplesCache::new(&samples_directory);
 
         assert!(!project_directory.exists());
         ProjectStore::new(&project_directory);
@@ -305,7 +303,7 @@ mod tests {
         let root_dir = temp_dir.into_path();
         let project_directory: PathBuf = [root_dir.to_str().unwrap(), "projects"].iter().collect();
         let samples_directory: PathBuf = [root_dir.to_str().unwrap(), "samples"].iter().collect();
-        let mut samples_cache = SamplesCache::new(&samples_directory);
+        let samples_cache = SamplesCache::new(&samples_directory);
 
         let project_store = ProjectStore::new(&project_directory);
 
