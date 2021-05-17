@@ -274,7 +274,7 @@ impl Project {
             self = self.select_song_index(selected_song_index);
         }
 
-        Ok(self)
+        Ok(self.remove_unused_samples())
     }
 
     pub fn replace_section(mut self, section: &Section) -> Result<Self, String> {
@@ -481,8 +481,8 @@ impl Project {
             return Err(format!("Sample not found with ID: {}", sample_id));
         }
 
-        let mut song = match self.song_with_id(&song_id) {
-            Some(song) => song.clone(),
+        let mut song = match self.song_with_id_mut(&song_id) {
+            Some(song) => song,
             None => {
                 return Err(format!("Song not found with ID: {}", song_id));
             }
@@ -490,7 +490,6 @@ impl Project {
 
         song.sample_id = None;
 
-        self = self.replace_song(&song)?;
         Ok(self.remove_unused_samples())
     }
 }

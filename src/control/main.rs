@@ -22,14 +22,19 @@ pub async fn run(request_rx: &mut mpsc::Receiver<Request>, response_tx: broadcas
     });
 
     let directories = Directories::new();
-    let project_store = ProjectStore::new(&directories.projects);
-
     let mut samples_cache = SamplesCache::new(&directories.samples);
+    let mut project_store = ProjectStore::new(&directories.projects);
 
     let send_response = |response| send_response(response, &response_tx);
 
     while let Some(request) = request_rx.recv().await {
-        project_store_handlers::handle_request(&request, &mut project_proxy, &project_store, &send_response);
+        project_store_handlers::handle_request(
+            &request,
+            &mut project_proxy,
+            &mut project_store,
+            &mut samples_cache,
+            &send_response,
+        );
         sample_handlers::handle_request(&request, &mut project_proxy, &mut samples_cache, &send_response);
         project_handlers::handle_request(&request, &mut project_proxy, &send_response);
 

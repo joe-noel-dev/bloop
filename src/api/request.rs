@@ -73,11 +73,6 @@ pub struct RenameRequest {
     pub name: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-struct Foo {
-    bytes: Vec<u8>,
-}
-
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct UploadSampleRequest {
@@ -87,6 +82,13 @@ pub struct UploadSampleRequest {
 
     #[serde(with = "serde_bytes")]
     pub file_data: Vec<u8>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoveSampleRequest {
+    pub sample_id: id::ID,
+    pub song_id: id::ID,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -102,4 +104,5 @@ pub enum Request {
     Load(LoadRequest),
     Rename(RenameRequest),
     Upload(UploadSampleRequest),
+    RemoveSample(RemoveSampleRequest),
 }

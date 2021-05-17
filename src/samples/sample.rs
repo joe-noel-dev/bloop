@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 use crate::model::id::ID;
 
+#[derive(PartialEq)]
 pub enum CacheState {
     Init,
     Cached,

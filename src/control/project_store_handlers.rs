@@ -6,18 +6,20 @@ use crate::{
         response::ResponseBroadcaster,
     },
     model::{project::Project, proxy::Proxy},
+    samples::cache::SamplesCache,
 };
 
 pub fn handle_request(
     request: &Request,
     project_proxy: &mut dyn Proxy<Project>,
-    project_store: &ProjectStore,
+    project_store: &mut ProjectStore,
+    samples_cache: &mut SamplesCache,
     response_broadcaster: &dyn ResponseBroadcaster,
 ) {
     let result = match request {
         Request::Get(get_request) => handle_get(get_request, project_store, response_broadcaster),
-        Request::Save => project_store.save(project_proxy.get()),
-        Request::Load(load_request) => handle_load(load_request, project_store, project_proxy),
+        Request::Save => project_store.save(project_proxy.get(), samples_cache),
+        Request::Load(load_request) => handle_load(load_request, project_store, project_proxy, samples_cache),
         Request::Remove(remove_request) => handle_remove(remove_request, project_store, response_broadcaster),
         _ => Ok(()),
     };
@@ -54,10 +56,11 @@ fn handle_get_projects(
 
 fn handle_load(
     request: &LoadRequest,
-    project_store: &ProjectStore,
+    project_store: &mut ProjectStore,
     project_proxy: &mut dyn Proxy<Project>,
+    samples_cache: &mut SamplesCache,
 ) -> Result<(), String> {
-    let project = project_store.load(&request.id)?;
+    let project = project_store.load(&request.id, samples_cache)?;
     project_proxy.set(project);
     Ok(())
 }

@@ -105,6 +105,10 @@ impl SamplesCache {
         self.samples.clear();
     }
 
+    pub fn get_sample(&self, id: &ID) -> Option<&Sample> {
+        self.samples.get(id)
+    }
+
     fn path_for_sample(&self, id: &ID, format: &AudioFileFormat) -> PathBuf {
         let mut path = self.root_directory.clone();
         let filename = id.to_string() + "." + extension_for_format(&format);

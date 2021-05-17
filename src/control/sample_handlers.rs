@@ -1,6 +1,6 @@
 use crate::{
     api::{
-        request::{Request, UploadSampleRequest},
+        request::{RemoveSampleRequest, Request, UploadSampleRequest},
         response::{Response, ResponseBroadcaster},
     },
     model::{project::Project, proxy::Proxy, sample::Sample},
@@ -15,6 +15,7 @@ pub fn handle_request(
 ) {
     let result = match request {
         Request::Upload(upload_request) => handle_upload(upload_request, project_proxy, samples_cache),
+        Request::RemoveSample(remove_request) => handle_remove_sample(remove_request, project_proxy),
         _ => Ok(()),
     };
 
@@ -40,6 +41,14 @@ fn handle_upload(
 
     project = project.add_sample_to_song(sample, &request.song_id)?;
 
+    project_proxy.set(project);
+    Ok(())
+}
+
+fn handle_remove_sample(request: &RemoveSampleRequest, project_proxy: &mut dyn Proxy<Project>) -> Result<(), String> {
+    let mut project = project_proxy.get();
+    project = project.remove_sample(&request.sample_id, &request.song_id)?;
+    // TODO: Remove from samples cache?
     project_proxy.set(project);
     Ok(())
 }
