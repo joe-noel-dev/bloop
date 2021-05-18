@@ -1,4 +1,5 @@
 mod api;
+mod audio;
 mod control;
 mod generators;
 mod model;

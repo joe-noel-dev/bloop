@@ -93,6 +93,24 @@ pub struct RemoveSampleRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct QueueRequest {
+    pub song_id: id::ID,
+    pub section_id: id::ID,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+#[serde(tag = "method", content = "options")]
+pub enum TransportMethod {
+    Play,
+    Stop,
+    Loop,
+    ExitLoop,
+    Queue(QueueRequest),
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 #[serde(tag = "method", content = "payload")]
 pub enum Request {
     Get(GetRequest),
@@ -105,4 +123,5 @@ pub enum Request {
     Rename(RenameRequest),
     Upload(UploadSampleRequest),
     RemoveSample(RemoveSampleRequest),
+    Transport(TransportMethod),
 }

@@ -1,6 +1,10 @@
-use super::{directories::Directories, project_handlers, project_store::ProjectStore, project_store_handlers};
+use super::{
+    directories::Directories, project_handlers, project_store::ProjectStore, project_store_handlers, transport_handlers,
+};
 use crate::{
     api::request::Entity,
+    audio::manager::Audio,
+    audio::manager::AudioManager,
     control::sample_handlers,
     model::{project::Project, proxy::Proxy},
     samples::cache::SamplesCache,
@@ -24,6 +28,7 @@ pub async fn run(request_rx: &mut mpsc::Receiver<Request>, response_tx: broadcas
     let directories = Directories::new();
     let mut samples_cache = SamplesCache::new(&directories.samples);
     let mut project_store = ProjectStore::new(&directories.projects);
+    let audio_manager = AudioManager::new();
 
     let send_response = |response| send_response(response, &response_tx);
 
@@ -37,6 +42,7 @@ pub async fn run(request_rx: &mut mpsc::Receiver<Request>, response_tx: broadcas
         );
         sample_handlers::handle_request(&request, &mut project_proxy, &mut samples_cache, &send_response);
         project_handlers::handle_request(&request, &mut project_proxy, &send_response);
+        transport_handlers::handle_request(&request, &audio_manager);
 
         if let Request::Get(get_request) = request {
             handle_get(&get_request, &project_proxy, &send_response);
