@@ -501,7 +501,7 @@ mod tests {
         let song = &project.songs[2];
         let retrieved_song = match project.song_with_id(&song.id) {
             Some(song) => song,
-            None => return assert!(false),
+            None => panic!("Couldn't find song"),
         };
         assert_eq!(retrieved_song, song);
     }
