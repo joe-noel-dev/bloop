@@ -71,10 +71,9 @@ impl Response {
         self
     }
 
-    pub fn _with_songs(self, songs: &[song::Song]) -> Self {
-        let mut response = self.clone();
-        response.songs = Some(Vec::from(songs));
-        response
+    pub fn _with_songs(mut self, songs: &[song::Song]) -> Self {
+        self.songs = Some(Vec::from(songs));
+        self
     }
 
     pub fn _with_sections(mut self, sections: &[section::Section]) -> Self {

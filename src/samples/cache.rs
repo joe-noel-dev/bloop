@@ -27,10 +27,8 @@ pub struct SampleMetadata {
 impl SamplesCache {
     pub fn new(root_directory: &Path) -> Self {
         if !root_directory.exists() {
-            fs::create_dir_all(root_directory).expect(&format!(
-                "Couldn't create directory: {}",
-                root_directory.to_str().unwrap()
-            ));
+            fs::create_dir_all(root_directory)
+                .unwrap_or_else(|_| panic!("Couldn't create directory: {}", root_directory.to_str().unwrap()));
         }
 
         Self {

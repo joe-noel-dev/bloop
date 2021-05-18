@@ -13,7 +13,7 @@ impl Directories {
         let mut projects = root.clone();
         projects.push("projects");
 
-        let mut samples = root.clone();
+        let mut samples = root;
         samples.push("samples");
 
         Self { projects, samples }

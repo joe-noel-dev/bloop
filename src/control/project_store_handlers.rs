@@ -24,10 +24,9 @@ pub fn handle_request(
         _ => Ok(()),
     };
 
-    match result {
-        Err(error) => response_broadcaster.broadcast(Response::new().with_error(&error)),
-        Ok(_) => (),
-    };
+    if let Err(error) = result {
+        response_broadcaster.broadcast(Response::new().with_error(&error))
+    }
 }
 
 fn handle_get(

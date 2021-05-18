@@ -7,7 +7,7 @@ use crate::{
     types::audio_file_format::AudioFileFormat,
 };
 use std::convert::TryInto;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{fs, io::BufReader};
 
@@ -22,16 +22,14 @@ fn current_time() -> i64 {
 }
 
 impl ProjectStore {
-    pub fn new(root_directory: &PathBuf) -> Self {
+    pub fn new(root_directory: &Path) -> Self {
         if !root_directory.exists() {
-            fs::create_dir_all(root_directory).expect(&format!(
-                "Couldn't create directory: {}",
-                root_directory.to_str().unwrap()
-            ));
+            fs::create_dir_all(root_directory)
+                .unwrap_or_else(|_| panic!("Couldn't create directory: {}", root_directory.to_str().unwrap()));
         }
 
         Self {
-            root_directory: root_directory.clone(),
+            root_directory: PathBuf::from(root_directory),
         }
     }
 

@@ -45,7 +45,7 @@ impl Song {
             .section_ids
             .iter()
             .filter(|id| id != &section_id)
-            .map(|id| id.clone())
+            .copied()
             .collect();
 
         self

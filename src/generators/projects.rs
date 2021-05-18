@@ -13,12 +13,12 @@ pub fn generate_project(num_channels: usize, num_songs: usize, num_sections_per_
     }
 
     for section in &mut project.sections {
-        section.name = names::random_section_name();
+        section.name = String::from(names::random_section_name());
     }
 
     for channel in &mut project.channels {
-        channel.name = names::random_channel_name();
-        channel.colour = colours::random_colour();
+        channel.name = String::from(names::random_channel_name());
+        channel.colour = String::from(colours::random_colour());
     }
 
     project

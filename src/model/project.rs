@@ -7,8 +7,6 @@ use super::song::Song;
 use serde::{Deserialize, Serialize};
 use std::{cmp::PartialEq, collections::HashSet};
 
-use std::iter::FromIterator;
-
 pub const MAX_CHANNELS: usize = 8;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -61,7 +59,7 @@ impl Project {
     }
 
     pub fn with_channels(mut self, num_channels: usize) -> Self {
-        assert!(1 <= num_channels && num_channels <= MAX_CHANNELS);
+        assert!((1..=MAX_CHANNELS).contains(&num_channels));
         self.channels.clear();
         for _ in 0..num_channels {
             self = self.add_channel().unwrap()
@@ -135,15 +133,15 @@ impl Project {
     }
 
     pub fn contains_song(&self, song_id: &ID) -> bool {
-        self.songs.iter().find(|s| s.id == *song_id).is_some()
+        self.songs.iter().any(|s| s.id == *song_id)
     }
 
     pub fn contains_section(&self, section_id: &ID) -> bool {
-        self.sections.iter().find(|section| section.id == *section_id).is_some()
+        self.sections.iter().any(|section| section.id == *section_id)
     }
 
     pub fn contains_channel(&self, channel_id: &ID) -> bool {
-        self.channels.iter().find(|channel| channel.id == *channel_id).is_some()
+        self.channels.iter().any(|channel| channel.id == *channel_id)
     }
 
     pub fn remove_sections_for_song(mut self, song: &Song) -> Self {
@@ -175,13 +173,10 @@ impl Project {
 
     pub fn select_song_with_id(mut self, song_id: &ID) -> Self {
         if let Some(song) = self.song_with_id(song_id) {
-            if self.selections.song.unwrap_or(ID::nil()) != song.id {
+            if self.selections.song.unwrap_or_else(ID::nil) != song.id {
                 self.selections = Selections {
                     song: Some(*song_id),
-                    section: match song.section_ids.first() {
-                        Some(section_id) => Some(*section_id),
-                        None => None,
-                    },
+                    section: song.section_ids.first().copied(),
                 }
             }
         }
@@ -219,7 +214,7 @@ impl Project {
 
     pub fn remove_channel(mut self, channel_id: &ID) -> Result<Self, String> {
         if self.channels.len() < 2 {
-            return Err(format!("Can't remove last channel"));
+            return Err("Can't remove last channel".to_string());
         }
 
         if !self.contains_channel(channel_id) {
@@ -304,12 +299,7 @@ impl Project {
     }
 
     fn remove_unused_samples(mut self) -> Self {
-        let samples_in_use: HashSet<ID> = HashSet::from_iter(
-            self.songs
-                .iter()
-                .filter(|song| song.sample_id.is_some())
-                .map(|song| song.sample_id.unwrap()),
-        );
+        let samples_in_use: HashSet<ID> = self.songs.iter().filter_map(|song| song.sample_id).collect();
 
         self.samples.retain(|sample| samples_in_use.contains(&sample.id));
         self

@@ -60,12 +60,12 @@ pub async fn run(
                     }
                 };
 
-                let message = match message {
+                let mut message = match message {
                     Message::Binary(message) => message,
                     _ => continue
                 };
 
-                let api_request = match handle_message(&message) {
+                let api_request = match handle_message(&mut message) {
                     Ok(request) => request,
                     Err(error) => {
                         send_response(response::Response::new().with_error(&error.to_string()), &mut outgoing).await;
@@ -103,8 +103,8 @@ async fn send_response(response: response::Response, mut outgoing: impl Sink<Mes
     let _ = outgoing.send(Message::binary(data)).await;
 }
 
-fn handle_message(message: &Vec<u8>) -> Result<request::Request, error::NetworkError> {
-    let document = match bson::Document::from_reader(&mut message.as_slice()) {
+fn handle_message(message: &mut [u8]) -> Result<request::Request, error::NetworkError> {
+    let document = match bson::Document::from_reader(&mut &message[..]) {
         Ok(doc) => doc,
         Err(error) => {
             let message = format!("Failed to parse JSON: {}", error);
