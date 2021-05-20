@@ -3,13 +3,13 @@ use crate::{
     audio::manager::Audio,
 };
 
-pub fn handle_request(request: &Request, audio: &dyn Audio) {
+pub fn handle_request(request: &Request, audio: &mut dyn Audio) {
     if let Request::Transport(transport_method) = request {
         handle_transport_request(transport_method, audio)
     }
 }
 
-fn handle_transport_request(transport_method: &TransportMethod, audio: &dyn Audio) {
+fn handle_transport_request(transport_method: &TransportMethod, audio: &mut dyn Audio) {
     match transport_method {
         TransportMethod::Play => audio.play(),
         TransportMethod::Stop => audio.stop(),

@@ -1,50 +1,83 @@
-use crate::model::id::ID;
-
-use super::process::Process;
+use super::{command::Command, notification::Notification, process::Process};
+use crate::{
+    api::response::{Response, ResponseBroadcaster},
+    audio::command::QueueCommand,
+    model::{id::ID, project::Project},
+};
+use futures_channel::mpsc;
 
 pub trait Audio {
-    fn play(&self);
-    fn stop(&self);
-    fn enter_loop(&self);
-    fn exit_loop(&self);
-    fn queue(&self, song_id: &ID, section_id: &ID);
-    fn queue_selected(&self);
+    fn play(&mut self);
+    fn stop(&mut self);
+    fn enter_loop(&mut self);
+    fn exit_loop(&mut self);
+    fn queue(&mut self, song_id: &ID, section_id: &ID);
+    fn queue_selected(&mut self);
 }
 
 pub struct AudioManager {
-    process: Process,
+    _process: Process,
+    command_tx: mpsc::Sender<Command>,
 }
 
 impl AudioManager {
-    pub fn new() -> Self {
+    pub fn new(notification_tx: mpsc::Sender<Notification>) -> Self {
+        let (command_tx, command_rx) = mpsc::channel(128);
+
         Self {
-            process: Process::new(),
+            _process: Process::new(command_rx, notification_tx),
+            command_tx,
         }
+    }
+
+    pub fn on_notification(&self, notification: Notification, response_broadcaster: &dyn ResponseBroadcaster) {
+        match notification {
+            Notification::ReturnProject(_) => (),
+            Notification::Transport(playback_state) => {
+                response_broadcaster.broadcast(Response::new().with_playback_state(playback_state))
+            }
+        }
+    }
+
+    pub fn on_project_updated(&mut self, project: &Project) {
+        self.send(Command::UpdateProject(project.clone()));
+    }
+
+    fn send(&mut self, command: Command) {
+        self.command_tx.try_send(command).unwrap();
     }
 }
 
 impl Audio for AudioManager {
-    fn play(&self) {
+    fn play(&mut self) {
         println!("Play");
+        self.send(Command::Play);
     }
 
-    fn stop(&self) {
+    fn stop(&mut self) {
         println!("Stop");
+        self.send(Command::Stop);
     }
 
-    fn enter_loop(&self) {
+    fn enter_loop(&mut self) {
         println!("Enter loop");
+        self.send(Command::EnterLoop);
     }
 
-    fn exit_loop(&self) {
+    fn exit_loop(&mut self) {
         println!("Exit loop");
+        self.send(Command::ExitLoop);
     }
 
-    fn queue(&self, song_id: &ID, section_id: &ID) {
+    fn queue(&mut self, song_id: &ID, section_id: &ID) {
         println!("Queue song {}, section {}", song_id, section_id);
+        self.send(Command::Queue(QueueCommand {
+            song_id: *song_id,
+            section_id: *section_id,
+        }));
     }
 
-    fn queue_selected(&self) {
+    fn queue_selected(&mut self) {
         println!("Queue selected");
     }
 }

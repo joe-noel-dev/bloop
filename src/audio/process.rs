@@ -1,26 +1,48 @@
-use cpal::traits::{DeviceTrait, HostTrait};
+use super::{
+    buffer::BorrowedAudioBuffer, command::Command, engine::AudioEngine, engine::Engine, notification::Notification,
+};
+use cpal::{
+    traits::{DeviceTrait, HostTrait, StreamTrait},
+    SampleRate, Stream,
+};
+use futures_channel::mpsc::{Receiver, Sender};
 
-pub struct Process {}
+const SAMPLE_RATE: u32 = 44100;
+
+pub struct Process {
+    _output_stream: Stream,
+}
 
 impl Process {
-    pub fn new() -> Self {
+    pub fn new(command_rx: Receiver<Command>, notification_tx: Sender<Notification>) -> Self {
         let host = cpal::default_host();
+        println!("Using audio host: {}", host.id().name());
+
         let device = host.default_output_device().expect("No output device available");
+        println!("Connecting to device: {}", device.name().unwrap());
 
-        let stream_config = device.default_output_config().expect("error while querying configs");
+        let mut output_configs = device.supported_output_configs().unwrap();
+        let config = output_configs
+            .next()
+            .expect("No configs supported")
+            .with_sample_rate(SampleRate(SAMPLE_RATE));
 
-        let _stream = device.build_output_stream(
-            &stream_config.config(),
-            move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                for sample in data.iter_mut() {
-                    *sample = 0.0;
-                }
-            },
-            move |_err| {
-                // react to errors here.
-            },
-        );
+        let mut engine = AudioEngine::new(command_rx, notification_tx);
 
-        Self {}
+        let stream = device
+            .build_output_stream(
+                &config.config(),
+                move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
+                    let mut audio_buffer =
+                        BorrowedAudioBuffer::new(data, usize::from(config.channels()), config.sample_rate().0);
+                    engine.render(&mut audio_buffer);
+                },
+                move |err| eprintln!("Stream error: {:?}", err),
+            )
+            .expect("Couldn't create output stream");
+
+        stream.play().unwrap();
+
+        Self { _output_stream: stream }
     }
 }

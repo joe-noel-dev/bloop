@@ -6,7 +6,7 @@ pub trait Proxy<T> {
 pub struct NotifyingProxy<T, U>
 where
     T: Clone,
-    U: Fn(&T),
+    U: FnMut(&T),
 {
     object: T,
     on_change: U,
@@ -15,7 +15,7 @@ where
 impl<T, U> NotifyingProxy<T, U>
 where
     T: Clone + PartialEq,
-    U: Fn(&T),
+    U: FnMut(&T),
 {
     pub fn new(initial_value: T, on_change: U) -> Self {
         Self {
@@ -28,7 +28,7 @@ where
 impl<T, U> Proxy<T> for NotifyingProxy<T, U>
 where
     T: Clone + PartialEq,
-    U: Fn(&T),
+    U: FnMut(&T),
 {
     fn get(&self) -> T {
         self.object.clone()

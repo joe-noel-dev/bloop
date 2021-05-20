@@ -16,20 +16,19 @@ pub fn handle_request(
     project_proxy: &mut dyn Proxy<Project>,
     response_broadcaster: &dyn ResponseBroadcaster,
 ) {
-    let existing_project = project_proxy.get();
-
     let result = match request {
-        Request::Add(add_request) => handle_add(existing_project, add_request),
-        Request::Select(select_request) => handle_select(existing_project, select_request),
-        Request::Remove(remove_request) => handle_remove(existing_project, remove_request),
-        Request::Update(update_request) => handle_update(existing_project, update_request),
-        Request::Rename(rename_reuqest) => handle_rename(existing_project, rename_reuqest),
-        _ => Ok(existing_project),
+        Request::Add(add_request) => Some(handle_add(project_proxy.get(), add_request)),
+        Request::Select(select_request) => Some(handle_select(project_proxy.get(), select_request)),
+        Request::Remove(remove_request) => Some(handle_remove(project_proxy.get(), remove_request)),
+        Request::Update(update_request) => Some(handle_update(project_proxy.get(), update_request)),
+        Request::Rename(rename_request) => Some(handle_rename(project_proxy.get(), rename_request)),
+        _ => None,
     };
 
     match result {
-        Ok(project) => project_proxy.set(project),
-        Err(error) => response_broadcaster.broadcast(Response::new().with_error(&error)),
+        Some(Ok(project)) => project_proxy.set(project),
+        Some(Err(error)) => response_broadcaster.broadcast(Response::new().with_error(&error)),
+        None => (),
     };
 }
 
