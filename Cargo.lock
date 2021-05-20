@@ -29,6 +29,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
+name = "az"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "822d7d63e0c0260a050f6b1f0d316f5c79b9eab830aca526ed904e1011bd64ca"
+
+[[package]]
 name = "base64"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -74,6 +80,7 @@ version = "0.1.0"
 dependencies = [
  "bson",
  "cpal",
+ "fixed",
  "futures",
  "futures-channel",
  "futures-util",
@@ -113,6 +120,12 @@ name = "bumpalo"
 version = "3.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63396b8a4b9de3f4fdfb320ab6080762242f66a8ef174c49d8e19b674db4cdbe"
+
+[[package]]
+name = "bytemuck"
+version = "1.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bed57e2090563b83ba8f83366628ce535a7584c9afa4c9fc0612a03925c6df58"
 
 [[package]]
 name = "byteorder"
@@ -321,6 +334,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "fixed"
+version = "1.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c97cabfe1ce0db024d64e9f688469e80a8e2b36cb792b09ba33e1ee8d21d00ae"
+dependencies = [
+ "az",
+ "bytemuck",
+ "half",
+ "typenum",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -482,6 +507,12 @@ name = "glob"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
+
+[[package]]
+name = "half"
+version = "1.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62aca2aba2d62b4a7f5b33f3712cb1b0692779a56fb510499d5c0aa594daeaf3"
 
 [[package]]
 name = "hashbrown"

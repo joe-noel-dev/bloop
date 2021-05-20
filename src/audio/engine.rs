@@ -1,15 +1,21 @@
-use std::mem;
-
 use super::{
     buffer::AudioBuffer,
     command::{Command, QueueCommand},
     notification::Notification,
+    timeline::Timeline,
 };
-use crate::model::{
-    playback_state::{PlaybackState, PlayingState},
-    project::Project,
+use crate::{
+    model::{
+        playback_state::{PlaybackState, PlayingState},
+        project::Project,
+        sample::Sample,
+        section::Section,
+        song::Song,
+    },
+    types::beats::Beats,
 };
 use futures_channel::mpsc::{Receiver, Sender};
+use std::{convert::TryInto, mem};
 
 pub trait Engine {
     fn render<T>(&mut self, output: &mut T)
@@ -23,6 +29,9 @@ pub struct AudioEngine {
     notification_tx: Sender<Notification>,
     sample_position: usize,
     project: Project,
+    timeline: Timeline,
+    last_section_start: Beats,
+    loop_count: i32,
 }
 
 impl AudioEngine {
@@ -33,6 +42,9 @@ impl AudioEngine {
             notification_tx,
             sample_position: 0,
             project: Project::new(),
+            timeline: Timeline::new(44100),
+            last_section_start: Beats::from_num(0.0),
+            loop_count: 0,
         }
     }
 
@@ -44,8 +56,54 @@ impl AudioEngine {
         self.send_notification(Notification::Transport(self.playback_state.clone()));
     }
 
+    fn current_song(&self) -> Option<&Song> {
+        match self.playback_state.song_id {
+            Some(song_id) => self.project.song_with_id(&song_id),
+            None => None,
+        }
+    }
+
+    fn current_sample(&self) -> Option<&Sample> {
+        let song = self.current_song()?;
+        match song.sample_id {
+            Some(sample_id) => self.project.sample_with_id(&sample_id),
+            None => None,
+        }
+    }
+
+    fn current_section(&self) -> Option<&Section> {
+        match self.playback_state.section_id {
+            Some(section_id) => self.project.section_with_id(&section_id),
+            None => None,
+        }
+    }
+
     fn play(&mut self) {
-        self.playback_state.playing = PlayingState::Playing;
+        self.timeline
+            .set_reference_point(Beats::from_num(0.0), self.sample_position.try_into().unwrap());
+
+        self.playback_state.song_id = self.project.selections.song;
+        self.playback_state.section_id = self.project.selections.section;
+
+        let mut playing = PlayingState::Stopped;
+        let mut tempo = 120.0;
+
+        if let Some(sample) = self.current_sample() {
+            playing = PlayingState::Playing;
+            tempo = sample.tempo.bpm;
+
+            self.last_section_start = Beats::from_num(0);
+            self.loop_count = 0;
+
+            if let Some(section) = self.current_section() {
+                self.playback_state.looping = section.looping;
+            } else {
+                self.playback_state.looping = false;
+            }
+        }
+
+        self.playback_state.playing = playing;
+        self.timeline.set_tempo(tempo);
     }
 
     fn stop(&mut self) {
