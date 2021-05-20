@@ -44,7 +44,9 @@ impl AudioEngine {
         self.send_notification(Notification::Transport(self.playback_state.clone()));
     }
 
-    fn play(&self) {}
+    fn play(&mut self) {
+        self.playback_state.playing = PlayingState::Playing;
+    }
 
     fn stop(&mut self) {
         self.playback_state = PlaybackState::new();
@@ -77,7 +79,7 @@ impl AudioEngine {
         T: AudioBuffer,
     {
         output.clear();
-        false
+        true
     }
 
     fn process_command(&mut self, command: Command) {

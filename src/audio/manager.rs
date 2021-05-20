@@ -50,34 +50,27 @@ impl AudioManager {
 
 impl Audio for AudioManager {
     fn play(&mut self) {
-        println!("Play");
         self.send(Command::Play);
     }
 
     fn stop(&mut self) {
-        println!("Stop");
         self.send(Command::Stop);
     }
 
     fn enter_loop(&mut self) {
-        println!("Enter loop");
         self.send(Command::EnterLoop);
     }
 
     fn exit_loop(&mut self) {
-        println!("Exit loop");
         self.send(Command::ExitLoop);
     }
 
     fn queue(&mut self, song_id: &ID, section_id: &ID) {
-        println!("Queue song {}, section {}", song_id, section_id);
         self.send(Command::Queue(QueueCommand {
             song_id: *song_id,
             section_id: *section_id,
         }));
     }
 
-    fn queue_selected(&mut self) {
-        println!("Queue selected");
-    }
+    fn queue_selected(&mut self) {}
 }
