@@ -35,7 +35,7 @@ impl Timeline {
         self.beat_reference + Beats::from_num(sample_offset) * Beats::from_num(self.beat_frequency() / self.sample_rate)
     }
 
-    pub fn sample_position_for_beats(&self, beat_position: Beats) -> f64 {
+    pub fn _sample_position_for_beats(&self, beat_position: Beats) -> f64 {
         let beat_offset = beat_position - self.beat_reference;
         self.sample_reference as f64 + beat_offset.to_num::<f64>() * self.sample_rate / self.beat_frequency()
     }

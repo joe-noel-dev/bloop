@@ -1,6 +1,6 @@
 use crate::model::{id::ID, project::Project};
 
-use super::buffer::AudioBuffer;
+use super::buffer::OwnedAudioBuffer;
 
 pub struct QueueCommand {
     pub song_id: ID,
@@ -9,7 +9,7 @@ pub struct QueueCommand {
 
 pub struct AddSampleCommand {
     pub sample_id: ID,
-    pub audio_data: Box<dyn AudioBuffer + Send>,
+    pub audio_data: Box<OwnedAudioBuffer>,
 }
 
 pub struct RemoveSampleCommand {

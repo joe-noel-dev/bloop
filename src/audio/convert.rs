@@ -1,4 +1,4 @@
-use crate::audio::buffer::{AudioBuffer, OwnedAudioBuffer};
+use crate::audio::buffer::OwnedAudioBuffer;
 use hound::SampleFormat;
 use num_traits::pow::Pow;
 use std::convert::From;
@@ -17,7 +17,7 @@ where
         .collect()
 }
 
-pub fn convert_sample(sample_path: &Path) -> Result<Box<dyn AudioBuffer + Send>, String> {
+pub fn convert_sample(sample_path: &Path) -> Result<Box<OwnedAudioBuffer>, String> {
     println!("Converting sample @ {}", sample_path.display());
     let mut reader = match hound::WavReader::open(sample_path) {
         Ok(reader) => reader,
@@ -32,6 +32,9 @@ pub fn convert_sample(sample_path: &Path) -> Result<Box<dyn AudioBuffer + Send>,
         SampleFormat::Int => read_samples::<i32, _>(&mut reader, 2.0_f64.pow(spec.bits_per_sample)),
     };
 
-    let audio_data = Box::new(OwnedAudioBuffer::new(samples, spec.channels.into(), spec.sample_rate));
-    Ok(audio_data)
+    Ok(Box::new(OwnedAudioBuffer::new(
+        samples,
+        spec.channels.into(),
+        spec.sample_rate,
+    )))
 }

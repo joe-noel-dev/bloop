@@ -1,7 +1,8 @@
 use super::{
-    buffer::{AudioBuffer, AudioBufferSlice, SampleLocation},
+    buffer::{AudioBuffer, AudioBufferSlice, OwnedAudioBuffer},
     command::{Command, QueueCommand},
     notification::Notification,
+    sampler::Sampler,
     timeline::Timeline,
 };
 use crate::{
@@ -16,7 +17,7 @@ use crate::{
     types::beats::Beats,
 };
 use futures_channel::mpsc::{Receiver, Sender};
-use std::{cmp::max, cmp::min, collections::HashMap, convert::TryInto, mem, usize};
+use std::{collections::HashMap, convert::TryInto, mem, usize};
 
 pub trait Engine {
     fn render<T>(&mut self, output: &mut T)
@@ -34,10 +35,11 @@ pub struct AudioEngine {
     sample_position: usize,
     project: Box<Project>,
     timeline: Timeline,
-    last_section_start: Beats,
+    last_section_start: usize,
     loop_count: i32,
     sample_rate: f64,
-    audio_samples: HashMap<ID, Box<dyn AudioBuffer + Send>>,
+    audio_samples: HashMap<ID, Box<OwnedAudioBuffer>>,
+    sampler: Sampler,
 }
 
 impl AudioEngine {
@@ -52,10 +54,11 @@ impl AudioEngine {
             sample_position: 0,
             project: Box::new(Project::new()),
             timeline: Timeline::new(SAMPLE_RATE),
-            last_section_start: Beats::from_num(0.0),
+            last_section_start: 0,
             loop_count: 0,
             sample_rate: 44100.0,
             audio_samples,
+            sampler: Sampler::new(),
         }
     }
 
@@ -103,8 +106,10 @@ impl AudioEngine {
             playing = PlayingState::Playing;
             tempo = sample.tempo.bpm;
 
-            self.last_section_start = Beats::from_num(0);
+            self.last_section_start = self.sample_position;
             self.loop_count = 0;
+
+            self.sampler.play();
 
             if let Some(section) = self.current_section() {
                 self.playback_state.looping = section.looping;
@@ -118,6 +123,7 @@ impl AudioEngine {
     }
 
     fn stop(&mut self) {
+        self.sampler.stop();
         self.playback_state = PlaybackState::new();
     }
 
@@ -188,17 +194,17 @@ impl AudioEngine {
         };
     }
 
-    fn update_tempo(&mut self, at_beat_position: Beats) {
+    fn update_tempo(&mut self, sample_position: usize) {
         let tempo = self.current_sample().map(|sample| sample.tempo.bpm);
 
         if let Some(tempo) = tempo {
-            let sample_position = self.timeline.sample_position_for_beats(at_beat_position).ceil() as i64;
-            self.timeline.set_reference_point(at_beat_position, sample_position);
+            let beat_position = self.timeline.beat_position_for_samples(sample_position as i64);
+            self.timeline.set_reference_point(beat_position, sample_position as i64);
             self.timeline.set_tempo(tempo);
         }
     }
 
-    fn process_current_section<T>(&mut self, output: &mut T, start_position: Beats, end_position: Beats) -> usize
+    fn process_current_section<T>(&mut self, output: &mut T, start_position: usize, end_position: usize) -> usize
     where
         T: AudioBuffer,
     {
@@ -212,60 +218,29 @@ impl AudioEngine {
             None => return 0,
         };
 
-        let source_buffer = match self.audio_samples.get(&sample.id) {
-            Some(buffer) => buffer.as_ref(),
+        let source = match self.audio_samples.get(&sample.id) {
+            Some(buffer) => buffer,
             None => return 0,
         };
 
-        let start_position_in_section = max(Beats::from_num(0), start_position - self.last_section_start);
-        let section_length = Beats::from_num(section.beat_length);
-        let end_position_in_section = min(section_length, end_position - self.last_section_start);
-
-        let start_frame_offset = self.next_sample_after(
-            start_position_in_section + Beats::from_num(section.start),
-            sample.tempo.bpm,
-        );
-
-        let end_frame_offset = self.next_sample_after(
-            end_position_in_section + Beats::from_num(section.start),
-            sample.tempo.bpm,
-        );
-
-        let mut num_frames = output.num_frames();
-
-        if start_frame_offset < end_frame_offset {
-            num_frames = min(num_frames, end_frame_offset - start_frame_offset);
+        let section_offset = if self.last_section_start < start_position {
+            start_position - self.last_section_start
         } else {
-            num_frames = 0;
-        }
-
-        if start_frame_offset < source_buffer.num_frames() {
-            num_frames = min(num_frames, source_buffer.num_frames() - start_frame_offset);
-        } else {
-            num_frames = 0;
-        }
-
-        let num_channels = min(source_buffer.num_channels(), output.num_channels());
-
-        let source_location = SampleLocation {
-            channel: 0,
-            frame: start_frame_offset,
+            0
         };
 
-        let destination_location = SampleLocation { channel: 0, frame: 0 };
+        let section_start = self.next_sample_after(Beats::from_num(section.start), sample.tempo.bpm);
+        let section_end =
+            self.next_sample_after(Beats::from_num(section.start + section.beat_length), sample.tempo.bpm);
 
-        output.add_from(
-            source_buffer,
-            &source_location,
-            &destination_location,
-            num_channels,
-            num_frames,
-        );
+        self.sampler.set_position(section_start + section_offset);
+        self.sampler.set_end_position(section_end);
+        let num_frames = self.sampler.render(output, source.as_ref());
 
-        if end_position_in_section == section_length {
+        if num_frames < end_position - start_position {
             self.increment_section();
-            self.update_tempo(end_position_in_section + self.last_section_start);
-            self.last_section_start += section_length;
+            self.update_tempo(start_position + num_frames);
+            self.last_section_start = start_position + num_frames;
         }
 
         num_frames
@@ -288,18 +263,18 @@ impl AudioEngine {
 
             let mut output_slice = AudioBufferSlice::new(output, output_offset, remaining);
 
-            let start_beat_position = self
-                .timeline
-                .beat_position_for_samples((self.sample_position + output_offset).try_into().unwrap());
-            let end_beat_position = self
-                .timeline
-                .beat_position_for_samples((self.sample_position + output_offset + remaining).try_into().unwrap());
-
-            let mut num_frames_processed =
-                self.process_current_section(&mut output_slice, start_beat_position, end_beat_position);
+            let mut num_frames_processed = self.process_current_section(
+                &mut output_slice,
+                self.sample_position + output_offset,
+                self.sample_position + output_offset + remaining,
+            );
 
             if num_frames_processed == 0 {
-                num_frames_processed = self.process_current_section(output, start_beat_position, end_beat_position);
+                num_frames_processed = self.process_current_section(
+                    output,
+                    self.sample_position + output_offset,
+                    self.sample_position + output_offset + remaining,
+                );
 
                 if num_frames_processed == 0 {
                     return false;
@@ -312,7 +287,7 @@ impl AudioEngine {
         true
     }
 
-    fn add_sample(&mut self, sample_id: ID, audio_data: Box<dyn AudioBuffer + Send>) {
+    fn add_sample(&mut self, sample_id: ID, audio_data: Box<OwnedAudioBuffer>) {
         self.audio_samples.insert(sample_id, audio_data);
     }
 

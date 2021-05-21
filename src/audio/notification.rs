@@ -1,15 +1,15 @@
 use crate::model::{id::ID, playback_state::PlaybackState, project::Project};
 
-use super::buffer::AudioBuffer;
+use super::buffer::OwnedAudioBuffer;
 
 pub struct SampleConversionResult {
     pub sample_id: ID,
-    pub result: Result<Box<dyn AudioBuffer + Send>, String>,
+    pub result: Result<Box<OwnedAudioBuffer>, String>,
 }
 
 pub enum Notification {
     ReturnProject(Box<Project>),
-    ReturnSample(Box<dyn AudioBuffer + Send>),
+    ReturnSample(Box<OwnedAudioBuffer>),
     Transport(PlaybackState),
     SampleConverted(SampleConversionResult),
 }
