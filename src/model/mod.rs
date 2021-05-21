@@ -1,7 +1,7 @@
 pub mod channel;
 pub mod id;
+pub mod playback_state;
 pub mod project;
-pub mod proxy;
 pub mod sample;
 pub mod section;
 pub mod selections;

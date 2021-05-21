@@ -1,4 +1,5 @@
 mod api;
+mod audio;
 mod control;
 mod generators;
 mod model;
@@ -11,12 +12,16 @@ use std::io::Error;
 use tokio::join;
 use tokio::sync::{broadcast, mpsc};
 
+use crate::control::main::MainController;
+
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let (request_tx, mut request_rx) = mpsc::channel(100);
-    let (response_tx, _) = broadcast::channel(100);
+    let (request_tx, request_rx) = mpsc::channel(128);
+    let (response_tx, _) = broadcast::channel(128);
 
-    let control_fut = control::main::run(&mut request_rx, response_tx.clone());
+    let mut main_controller = MainController::new(request_rx, response_tx.clone());
+
+    let control_fut = main_controller.run();
     let network_fut = network::manager::run(request_tx, response_tx);
     join!(control_fut, network_fut);
     Ok(())
