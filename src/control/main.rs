@@ -7,19 +7,16 @@ use crate::{
         },
         response::{Response, ResponseBroadcaster},
     },
-    audio::{manager::Audio, manager::AudioManager, notification::Notification},
+    audio::{manager::Audio, manager::AudioManager},
     generators::projects,
     model::{project::Project, sample::Sample},
     samples::cache::SamplesCache,
 };
-use futures::StreamExt;
-use futures_channel::mpsc::Receiver;
 use tokio::sync::{broadcast, mpsc};
 
 pub struct MainController {
     samples_cache: SamplesCache,
     project_store: ProjectStore,
-    audio_notification_rx: Receiver<Notification>,
     request_rx: mpsc::Receiver<Request>,
     response_tx: broadcast::Sender<Response>,
     project: Project,
@@ -38,14 +35,11 @@ impl MainController {
         let samples_cache = SamplesCache::new(&directories.samples);
         let project_store = ProjectStore::new(&directories.projects);
 
-        let (audio_notification_tx, audio_notification_rx) = futures_channel::mpsc::channel(100);
-
-        let audio_manager = AudioManager::new(audio_notification_tx);
+        let audio_manager = AudioManager::new(response_tx.clone());
 
         Self {
             samples_cache,
             project_store,
-            audio_notification_rx,
             request_rx,
             response_tx,
             project: projects::generate_project(4, 3, 3),
@@ -121,7 +115,7 @@ impl MainController {
         loop {
             tokio::select! {
                 Some(request) = self.request_rx.recv() => self.handle_request(request),
-                Some(notification) =  self.audio_notification_rx.next() => self.audio_manager.on_notification(notification, self),
+                _ = self.audio_manager.run() => (),
                 else => break,
             }
         }
