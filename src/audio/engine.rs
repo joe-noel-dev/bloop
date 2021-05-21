@@ -16,13 +16,16 @@ use crate::{
     types::beats::Beats,
 };
 use futures_channel::mpsc::{Receiver, Sender};
-use std::{cmp::min, convert::TryInto, mem, usize};
+use std::{cmp::min, collections::HashMap, convert::TryInto, mem, usize};
 
 pub trait Engine {
     fn render<T>(&mut self, output: &mut T)
     where
         T: AudioBuffer;
 }
+
+const SAMPLE_RATE: u32 = 44100;
+const MAX_SAMPLES: usize = 128;
 
 pub struct AudioEngine {
     playback_state: PlaybackState,
@@ -34,20 +37,25 @@ pub struct AudioEngine {
     last_section_start: Beats,
     loop_count: i32,
     sample_rate: f64,
+    audio_samples: HashMap<ID, Box<dyn AudioBuffer + Send>>,
 }
 
 impl AudioEngine {
     pub fn new(command_rx: Receiver<Command>, notification_tx: Sender<Notification>) -> Self {
+        let mut audio_samples = HashMap::new();
+        audio_samples.reserve(MAX_SAMPLES);
+
         Self {
             playback_state: PlaybackState::new(),
             command_rx,
             notification_tx,
             sample_position: 0,
             project: Box::new(Project::new()),
-            timeline: Timeline::new(44100),
+            timeline: Timeline::new(SAMPLE_RATE),
             last_section_start: Beats::from_num(0.0),
             loop_count: 0,
             sample_rate: 44100.0,
+            audio_samples,
         }
     }
 
@@ -135,10 +143,6 @@ impl AudioEngine {
         self.playback_state.queued_section_id = Some(command.section_id);
     }
 
-    fn buffer_for_sample(&self, sample_id: &ID) -> Option<&dyn AudioBuffer> {
-        None
-    }
-
     fn next_sample_after(&self, beat_position: Beats, bpm: f64) -> usize {
         let beat_frequency = bpm / 60.0;
         let sample_position = (beat_position.to_num::<f64>() * self.sample_rate / beat_frequency).ceil();
@@ -208,8 +212,8 @@ impl AudioEngine {
             None => return 0,
         };
 
-        let sample_buffer = match self.buffer_for_sample(&sample.id) {
-            Some(buffer) => buffer,
+        let source_buffer = match self.audio_samples.get(&sample.id) {
+            Some(buffer) => buffer.as_ref(),
             None => return 0,
         };
 
@@ -227,9 +231,9 @@ impl AudioEngine {
             sample.tempo.bpm,
         );
 
-        let num_frames = min(end_frame_offset - start_frame_offset, sample_buffer.num_frames());
+        let num_frames = min(end_frame_offset - start_frame_offset, source_buffer.num_frames());
         let num_frames = min(num_frames, output.num_frames() - start_frame_offset);
-        let num_channels = min(sample_buffer.num_channels(), output.num_channels());
+        let num_channels = min(source_buffer.num_channels(), output.num_channels());
 
         let source_location = SampleLocation {
             channel: 0,
@@ -239,7 +243,7 @@ impl AudioEngine {
         let destination_location = SampleLocation { channel: 0, frame: 0 };
 
         output.add_from(
-            sample_buffer,
+            source_buffer,
             &source_location,
             &destination_location,
             num_channels,
@@ -296,8 +300,22 @@ impl AudioEngine {
         true
     }
 
+    fn add_sample(&mut self, sample_id: ID, audio_data: Box<dyn AudioBuffer + Send>) {
+        self.audio_samples.insert(sample_id, audio_data);
+    }
+
+    fn remove_sample(&mut self, sample_id: ID) {
+        if let Some(sample) = self.audio_samples.remove(&sample_id) {
+            self.send_notification(Notification::ReturnSample(sample));
+        }
+    }
+
     fn process_command(&mut self, command: Command) {
         match command {
+            Command::AddSample(add_sample_command) => {
+                self.add_sample(add_sample_command.sample_id, add_sample_command.audio_data)
+            }
+            Command::RemoveSample(remove_sample_command) => self.remove_sample(remove_sample_command.sample_id),
             Command::Play => self.play(),
             Command::Stop => self.stop(),
             Command::UpdateProject(project) => self.update_project(project),

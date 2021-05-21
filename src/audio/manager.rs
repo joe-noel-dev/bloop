@@ -32,7 +32,8 @@ impl AudioManager {
 
     pub fn on_notification(&self, notification: Notification, response_broadcaster: &dyn ResponseBroadcaster) {
         match notification {
-            Notification::ReturnProject(_) => (),
+            Notification::ReturnProject(_) => (/* Project is dropped here */),
+            Notification::ReturnSample(_) => (/* Sample is dropped here */),
             Notification::Transport(playback_state) => {
                 response_broadcaster.broadcast(Response::new().with_playback_state(playback_state))
             }
