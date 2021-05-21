@@ -27,7 +27,7 @@ pub struct AudioManager {
 impl AudioManager {
     pub fn new(response_tx: broadcast::Sender<Response>) -> Self {
         let (command_tx, command_rx) = mpsc::channel(128);
-        let (notification_tx, notification_rx) = futures_channel::mpsc::channel(100);
+        let (notification_tx, notification_rx) = futures_channel::mpsc::channel(128);
 
         Self {
             _process: Process::new(command_rx, notification_tx),
