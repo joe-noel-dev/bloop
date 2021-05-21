@@ -87,6 +87,7 @@ dependencies = [
  "futures-util",
  "home",
  "hound",
+ "num-traits",
  "rand 0.8.3",
  "serde",
  "serde_bytes",

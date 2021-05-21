@@ -41,7 +41,7 @@ impl Section {
             id: ID::new_v4(),
             name: "Section".to_string(),
             start: 0.0,
-            beat_length: 0.0,
+            beat_length: 8.0,
             looping: false,
             samples: vec![],
         }

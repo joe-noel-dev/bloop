@@ -79,7 +79,8 @@ impl MainController {
                 if self.project != project {
                     self.project = project;
                     self.send_project_response(&self.project);
-                    self.audio_manager.on_project_updated(&self.project);
+                    self.audio_manager
+                        .on_project_updated(&self.project, &self.samples_cache);
                 }
             }
             Err(error) => self.send_error_response(&error),
@@ -184,6 +185,7 @@ impl MainController {
 
     fn handle_upload(&mut self, request: &UploadSampleRequest, project: Project) -> Result<Project, String> {
         let mut sample = Sample::new();
+
         let sample_metadata =
             self.samples_cache
                 .add_sample_from_data(&sample.id, &request.format, &request.file_data)?;

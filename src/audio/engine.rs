@@ -16,7 +16,7 @@ use crate::{
     types::beats::Beats,
 };
 use futures_channel::mpsc::{Receiver, Sender};
-use std::{cmp::min, collections::HashMap, convert::TryInto, mem, usize};
+use std::{cmp::max, cmp::min, collections::HashMap, convert::TryInto, mem, usize};
 
 pub trait Engine {
     fn render<T>(&mut self, output: &mut T)
@@ -217,7 +217,7 @@ impl AudioEngine {
             None => return 0,
         };
 
-        let start_position_in_section = start_position - self.last_section_start;
+        let start_position_in_section = max(Beats::from_num(0), start_position - self.last_section_start);
         let section_length = Beats::from_num(section.beat_length);
         let end_position_in_section = min(section_length, end_position - self.last_section_start);
 
@@ -231,8 +231,20 @@ impl AudioEngine {
             sample.tempo.bpm,
         );
 
-        let num_frames = min(end_frame_offset - start_frame_offset, source_buffer.num_frames());
-        let num_frames = min(num_frames, output.num_frames() - start_frame_offset);
+        let mut num_frames = output.num_frames();
+
+        if start_frame_offset < end_frame_offset {
+            num_frames = min(num_frames, end_frame_offset - start_frame_offset);
+        } else {
+            num_frames = 0;
+        }
+
+        if start_frame_offset < source_buffer.num_frames() {
+            num_frames = min(num_frames, source_buffer.num_frames() - start_frame_offset);
+        } else {
+            num_frames = 0;
+        }
+
         let num_channels = min(source_buffer.num_channels(), output.num_channels());
 
         let source_location = SampleLocation {
@@ -342,7 +354,7 @@ impl Engine for AudioEngine {
         }
 
         let continue_processing = self.process_project(output);
-        if !continue_processing {
+        if self.playback_state.playing != PlayingState::Stopped && !continue_processing {
             self.stop();
         }
 
