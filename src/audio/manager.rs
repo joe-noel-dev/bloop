@@ -40,7 +40,7 @@ impl AudioManager {
     }
 
     pub fn on_project_updated(&mut self, project: &Project) {
-        self.send(Command::UpdateProject(project.clone()));
+        self.send(Command::UpdateProject(Box::new(project.clone())));
     }
 
     fn send(&mut self, command: Command) {

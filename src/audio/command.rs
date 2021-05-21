@@ -6,7 +6,7 @@ pub struct QueueCommand {
 }
 
 pub enum Command {
-    UpdateProject(Project),
+    UpdateProject(Box<Project>),
     Play,
     Stop,
     EnterLoop,

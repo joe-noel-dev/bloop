@@ -29,7 +29,7 @@ pub struct AudioEngine {
     command_rx: Receiver<Command>,
     notification_tx: Sender<Notification>,
     sample_position: usize,
-    project: Project,
+    project: Box<Project>,
     timeline: Timeline,
     last_section_start: Beats,
     loop_count: i32,
@@ -43,7 +43,7 @@ impl AudioEngine {
             command_rx,
             notification_tx,
             sample_position: 0,
-            project: Project::new(),
+            project: Box::new(Project::new()),
             timeline: Timeline::new(44100),
             last_section_start: Beats::from_num(0.0),
             loop_count: 0,
@@ -113,7 +113,7 @@ impl AudioEngine {
         self.playback_state = PlaybackState::new();
     }
 
-    fn update_project(&mut self, project: Project) {
+    fn update_project(&mut self, project: Box<Project>) {
         let old_project = mem::replace(&mut self.project, project);
         self.send_notification(Notification::ReturnProject(old_project));
     }
