@@ -2,7 +2,7 @@ use super::{
     buffer::{AudioBuffer, AudioBufferSlice, OwnedAudioBuffer},
     command::{Command, QueueCommand},
     notification::Notification,
-    sampler::Sampler,
+    sampler,
     timeline::Timeline,
 };
 use crate::{
@@ -39,7 +39,6 @@ pub struct AudioEngine {
     loop_count: i32,
     sample_rate: f64,
     audio_samples: HashMap<ID, Box<OwnedAudioBuffer>>,
-    sampler: Sampler,
 }
 
 impl AudioEngine {
@@ -58,7 +57,6 @@ impl AudioEngine {
             loop_count: 0,
             sample_rate: 44100.0,
             audio_samples,
-            sampler: Sampler::new(),
         }
     }
 
@@ -109,13 +107,10 @@ impl AudioEngine {
             self.last_section_start = self.sample_position;
             self.loop_count = 0;
 
-            self.sampler.play();
-
-            if let Some(section) = self.current_section() {
-                self.playback_state.looping = section.looping;
-            } else {
-                self.playback_state.looping = false;
-            }
+            self.playback_state.looping = match self.current_section() {
+                Some(section) => section.looping,
+                None => false,
+            };
         }
 
         self.playback_state.playing = playing;
@@ -123,7 +118,6 @@ impl AudioEngine {
     }
 
     fn stop(&mut self) {
-        self.sampler.stop();
         self.playback_state = PlaybackState::new();
     }
 
@@ -233,9 +227,7 @@ impl AudioEngine {
         let section_end =
             self.next_sample_after(Beats::from_num(section.start + section.beat_length), sample.tempo.bpm);
 
-        self.sampler.set_position(section_start + section_offset);
-        self.sampler.set_end_position(section_end);
-        let num_frames = self.sampler.render(output, source.as_ref());
+        let num_frames = sampler::render(output, source.as_ref(), section_start + section_offset, section_end);
 
         if num_frames < end_position - start_position {
             self.increment_section();
