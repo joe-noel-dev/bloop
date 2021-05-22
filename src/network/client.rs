@@ -46,7 +46,7 @@ pub async fn run(
                 let message = match message {
                     Some(message) => message,
                     None => {
-                        println!("Connection closed to clinet: {}", addr);
+                        println!("Connection closed to client: {}", addr);
                         break;
                     }
                 };

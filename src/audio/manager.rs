@@ -6,7 +6,7 @@ use super::{
 use crate::{
     api::response::Response,
     audio::{command::QueueCommand, convert::convert_sample},
-    model::{id::ID, project::Project},
+    model::{id::ID, playback_state::PlaybackState, project::Project},
     samples::{cache::SamplesCache, sample::CacheState},
 };
 use futures::StreamExt;
@@ -31,6 +31,7 @@ pub struct AudioManager {
     response_tx: broadcast::Sender<Response>,
     samples_in_engine: HashSet<ID>,
     samples_being_converted: HashSet<ID>,
+    playback_state: PlaybackState,
 }
 
 impl AudioManager {
@@ -46,6 +47,7 @@ impl AudioManager {
             response_tx,
             samples_in_engine: HashSet::new(),
             samples_being_converted: HashSet::new(),
+            playback_state: PlaybackState::new(),
         }
     }
 
@@ -60,14 +62,20 @@ impl AudioManager {
         }
     }
 
+    pub fn playback_state(&self) -> &PlaybackState {
+        &self.playback_state
+    }
+
     pub fn on_notification(&mut self, notification: Notification) {
         match notification {
             Notification::ReturnProject(_) => (/* Project is dropped here */),
             Notification::ReturnSample(_) => (/* Sample is dropped here */),
             Notification::Transport(playback_state) => {
                 self.response_tx
-                    .send(Response::new().with_playback_state(playback_state))
+                    .send(Response::new().with_playback_state(&playback_state))
                     .unwrap();
+
+                self.playback_state = playback_state;
             }
             Notification::SampleConverted(result) => self.on_sample_converted(result),
         }

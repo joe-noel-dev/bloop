@@ -55,8 +55,8 @@ impl Response {
         self
     }
 
-    pub fn with_playback_state(mut self, playback_state: PlaybackState) -> Self {
-        self.playback_state = Some(playback_state);
+    pub fn with_playback_state(mut self, playback_state: &PlaybackState) -> Self {
+        self.playback_state = Some(playback_state.clone());
         self
     }
 }

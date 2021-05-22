@@ -89,7 +89,11 @@ impl MainController {
 
     async fn handle_get(&self, get_request: &GetRequest) -> Result<(), String> {
         match get_request.entity {
-            Entity::All => self.send_project_response(&self.project),
+            Entity::All => self.send_response(
+                Response::new()
+                    .with_project(&self.project)
+                    .with_playback_state(self.audio_manager.playback_state()),
+            ),
             Entity::Projects => {
                 let projects = self.project_store.projects().await?;
                 self.send_response(Response::new().with_projects(&projects));
