@@ -25,7 +25,10 @@ pub fn convert_sample(sample_path: &Path) -> Result<Box<OwnedAudioBuffer>, Strin
     };
 
     let spec = reader.spec();
-    println!("Sample spec: {:?}", spec);
+
+    if spec.sample_rate != 44100 {
+        return Err("Only samples at 44.1 kHz are supported at present".to_string());
+    }
 
     let samples = match spec.sample_format {
         SampleFormat::Float => read_samples::<f32, _>(&mut reader, 1.0),

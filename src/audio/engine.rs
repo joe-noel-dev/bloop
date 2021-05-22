@@ -255,18 +255,13 @@ impl AudioEngine {
 
             let mut output_slice = AudioBufferSlice::new(output, output_offset, remaining);
 
-            let mut num_frames_processed = self.process_current_section(
-                &mut output_slice,
-                self.sample_position + output_offset,
-                self.sample_position + output_offset + remaining,
-            );
+            let start_sample = self.sample_position + output_offset;
+            let end_sample = start_sample + remaining;
+
+            let mut num_frames_processed = self.process_current_section(&mut output_slice, start_sample, end_sample);
 
             if num_frames_processed == 0 {
-                num_frames_processed = self.process_current_section(
-                    output,
-                    self.sample_position + output_offset,
-                    self.sample_position + output_offset + remaining,
-                );
+                num_frames_processed = self.process_current_section(output, start_sample, end_sample);
 
                 if num_frames_processed == 0 {
                     return false;
