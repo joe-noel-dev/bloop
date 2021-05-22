@@ -47,21 +47,21 @@ impl MainController {
         }
     }
 
-    fn handle_request(&mut self, request: Request) {
+    async fn handle_request(&mut self, request: Request) {
         let project = self.project.clone();
         let result = match request {
             Request::Add(add_request) => self.handle_add(project, &add_request),
-            Request::Get(get_request) => match self.handle_get(&get_request) {
+            Request::Get(get_request) => match self.handle_get(&get_request).await {
                 Ok(_) => Ok(project),
                 Err(error) => Err(error),
             },
-            Request::Load(load_request) => self.handle_load(&load_request),
-            Request::Remove(remove_request) => self.handle_remove(project, &remove_request),
+            Request::Load(load_request) => self.handle_load(&load_request).await,
+            Request::Remove(remove_request) => self.handle_remove(project, &remove_request).await,
             Request::RemoveSample(remove_request) => {
                 project.remove_sample(&remove_request.sample_id, &remove_request.song_id)
             }
             Request::Rename(rename_request) => self.handle_rename(project, &rename_request),
-            Request::Save => match self.project_store.save(project.clone(), &self.samples_cache) {
+            Request::Save => match self.project_store.save(project.clone(), &self.samples_cache).await {
                 Ok(_) => Ok(project),
                 Err(error) => Err(error),
             },
@@ -71,7 +71,7 @@ impl MainController {
                 Ok(project)
             }
             Request::Update(update_request) => self.handle_update(project, &update_request),
-            Request::Upload(upload_request) => self.handle_upload(&upload_request, project),
+            Request::Upload(upload_request) => self.handle_upload(&upload_request, project).await,
         };
 
         match result {
@@ -87,11 +87,11 @@ impl MainController {
         }
     }
 
-    fn handle_get(&self, get_request: &GetRequest) -> Result<(), String> {
+    async fn handle_get(&self, get_request: &GetRequest) -> Result<(), String> {
         match get_request.entity {
             Entity::All => self.send_project_response(&self.project),
             Entity::Projects => {
-                let projects = self.project_store.projects()?;
+                let projects = self.project_store.projects().await?;
                 self.send_response(Response::new().with_projects(&projects));
             }
             _ => (),
@@ -115,7 +115,7 @@ impl MainController {
     pub async fn run(&mut self) {
         loop {
             tokio::select! {
-                Some(request) = self.request_rx.recv() => self.handle_request(request),
+                Some(request) = self.request_rx.recv() => self.handle_request(request).await,
                 _ = self.audio_manager.run() => (),
                 else => break,
             }
@@ -149,14 +149,14 @@ impl MainController {
         }
     }
 
-    fn handle_remove(&self, project: Project, remove_request: &RemoveRequest) -> Result<Project, String> {
+    async fn handle_remove(&self, project: Project, remove_request: &RemoveRequest) -> Result<Project, String> {
         match remove_request.entity {
             Entity::Song => project.remove_song(&remove_request.id),
             Entity::Section => project.remove_section(&remove_request.id),
             Entity::Channel => project.remove_channel(&remove_request.id),
             Entity::Project => {
-                self.project_store.remove_project(&remove_request.id)?;
-                let projects = self.project_store.projects()?;
+                self.project_store.remove_project(&remove_request.id).await?;
+                let projects = self.project_store.projects().await?;
                 self.send_response(Response::new().with_projects(&projects));
                 Ok(project)
             }
@@ -179,16 +179,17 @@ impl MainController {
         }
     }
 
-    fn handle_load(&mut self, request: &LoadRequest) -> Result<Project, String> {
-        self.project_store.load(&request.id, &mut self.samples_cache)
+    async fn handle_load(&mut self, request: &LoadRequest) -> Result<Project, String> {
+        self.project_store.load(&request.id, &mut self.samples_cache).await
     }
 
-    fn handle_upload(&mut self, request: &UploadSampleRequest, project: Project) -> Result<Project, String> {
+    async fn handle_upload(&mut self, request: &UploadSampleRequest, project: Project) -> Result<Project, String> {
         let mut sample = Sample::new();
 
-        let sample_metadata =
-            self.samples_cache
-                .add_sample_from_data(&sample.id, &request.format, &request.file_data)?;
+        let sample_metadata = self
+            .samples_cache
+            .add_sample_from_data(&sample.id, &request.format, &request.file_data)
+            .await?;
 
         sample.name = request.name.clone();
         sample.sample_rate = sample_metadata.sample_rate as i32;

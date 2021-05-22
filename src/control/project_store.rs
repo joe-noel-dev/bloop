@@ -7,9 +7,12 @@ use crate::{
     types::audio_file_format::AudioFileFormat,
 };
 use std::convert::TryInto;
-use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::{fs, io::BufReader};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
+use tokio::io::AsyncWriteExt;
 
 pub struct ProjectStore {
     root_directory: PathBuf,
@@ -33,33 +36,32 @@ impl ProjectStore {
         }
     }
 
-    pub fn save(&self, mut project: Project, samples_cache: &SamplesCache) -> Result<(), String> {
+    pub async fn save(&self, mut project: Project, samples_cache: &SamplesCache) -> Result<(), String> {
         project.info.last_saved = current_time();
-        self.create_project_directory(&project.info.id)?;
-        self.create_samples_directory(&project.info.id)?;
-        self.copy_samples_from_cache(&project, samples_cache)?;
-        self.write_project_json(project)?;
+        self.create_project_directory(&project.info.id).await?;
+        self.create_samples_directory(&project.info.id).await?;
+        self.copy_samples_from_cache(&project, samples_cache).await?;
+        self.write_project_json(project).await?;
         Ok(())
     }
 
-    pub fn load(&mut self, project_id: &ID, samples_cache: &mut SamplesCache) -> Result<Project, String> {
-        let project = self.read_project_json(project_id)?;
-        self.load_samples_into_cache(project_id, samples_cache)?;
+    pub async fn load(&mut self, project_id: &ID, samples_cache: &mut SamplesCache) -> Result<Project, String> {
+        let project = self.read_project_json(project_id).await?;
+        self.load_samples_into_cache(project_id, samples_cache).await?;
         Ok(project)
     }
 
-    pub fn projects(&self) -> Result<Vec<ProjectInfo>, String> {
+    pub async fn projects(&self) -> Result<Vec<ProjectInfo>, String> {
         let mut project_infos = vec![];
-
-        for entry in match fs::read_dir(&self.root_directory) {
+        let mut read_dir = match tokio::fs::read_dir(&self.root_directory).await {
             Ok(read_dir) => read_dir,
-            Err(_) => return Err("Failed to read projects directory".to_string()),
-        } {
-            let entry = match entry {
-                Ok(entry) => entry,
-                Err(_) => continue,
-            };
+            Err(error) => return Err(format!("Error reading projects directory: {}", error)),
+        };
 
+        while let Some(entry) = match read_dir.next_entry().await {
+            Ok(entry) => entry,
+            Err(error) => return Err(format!("Error reading projects directory: {}", error)),
+        } {
             let path = entry.path();
             if !path.is_dir() {
                 continue;
@@ -75,9 +77,12 @@ impl ProjectStore {
                 Err(_) => continue,
             };
 
-            let project = match self.read_project_json(&id) {
+            let project = match self.read_project_json(&id).await {
                 Ok(project) => project,
-                Err(_) => continue,
+                Err(error) => {
+                    println!("Error reading project JSON: {}", error);
+                    continue;
+                }
             };
 
             project_infos.push(project.info);
@@ -86,22 +91,22 @@ impl ProjectStore {
         Ok(project_infos)
     }
 
-    pub fn remove_project(&self, project_id: &ID) -> Result<(), String> {
+    pub async fn remove_project(&self, project_id: &ID) -> Result<(), String> {
         let directory = self.directory_for_project(project_id);
         if !directory.is_dir() {
             return Ok(());
         }
 
-        match fs::remove_dir_all(directory) {
+        match tokio::fs::remove_dir_all(directory).await {
             Ok(_) => Ok(()),
             Err(error) => Err(error.to_string()),
         }
     }
 
-    fn create_project_directory(&self, project_id: &ID) -> Result<(), String> {
+    async fn create_project_directory(&self, project_id: &ID) -> Result<(), String> {
         let project_directory = self.directory_for_project(project_id);
         if !project_directory.exists() {
-            match fs::create_dir_all(project_directory) {
+            match tokio::fs::create_dir_all(project_directory).await {
                 Ok(_) => (),
                 Err(error) => return Err(error.to_string()),
             }
@@ -110,10 +115,10 @@ impl ProjectStore {
         Ok(())
     }
 
-    fn create_samples_directory(&self, project_id: &ID) -> Result<(), String> {
+    async fn create_samples_directory(&self, project_id: &ID) -> Result<(), String> {
         let samples_directory = self.directory_for_samples(project_id);
         if !samples_directory.exists() {
-            match fs::create_dir_all(samples_directory) {
+            match tokio::fs::create_dir_all(samples_directory).await {
                 Ok(_) => (),
                 Err(error) => return Err(error.to_string()),
             }
@@ -140,34 +145,39 @@ impl ProjectStore {
         json_path
     }
 
-    fn write_project_json(&self, project: Project) -> Result<(), String> {
+    async fn write_project_json(&self, project: Project) -> Result<(), String> {
         let json_path = self.project_json_path(&project.info.id);
 
-        let file = match fs::File::create(json_path) {
+        let mut file = match tokio::fs::File::create(json_path).await {
             Ok(file) => file,
             Err(error) => return Err(error.to_string()),
         };
 
-        match serde_json::to_writer_pretty(file, &project) {
-            Ok(_) => (),
-            Err(error) => return Err(error.to_string()),
+        let json = match serde_json::to_string(&project) {
+            Ok(string) => string,
+            Err(error) => return Err(format!("Failed to convert project to JSON: {}", error)),
         };
+
+        match file.write(json.as_bytes()).await {
+            Ok(_) => (),
+            Err(error) => return Err(format!("Failed to write project JSON: {}", error)),
+        }
 
         Ok(())
     }
 
-    fn read_project_json(&self, project_id: &ID) -> Result<Project, String> {
+    async fn read_project_json(&self, project_id: &ID) -> Result<Project, String> {
         let json_path = self.project_json_path(project_id);
-        let file = match fs::File::open(json_path) {
-            Ok(file) => file,
-            Err(error) => return Err(error.to_string()),
+
+        let data = match tokio::fs::read_to_string(json_path).await {
+            Ok(string) => string,
+            Err(error) => return Err(format!("Failed to read project: {}", error)),
         };
-        let reader = BufReader::new(file);
-        let project = match serde_json::from_reader(reader) {
-            Ok(project) => project,
+
+        match serde_json::from_str::<Project>(&data) {
+            Ok(project) => Ok(project),
             Err(error) => return Err(error.to_string()),
-        };
-        Ok(project)
+        }
     }
 
     fn sample_path(&self, project_id: &ID, sample_id: &ID) -> PathBuf {
@@ -177,8 +187,9 @@ impl ProjectStore {
         path
     }
 
-    fn copy_samples_from_cache(&self, project: &Project, samples_cache: &SamplesCache) -> Result<(), String> {
-        let mut errors: Vec<String> = vec![];
+    async fn copy_samples_from_cache(&self, project: &Project, samples_cache: &SamplesCache) -> Result<(), String> {
+        let mut futures = vec![];
+        let mut errors = vec![];
 
         for sample in project.samples.iter() {
             let project_path = self.sample_path(&project.info.id, &sample.id);
@@ -201,13 +212,18 @@ impl ProjectStore {
             }
 
             let cached_sample_path = cached_sample.get_path();
-            match fs::copy(cached_sample_path, project_path) {
+            let future = tokio::fs::copy(cached_sample_path, project_path);
+            futures.push(future);
+        }
+
+        for future in futures {
+            match future.await {
                 Ok(_) => (),
                 Err(error) => {
                     errors.push(format!("Failed to copy sample from cache into project: {}", error));
                     continue;
                 }
-            }
+            };
         }
 
         if !errors.is_empty() {
@@ -217,20 +233,24 @@ impl ProjectStore {
         Ok(())
     }
 
-    fn load_samples_into_cache(&mut self, project_id: &ID, samples_cache: &mut SamplesCache) -> Result<(), String> {
+    async fn load_samples_into_cache(
+        &mut self,
+        project_id: &ID,
+        samples_cache: &mut SamplesCache,
+    ) -> Result<(), String> {
         samples_cache.clear();
 
         let samples_directory = self.directory_for_samples(project_id);
 
-        for entry in match fs::read_dir(samples_directory) {
+        let mut read_dir = match tokio::fs::read_dir(samples_directory).await {
             Ok(read_dir) => read_dir,
-            Err(error) => return Err(format!("Unabled to read samples directory: {}", error)),
-        } {
-            let entry = match entry {
-                Ok(entry) => entry,
-                Err(_) => continue,
-            };
+            Err(error) => return Err(format!("Error reading samples directory: {}", error)),
+        };
 
+        while let Some(entry) = match read_dir.next_entry().await {
+            Ok(entry) => entry,
+            Err(error) => return Err(format!("Error reading samples directory: {}", error)),
+        } {
             let project_path = entry.path();
             if !project_path.is_file() {
                 continue;
@@ -246,7 +266,9 @@ impl ProjectStore {
                 }
             };
 
-            samples_cache.add_sample_from_file(&sample_id, &AudioFileFormat::Wav, project_path.as_path())?;
+            samples_cache
+                .add_sample_from_file(&sample_id, &AudioFileFormat::Wav, project_path.as_path())
+                .await?;
         }
 
         Ok(())
@@ -273,8 +295,8 @@ mod tests {
         fs::remove_dir_all(root_dir).expect("Failed to remove directory");
     }
 
-    #[test]
-    fn save_and_load_project() {
+    #[tokio::test]
+    async fn save_and_load_project() {
         let temp_dir = tempfile::TempDir::new().unwrap();
         let root_dir = temp_dir.into_path();
         let project_directory: PathBuf = [root_dir.to_str().unwrap(), "projects"].iter().collect();
@@ -285,9 +307,9 @@ mod tests {
 
         let project = generators::projects::generate_project(3, 4, 5);
         let project_id = project.info.id;
-        project_store.save(project, &samples_cache).unwrap();
+        project_store.save(project, &samples_cache).await.unwrap();
 
-        let project2 = project_store.load(&project_id, &mut samples_cache).unwrap();
+        let project2 = project_store.load(&project_id, &mut samples_cache).await.unwrap();
         assert_eq!(project2.channels.len(), 3);
         assert_eq!(project2.songs.len(), 4);
         assert_eq!(project2.sections.len(), 20);
@@ -295,8 +317,8 @@ mod tests {
         fs::remove_dir_all(root_dir).unwrap();
     }
 
-    #[test]
-    fn list_projects() {
+    #[tokio::test]
+    async fn list_projects() {
         let temp_dir = tempfile::TempDir::new().unwrap();
         let root_dir = temp_dir.into_path();
         let project_directory: PathBuf = [root_dir.to_str().unwrap(), "projects"].iter().collect();
@@ -313,11 +335,11 @@ mod tests {
         let project2_id = project1.info.id;
         let project3_id = project1.info.id;
 
-        project_store.save(project1, &samples_cache).unwrap();
-        project_store.save(project2, &samples_cache).unwrap();
-        project_store.save(project3, &samples_cache).unwrap();
+        project_store.save(project1, &samples_cache).await.unwrap();
+        project_store.save(project2, &samples_cache).await.unwrap();
+        project_store.save(project3, &samples_cache).await.unwrap();
 
-        let projects = project_store.projects().unwrap();
+        let projects = project_store.projects().await.unwrap();
 
         assert_eq!(projects.len(), 3, "Should be 3 projects on disk");
         assert!(

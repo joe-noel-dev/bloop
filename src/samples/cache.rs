@@ -1,17 +1,14 @@
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
-
-use std::fs;
-use std::io::prelude::*;
-
+use super::sample::Sample;
 use crate::{
     model::id::ID,
     types::audio_file_format::{extension_for_format, AudioFileFormat},
 };
-
-use super::sample::Sample;
+use std::fs;
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
+use tokio::io::AsyncWriteExt;
 
 pub struct SamplesCache {
     root_directory: PathBuf,
@@ -37,7 +34,7 @@ impl SamplesCache {
         }
     }
 
-    pub fn add_sample_from_data(
+    pub async fn add_sample_from_data(
         &mut self,
         id: &ID,
         format: &AudioFileFormat,
@@ -46,7 +43,7 @@ impl SamplesCache {
         let mut sample = Sample::new();
         let path = self.path_for_sample(id, &format);
 
-        self.write_file(data, &path)?;
+        self.write_file(data, &path).await?;
 
         sample.set_cache_location(&path);
 
@@ -64,12 +61,17 @@ impl SamplesCache {
         })
     }
 
-    pub fn add_sample_from_file(&mut self, id: &ID, format: &AudioFileFormat, from_path: &Path) -> Result<(), String> {
+    pub async fn add_sample_from_file(
+        &mut self,
+        id: &ID,
+        format: &AudioFileFormat,
+        from_path: &Path,
+    ) -> Result<(), String> {
         let mut sample = Sample::new();
         let path = self.path_for_sample(id, &format);
 
         if path.is_file() {
-            match fs::remove_file(path.as_path()) {
+            match tokio::fs::remove_file(path.as_path()).await {
                 Ok(_) => (),
                 Err(error) => {
                     return Err(format!(
@@ -81,7 +83,7 @@ impl SamplesCache {
             }
         }
 
-        match fs::copy(from_path, path.as_path()) {
+        match tokio::fs::copy(from_path, path.as_path()).await {
             Ok(_) => (),
             Err(error) => {
                 return Err(format!(
@@ -114,9 +116,9 @@ impl SamplesCache {
         path
     }
 
-    fn write_file(&self, data: &[u8], path: &Path) -> Result<(), String> {
+    async fn write_file(&self, data: &[u8], path: &Path) -> Result<(), String> {
         let mut position = 0;
-        let mut file = match fs::File::create(path) {
+        let mut file = match tokio::fs::File::create(path).await {
             Ok(file) => file,
             Err(error) => {
                 return Err(format!(
@@ -128,7 +130,7 @@ impl SamplesCache {
         };
 
         while position < data.len() {
-            let bytes_written = match file.write(&data[position..]) {
+            let bytes_written = match file.write(&data[position..]).await {
                 Ok(bytes_written) => bytes_written,
                 Err(error) => return Err(format!("Error writing audio file: {}", error)),
             };
