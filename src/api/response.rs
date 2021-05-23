@@ -1,5 +1,15 @@
-use crate::model::{playback_state::PlaybackState, project::Project, project::ProjectInfo};
+use crate::{
+    model::{id::ID, playback_state::PlaybackState, project::Project, project::ProjectInfo},
+    waveform::data::WaveformData,
+};
 use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct WaveformResponse {
+    pub sample_id: ID,
+    pub waveform_data: WaveformData,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -12,6 +22,9 @@ pub struct Response {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub playback_state: Option<PlaybackState>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub waveform: Option<WaveformResponse>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
@@ -36,6 +49,7 @@ impl Response {
             project: None,
             projects: None,
             playback_state: None,
+            waveform: None,
             error: None,
         }
     }
@@ -57,6 +71,11 @@ impl Response {
 
     pub fn with_playback_state(mut self, playback_state: &PlaybackState) -> Self {
         self.playback_state = Some(playback_state.clone());
+        self
+    }
+
+    pub fn with_waveform(mut self, waveform: WaveformResponse) -> Self {
+        self.waveform = Some(waveform);
         self
     }
 }

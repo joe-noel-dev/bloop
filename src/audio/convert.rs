@@ -18,7 +18,6 @@ where
 }
 
 pub fn convert_sample(sample_path: &Path) -> Result<Box<OwnedAudioBuffer>, String> {
-    println!("Converting sample @ {}", sample_path.display());
     let mut reader = match hound::WavReader::open(sample_path) {
         Ok(reader) => reader,
         Err(error) => return Err(format!("Error reading audio file: {}", error)),
@@ -32,7 +31,7 @@ pub fn convert_sample(sample_path: &Path) -> Result<Box<OwnedAudioBuffer>, Strin
 
     let samples = match spec.sample_format {
         SampleFormat::Float => read_samples::<f32, _>(&mut reader, 1.0),
-        SampleFormat::Int => read_samples::<i32, _>(&mut reader, 2.0_f64.pow(spec.bits_per_sample)),
+        SampleFormat::Int => read_samples::<i32, _>(&mut reader, 2.0_f64.pow(spec.bits_per_sample - 1)),
     };
 
     Ok(Box::new(OwnedAudioBuffer::new(

@@ -1,2 +1,2 @@
 pub mod data;
-mod generate;
+pub mod generate;

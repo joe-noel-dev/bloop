@@ -94,6 +94,8 @@ impl AudioManager {
 
         self.samples_in_engine.insert(result.sample_id);
 
+        println!("Adding sample to the audio engine: {}", result.sample_id);
+
         self.send(Command::AddSample(AddSampleCommand {
             sample_id: result.sample_id,
             audio_data,

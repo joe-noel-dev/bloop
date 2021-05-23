@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[serde(rename_all = "camelCase")]
 pub enum Algorithm {
     Min,
     Max,
@@ -9,6 +9,7 @@ pub enum Algorithm {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[serde(rename_all = "camelCase")]
 pub struct Properties {
     pub length: i32,
     pub algorithm: Algorithm,
@@ -17,42 +18,43 @@ pub struct Properties {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
+pub struct WaveformGroup {
+    pub properties: Properties,
+    pub values: Vec<f32>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct WaveformData {
     sample_rate: i32,
-    data: HashMap<Properties, Vec<f32>>,
+    peaks: Vec<WaveformGroup>,
 }
 
 impl WaveformData {
     pub fn new(sample_rate: i32) -> Self {
         Self {
             sample_rate,
-            data: HashMap::new(),
+            peaks: vec![],
         }
     }
 
-    pub fn set_data(&mut self, properties: Properties, data: Vec<f32>) {
-        self.data.insert(properties, data);
+    fn get_group_mut(&mut self, properties: &Properties) -> Option<&mut WaveformGroup> {
+        self.peaks.iter_mut().find(|group| (*group).properties == *properties)
     }
 
     pub fn push(&mut self, properties: &Properties, value: f32) {
-        match self.data.get_mut(properties) {
+        match self.get_group_mut(properties) {
             None => {
-                self.data.insert(properties.clone(), vec![value]);
+                self.peaks.push(WaveformGroup {
+                    properties: properties.clone(),
+                    values: vec![value],
+                });
             }
-            Some(values) => values.push(value),
+            Some(group) => group.values.push(value),
         }
     }
 
-    pub fn sample_rate(&self) -> i32 {
-        self.sample_rate
-    }
-
-    pub fn reset(&mut self) {
-        self.sample_rate = 0;
-        self.data.clear();
-    }
-
-    pub fn add(&mut self, other: Self) {
+    pub fn add(&mut self, mut other: Self) {
         if other == *self {
             return;
         }
@@ -61,6 +63,6 @@ impl WaveformData {
             return;
         }
 
-        self.data.extend(other.data);
+        self.peaks.append(&mut other.peaks);
     }
 }

@@ -1,4 +1,4 @@
-use super::{directories::Directories, project_store::ProjectStore};
+use super::{directories::Directories, project_store::ProjectStore, waveform_store::WaveformStore};
 use crate::{
     api::{
         request::{
@@ -21,6 +21,7 @@ pub struct MainController {
     response_tx: broadcast::Sender<Response>,
     project: Project,
     audio_manager: AudioManager,
+    waveform_store: WaveformStore,
 }
 
 impl ResponseBroadcaster for MainController {
@@ -34,7 +35,7 @@ impl MainController {
         let directories = Directories::new();
         let samples_cache = SamplesCache::new(&directories.samples);
         let project_store = ProjectStore::new(&directories.projects);
-
+        let waveform_store = WaveformStore::new(response_tx.clone());
         let audio_manager = AudioManager::new(response_tx.clone());
 
         Self {
@@ -44,6 +45,7 @@ impl MainController {
             response_tx,
             project: projects::generate_project(4, 3, 3),
             audio_manager,
+            waveform_store,
         }
     }
 
@@ -98,6 +100,10 @@ impl MainController {
                 let projects = self.project_store.projects().await?;
                 self.send_response(Response::new().with_projects(&projects));
             }
+            Entity::Waveform => {
+                let sample_id = get_request.id.expect("Missing sample ID in waveform request");
+                self.waveform_store.get_waveform(&sample_id, &self.samples_cache)?;
+            }
             _ => (),
         };
 
@@ -121,6 +127,7 @@ impl MainController {
             tokio::select! {
                 Some(request) = self.request_rx.recv() => self.handle_request(request).await,
                 _ = self.audio_manager.run() => (),
+                // _ = self.waveform_store.run() => (),
                 else => break,
             }
         }

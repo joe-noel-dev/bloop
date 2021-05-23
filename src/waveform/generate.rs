@@ -1,15 +1,20 @@
-use std::{borrow::Borrow, collections::HashSet, sync::Arc, thread::spawn};
-
-use crate::audio::buffer::{AudioBuffer, ImmutableAudioBufferSlice, OwnedAudioBuffer, SampleLocation};
-
 use super::data::{Algorithm, Properties, WaveformData};
+use crate::audio::buffer::{AudioBuffer, ImmutableAudioBufferSlice, OwnedAudioBuffer, SampleLocation};
+use crate::audio::convert::convert_sample;
 use std::convert::TryInto;
+use std::{borrow::Borrow, collections::HashSet, sync::Arc};
+use std::{path::Path, thread::spawn};
 
 #[derive(Clone)]
 pub struct Options {
-    lengths: HashSet<i32>,
-    algorithms: HashSet<Algorithm>,
-    num_channels: i32,
+    pub lengths: HashSet<i32>,
+    pub algorithms: HashSet<Algorithm>,
+    pub num_channels: i32,
+}
+
+pub fn generate_waveform_from_file(sample_path: &Path, options: Options) -> Result<WaveformData, String> {
+    let audio = convert_sample(sample_path)?;
+    generate_waveform_from_audio(*audio, options)
 }
 
 pub fn generate_waveform_from_audio(audio: OwnedAudioBuffer, mut options: Options) -> Result<WaveformData, String> {
@@ -26,9 +31,7 @@ pub fn generate_waveform_from_audio(audio: OwnedAudioBuffer, mut options: Option
 
     let audio: Arc<OwnedAudioBuffer> = Arc::from(audio);
 
-    let data = WaveformData::new(audio.sample_rate().try_into().unwrap());
-
-    let data = options
+    let tasks: Vec<_> = options
         .lengths
         .iter()
         .map(|peak_length| {
@@ -40,10 +43,12 @@ pub fn generate_waveform_from_audio(audio: OwnedAudioBuffer, mut options: Option
 
             spawn(move || process_waveform(options, audio))
         })
-        .fold(data, |mut data, handle| {
-            data.add(handle.join().unwrap());
-            data
-        });
+        .collect();
+
+    let mut data = WaveformData::new(audio.sample_rate().try_into().unwrap());
+    for task in tasks {
+        data.add(task.join().unwrap());
+    }
 
     Ok(data)
 }
@@ -82,7 +87,9 @@ fn process_channel(
     let mut max_sample = 0.0_f32;
     let mut squared_total = 0.0_f64;
 
-    for frame in 0..length {
+    let num_frames = length.min(audio.num_frames());
+
+    for frame in 0..num_frames {
         let sample = audio.get_sample(&SampleLocation { channel, frame });
         min_sample = min_sample.min(sample);
         max_sample = max_sample.max(sample);
@@ -112,7 +119,7 @@ fn process_channel(
     }
 
     if algorithms.contains(&Algorithm::Rms) {
-        let mean_squared = squared_total / length as f64;
+        let mean_squared = squared_total / num_frames as f64;
         let rms = mean_squared.sqrt();
         waveform.push(
             &Properties {
