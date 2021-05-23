@@ -89,7 +89,7 @@ impl MainController {
         }
     }
 
-    async fn handle_get(&self, get_request: &GetRequest) -> Result<(), String> {
+    async fn handle_get(&mut self, get_request: &GetRequest) -> Result<(), String> {
         match get_request.entity {
             Entity::All => self.send_response(
                 Response::new()

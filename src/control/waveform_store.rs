@@ -14,16 +14,22 @@ use crate::{
 
 pub struct WaveformStore {
     response_tx: broadcast::Sender<Response>,
+    samples_being_generated: HashSet<ID>,
 }
 
 impl WaveformStore {
     pub fn new(response_tx: broadcast::Sender<Response>) -> Self {
-        Self { response_tx }
+        Self {
+            response_tx,
+            samples_being_generated: HashSet::new(),
+        }
     }
 
-    pub async fn run(&mut self) {}
+    pub fn get_waveform(&mut self, sample_id: &ID, samples_cache: &SamplesCache) -> Result<(), String> {
+        if self.samples_being_generated.contains(sample_id) {
+            return Ok(());
+        }
 
-    pub fn get_waveform(&self, sample_id: &ID, samples_cache: &SamplesCache) -> Result<(), String> {
         let sample = match samples_cache.get_sample(sample_id) {
             Some(sample) => sample,
             None => return Err(format!("Couldn't find sample with ID: {}", sample_id)),
@@ -32,6 +38,8 @@ impl WaveformStore {
         if *sample.get_cache_state() != CacheState::Cached {
             return Err(format!("Sample is not cached: {}", sample_id));
         }
+
+        self.samples_being_generated.insert(*sample_id);
 
         let tx = self.response_tx.clone();
         let sample_id = *sample_id;
