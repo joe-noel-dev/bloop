@@ -211,7 +211,6 @@ impl Audio for AudioManager {
     }
 
     fn toggle_loop(&mut self) {
-        println!("Toggle loop");
         if self.playback_state.looping {
             self.exit_loop();
         } else {
@@ -220,7 +219,6 @@ impl Audio for AudioManager {
     }
 
     fn toggle_play(&mut self) {
-        println!("Toggle play");
         match self.playback_state.playing {
             PlayingState::Stopped => self.play(),
             PlayingState::Playing => self.stop(),
