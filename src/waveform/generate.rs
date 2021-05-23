@@ -50,6 +50,8 @@ pub fn generate_waveform_from_audio(audio: OwnedAudioBuffer, mut options: Option
         data.add(task.join().unwrap());
     }
 
+    data.sort();
+
     Ok(data)
 }
 
