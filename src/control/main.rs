@@ -9,6 +9,7 @@ use crate::{
     },
     audio::{manager::Audio, manager::AudioManager},
     generators::projects,
+    midi::{action::Action, manager::MidiManager},
     model::{project::Project, sample::Sample},
     samples::cache::SamplesCache,
 };
@@ -22,6 +23,8 @@ pub struct MainController {
     project: Project,
     audio_manager: AudioManager,
     waveform_store: WaveformStore,
+    _midi_manager: MidiManager,
+    midi_action_rx: mpsc::Receiver<Action>,
 }
 
 impl ResponseBroadcaster for MainController {
@@ -37,6 +40,8 @@ impl MainController {
         let project_store = ProjectStore::new(&directories.projects);
         let waveform_store = WaveformStore::new(response_tx.clone());
         let audio_manager = AudioManager::new(response_tx.clone());
+        let (midi_action_tx, midi_action_rx) = mpsc::channel(128);
+        let midi_manager = MidiManager::new(midi_action_tx);
 
         Self {
             samples_cache,
@@ -46,6 +51,8 @@ impl MainController {
             project: projects::generate_project(4, 3, 3),
             audio_manager,
             waveform_store,
+            _midi_manager: midi_manager,
+            midi_action_rx,
         }
     }
 
@@ -77,15 +84,17 @@ impl MainController {
         };
 
         match result {
-            Ok(project) => {
-                if self.project != project {
-                    self.project = project;
-                    self.send_project_response(&self.project);
-                    self.audio_manager
-                        .on_project_updated(&self.project, &self.samples_cache);
-                }
-            }
+            Ok(project) => self.set_project(project),
             Err(error) => self.send_error_response(&error),
+        }
+    }
+
+    fn set_project(&mut self, project: Project) {
+        if self.project != project {
+            self.project = project;
+            self.send_project_response(&self.project);
+            self.audio_manager
+                .on_project_updated(&self.project, &self.samples_cache);
         }
     }
 
@@ -127,8 +136,54 @@ impl MainController {
             tokio::select! {
                 Some(request) = self.request_rx.recv() => self.handle_request(request).await,
                 _ = self.audio_manager.run() => (),
-                // _ = self.waveform_store.run() => (),
+                Some(midi_action) = self.midi_action_rx.recv() => self.handle_midi_action(midi_action),
                 else => break,
+            }
+        }
+    }
+
+    fn handle_midi_action(&mut self, action: Action) {
+        match action {
+            Action::PreviousSong => self.previous_song(),
+            Action::NextSong => self.next_song(),
+            Action::PreviousSection => self.previous_section(),
+            Action::NextSection => self.next_section(),
+            Action::QueueSelected => self.queue_selected(),
+            Action::ToggleLoop => self.audio_manager.toggle_loop(),
+            Action::TogglePlay => self.audio_manager.toggle_play(),
+        }
+    }
+
+    fn previous_song(&mut self) {
+        let mut project = self.project.clone();
+        project = project.select_previous_song();
+        self.set_project(project);
+    }
+
+    fn next_song(&mut self) {
+        let mut project = self.project.clone();
+        project = project.select_next_song();
+        self.set_project(project);
+    }
+
+    fn previous_section(&mut self) {
+        let project = self.project.clone();
+        if let Ok(project) = project.select_previous_section() {
+            self.set_project(project);
+        }
+    }
+
+    fn next_section(&mut self) {
+        let project = self.project.clone();
+        if let Ok(project) = project.select_next_section() {
+            self.set_project(project);
+        }
+    }
+
+    fn queue_selected(&mut self) {
+        if let Some(song_id) = self.project.selections.song {
+            if let Some(section_id) = self.project.selections.section {
+                self.audio_manager.queue(&song_id, &section_id);
             }
         }
     }

@@ -6,7 +6,11 @@ use super::{
 use crate::{
     api::response::Response,
     audio::{command::QueueCommand, convert::convert_sample},
-    model::{id::ID, playback_state::PlaybackState, project::Project},
+    model::{
+        id::ID,
+        playback_state::{PlaybackState, PlayingState},
+        project::Project,
+    },
     samples::{cache::SamplesCache, sample::CacheState},
 };
 use futures::StreamExt;
@@ -20,7 +24,9 @@ pub trait Audio {
     fn enter_loop(&mut self);
     fn exit_loop(&mut self);
     fn queue(&mut self, song_id: &ID, section_id: &ID);
-    fn queue_selected(&mut self);
+
+    fn toggle_loop(&mut self);
+    fn toggle_play(&mut self);
 }
 
 pub struct AudioManager {
@@ -204,5 +210,20 @@ impl Audio for AudioManager {
         }));
     }
 
-    fn queue_selected(&mut self) {}
+    fn toggle_loop(&mut self) {
+        println!("Toggle loop");
+        if self.playback_state.looping {
+            self.exit_loop();
+        } else {
+            self.enter_loop();
+        }
+    }
+
+    fn toggle_play(&mut self) {
+        println!("Toggle play");
+        match self.playback_state.playing {
+            PlayingState::Stopped => self.play(),
+            PlayingState::Playing => self.stop(),
+        }
+    }
 }
