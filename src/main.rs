@@ -2,6 +2,7 @@ mod api;
 mod audio;
 mod control;
 mod generators;
+mod midi;
 mod model;
 mod network;
 mod samples;

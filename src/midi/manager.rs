@@ -1,0 +1,109 @@
+use midir::{MidiInput, MidiInputConnection};
+use tokio::sync::mpsc;
+
+use crate::midi::matcher::ExactMatcher;
+
+use super::{action::Action, matcher::Matcher};
+
+pub struct MidiManager {
+    _input_connection: Option<MidiInputConnection<Context>>,
+}
+
+struct Mapping {
+    pub matcher: Box<dyn Matcher + Send>,
+    pub action: Action,
+}
+
+struct Context {
+    action_tx: mpsc::Sender<Action>,
+}
+
+const DESIRED_INPUT_NAME: &str = "iCON G_Boar V1.03";
+
+fn get_mappings() -> Vec<Mapping> {
+    vec![
+        Mapping {
+            matcher: Box::new(ExactMatcher::new(&[176_u8, 40_u8, 127_u8])),
+            action: Action::PreviousSong,
+        },
+        Mapping {
+            matcher: Box::new(ExactMatcher::new(&[176_u8, 41_u8, 127_u8])),
+            action: Action::NextSong,
+        },
+        Mapping {
+            matcher: Box::new(ExactMatcher::new(&[176_u8, 42_u8, 127_u8])),
+            action: Action::QueueSelected,
+        },
+        Mapping {
+            matcher: Box::new(ExactMatcher::new(&[176_u8, 43_u8, 127_u8])),
+            action: Action::ToggleLoop,
+        },
+        Mapping {
+            matcher: Box::new(ExactMatcher::new(&[176_u8, 44_u8, 127_u8])),
+            action: Action::PreviousSection,
+        },
+        Mapping {
+            matcher: Box::new(ExactMatcher::new(&[176_u8, 45_u8, 127_u8])),
+            action: Action::NextSection,
+        },
+        Mapping {
+            matcher: Box::new(ExactMatcher::new(&[176_u8, 47_u8, 127_u8])),
+            action: Action::TogglePlay,
+        },
+    ]
+}
+
+fn on_midi_input(_: u64, message: &[u8], mappings: &[Mapping], context: &mut Context) {
+    mappings
+        .iter()
+        .filter(|mapping| (*mapping).matcher.matches(message))
+        .for_each(|mapping| {
+            let _ = context.action_tx.try_send(mapping.action);
+        });
+}
+
+impl MidiManager {
+    pub fn new(action_tx: mpsc::Sender<Action>) -> Self {
+        let midi_input = MidiInput::new("Bloop").expect("Unable to connect to MIDI backend");
+        let ports = midi_input.ports();
+        println!("MIDI Input ports:");
+
+        ports.iter().for_each(|port| {
+            let name = match midi_input.port_name(port) {
+                Ok(name) => name,
+                Err(_) => return,
+            };
+
+            println!("{}", name);
+        });
+
+        let port = ports.iter().find(|port| match midi_input.port_name(port) {
+            Ok(name) => name.contains(DESIRED_INPUT_NAME),
+            Err(_) => false,
+        });
+
+        let mut input_connection: Option<MidiInputConnection<Context>> = None;
+        let mappings = get_mappings();
+
+        if let Some(port) = port {
+            println!("Connecting to {}", midi_input.port_name(port).unwrap());
+
+            input_connection = match midi_input.connect(
+                port,
+                "Bloop Input",
+                move |timestamp, message, context| on_midi_input(timestamp, message, &mappings, context),
+                Context { action_tx },
+            ) {
+                Ok(connection) => Some(connection),
+                Err(error) => {
+                    eprintln!("Unable to connect to MIDI input: {}", error);
+                    None
+                }
+            }
+        }
+
+        Self {
+            _input_connection: input_connection,
+        }
+    }
+}
