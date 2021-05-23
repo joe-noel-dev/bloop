@@ -170,6 +170,8 @@ impl AudioEngine {
                 if let Some(queued_section) = self.current_section() {
                     self.playback_state.looping = queued_section.looping;
                 }
+
+                return;
             }
         }
 
