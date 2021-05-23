@@ -2,6 +2,7 @@ use super::{
     buffer::{AudioBuffer, AudioBufferSlice, OwnedAudioBuffer},
     command::{Command, QueueCommand},
     notification::Notification,
+    periodic_notification::PeriodicNotification,
     sampler,
     timeline::Timeline,
 };
@@ -9,6 +10,7 @@ use crate::{
     model::{
         id::ID,
         playback_state::{PlaybackState, PlayingState},
+        progress::Progress,
         project::Project,
         sample::Sample,
         section::Section,
@@ -27,6 +29,7 @@ pub trait Engine {
 
 const SAMPLE_RATE: u32 = 44100;
 const MAX_SAMPLES: usize = 128;
+const NOTIFICATION_RATE_HZ: f64 = 30.0;
 
 pub struct AudioEngine {
     playback_state: PlaybackState,
@@ -39,12 +42,16 @@ pub struct AudioEngine {
     loop_count: i32,
     sample_rate: f64,
     audio_samples: HashMap<ID, Box<OwnedAudioBuffer>>,
+    progress_notification: PeriodicNotification,
 }
 
 impl AudioEngine {
     pub fn new(command_rx: Receiver<Command>, notification_tx: Sender<Notification>) -> Self {
         let mut audio_samples = HashMap::new();
         audio_samples.reserve(MAX_SAMPLES);
+
+        let mut progress_notification = PeriodicNotification::default();
+        progress_notification.reset(SAMPLE_RATE, NOTIFICATION_RATE_HZ);
 
         Self {
             playback_state: PlaybackState::new(),
@@ -57,6 +64,7 @@ impl AudioEngine {
             loop_count: 0,
             sample_rate: 44100.0,
             audio_samples,
+            progress_notification,
         }
     }
 
@@ -298,6 +306,40 @@ impl AudioEngine {
             Command::Queue(queue_command) => self.queue(queue_command),
         }
     }
+
+    fn notify_progress(&mut self) {
+        let section = match self.current_section() {
+            Some(section) => section,
+            None => return,
+        };
+
+        let sample = match self.current_sample() {
+            Some(sample) => sample,
+            None => return,
+        };
+
+        let audio_sample = match self.audio_samples.get(&sample.id) {
+            Some(buffer) => buffer,
+            None => return,
+        };
+
+        if self.last_section_start > self.sample_position {
+            return;
+        }
+
+        let beat_frequency = sample.tempo.bpm / 60.0;
+
+        let section_beat_offset =
+            (self.sample_position - self.last_section_start) as f64 * beat_frequency / self.sample_rate;
+        let song_frame_offset = (section.start + section_beat_offset) * self.sample_rate / beat_frequency;
+
+        let progress = Progress {
+            song_progress: song_frame_offset / audio_sample.num_frames() as f64,
+            section_progress: section_beat_offset / section.beat_length,
+        };
+
+        self.send_notification(Notification::Progress(progress));
+    }
 }
 
 impl Engine for AudioEngine {
@@ -325,5 +367,9 @@ impl Engine for AudioEngine {
         }
 
         self.sample_position += output.num_frames();
+
+        if self.progress_notification.increment(output.num_frames() as i64) {
+            self.notify_progress();
+        }
     }
 }

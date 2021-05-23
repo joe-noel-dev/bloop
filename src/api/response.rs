@@ -1,5 +1,5 @@
 use crate::{
-    model::{id::ID, playback_state::PlaybackState, project::Project, project::ProjectInfo},
+    model::{id::ID, playback_state::PlaybackState, progress::Progress, project::Project, project::ProjectInfo},
     waveform::data::WaveformData,
 };
 use serde::{Deserialize, Serialize};
@@ -27,6 +27,9 @@ pub struct Response {
     pub waveform: Option<WaveformResponse>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub progress: Option<Progress>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
 }
 
@@ -50,6 +53,7 @@ impl Response {
             projects: None,
             playback_state: None,
             waveform: None,
+            progress: None,
             error: None,
         }
     }
@@ -76,6 +80,11 @@ impl Response {
 
     pub fn with_waveform(mut self, waveform: WaveformResponse) -> Self {
         self.waveform = Some(waveform);
+        self
+    }
+
+    pub fn with_progress(mut self, progress: Progress) -> Self {
+        self.progress = Some(progress);
         self
     }
 }

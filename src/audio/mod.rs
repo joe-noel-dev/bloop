@@ -4,6 +4,7 @@ pub mod convert;
 mod engine;
 pub mod manager;
 pub mod notification;
+mod periodic_notification;
 mod process;
 mod sampler;
 mod timeline;

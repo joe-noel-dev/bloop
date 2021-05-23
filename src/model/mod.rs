@@ -1,6 +1,7 @@
 pub mod channel;
 pub mod id;
 pub mod playback_state;
+pub mod progress;
 pub mod project;
 pub mod sample;
 pub mod section;

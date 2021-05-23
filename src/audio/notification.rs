@@ -1,4 +1,4 @@
-use crate::model::{id::ID, playback_state::PlaybackState, project::Project};
+use crate::model::{id::ID, playback_state::PlaybackState, progress::Progress, project::Project};
 
 use super::buffer::OwnedAudioBuffer;
 
@@ -12,4 +12,5 @@ pub enum Notification {
     ReturnSample(Box<OwnedAudioBuffer>),
     Transport(PlaybackState),
     SampleConverted(SampleConversionResult),
+    Progress(Progress),
 }

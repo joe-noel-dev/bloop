@@ -84,6 +84,9 @@ impl AudioManager {
                 self.playback_state = playback_state;
             }
             Notification::SampleConverted(result) => self.on_sample_converted(result),
+            Notification::Progress(progress) => {
+                let _ = self.response_tx.send(Response::new().with_progress(progress)).unwrap();
+            }
         }
     }
 
