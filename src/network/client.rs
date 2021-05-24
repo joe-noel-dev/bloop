@@ -68,7 +68,7 @@ pub async fn run(
                 let api_request = match handle_message(&mut message) {
                     Ok(request) => request,
                     Err(error) => {
-                        send_response(response::Response::new().with_error(&error.to_string()), &mut outgoing).await;
+                        send_response(response::Response::default().with_error(&error.to_string()), &mut outgoing).await;
                         continue;
                     }
                 };

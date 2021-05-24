@@ -66,11 +66,11 @@ impl WaveformStore {
             };
 
             let response = match generate_waveform_from_file(&sample_path, options) {
-                Ok(waveform_data) => Response::new().with_waveform(WaveformResponse {
+                Ok(waveform_data) => Response::default().with_waveform(WaveformResponse {
                     sample_id,
                     waveform_data,
                 }),
-                Err(error) => Response::new().with_error(&error),
+                Err(error) => Response::default().with_error(&error),
             };
 
             tx.send(response).unwrap();

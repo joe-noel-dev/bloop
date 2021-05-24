@@ -53,7 +53,7 @@ impl AudioManager {
             response_tx,
             samples_in_engine: HashSet::new(),
             samples_being_converted: HashSet::new(),
-            playback_state: PlaybackState::new(),
+            playback_state: PlaybackState::default(),
         }
     }
 
@@ -78,14 +78,17 @@ impl AudioManager {
             Notification::ReturnSample(_) => (/* Sample is dropped here */),
             Notification::Transport(playback_state) => {
                 self.response_tx
-                    .send(Response::new().with_playback_state(&playback_state))
+                    .send(Response::default().with_playback_state(&playback_state))
                     .unwrap();
 
                 self.playback_state = playback_state;
             }
             Notification::SampleConverted(result) => self.on_sample_converted(result),
             Notification::Progress(progress) => {
-                let _ = self.response_tx.send(Response::new().with_progress(progress)).unwrap();
+                let _ = self
+                    .response_tx
+                    .send(Response::default().with_progress(progress))
+                    .unwrap();
             }
         }
     }

@@ -45,6 +45,15 @@ pub struct AudioEngine {
     progress_notification: PeriodicNotification,
 }
 
+macro_rules! unwrap_or_return {
+    ( $e:expr ) => {
+        match $e {
+            Some(x) => x,
+            None => return,
+        }
+    };
+}
+
 impl AudioEngine {
     pub fn new(command_rx: Receiver<Command>, notification_tx: Sender<Notification>) -> Self {
         let mut audio_samples = HashMap::new();
@@ -54,7 +63,7 @@ impl AudioEngine {
         progress_notification.reset(SAMPLE_RATE, NOTIFICATION_RATE_HZ);
 
         Self {
-            playback_state: PlaybackState::new(),
+            playback_state: PlaybackState::default(),
             command_rx,
             notification_tx,
             sample_position: 0,
@@ -77,10 +86,8 @@ impl AudioEngine {
     }
 
     fn current_song(&self) -> Option<&Song> {
-        match self.playback_state.song_id {
-            Some(song_id) => self.project.song_with_id(&song_id),
-            None => None,
-        }
+        let song_id = self.playback_state.song_id?;
+        self.project.song_with_id(&song_id)
     }
 
     fn current_sample(&self) -> Option<&Sample> {
@@ -126,7 +133,7 @@ impl AudioEngine {
     }
 
     fn stop(&mut self) {
-        self.playback_state = PlaybackState::new();
+        self.playback_state = PlaybackState::default();
     }
 
     fn update_project(&mut self, project: Box<Project>) {
@@ -179,15 +186,8 @@ impl AudioEngine {
             return;
         }
 
-        let song = match self.current_song() {
-            Some(song) => song,
-            None => return,
-        };
-
-        let current_section_id = match self.playback_state.section_id {
-            Some(id) => id,
-            None => return,
-        };
+        let song = unwrap_or_return!(self.current_song());
+        let current_section_id = unwrap_or_return!(self.playback_state.section_id);
 
         let mut iter = song.section_ids.iter();
         iter.find(|song_section_id| *song_section_id == &current_section_id);
@@ -310,20 +310,9 @@ impl AudioEngine {
     }
 
     fn notify_progress(&mut self) {
-        let section = match self.current_section() {
-            Some(section) => section,
-            None => return,
-        };
-
-        let sample = match self.current_sample() {
-            Some(sample) => sample,
-            None => return,
-        };
-
-        let audio_sample = match self.audio_samples.get(&sample.id) {
-            Some(buffer) => buffer,
-            None => return,
-        };
+        let section = unwrap_or_return!(self.current_section());
+        let sample = unwrap_or_return!(self.current_sample());
+        let audio_sample = unwrap_or_return!(self.audio_samples.get(&sample.id));
 
         if self.last_section_start > self.sample_position {
             return;

@@ -75,8 +75,8 @@ impl<'a> AudioBuffer for BorrowedAudioBuffer<'a> {
     }
 
     fn set_sample(&mut self, sample_location: &SampleLocation, value: f32) {
-        assert!(sample_location.channel < self.num_channels);
-        assert!(sample_location.frame < self.num_frames());
+        debug_assert!(sample_location.channel < self.num_channels);
+        debug_assert!(sample_location.frame < self.num_frames());
         self.data[sample_location.frame * self.num_channels + sample_location.channel] = value;
     }
 
@@ -86,8 +86,8 @@ impl<'a> AudioBuffer for BorrowedAudioBuffer<'a> {
     }
 
     fn get_sample(&self, sample_location: &SampleLocation) -> f32 {
-        assert!(sample_location.channel < self.num_channels);
-        assert!(sample_location.frame < self.num_frames());
+        debug_assert!(sample_location.channel < self.num_channels);
+        debug_assert!(sample_location.frame < self.num_frames());
         self.data[sample_location.frame * self.num_channels + sample_location.channel]
     }
 }
@@ -128,8 +128,8 @@ impl AudioBuffer for OwnedAudioBuffer {
     }
 
     fn set_sample(&mut self, sample_location: &SampleLocation, value: f32) {
-        assert!(sample_location.channel < self.num_channels);
-        assert!(sample_location.frame < self.num_frames());
+        debug_assert!(sample_location.channel < self.num_channels);
+        debug_assert!(sample_location.frame < self.num_frames());
         self.data[sample_location.frame * self.num_channels + sample_location.channel] = value;
     }
 
@@ -139,8 +139,8 @@ impl AudioBuffer for OwnedAudioBuffer {
     }
 
     fn get_sample(&self, sample_location: &SampleLocation) -> f32 {
-        assert!(sample_location.channel < self.num_channels);
-        assert!(sample_location.frame < self.num_frames());
+        debug_assert!(sample_location.channel < self.num_channels);
+        debug_assert!(sample_location.frame < self.num_frames());
         self.data[sample_location.frame * self.num_channels + sample_location.channel]
     }
 }

@@ -8,7 +8,13 @@ pub enum PlayingState {
     Playing,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+impl Default for PlayingState {
+    fn default() -> Self {
+        Self::Stopped
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct PlaybackState {
     pub playing: PlayingState,
@@ -20,18 +26,4 @@ pub struct PlaybackState {
 
     pub looping: bool,
     pub loop_count: i32,
-}
-
-impl PlaybackState {
-    pub fn new() -> Self {
-        Self {
-            playing: PlayingState::Stopped,
-            song_id: Option::None,
-            section_id: Option::None,
-            queued_song_id: Option::None,
-            queued_section_id: Option::None,
-            looping: false,
-            loop_count: 0,
-        }
-    }
 }

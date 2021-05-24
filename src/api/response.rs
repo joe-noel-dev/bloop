@@ -11,7 +11,7 @@ pub struct WaveformResponse {
     pub waveform_data: WaveformData,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Response {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -47,17 +47,6 @@ where
 }
 
 impl Response {
-    pub fn new() -> Self {
-        Response {
-            project: None,
-            projects: None,
-            playback_state: None,
-            waveform: None,
-            progress: None,
-            error: None,
-        }
-    }
-
     pub fn with_error(mut self, message: &str) -> Self {
         self.error = Some(message.to_string());
         self

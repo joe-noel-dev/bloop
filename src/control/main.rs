@@ -60,20 +60,18 @@ impl MainController {
         let project = self.project.clone();
         let result = match request {
             Request::Add(add_request) => self.handle_add(project, &add_request),
-            Request::Get(get_request) => match self.handle_get(&get_request).await {
-                Ok(_) => Ok(project),
-                Err(error) => Err(error),
-            },
+            Request::Get(get_request) => self.handle_get(&get_request).await.map(|_| project),
             Request::Load(load_request) => self.handle_load(&load_request).await,
             Request::Remove(remove_request) => self.handle_remove(project, &remove_request).await,
             Request::RemoveSample(remove_request) => {
                 project.remove_sample(&remove_request.sample_id, &remove_request.song_id)
             }
             Request::Rename(rename_request) => self.handle_rename(project, &rename_request),
-            Request::Save => match self.project_store.save(project.clone(), &self.samples_cache).await {
-                Ok(_) => Ok(project),
-                Err(error) => Err(error),
-            },
+            Request::Save => self
+                .project_store
+                .save(project.clone(), &self.samples_cache)
+                .await
+                .map(|_| project),
             Request::Select(select_request) => self.handle_select(project, &select_request),
             Request::Transport(transport_method) => {
                 self.handle_transport_request(&transport_method);
@@ -101,13 +99,13 @@ impl MainController {
     async fn handle_get(&mut self, get_request: &GetRequest) -> Result<(), String> {
         match get_request.entity {
             Entity::All => self.send_response(
-                Response::new()
+                Response::default()
                     .with_project(&self.project)
                     .with_playback_state(self.audio_manager.playback_state()),
             ),
             Entity::Projects => {
                 let projects = self.project_store.projects().await?;
-                self.send_response(Response::new().with_projects(&projects));
+                self.send_response(Response::default().with_projects(&projects));
             }
             Entity::Waveform => {
                 let sample_id = get_request.id.expect("Missing sample ID in waveform request");
@@ -120,11 +118,11 @@ impl MainController {
     }
 
     fn send_project_response(&self, project: &Project) {
-        self.send_response(Response::new().with_project(project));
+        self.send_response(Response::default().with_project(project));
     }
 
     fn send_error_response(&self, message: &str) {
-        self.send_response(Response::new().with_error(message));
+        self.send_response(Response::default().with_error(message));
     }
 
     fn send_response(&self, response: Response) {
@@ -199,11 +197,7 @@ impl MainController {
     }
 
     fn handle_add_section(&self, project: Project, request: &AddRequest) -> Result<Project, String> {
-        let song_id = match request.id {
-            Some(id) => id,
-            None => return Err("Missing parent ID".to_string()),
-        };
-
+        let song_id = request.id.ok_or_else(|| "Missing parent ID".to_string())?;
         project.add_section_to_song(&song_id)
     }
 
@@ -223,7 +217,7 @@ impl MainController {
             Entity::Project => {
                 self.project_store.remove_project(&remove_request.id).await?;
                 let projects = self.project_store.projects().await?;
-                self.send_response(Response::new().with_projects(&projects));
+                self.send_response(Response::default().with_projects(&projects));
                 Ok(project)
             }
             _ => Ok(project),
