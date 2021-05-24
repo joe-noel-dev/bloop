@@ -20,6 +20,7 @@ impl Process {
 
         let device = host.default_output_device().expect("No output device available");
         println!("Connecting to device: {}", device.name().unwrap());
+        println!();
 
         let mut output_configs = device.supported_output_configs().unwrap();
         let config = output_configs
