@@ -77,18 +77,15 @@ impl AudioManager {
             Notification::ReturnProject(_) => (/* Project is dropped here */),
             Notification::ReturnSample(_) => (/* Sample is dropped here */),
             Notification::Transport(playback_state) => {
-                self.response_tx
-                    .send(Response::default().with_playback_state(&playback_state))
-                    .unwrap();
+                let _ = self
+                    .response_tx
+                    .send(Response::default().with_playback_state(&playback_state));
 
                 self.playback_state = playback_state;
             }
             Notification::SampleConverted(result) => self.on_sample_converted(result),
             Notification::Progress(progress) => {
-                let _ = self
-                    .response_tx
-                    .send(Response::default().with_progress(progress))
-                    .unwrap();
+                let _ = self.response_tx.send(Response::default().with_progress(progress));
             }
         }
     }

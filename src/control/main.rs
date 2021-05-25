@@ -133,7 +133,7 @@ impl MainController {
     }
 
     fn send_response(&self, response: Response) {
-        self.response_tx.send(response).unwrap();
+        let _ = self.response_tx.send(response);
     }
 
     pub async fn run(&mut self) {
