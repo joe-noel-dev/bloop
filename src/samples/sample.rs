@@ -3,26 +3,24 @@ use std::path::{Path, PathBuf};
 pub struct Sample {
     path: PathBuf,
     name: String,
-    metadata: Option<SampleMetadata>,
-}
-
-pub struct SampleMetadata {
-    pub sample_rate: u32,
-    pub sample_count: u32,
-    pub num_channels: u32,
+    cached: bool,
 }
 
 impl Sample {
     pub fn new(name: &str) -> Self {
         Self {
             path: PathBuf::new(),
-            metadata: None,
+            cached: false,
             name: String::from(name),
         }
     }
 
     pub fn is_cached(&self) -> bool {
-        self.metadata.is_some()
+        self.cached
+    }
+
+    pub fn set_cached(&mut self, cached: bool) {
+        self.cached = cached
     }
 
     pub fn get_path(&self) -> &Path {
@@ -31,14 +29,6 @@ impl Sample {
 
     pub fn set_cache_location(&mut self, path: &Path) {
         self.path = PathBuf::from(path);
-    }
-
-    pub fn set_metadata(&mut self, metadata: SampleMetadata) {
-        self.metadata = Some(metadata);
-    }
-
-    pub fn get_metadata(&self) -> Option<&SampleMetadata> {
-        self.metadata.as_ref()
     }
 
     pub fn get_name(&self) -> &str {

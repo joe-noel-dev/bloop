@@ -1,7 +1,6 @@
 use super::sample::Sample;
 use crate::{
     model::id::ID,
-    samples::sample::SampleMetadata,
     types::audio_file_format::{extension_for_format, AudioFileFormat},
 };
 use std::fs;
@@ -14,6 +13,13 @@ use tokio::{fs::OpenOptions, io::AsyncWriteExt};
 pub struct SamplesCache {
     root_directory: PathBuf,
     samples: HashMap<ID, Sample>,
+}
+
+pub struct SampleMetadata {
+    pub name: String,
+    pub sample_rate: u32,
+    pub sample_count: u32,
+    pub num_channels: u32,
 }
 
 impl SamplesCache {
@@ -51,17 +57,27 @@ impl SamplesCache {
             return Err(format!("Sample doesn't exist on disk: {}", id));
         }
 
+        sample.set_cached(true);
+        Ok(())
+    }
+
+    pub fn get_sample_metadata(&self, id: &ID) -> Result<SampleMetadata, String> {
+        let sample = self.samples.get(id).ok_or(format!("Sample not found: {}", id))?;
+
         let path = sample.get_path();
+        if !sample.is_cached() || !path.is_file() {
+            return Err(format!("Sample doesn't exist on disk: {}", id));
+        }
+
         let wav_reader =
             hound::WavReader::open(path).map_err(|error| format!("Couldn't read audio file: {}", error))?;
 
-        sample.set_metadata(SampleMetadata {
+        Ok(SampleMetadata {
+            name: String::from(sample.get_name()),
             sample_rate: wav_reader.spec().sample_rate,
             sample_count: wav_reader.duration(),
             num_channels: u32::from(wav_reader.spec().channels),
-        });
-
-        Ok(())
+        })
     }
 
     pub async fn add_sample_from_file(
@@ -98,6 +114,7 @@ impl SamplesCache {
         };
 
         sample.set_cache_location(&path);
+        sample.set_cached(true);
 
         self.samples.insert(*id, sample);
 

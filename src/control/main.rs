@@ -278,20 +278,13 @@ impl MainController {
     }
 
     fn handle_add_sample(&mut self, request: AddSampleRequest, mut project: Project) -> Result<Project, String> {
-        let cache_sample = self
-            .samples_cache
-            .get_sample(&request.upload_id)
-            .ok_or(format!("Sample not found: {}", request.upload_id))?;
-        let sample_metadata = cache_sample
-            .get_metadata()
-            .ok_or(format!("Sample is not cached: {}", request.upload_id))?;
+        let sample_metadata = self.samples_cache.get_sample_metadata(&request.upload_id)?;
 
         let mut sample = Sample::new_with_id(&request.upload_id);
-        sample.name = String::from(cache_sample.get_name());
+        sample.name = sample_metadata.name;
         sample.sample_rate = sample_metadata.sample_rate as i32;
         sample.channel_count = sample_metadata.num_channels as i32;
         sample.sample_count = sample_metadata.sample_count as i64;
-
         project = project.add_sample_to_song(sample, &request.song_id)?;
         Ok(project)
     }
