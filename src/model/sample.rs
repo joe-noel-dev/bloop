@@ -25,6 +25,12 @@ impl Sample {
         }
     }
 
+    pub fn new_with_id(id: &ID) -> Self {
+        let mut sample = Sample::new();
+        sample.id = *id;
+        sample
+    }
+
     pub fn is_valid(&self) -> bool {
         true
     }

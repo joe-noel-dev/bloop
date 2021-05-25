@@ -11,7 +11,7 @@ use crate::{
         playback_state::{PlaybackState, PlayingState},
         project::Project,
     },
-    samples::{cache::SamplesCache, sample::CacheState},
+    samples::cache::SamplesCache,
 };
 use futures::StreamExt;
 use futures_channel::mpsc;
@@ -125,7 +125,7 @@ impl AudioManager {
                 None => continue,
             };
 
-            if *cached_sample.get_cache_state() != CacheState::Cached {
+            if !cached_sample.is_cached() {
                 continue;
             }
 

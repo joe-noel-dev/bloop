@@ -3,7 +3,7 @@ use crate::{
         id::ID,
         project::{Project, ProjectInfo},
     },
-    samples::{cache::SamplesCache, sample::CacheState},
+    samples::cache::SamplesCache,
     types::audio_file_format::AudioFileFormat,
 };
 use std::convert::TryInto;
@@ -206,7 +206,7 @@ impl ProjectStore {
                 }
             };
 
-            if *cached_sample.get_cache_state() != CacheState::Cached {
+            if !cached_sample.is_cached() {
                 errors.push(format!("Sample isn't cached: {}", sample.id));
                 continue;
             }

@@ -75,17 +75,6 @@ pub struct RenameRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct UploadSampleRequest {
-    pub song_id: id::ID,
-    pub name: String,
-    pub format: AudioFileFormat,
-
-    #[serde(with = "serde_bytes")]
-    pub file_data: Vec<u8>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct RemoveSampleRequest {
     pub sample_id: id::ID,
     pub song_id: id::ID,
@@ -111,6 +100,35 @@ pub enum TransportMethod {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct BeginUploadRequest {
+    pub upload_id: id::ID,
+    pub filename: String,
+    pub format: AudioFileFormat,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct UploadRequest {
+    pub upload_id: id::ID,
+    #[serde(with = "serde_bytes")]
+    pub data: Vec<u8>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CompleteUploadRequest {
+    pub upload_id: id::ID,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct AddSampleRequest {
+    pub song_id: id::ID,
+    pub upload_id: id::ID,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 #[serde(tag = "method", content = "payload")]
 pub enum Request {
     Get(GetRequest),
@@ -121,7 +139,10 @@ pub enum Request {
     Save,
     Load(LoadRequest),
     Rename(RenameRequest),
-    Upload(UploadSampleRequest),
+    BeginUpload(BeginUploadRequest),
+    Upload(UploadRequest),
+    CompleteUpload(CompleteUploadRequest),
+    AddSample(AddSampleRequest),
     RemoveSample(RemoveSampleRequest),
     Transport(TransportMethod),
 }

@@ -1,6 +1,7 @@
 use super::sample::Sample;
 use crate::{
     model::id::ID,
+    samples::sample::SampleMetadata,
     types::audio_file_format::{extension_for_format, AudioFileFormat},
 };
 use std::fs;
@@ -8,17 +9,11 @@ use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
-use tokio::io::AsyncWriteExt;
+use tokio::{fs::OpenOptions, io::AsyncWriteExt};
 
 pub struct SamplesCache {
     root_directory: PathBuf,
     samples: HashMap<ID, Sample>,
-}
-
-pub struct SampleMetadata {
-    pub sample_rate: u32,
-    pub sample_count: u32,
-    pub num_channels: u32,
 }
 
 impl SamplesCache {
@@ -34,31 +29,39 @@ impl SamplesCache {
         }
     }
 
-    pub async fn add_sample_from_data(
-        &mut self,
-        id: &ID,
-        format: &AudioFileFormat,
-        data: &[u8],
-    ) -> Result<SampleMetadata, String> {
-        let mut sample = Sample::new();
+    pub fn begin_upload(&mut self, id: &ID, format: &AudioFileFormat, filename: &str) {
+        let mut sample = Sample::new(filename);
         let path = self.path_for_sample(id, &format);
-
-        self.write_file(data, &path).await?;
-
         sample.set_cache_location(&path);
-
         self.samples.insert(*id, sample);
+    }
 
-        let wav_reader = match hound::WavReader::open(path) {
-            Ok(reader) => reader,
-            Err(error) => return Err(format!("Failed to read audio file: {}", error)),
-        };
+    pub async fn upload(&mut self, id: &ID, data: &[u8]) -> Result<(), String> {
+        let sample = self.samples.get(id).ok_or(format!("Sample not found: {}", id))?;
+        let path = sample.get_path();
+        self.write_to_file(data, path).await?;
+        Ok(())
+    }
 
-        Ok(SampleMetadata {
+    pub fn complete_upload(&mut self, id: &ID) -> Result<(), String> {
+        let sample = self.samples.get_mut(id).ok_or(format!("Sample not found: {}", id))?;
+
+        let path = sample.get_path();
+        if !path.is_file() {
+            return Err(format!("Sample doesn't exist on disk: {}", id));
+        }
+
+        let path = sample.get_path();
+        let wav_reader =
+            hound::WavReader::open(path).map_err(|error| format!("Couldn't read audio file: {}", error))?;
+
+        sample.set_metadata(SampleMetadata {
             sample_rate: wav_reader.spec().sample_rate,
             sample_count: wav_reader.duration(),
             num_channels: u32::from(wav_reader.spec().channels),
-        })
+        });
+
+        Ok(())
     }
 
     pub async fn add_sample_from_file(
@@ -67,7 +70,7 @@ impl SamplesCache {
         format: &AudioFileFormat,
         from_path: &Path,
     ) -> Result<(), String> {
-        let mut sample = Sample::new();
+        let mut sample = Sample::new("");
         let path = self.path_for_sample(id, &format);
 
         if path.is_file() {
@@ -116,9 +119,10 @@ impl SamplesCache {
         path
     }
 
-    async fn write_file(&self, data: &[u8], path: &Path) -> Result<(), String> {
+    async fn write_to_file(&self, data: &[u8], path: &Path) -> Result<(), String> {
         let mut position = 0;
-        let mut file = match tokio::fs::File::create(path).await {
+
+        let mut file = match OpenOptions::new().append(true).create(true).open(path).await {
             Ok(file) => file,
             Err(error) => {
                 return Err(format!(

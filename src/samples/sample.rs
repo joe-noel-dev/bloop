@@ -1,26 +1,28 @@
 use std::path::{Path, PathBuf};
 
-#[derive(PartialEq)]
-pub enum CacheState {
-    Init,
-    Cached,
+pub struct Sample {
+    path: PathBuf,
+    name: String,
+    metadata: Option<SampleMetadata>,
 }
 
-pub struct Sample {
-    cache_state: CacheState,
-    path: PathBuf,
+pub struct SampleMetadata {
+    pub sample_rate: u32,
+    pub sample_count: u32,
+    pub num_channels: u32,
 }
 
 impl Sample {
-    pub fn new() -> Self {
+    pub fn new(name: &str) -> Self {
         Self {
-            cache_state: CacheState::Init,
             path: PathBuf::new(),
+            metadata: None,
+            name: String::from(name),
         }
     }
 
-    pub fn get_cache_state(&self) -> &CacheState {
-        &self.cache_state
+    pub fn is_cached(&self) -> bool {
+        self.metadata.is_some()
     }
 
     pub fn get_path(&self) -> &Path {
@@ -28,13 +30,19 @@ impl Sample {
     }
 
     pub fn set_cache_location(&mut self, path: &Path) {
-        if path.exists() {
-            self.cache_state = CacheState::Cached;
-        } else {
-            self.cache_state = CacheState::Init;
-        }
-
         self.path = PathBuf::from(path);
+    }
+
+    pub fn set_metadata(&mut self, metadata: SampleMetadata) {
+        self.metadata = Some(metadata);
+    }
+
+    pub fn get_metadata(&self) -> Option<&SampleMetadata> {
+        self.metadata.as_ref()
+    }
+
+    pub fn get_name(&self) -> &str {
+        &self.name
     }
 
     pub fn delete_sample_on_disk(&self) {

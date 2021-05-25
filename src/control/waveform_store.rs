@@ -5,7 +5,7 @@ use tokio::sync::broadcast;
 use crate::{
     api::response::{Response, WaveformResponse},
     model::id::ID,
-    samples::{cache::SamplesCache, sample::CacheState},
+    samples::cache::SamplesCache,
     waveform::{
         data::Algorithm,
         generate::{generate_waveform_from_file, Options},
@@ -35,7 +35,7 @@ impl WaveformStore {
             None => return Err(format!("Couldn't find sample with ID: {}", sample_id)),
         };
 
-        if *sample.get_cache_state() != CacheState::Cached {
+        if !sample.is_cached() {
             return Err(format!("Sample is not cached: {}", sample_id));
         }
 

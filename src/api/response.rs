@@ -11,6 +11,12 @@ pub struct WaveformResponse {
     pub waveform_data: WaveformData,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct UploadAck {
+    pub upload_id: ID,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Response {
@@ -28,6 +34,9 @@ pub struct Response {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub progress: Option<Progress>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub upload: Option<UploadAck>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
@@ -74,6 +83,11 @@ impl Response {
 
     pub fn with_progress(mut self, progress: Progress) -> Self {
         self.progress = Some(progress);
+        self
+    }
+
+    pub fn with_upload_ack(mut self, upload_ack: UploadAck) -> Self {
+        self.upload = Some(upload_ack);
         self
     }
 }

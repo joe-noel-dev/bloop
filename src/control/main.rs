@@ -2,10 +2,10 @@ use super::{directories::Directories, project_store::ProjectStore, waveform_stor
 use crate::{
     api::{
         request::{
-            AddRequest, Entity, GetRequest, LoadRequest, RemoveRequest, RenameRequest, Request, SelectRequest,
-            TransportMethod, UpdateRequest, UploadSampleRequest,
+            AddRequest, AddSampleRequest, BeginUploadRequest, CompleteUploadRequest, Entity, GetRequest, LoadRequest,
+            RemoveRequest, RenameRequest, Request, SelectRequest, TransportMethod, UpdateRequest, UploadRequest,
         },
-        response::{Response, ResponseBroadcaster},
+        response::{Response, ResponseBroadcaster, UploadAck},
     },
     audio::{manager::Audio, manager::AudioManager},
     generators::projects,
@@ -78,7 +78,14 @@ impl MainController {
                 Ok(project)
             }
             Request::Update(update_request) => self.handle_update(project, &update_request),
-            Request::Upload(upload_request) => self.handle_upload(&upload_request, project).await,
+            Request::BeginUpload(begin_upload_request) => {
+                self.handle_begin_upload(begin_upload_request).map(|_| project)
+            }
+            Request::Upload(upload_request) => self.handle_upload(upload_request).await.map(|_| project),
+            Request::CompleteUpload(complete_upload_request) => {
+                self.handle_complete_upload(complete_upload_request).map(|_| project)
+            }
+            Request::AddSample(add_sample_request) => self.handle_add_sample(add_sample_request, project),
         };
 
         match result {
@@ -243,20 +250,50 @@ impl MainController {
         self.project_store.load(&request.id, &mut self.samples_cache).await
     }
 
-    async fn handle_upload(&mut self, request: &UploadSampleRequest, project: Project) -> Result<Project, String> {
-        let mut sample = Sample::new();
+    fn handle_begin_upload(&mut self, request: BeginUploadRequest) -> Result<(), String> {
+        println!("Upload started {}", request.upload_id);
+        self.samples_cache
+            .begin_upload(&request.upload_id, &request.format, &request.filename);
+        self.send_response(Response::default().with_upload_ack(UploadAck {
+            upload_id: request.upload_id,
+        }));
+        Ok(())
+    }
 
-        let sample_metadata = self
+    fn handle_complete_upload(&mut self, request: CompleteUploadRequest) -> Result<(), String> {
+        println!("Upload complete {}", request.upload_id);
+        self.samples_cache.complete_upload(&request.upload_id)?;
+        self.send_response(Response::default().with_upload_ack(UploadAck {
+            upload_id: request.upload_id,
+        }));
+        Ok(())
+    }
+
+    async fn handle_upload(&mut self, request: UploadRequest) -> Result<(), String> {
+        self.samples_cache.upload(&request.upload_id, &request.data).await?;
+        self.send_response(Response::default().with_upload_ack(UploadAck {
+            upload_id: request.upload_id,
+        }));
+        Ok(())
+    }
+
+    fn handle_add_sample(&mut self, request: AddSampleRequest, mut project: Project) -> Result<Project, String> {
+        let cache_sample = self
             .samples_cache
-            .add_sample_from_data(&sample.id, &request.format, &request.file_data)
-            .await?;
+            .get_sample(&request.upload_id)
+            .ok_or(format!("Sample not found: {}", request.upload_id))?;
+        let sample_metadata = cache_sample
+            .get_metadata()
+            .ok_or(format!("Sample is not cached: {}", request.upload_id))?;
 
-        sample.name = request.name.clone();
+        let mut sample = Sample::new_with_id(&request.upload_id);
+        sample.name = String::from(cache_sample.get_name());
         sample.sample_rate = sample_metadata.sample_rate as i32;
         sample.channel_count = sample_metadata.num_channels as i32;
         sample.sample_count = sample_metadata.sample_count as i64;
 
-        project.add_sample_to_song(sample, &request.song_id)
+        project = project.add_sample_to_song(sample, &request.song_id)?;
+        Ok(project)
     }
 
     fn handle_transport_request(&mut self, transport_method: &TransportMethod) {
