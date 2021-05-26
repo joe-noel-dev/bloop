@@ -1,4 +1,5 @@
 use crate::audio::buffer::OwnedAudioBuffer;
+use anyhow::{anyhow, Context};
 use hound::SampleFormat;
 use num_traits::pow::Pow;
 use std::convert::From;
@@ -17,16 +18,13 @@ where
         .collect()
 }
 
-pub fn convert_sample(sample_path: &Path) -> Result<Box<OwnedAudioBuffer>, String> {
-    let mut reader = match hound::WavReader::open(sample_path) {
-        Ok(reader) => reader,
-        Err(error) => return Err(format!("Error reading audio file: {}", error)),
-    };
+pub fn convert_sample(sample_path: &Path) -> anyhow::Result<Box<OwnedAudioBuffer>> {
+    let mut reader = hound::WavReader::open(sample_path).context("Unable to open file for conversion")?;
 
     let spec = reader.spec();
 
     if spec.sample_rate != 44100 {
-        return Err("Only samples at 44.1 kHz are supported at present".to_string());
+        return Err(anyhow!("Only samples at 44.1 kHz are supported at present"));
     }
 
     let samples = match spec.sample_format {

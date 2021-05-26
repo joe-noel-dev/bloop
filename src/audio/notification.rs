@@ -1,10 +1,11 @@
 use crate::model::{id::ID, playback_state::PlaybackState, progress::Progress, project::Project};
+use anyhow::Result;
 
 use super::buffer::OwnedAudioBuffer;
 
 pub struct SampleConversionResult {
     pub sample_id: ID,
-    pub result: Result<Box<OwnedAudioBuffer>, String>,
+    pub result: Result<Box<OwnedAudioBuffer>>,
 }
 
 pub enum Notification {

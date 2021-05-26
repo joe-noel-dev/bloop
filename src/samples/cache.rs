@@ -3,6 +3,7 @@ use crate::{
     model::id::ID,
     types::audio_file_format::{extension_for_format, AudioFileFormat},
 };
+use anyhow::{anyhow, Context};
 use std::fs;
 use std::{
     collections::HashMap,
@@ -43,19 +44,25 @@ impl SamplesCache {
         self.samples.insert(*id, sample);
     }
 
-    pub async fn upload(&mut self, id: &ID, data: &[u8]) -> Result<(), String> {
-        let sample = self.samples.get(id).ok_or(format!("Sample not found: {}", id))?;
+    pub async fn upload(&mut self, id: &ID, data: &[u8]) -> anyhow::Result<()> {
+        let sample = self
+            .samples
+            .get(id)
+            .ok_or_else(|| anyhow!("Sample not found: {}", id))?;
         let path = sample.get_path();
         self.write_to_file(data, path).await?;
         Ok(())
     }
 
-    pub fn complete_upload(&mut self, id: &ID) -> Result<(), String> {
-        let sample = self.samples.get_mut(id).ok_or(format!("Sample not found: {}", id))?;
+    pub fn complete_upload(&mut self, id: &ID) -> anyhow::Result<()> {
+        let sample = self
+            .samples
+            .get_mut(id)
+            .ok_or_else(|| anyhow!("Sample not found: {}", id))?;
 
         let path = sample.get_path();
         if !path.is_file() {
-            return Err(format!("Sample doesn't exist on disk: {}", id));
+            return Err(anyhow!("Sample doesn't exist on disk: {}", id));
         }
 
         sample.set_cached(true);
@@ -79,16 +86,18 @@ impl SamplesCache {
             })
     }
 
-    pub fn get_sample_metadata(&self, id: &ID) -> Result<SampleMetadata, String> {
-        let sample = self.samples.get(id).ok_or(format!("Sample not found: {}", id))?;
+    pub fn get_sample_metadata(&self, id: &ID) -> anyhow::Result<SampleMetadata> {
+        let sample = self
+            .samples
+            .get(id)
+            .ok_or_else(|| anyhow!("Sample not found: {}", id))?;
 
         let path = sample.get_path();
         if !sample.is_cached() || !path.is_file() {
-            return Err(format!("Sample doesn't exist on disk: {}", id));
+            return Err(anyhow!("Sample doesn't exist on disk: {}", id));
         }
 
-        let wav_reader =
-            hound::WavReader::open(path).map_err(|error| format!("Couldn't read audio file: {}", error))?;
+        let wav_reader = hound::WavReader::open(path).with_context(|| format!("Couldn't read audio file: {}", id))?;
 
         Ok(SampleMetadata {
             name: String::from(sample.get_name()),
@@ -104,33 +113,19 @@ impl SamplesCache {
         id: &ID,
         format: &AudioFileFormat,
         from_path: &Path,
-    ) -> Result<(), String> {
+    ) -> anyhow::Result<()> {
         let mut sample = Sample::new("");
         let path = self.path_for_sample(id, &format);
 
         if path.is_file() {
-            match tokio::fs::remove_file(path.as_path()).await {
-                Ok(_) => (),
-                Err(error) => {
-                    return Err(format!(
-                        "Failed to remove existing file ({}): {}",
-                        path.display(),
-                        error
-                    ))
-                }
-            }
+            tokio::fs::remove_file(path.as_path())
+                .await
+                .with_context(|| format!("Failed to remove existing file: {}", path.display()))?
         }
 
-        match tokio::fs::copy(from_path, path.as_path()).await {
-            Ok(_) => (),
-            Err(error) => {
-                return Err(format!(
-                    "Error copying sample into cache ({}): {}",
-                    from_path.display(),
-                    error
-                ))
-            }
-        };
+        tokio::fs::copy(from_path, path.as_path())
+            .await
+            .with_context(|| format!("Error copying sample into cache: {}", from_path.display()))?;
 
         sample.set_cache_location(&path);
         sample.set_cached(true);
@@ -155,25 +150,21 @@ impl SamplesCache {
         path
     }
 
-    async fn write_to_file(&self, data: &[u8], path: &Path) -> Result<(), String> {
+    async fn write_to_file(&self, data: &[u8], path: &Path) -> anyhow::Result<()> {
         let mut position = 0;
 
-        let mut file = match OpenOptions::new().append(true).create(true).open(path).await {
-            Ok(file) => file,
-            Err(error) => {
-                return Err(format!(
-                    "Failed to open audio file ({}): {}",
-                    path.display(),
-                    error.to_string()
-                ))
-            }
-        };
+        let mut file = OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(path)
+            .await
+            .with_context(|| format!("Failed to open audio file: {}", path.display()))?;
 
         while position < data.len() {
-            let bytes_written = match file.write(&data[position..]).await {
-                Ok(bytes_written) => bytes_written,
-                Err(error) => return Err(format!("Error writing audio file: {}", error)),
-            };
+            let bytes_written = file
+                .write(&data[position..])
+                .await
+                .with_context(|| format!("Error writing audio file: {}", path.display()))?;
 
             position += bytes_written;
         }

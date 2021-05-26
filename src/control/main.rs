@@ -13,6 +13,7 @@ use crate::{
     model::{project::Project, sample::Sample},
     samples::cache::SamplesCache,
 };
+use anyhow::anyhow;
 use tokio::sync::{broadcast, mpsc};
 
 pub struct MainController {
@@ -90,7 +91,7 @@ impl MainController {
 
         match result {
             Ok(project) => self.set_project(project),
-            Err(error) => self.send_error_response(&error),
+            Err(error) => self.send_error_response(&error.to_string()),
         }
     }
 
@@ -103,7 +104,7 @@ impl MainController {
         }
     }
 
-    async fn handle_get(&mut self, get_request: &GetRequest) -> Result<(), String> {
+    async fn handle_get(&mut self, get_request: &GetRequest) -> anyhow::Result<()> {
         match get_request.entity {
             Entity::All => self.send_response(
                 Response::default()
@@ -193,7 +194,7 @@ impl MainController {
         }
     }
 
-    fn handle_add(&self, project: Project, request: &AddRequest) -> Result<Project, String> {
+    fn handle_add(&self, project: Project, request: &AddRequest) -> anyhow::Result<Project> {
         match request.entity {
             Entity::Channel => project.add_channel(),
             Entity::Section => self.handle_add_section(project, request),
@@ -203,12 +204,12 @@ impl MainController {
         }
     }
 
-    fn handle_add_section(&self, project: Project, request: &AddRequest) -> Result<Project, String> {
-        let song_id = request.id.ok_or_else(|| "Missing parent ID".to_string())?;
+    fn handle_add_section(&self, project: Project, request: &AddRequest) -> anyhow::Result<Project> {
+        let song_id = request.id.ok_or_else(|| anyhow!("Missing parent ID"))?;
         project.add_section_to_song(&song_id)
     }
 
-    fn handle_select(&self, project: Project, select_request: &SelectRequest) -> Result<Project, String> {
+    fn handle_select(&self, project: Project, select_request: &SelectRequest) -> anyhow::Result<Project> {
         match select_request.entity {
             Entity::Song => Ok(project.select_song_with_id(&select_request.id)),
             Entity::Section => project.select_section(&select_request.id),
@@ -216,7 +217,7 @@ impl MainController {
         }
     }
 
-    async fn handle_remove(&self, project: Project, remove_request: &RemoveRequest) -> Result<Project, String> {
+    async fn handle_remove(&self, project: Project, remove_request: &RemoveRequest) -> anyhow::Result<Project> {
         match remove_request.entity {
             Entity::Song => project.remove_song(&remove_request.id),
             Entity::Section => project.remove_section(&remove_request.id),
@@ -231,7 +232,7 @@ impl MainController {
         }
     }
 
-    fn handle_update(&self, project: Project, update_request: &UpdateRequest) -> Result<Project, String> {
+    fn handle_update(&self, project: Project, update_request: &UpdateRequest) -> anyhow::Result<Project> {
         match update_request {
             UpdateRequest::Song(song) => project.replace_song(song),
             UpdateRequest::Section(section) => project.replace_section(section),
@@ -239,18 +240,18 @@ impl MainController {
         }
     }
 
-    fn handle_rename(&self, project: Project, rename_request: &RenameRequest) -> Result<Project, String> {
+    fn handle_rename(&self, project: Project, rename_request: &RenameRequest) -> anyhow::Result<Project> {
         match rename_request.entity {
             Entity::Project => Ok(project.with_name(&rename_request.name)),
             _ => Ok(project),
         }
     }
 
-    async fn handle_load(&mut self, request: &LoadRequest) -> Result<Project, String> {
+    async fn handle_load(&mut self, request: &LoadRequest) -> anyhow::Result<Project> {
         self.project_store.load(&request.id, &mut self.samples_cache).await
     }
 
-    fn handle_begin_upload(&mut self, request: BeginUploadRequest) -> Result<(), String> {
+    fn handle_begin_upload(&mut self, request: BeginUploadRequest) -> anyhow::Result<()> {
         println!("Upload started {}", request.upload_id);
         self.samples_cache
             .begin_upload(&request.upload_id, &request.format, &request.filename);
@@ -260,7 +261,7 @@ impl MainController {
         Ok(())
     }
 
-    fn handle_complete_upload(&mut self, request: CompleteUploadRequest) -> Result<(), String> {
+    fn handle_complete_upload(&mut self, request: CompleteUploadRequest) -> anyhow::Result<()> {
         println!("Upload complete {}", request.upload_id);
         self.samples_cache.complete_upload(&request.upload_id)?;
         self.send_response(Response::default().with_upload_ack(UploadAck {
@@ -269,7 +270,7 @@ impl MainController {
         Ok(())
     }
 
-    async fn handle_upload(&mut self, request: UploadRequest) -> Result<(), String> {
+    async fn handle_upload(&mut self, request: UploadRequest) -> anyhow::Result<()> {
         self.samples_cache.upload(&request.upload_id, &request.data).await?;
         self.send_response(Response::default().with_upload_ack(UploadAck {
             upload_id: request.upload_id,
@@ -277,7 +278,7 @@ impl MainController {
         Ok(())
     }
 
-    fn handle_add_sample(&mut self, request: AddSampleRequest, mut project: Project) -> Result<Project, String> {
+    fn handle_add_sample(&mut self, request: AddSampleRequest, mut project: Project) -> anyhow::Result<Project> {
         let sample_metadata = self.samples_cache.get_sample_metadata(&request.upload_id)?;
 
         let mut sample = Sample::new_with_id(&request.upload_id);

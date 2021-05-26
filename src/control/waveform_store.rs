@@ -1,7 +1,3 @@
-use std::{collections::HashSet, thread::spawn};
-
-use tokio::sync::broadcast;
-
 use crate::{
     api::response::{Response, WaveformResponse},
     model::id::ID,
@@ -11,6 +7,9 @@ use crate::{
         generate::{generate_waveform_from_file, Options},
     },
 };
+use anyhow::anyhow;
+use std::{collections::HashSet, thread::spawn};
+use tokio::sync::broadcast;
 
 pub struct WaveformStore {
     response_tx: broadcast::Sender<Response>,
@@ -25,18 +24,18 @@ impl WaveformStore {
         }
     }
 
-    pub fn get_waveform(&mut self, sample_id: &ID, samples_cache: &SamplesCache) -> Result<(), String> {
+    pub fn get_waveform(&mut self, sample_id: &ID, samples_cache: &SamplesCache) -> anyhow::Result<()> {
         if self.samples_being_generated.contains(sample_id) {
             return Ok(());
         }
 
         let sample = match samples_cache.get_sample(sample_id) {
             Some(sample) => sample,
-            None => return Err(format!("Couldn't find sample with ID: {}", sample_id)),
+            None => return Err(anyhow!("Couldn't find sample with ID: {}", sample_id)),
         };
 
         if !sample.is_cached() {
-            return Err(format!("Sample is not cached: {}", sample_id));
+            return Err(anyhow!("Sample is not cached: {}", sample_id));
         }
 
         self.samples_being_generated.insert(*sample_id);
@@ -70,7 +69,7 @@ impl WaveformStore {
                     sample_id,
                     waveform_data,
                 }),
-                Err(error) => Response::default().with_error(&error),
+                Err(error) => Response::default().with_error(&error.to_string()),
             };
 
             tx.send(response).unwrap();

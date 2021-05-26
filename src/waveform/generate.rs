@@ -12,12 +12,12 @@ pub struct Options {
     pub num_channels: i32,
 }
 
-pub fn generate_waveform_from_file(sample_path: &Path, options: Options) -> Result<WaveformData, String> {
+pub fn generate_waveform_from_file(sample_path: &Path, options: Options) -> anyhow::Result<WaveformData> {
     let audio = convert_sample(sample_path)?;
     generate_waveform_from_audio(*audio, options)
 }
 
-pub fn generate_waveform_from_audio(audio: OwnedAudioBuffer, mut options: Options) -> Result<WaveformData, String> {
+pub fn generate_waveform_from_audio(audio: OwnedAudioBuffer, mut options: Options) -> anyhow::Result<WaveformData> {
     let min_num_peaks = 10;
     let num_frames: i32 = audio.num_frames().try_into().unwrap();
     let max_peak_length: i32 = num_frames / min_num_peaks;

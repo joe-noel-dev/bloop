@@ -6,6 +6,7 @@ use crate::{
     samples::cache::SamplesCache,
     types::audio_file_format::AudioFileFormat,
 };
+use anyhow::{anyhow, Context};
 use std::convert::TryInto;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{
@@ -36,7 +37,7 @@ impl ProjectStore {
         }
     }
 
-    pub async fn save(&self, mut project: Project, samples_cache: &SamplesCache) -> Result<(), String> {
+    pub async fn save(&self, mut project: Project, samples_cache: &SamplesCache) -> anyhow::Result<()> {
         project.info.last_saved = current_time();
         self.create_project_directory(&project.info.id).await?;
         self.create_samples_directory(&project.info.id).await?;
@@ -45,23 +46,23 @@ impl ProjectStore {
         Ok(())
     }
 
-    pub async fn load(&mut self, project_id: &ID, samples_cache: &mut SamplesCache) -> Result<Project, String> {
+    pub async fn load(&mut self, project_id: &ID, samples_cache: &mut SamplesCache) -> anyhow::Result<Project> {
         let project = self.read_project_json(project_id).await?;
         self.load_samples_into_cache(project_id, samples_cache).await?;
         Ok(project)
     }
 
-    pub async fn projects(&self) -> Result<Vec<ProjectInfo>, String> {
+    pub async fn projects(&self) -> anyhow::Result<Vec<ProjectInfo>> {
         let mut project_infos = vec![];
-        let mut read_dir = match tokio::fs::read_dir(&self.root_directory).await {
-            Ok(read_dir) => read_dir,
-            Err(error) => return Err(format!("Error reading projects directory: {}", error)),
-        };
+        let mut read_dir = tokio::fs::read_dir(&self.root_directory)
+            .await
+            .context("Error reading projects directory")?;
 
-        while let Some(entry) = match read_dir.next_entry().await {
-            Ok(entry) => entry,
-            Err(error) => return Err(format!("Error reading projects directory: {}", error)),
-        } {
+        while let Some(entry) = read_dir
+            .next_entry()
+            .await
+            .context("Error iterating through projects directory")?
+        {
             let path = entry.path();
             if !path.is_dir() {
                 continue;
@@ -91,37 +92,32 @@ impl ProjectStore {
         Ok(project_infos)
     }
 
-    pub async fn remove_project(&self, project_id: &ID) -> Result<(), String> {
+    pub async fn remove_project(&self, project_id: &ID) -> anyhow::Result<()> {
         let directory = self.directory_for_project(project_id);
         if !directory.is_dir() {
             return Ok(());
         }
 
-        match tokio::fs::remove_dir_all(directory).await {
-            Ok(_) => Ok(()),
-            Err(error) => Err(error.to_string()),
-        }
+        Ok(tokio::fs::remove_dir_all(directory).await?)
     }
 
-    async fn create_project_directory(&self, project_id: &ID) -> Result<(), String> {
+    async fn create_project_directory(&self, project_id: &ID) -> anyhow::Result<()> {
         let project_directory = self.directory_for_project(project_id);
         if !project_directory.exists() {
-            match tokio::fs::create_dir_all(project_directory).await {
-                Ok(_) => (),
-                Err(error) => return Err(error.to_string()),
-            }
+            tokio::fs::create_dir_all(project_directory)
+                .await
+                .with_context(|| format!("Unable to create project directory: {}", project_id))?;
         }
 
         Ok(())
     }
 
-    async fn create_samples_directory(&self, project_id: &ID) -> Result<(), String> {
+    async fn create_samples_directory(&self, project_id: &ID) -> anyhow::Result<()> {
         let samples_directory = self.directory_for_samples(project_id);
         if !samples_directory.exists() {
-            match tokio::fs::create_dir_all(samples_directory).await {
-                Ok(_) => (),
-                Err(error) => return Err(error.to_string()),
-            }
+            tokio::fs::create_dir_all(samples_directory)
+                .await
+                .with_context(|| format!("Unable to create samples directory: {}", project_id))?;
         }
 
         Ok(())
@@ -145,39 +141,30 @@ impl ProjectStore {
         json_path
     }
 
-    async fn write_project_json(&self, project: Project) -> Result<(), String> {
+    async fn write_project_json(&self, project: Project) -> anyhow::Result<()> {
         let json_path = self.project_json_path(&project.info.id);
 
-        let mut file = match tokio::fs::File::create(json_path).await {
-            Ok(file) => file,
-            Err(error) => return Err(error.to_string()),
-        };
+        let mut file = tokio::fs::File::create(json_path)
+            .await
+            .context("Failed to open project JSON file for writing")?;
 
-        let json = match serde_json::to_string(&project) {
-            Ok(string) => string,
-            Err(error) => return Err(format!("Failed to convert project to JSON: {}", error)),
-        };
+        let json = serde_json::to_string(&project).context("Failed to convert project to JSON")?;
 
-        match file.write(json.as_bytes()).await {
-            Ok(_) => (),
-            Err(error) => return Err(format!("Failed to write project JSON: {}", error)),
-        }
-
+        file.write(json.as_bytes())
+            .await
+            .context("Failed to write project JSON")?;
         Ok(())
     }
 
-    async fn read_project_json(&self, project_id: &ID) -> Result<Project, String> {
+    async fn read_project_json(&self, project_id: &ID) -> anyhow::Result<Project> {
         let json_path = self.project_json_path(project_id);
 
-        let data = match tokio::fs::read_to_string(json_path).await {
-            Ok(string) => string,
-            Err(error) => return Err(format!("Failed to read project: {}", error)),
-        };
+        let data = tokio::fs::read_to_string(json_path)
+            .await
+            .with_context(|| format!("Failed to read project with ID: {}", project_id))?;
 
-        match serde_json::from_str::<Project>(&data) {
-            Ok(project) => Ok(project),
-            Err(error) => return Err(error.to_string()),
-        }
+        Ok(serde_json::from_str::<Project>(&data)
+            .with_context(|| format!("Failed to parse project JSON: {}", project_id))?)
     }
 
     fn sample_path(&self, project_id: &ID, sample_id: &ID) -> PathBuf {
@@ -187,9 +174,8 @@ impl ProjectStore {
         path
     }
 
-    async fn copy_samples_from_cache(&self, project: &Project, samples_cache: &SamplesCache) -> Result<(), String> {
+    async fn copy_samples_from_cache(&self, project: &Project, samples_cache: &SamplesCache) -> anyhow::Result<()> {
         let mut futures = vec![];
-        let mut errors = vec![];
 
         for sample in project.samples.iter() {
             let project_path = self.sample_path(&project.info.id, &sample.id);
@@ -201,14 +187,12 @@ impl ProjectStore {
             let cached_sample = match samples_cache.get_sample(&sample.id) {
                 Some(sample) => sample,
                 None => {
-                    errors.push(format!("Missing sample in cache: {}", sample.id));
-                    continue;
+                    return Err(anyhow!("Missing sample in cache: {}", sample.id));
                 }
             };
 
             if !cached_sample.is_cached() {
-                errors.push(format!("Sample isn't cached: {}", sample.id));
-                continue;
+                return Err(anyhow!("Sample isn't cached: {}", sample.id));
             }
 
             let cached_sample_path = cached_sample.get_path();
@@ -217,17 +201,7 @@ impl ProjectStore {
         }
 
         for future in futures {
-            match future.await {
-                Ok(_) => (),
-                Err(error) => {
-                    errors.push(format!("Failed to copy sample from cache into project: {}", error));
-                    continue;
-                }
-            };
-        }
-
-        if !errors.is_empty() {
-            return Err(errors.join(" "));
+            future.await?;
         }
 
         Ok(())
@@ -237,20 +211,20 @@ impl ProjectStore {
         &mut self,
         project_id: &ID,
         samples_cache: &mut SamplesCache,
-    ) -> Result<(), String> {
+    ) -> anyhow::Result<()> {
         samples_cache.clear();
 
         let samples_directory = self.directory_for_samples(project_id);
 
-        let mut read_dir = match tokio::fs::read_dir(samples_directory).await {
-            Ok(read_dir) => read_dir,
-            Err(error) => return Err(format!("Error reading samples directory: {}", error)),
-        };
+        let mut read_dir = tokio::fs::read_dir(samples_directory)
+            .await
+            .with_context(|| format!("Error reading samples directory: {}", project_id))?;
 
-        while let Some(entry) = match read_dir.next_entry().await {
-            Ok(entry) => entry,
-            Err(error) => return Err(format!("Error reading samples directory: {}", error)),
-        } {
+        while let Some(entry) = read_dir
+            .next_entry()
+            .await
+            .with_context(|| format!("Error iterating samples directory: {}", project_id))?
+        {
             let project_path = entry.path();
             if !project_path.is_file() {
                 continue;
