@@ -20,6 +20,7 @@ pub struct SampleMetadata {
     pub sample_rate: u32,
     pub sample_count: u32,
     pub num_channels: u32,
+    pub detected_tempo: Option<f64>,
 }
 
 impl SamplesCache {
@@ -61,6 +62,23 @@ impl SamplesCache {
         Ok(())
     }
 
+    fn detect_tempo(filename: &str) -> Option<f64> {
+        let re = regex::Regex::new(r"([0-9]{2,3}(?:[\.,][0-9]+)?)").unwrap();
+
+        let midrange = 120.0;
+
+        re.captures_iter(filename)
+            .filter_map(|captures| captures[1].parse::<f64>().ok())
+            .filter(|value| 30.0 <= *value && *value <= 300.0)
+            .reduce(|a, b| {
+                if (a - midrange).abs() < (b - midrange).abs() {
+                    a
+                } else {
+                    b
+                }
+            })
+    }
+
     pub fn get_sample_metadata(&self, id: &ID) -> Result<SampleMetadata, String> {
         let sample = self.samples.get(id).ok_or(format!("Sample not found: {}", id))?;
 
@@ -77,6 +95,7 @@ impl SamplesCache {
             sample_rate: wav_reader.spec().sample_rate,
             sample_count: wav_reader.duration(),
             num_channels: u32::from(wav_reader.spec().channels),
+            detected_tempo: Self::detect_tempo(sample.get_name()),
         })
     }
 

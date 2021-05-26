@@ -285,6 +285,11 @@ impl MainController {
         sample.sample_rate = sample_metadata.sample_rate as i32;
         sample.channel_count = sample_metadata.num_channels as i32;
         sample.sample_count = sample_metadata.sample_count as i64;
+
+        if let Some(tempo) = sample_metadata.detected_tempo {
+            sample.tempo.bpm = tempo;
+        }
+
         project = project.add_sample_to_song(sample, &request.song_id)?;
         Ok(project)
     }

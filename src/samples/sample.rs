@@ -10,8 +10,8 @@ impl Sample {
     pub fn new(name: &str) -> Self {
         Self {
             path: PathBuf::new(),
-            cached: false,
             name: String::from(name),
+            cached: false,
         }
     }
 
