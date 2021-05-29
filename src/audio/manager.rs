@@ -15,7 +15,10 @@ use crate::{
 };
 use futures::StreamExt;
 use futures_channel::mpsc;
-use std::{collections::HashSet, path::PathBuf};
+use std::{
+    collections::HashSet,
+    path::{Path, PathBuf},
+};
 use tokio::sync::broadcast;
 
 pub trait Audio {
@@ -41,12 +44,12 @@ pub struct AudioManager {
 }
 
 impl AudioManager {
-    pub fn new(response_tx: broadcast::Sender<Response>) -> Self {
+    pub fn new(response_tx: broadcast::Sender<Response>, preferences_dir: &Path) -> Self {
         let (command_tx, command_rx) = mpsc::channel(128);
         let (notification_tx, notification_rx) = futures_channel::mpsc::channel(128);
 
         Self {
-            _process: Process::new(command_rx, notification_tx.clone()),
+            _process: Process::new(command_rx, notification_tx.clone(), preferences_dir),
             command_tx,
             notification_tx,
             notification_rx,

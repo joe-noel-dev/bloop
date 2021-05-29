@@ -40,7 +40,7 @@ impl MainController {
         let samples_cache = SamplesCache::new(&directories.samples);
         let project_store = ProjectStore::new(&directories.projects);
         let waveform_store = WaveformStore::new(response_tx.clone());
-        let audio_manager = AudioManager::new(response_tx.clone());
+        let audio_manager = AudioManager::new(response_tx.clone(), &directories.preferences);
         let (midi_action_tx, midi_action_rx) = mpsc::channel(128);
         let midi_manager = MidiManager::new(midi_action_tx);
 
