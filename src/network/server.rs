@@ -4,7 +4,7 @@ use tokio::net::TcpListener;
 use tokio::sync::{broadcast, mpsc};
 
 pub async fn run(request_tx: mpsc::Sender<request::Request>, response_tx: broadcast::Sender<response::Response>) {
-    let listener = TcpListener::bind("127.0.0.1:8999").await.expect("Failed to bind");
+    let listener = TcpListener::bind("0.0.0.0:8999").await.expect("Failed to bind");
 
     println!("Server listening");
 
