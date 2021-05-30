@@ -45,6 +45,17 @@ pub struct AudioEngine {
     progress_notification: PeriodicNotification,
 }
 
+struct RenderInterval {
+    start: usize,
+    end: usize,
+}
+
+impl Default for RenderInterval {
+    fn default() -> Self {
+        Self { start: 0, end: 0 }
+    }
+}
+
 macro_rules! unwrap_or_return {
     ( $e:expr ) => {
         match $e {
@@ -220,23 +231,15 @@ impl AudioEngine {
         }
     }
 
-    fn process_current_section<T>(&mut self, output: &mut T, start_position: usize, end_position: usize) -> usize
-    where
-        T: AudioBuffer,
-    {
+    fn next_render_interval(&self, start_position: usize) -> Option<RenderInterval> {
         let section = match self.current_section() {
             Some(section) => section,
-            None => return 0,
+            None => return None,
         };
 
         let sample = match self.current_sample() {
             Some(sample) => sample,
-            None => return 0,
-        };
-
-        let source = match self.audio_samples.get(&sample.id) {
-            Some(buffer) => buffer,
-            None => return 0,
+            None => return None,
         };
 
         let section_offset = if self.last_section_start < start_position {
@@ -249,15 +252,10 @@ impl AudioEngine {
         let section_end =
             self.next_sample_after(Beats::from_num(section.start + section.beat_length), sample.tempo.bpm);
 
-        let num_frames = sampler::render(output, source.as_ref(), section_start + section_offset, section_end);
-
-        if num_frames < end_position - start_position {
-            self.increment_section();
-            self.update_tempo(start_position + num_frames);
-            self.last_section_start = start_position + num_frames;
-        }
-
-        num_frames
+        Some(RenderInterval {
+            start: section_start + section_offset,
+            end: section_end,
+        })
     }
 
     fn process_project<T>(&mut self, output: &mut T) -> bool
@@ -278,19 +276,36 @@ impl AudioEngine {
             let mut output_slice = AudioBufferSlice::new(output, output_offset, remaining);
 
             let start_sample = self.sample_position + output_offset;
-            let end_sample = start_sample + remaining;
 
-            let mut num_frames_processed = self.process_current_section(&mut output_slice, start_sample, end_sample);
+            let sample = match self.current_sample() {
+                Some(sample) => sample,
+                None => return false,
+            };
 
-            if num_frames_processed == 0 {
-                num_frames_processed = self.process_current_section(output, start_sample, end_sample);
+            let render_interval = self.next_render_interval(start_sample);
 
-                if num_frames_processed == 0 {
-                    return false;
+            match render_interval {
+                Some(render_interval) => {
+                    let source = match self.audio_samples.get(&sample.id) {
+                        Some(buffer) => buffer.as_ref(),
+                        None => return false,
+                    };
+
+                    let frames_rendered =
+                        sampler::render(&mut output_slice, source, render_interval.start, render_interval.end);
+                    output_offset += frames_rendered;
+
+                    if frames_rendered == 0 {
+                        return false;
+                    } else if frames_rendered < remaining {
+                        self.increment_section();
+                        let next_section_start = render_interval.start + frames_rendered;
+                        self.update_tempo(render_interval.start + frames_rendered);
+                        self.last_section_start = next_section_start;
+                    }
                 }
+                None => return false,
             }
-
-            output_offset += num_frames_processed;
         }
 
         true
