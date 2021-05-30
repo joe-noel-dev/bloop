@@ -1,0 +1,50 @@
+pub struct Fade {
+    values: Vec<f32>,
+}
+
+impl Fade {
+    pub fn new(length_ms: f32, sample_rate: u32) -> Self {
+        let length_samples = (sample_rate as f32 * length_ms / 1000.0).ceil() as usize;
+        let mut values = Vec::new();
+        values.reserve(length_samples);
+
+        for position in 0..length_samples {
+            let t = 2.0 * position as f64 / length_samples as f64 - 1.0;
+            let value = 0.5 + 0.5 * (t * std::f64::consts::FRAC_PI_2).sin();
+            values.push(value as f32);
+        }
+
+        Self { values }
+    }
+
+    pub fn len(&self) -> usize {
+        self.values.len()
+    }
+
+    fn value(&self, position: usize) -> f32 {
+        match self.values.get(position) {
+            Some(value) => *value,
+            None => 1.0,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn starts_and_end() {
+        let fade = Fade::new(100.0, 44100);
+        let length = fade.len();
+        assert!((fade.value(0) - 0.0).abs() < 1e-3);
+        assert!((fade.value(length / 2) - 0.5).abs() < 1e-3);
+        assert!((fade.value(length - 1) - 1.0).abs() < 1e-3);
+    }
+
+    #[test]
+    fn correct_length() {
+        let fade = Fade::new(1000.0, 44100);
+        assert_eq!(fade.len(), 44100);
+    }
+}

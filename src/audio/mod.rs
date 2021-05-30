@@ -2,6 +2,7 @@ pub mod buffer;
 mod command;
 pub mod convert;
 mod engine;
+mod fade;
 pub mod manager;
 pub mod notification;
 mod periodic_notification;
