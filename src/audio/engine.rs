@@ -138,6 +138,18 @@ impl AudioEngine {
 
     fn update_project(&mut self, project: Box<Project>) {
         let old_project = mem::replace(&mut self.project, project);
+
+        if let Some(section_id) = self.playback_state.section_id {
+            if let (Some(old_section), Some(new_section)) = (
+                old_project.section_with_id(&section_id),
+                self.project.section_with_id(&section_id),
+            ) {
+                if old_section.looping != new_section.looping {
+                    self.playback_state.looping = new_section.looping;
+                }
+            }
+        }
+
         self.send_notification(Notification::ReturnProject(old_project));
     }
 
