@@ -5,6 +5,7 @@ mod engine;
 pub mod manager;
 pub mod notification;
 mod periodic_notification;
+mod pool;
 mod process;
 mod sampler;
 mod timeline;

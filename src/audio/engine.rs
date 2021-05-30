@@ -3,6 +3,7 @@ use super::{
     command::{Command, QueueCommand},
     notification::Notification,
     periodic_notification::PeriodicNotification,
+    pool::Pool,
     sampler,
     timeline::Timeline,
 };
@@ -19,7 +20,7 @@ use crate::{
     types::beats::Beats,
 };
 use futures_channel::mpsc::{Receiver, Sender};
-use std::{collections::HashMap, convert::TryInto, mem, usize};
+use std::{convert::TryInto, mem, usize};
 
 pub trait Engine {
     fn render<T>(&mut self, output: &mut T)
@@ -28,7 +29,7 @@ pub trait Engine {
 }
 
 const SAMPLE_RATE: u32 = 44100;
-const MAX_SAMPLES: usize = 128;
+
 const NOTIFICATION_RATE_HZ: f64 = 30.0;
 
 pub struct AudioEngine {
@@ -41,7 +42,7 @@ pub struct AudioEngine {
     last_section_start: usize,
     loop_count: i32,
     sample_rate: f64,
-    audio_samples: HashMap<ID, Box<OwnedAudioBuffer>>,
+    sample_pool: Pool<OwnedAudioBuffer>,
     progress_notification: PeriodicNotification,
 }
 
@@ -67,9 +68,6 @@ macro_rules! unwrap_or_return {
 
 impl AudioEngine {
     pub fn new(command_rx: Receiver<Command>, notification_tx: Sender<Notification>) -> Self {
-        let mut audio_samples = HashMap::new();
-        audio_samples.reserve(MAX_SAMPLES);
-
         let mut progress_notification = PeriodicNotification::default();
         progress_notification.reset(SAMPLE_RATE, NOTIFICATION_RATE_HZ);
 
@@ -83,7 +81,7 @@ impl AudioEngine {
             last_section_start: 0,
             loop_count: 0,
             sample_rate: 44100.0,
-            audio_samples,
+            sample_pool: Pool::<OwnedAudioBuffer>::default(),
             progress_notification,
         }
     }
@@ -286,8 +284,8 @@ impl AudioEngine {
 
             match render_interval {
                 Some(render_interval) => {
-                    let source = match self.audio_samples.get(&sample.id) {
-                        Some(buffer) => buffer.as_ref(),
+                    let source = match self.sample_pool.get(&sample.id) {
+                        Some(buffer) => buffer,
                         None => return false,
                     };
 
@@ -312,11 +310,11 @@ impl AudioEngine {
     }
 
     fn add_sample(&mut self, sample_id: ID, audio_data: Box<OwnedAudioBuffer>) {
-        self.audio_samples.insert(sample_id, audio_data);
+        self.sample_pool.add(sample_id, audio_data);
     }
 
     fn remove_sample(&mut self, sample_id: ID) {
-        if let Some(sample) = self.audio_samples.remove(&sample_id) {
+        if let Some(sample) = self.sample_pool.remove(&sample_id) {
             self.send_notification(Notification::ReturnSample(sample));
         }
     }
@@ -339,7 +337,7 @@ impl AudioEngine {
     fn notify_progress(&mut self) {
         let section = unwrap_or_return!(self.current_section());
         let sample = unwrap_or_return!(self.current_sample());
-        let audio_sample = unwrap_or_return!(self.audio_samples.get(&sample.id));
+        let audio_sample = unwrap_or_return!(self.sample_pool.get(&sample.id));
 
         if self.last_section_start > self.sample_position {
             return;
