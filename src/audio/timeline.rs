@@ -26,6 +26,10 @@ impl Timeline {
         self.tempo_bpm = tempo_bpm;
     }
 
+    pub fn tempo(&self) -> f64 {
+        self.tempo_bpm
+    }
+
     pub fn beat_frequency(&self) -> f64 {
         self.tempo_bpm / 60.0
     }

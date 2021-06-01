@@ -11,7 +11,6 @@ pub struct Section {
     pub beat_length: f64,
     #[serde(rename = "loop")]
     pub looping: bool,
-    pub samples: Vec<ChannelSamplePair>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -19,13 +18,6 @@ pub struct Section {
 pub struct LoopProperties {
     pub mode: LoopMode,
     pub count: i32,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct ChannelSamplePair {
-    pub channel_id: ID,
-    pub sample_id: ID,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -43,7 +35,6 @@ impl Section {
             start: 0.0,
             beat_length: 8.0,
             looping: false,
-            samples: vec![],
         }
     }
 

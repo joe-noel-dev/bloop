@@ -4,7 +4,7 @@ use super::{
     notification::Notification,
     periodic_notification::PeriodicNotification,
     pool::Pool,
-    sampler,
+    sampler::Sampler,
     timeline::Timeline,
 };
 use crate::{
@@ -44,17 +44,7 @@ pub struct AudioEngine {
     sample_rate: f64,
     sample_pool: Pool<OwnedAudioBuffer>,
     progress_notification: PeriodicNotification,
-}
-
-struct RenderInterval {
-    start: usize,
-    end: usize,
-}
-
-impl Default for RenderInterval {
-    fn default() -> Self {
-        Self { start: 0, end: 0 }
-    }
+    sampler: Sampler,
 }
 
 macro_rules! unwrap_or_return {
@@ -83,6 +73,7 @@ impl AudioEngine {
             sample_rate: 44100.0,
             sample_pool: Pool::<OwnedAudioBuffer>::default(),
             progress_notification,
+            sampler: Sampler::default(),
         }
     }
 
@@ -138,10 +129,12 @@ impl AudioEngine {
         }
 
         self.playback_state.playing = playing;
+        self.sampler.play();
         self.timeline.set_tempo(tempo);
     }
 
     fn stop(&mut self) {
+        self.sampler.stop();
         self.playback_state = PlaybackState::default();
     }
 
@@ -229,84 +222,79 @@ impl AudioEngine {
         }
     }
 
-    fn next_render_interval(&self, start_position: usize) -> Option<RenderInterval> {
+    fn next_event(&self) -> Option<usize> {
         let section = match self.current_section() {
             Some(section) => section,
             None => return None,
         };
 
-        let sample = match self.current_sample() {
-            Some(sample) => sample,
+        Some(
+            self.last_section_start
+                + self.next_sample_after(Beats::from_num(section.beat_length), self.timeline.tempo()),
+        )
+    }
+
+    fn sample_position(&self, current_position: usize) -> Option<usize> {
+        let section = match self.current_section() {
+            Some(section) => section,
             None => return None,
         };
 
-        let section_offset = if self.last_section_start < start_position {
-            start_position - self.last_section_start
-        } else {
-            0
-        };
-
-        let section_start = self.next_sample_after(Beats::from_num(section.start), sample.tempo.bpm);
-        let section_end =
-            self.next_sample_after(Beats::from_num(section.start + section.beat_length), sample.tempo.bpm);
-
-        Some(RenderInterval {
-            start: section_start + section_offset,
-            end: section_end,
-        })
+        let section_start = self.next_sample_after(Beats::from_num(section.start), self.timeline.tempo());
+        Some(section_start + current_position - self.last_section_start)
     }
 
-    fn process_project<T>(&mut self, output: &mut T) -> bool
+    fn render_project<T>(&mut self, output: &mut T)
     where
         T: AudioBuffer,
     {
         output.clear();
-
-        if self.playback_state.playing != PlayingState::Playing {
-            return false;
-        }
 
         let mut output_offset: usize = 0;
 
         while output_offset < output.num_frames() {
             let remaining = output.num_frames() - output_offset;
 
-            let mut output_slice = AudioBufferSlice::new(output, output_offset, remaining);
-
             let start_sample = self.sample_position + output_offset;
+            let mut end_sample = start_sample + remaining;
 
-            let sample = match self.current_sample() {
-                Some(sample) => sample,
-                None => return false,
+            let mut increment_section = false;
+
+            if let Some(next_event_position) = self.next_event() {
+                if next_event_position <= end_sample {
+                    end_sample = next_event_position;
+                    increment_section = true;
+                }
             };
 
-            let render_interval = self.next_render_interval(start_sample);
+            let num_frames = end_sample - start_sample;
 
-            match render_interval {
-                Some(render_interval) => {
-                    let source = match self.sample_pool.get(&sample.id) {
-                        Some(buffer) => buffer,
-                        None => return false,
-                    };
+            let mut output_slice = AudioBufferSlice::new(output, output_offset, num_frames);
 
-                    let frames_rendered =
-                        sampler::render(&mut output_slice, source, render_interval.start, render_interval.end);
-                    output_offset += frames_rendered;
+            if let Some(sample) = self.current_sample() {
+                let sample_id = sample.id;
+                self.sampler.set_sample_id(&sample_id);
+            } else {
+                self.sampler.clear_sample_id();
+            }
 
-                    if frames_rendered == 0 {
-                        return false;
-                    } else if frames_rendered < remaining {
-                        self.increment_section();
-                        let next_section_start = render_interval.start + frames_rendered;
-                        self.update_tempo(render_interval.start + frames_rendered);
-                        self.last_section_start = next_section_start;
-                    }
-                }
-                None => return false,
+            if let Some(sample_position) = self.sample_position(start_sample) {
+                self.sampler.set_position(sample_position);
+            }
+
+            self.sampler.render(&mut output_slice, &self.sample_pool);
+            output_offset += num_frames;
+
+            if increment_section {
+                self.increment_section();
+                self.update_tempo(end_sample);
+                self.last_section_start = end_sample;
             }
         }
 
-        true
+        if self.playback_state.song_id.is_none() || self.playback_state.section_id.is_none() {
+            self.stop();
+        }
     }
 
     fn add_sample(&mut self, sample_id: ID, audio_data: Box<OwnedAudioBuffer>) {
@@ -373,10 +361,7 @@ impl Engine for AudioEngine {
             };
         }
 
-        let continue_processing = self.process_project(output);
-        if self.playback_state.playing != PlayingState::Stopped && !continue_processing {
-            self.stop();
-        }
+        self.render_project(output);
 
         if self.playback_state != previous_state {
             self.notify_playback_state();

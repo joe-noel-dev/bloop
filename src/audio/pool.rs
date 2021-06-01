@@ -1,7 +1,7 @@
 use crate::model::id::ID;
 use std::collections::HashMap;
 
-pub(super) struct Pool<T> {
+pub struct Pool<T> {
     items: HashMap<ID, Box<T>>,
 }
 
