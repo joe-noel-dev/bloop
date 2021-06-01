@@ -73,7 +73,7 @@ impl AudioEngine {
             sample_rate: 44100.0,
             sample_pool: Pool::<OwnedAudioBuffer>::default(),
             progress_notification,
-            sampler: Sampler::default(),
+            sampler: Sampler::new(SAMPLE_RATE),
         }
     }
 
@@ -129,7 +129,6 @@ impl AudioEngine {
         }
 
         self.playback_state.playing = playing;
-        self.sampler.play();
         self.timeline.set_tempo(tempo);
     }
 
@@ -271,17 +270,10 @@ impl AudioEngine {
 
             let mut output_slice = AudioBufferSlice::new(output, output_offset, num_frames);
 
-            if let Some(sample) = self.current_sample() {
-                let sample_id = sample.id;
-                self.sampler.set_sample_id(&sample_id);
-            } else {
-                self.sampler.clear_sample_id();
-            }
+            let sample_id = self.current_song().and_then(|song| song.sample_id);
+            let position = self.sample_position(start_sample).unwrap_or(0);
 
-            if let Some(sample_position) = self.sample_position(start_sample) {
-                self.sampler.set_position(sample_position);
-            }
-
+            self.sampler.prepare(position, sample_id);
             self.sampler.render(&mut output_slice, &self.sample_pool);
             output_offset += num_frames;
 

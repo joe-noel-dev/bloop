@@ -21,11 +21,19 @@ impl Fade {
         self.values.len()
     }
 
-    fn value(&self, position: usize) -> f32 {
+    pub fn value(&self, position: usize) -> f32 {
         match self.values.get(position) {
             Some(value) => *value,
             None => 1.0,
         }
+    }
+
+    pub fn fade_in_value(&self, position: usize) -> f32 {
+        self.value(position)
+    }
+
+    pub fn fade_out_value(&self, position: usize) -> f32 {
+        self.value(self.len() - position)
     }
 }
 
