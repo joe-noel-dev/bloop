@@ -18,7 +18,7 @@ pub struct Sampler {
 }
 
 const NUM_VOICES: usize = 4;
-const FADE_LENGTH_MS: f32 = 5.0;
+const FADE_LENGTH_MS: f32 = 10.0;
 
 impl Default for Sampler {
     fn default() -> Self {
@@ -41,12 +41,13 @@ impl Sampler {
     }
 
     fn use_next_voice(&mut self) {
+        self.stop();
+
         if let Some((index, free_voice)) = self.voices.iter_mut().enumerate().find(|(_, voice)| voice.is_stopped()) {
             free_voice.sample_id = self.sample_id;
             free_voice.position = self.position;
             free_voice.phase = Phase::FadingIn(0);
             self.active_voice = Some(index);
-            println!("Using voice: {}", index);
         }
     }
 
@@ -274,7 +275,7 @@ impl Voice {
                     frame: destination_offset + frame,
                 };
 
-                let sample = fade_value * source.get_sample(&source_location);
+                let sample = output.get_sample(&dest_location) + fade_value * source.get_sample(&source_location);
                 output.set_sample(&dest_location, sample);
             }
         }
@@ -302,25 +303,15 @@ mod tests {
     }
 
     impl Fixture {
-        fn add_sample(&mut self, num_samples: usize) -> ID {
+        fn add_sample(&mut self, num_samples: usize, fill_with_value: f32) -> ID {
             let audio_buffer = Box::new(OwnedAudioBuffer::new(
-                (0..num_samples).map(|_| 0_f32).collect(),
+                (0..num_samples).map(|_| fill_with_value).collect(),
                 1,
                 44100,
             ));
             let sample_id = ID::new_v4();
             self.pool.add(sample_id, audio_buffer);
             sample_id
-        }
-
-        fn fill_sample_with_value(&mut self, sample_id: &ID, value: f32) {
-            let sample = self.pool.get_mut(sample_id).unwrap();
-
-            for frame in 0..sample.num_frames() {
-                for channel in 0..sample.num_channels() {
-                    sample.set_sample(&SampleLocation { channel, frame }, value);
-                }
-            }
         }
 
         fn render(&mut self, num_samples: usize) -> OwnedAudioBuffer {
@@ -335,9 +326,7 @@ mod tests {
         let num_samples = 10000;
 
         let mut fixture = Fixture::default();
-        let sample_id = fixture.add_sample(num_samples);
-
-        fixture.fill_sample_with_value(&sample_id, 1.0);
+        let sample_id = fixture.add_sample(num_samples, 1.0);
 
         fixture.sampler.prepare(0, Some(sample_id));
         let output = fixture.render(num_samples);
@@ -366,9 +355,7 @@ mod tests {
         let num_samples = 10000;
 
         let mut fixture = Fixture::default();
-        let sample_id = fixture.add_sample(num_samples);
-
-        fixture.fill_sample_with_value(&sample_id, 1.0);
+        let sample_id = fixture.add_sample(num_samples, 1.0);
 
         fixture.sampler.prepare(0, Some(sample_id));
         let _ = fixture.render(2 * fixture.sampler.fade.len());
@@ -393,4 +380,40 @@ mod tests {
             epsilon = 0.01
         );
     }
+
+    #[test]
+    fn crossfades() {
+        let num_samples = 10000;
+
+        let mut fixture = Fixture::default();
+        let sample_id_1 = fixture.add_sample(num_samples, 1.0);
+        let sample_id_2 = fixture.add_sample(num_samples, -1.0);
+
+        fixture.sampler.prepare(0, Some(sample_id_1));
+        let _ = fixture.render(2 * fixture.sampler.fade.len());
+        fixture.sampler.prepare(0, Some(sample_id_2));
+
+        let output = fixture.render(2 * fixture.sampler.fade.len());
+
+        approx::assert_relative_eq!(1.0, output.get_sample(&SampleLocation { frame: 0, channel: 0 }));
+        approx::assert_relative_eq!(
+            0.0,
+            output.get_sample(&SampleLocation {
+                frame: fixture.sampler.fade.len() / 2,
+                channel: 0
+            }),
+            epsilon = 0.01
+        );
+        approx::assert_relative_eq!(
+            -1.0,
+            output.get_sample(&SampleLocation {
+                frame: fixture.sampler.fade.len(),
+                channel: 0
+            }),
+            epsilon = 0.01
+        );
+    }
+
+    // TODO: Fade out beyond the end of sample
+    // TODO: Re-uses voices
 }
