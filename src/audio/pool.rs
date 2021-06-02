@@ -20,10 +20,6 @@ impl<T> Pool<T> {
         self.items.get(id).map(|value| value.as_ref())
     }
 
-    pub fn get_mut(&mut self, id: &ID) -> Option<&mut T> {
-        self.items.get_mut(id).map(|value| value.as_mut())
-    }
-
     pub fn add(&mut self, id: ID, item: Box<T>) {
         self.items.insert(id, item);
     }
