@@ -9,9 +9,6 @@ use super::{
 };
 
 pub struct Sampler {
-    position: usize,
-    sample_id: Option<ID>,
-
     fade: Fade,
     voices: Vec<Voice>,
     active_voice: Option<usize>,
@@ -23,8 +20,6 @@ const FADE_LENGTH_MS: f32 = 10.0;
 impl Default for Sampler {
     fn default() -> Self {
         Self {
-            position: 0,
-            sample_id: None,
             fade: Fade::new(FADE_LENGTH_MS, 44100),
             voices: (0..NUM_VOICES).map(|_| Voice::default()).collect(),
             active_voice: None,
@@ -40,12 +35,12 @@ impl Sampler {
         }
     }
 
-    fn use_next_voice(&mut self) {
+    fn assign_voice(&mut self, position: usize, sample_id: ID) {
         self.stop();
 
         if let Some((index, free_voice)) = self.voices.iter_mut().enumerate().find(|(_, voice)| voice.is_stopped()) {
-            free_voice.sample_id = self.sample_id;
-            free_voice.position = self.position;
+            free_voice.sample_id = Some(sample_id);
+            free_voice.position = position;
             free_voice.phase = Phase::FadingIn(0);
             self.active_voice = Some(index);
         }
@@ -60,20 +55,15 @@ impl Sampler {
     }
 
     pub fn prepare(&mut self, position: usize, sample_id: Option<ID>) {
-        self.position = position;
-        self.sample_id = sample_id;
-
         if let Some(active_voice) = self.get_active_voice() {
             if active_voice.position == position && active_voice.sample_id == sample_id {
                 return;
             }
         }
 
-        if sample_id.is_some() {
-            self.use_next_voice();
-        }
-
-        if sample_id.is_none() {
+        if let Some(sample_id) = sample_id {
+            self.assign_voice(position, sample_id);
+        } else {
             self.stop();
         }
     }
