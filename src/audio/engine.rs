@@ -222,11 +222,7 @@ impl AudioEngine {
     }
 
     fn next_event(&self) -> Option<usize> {
-        let section = match self.current_section() {
-            Some(section) => section,
-            None => return None,
-        };
-
+        let section = self.current_section()?;
         Some(
             self.last_section_start
                 + self.next_sample_after(Beats::from_num(section.beat_length), self.timeline.tempo()),
@@ -234,11 +230,7 @@ impl AudioEngine {
     }
 
     fn sample_position(&self, current_position: usize) -> Option<usize> {
-        let section = match self.current_section() {
-            Some(section) => section,
-            None => return None,
-        };
-
+        let section = self.current_section()?;
         let section_start = self.next_sample_after(Beats::from_num(section.start), self.timeline.tempo());
         Some(section_start + current_position - self.last_section_start)
     }
