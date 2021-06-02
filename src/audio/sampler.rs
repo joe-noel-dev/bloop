@@ -250,14 +250,13 @@ impl Voice {
     {
         let num_channels = min(source.num_channels(), output.num_channels());
 
-        if self.position >= source.num_frames() {
-            return 0;
-        }
-
         let num_frames = std::cmp::min(fade.len() - fade_position, output.num_frames() - destination_offset);
-        let num_frames = std::cmp::min(num_frames, source.num_frames() - self.position);
 
         for frame in 0..num_frames {
+            if frame + self.position >= source.num_frames() {
+                break;
+            }
+
             let fade_value = if fade_in {
                 fade.fade_in_value(fade_position + frame)
             } else {
@@ -406,6 +405,31 @@ mod tests {
         );
         approx::assert_relative_eq!(
             -1.0,
+            output.get_sample(&SampleLocation {
+                frame: fixture.sampler.fade.len(),
+                channel: 0
+            }),
+            epsilon = 0.01
+        );
+    }
+
+    #[test]
+    fn fade_out_beyond_sample() {
+        let num_samples = 1000;
+
+        let mut fixture = Fixture::default();
+        let sample_id = fixture.add_sample(num_samples, 1.0);
+
+        fixture.sampler.prepare(0, Some(sample_id));
+        let _ = fixture.render(num_samples - fixture.sampler.fade.len() / 2);
+        fixture.sampler.stop();
+
+        let output = fixture.render(2 * fixture.sampler.fade.len());
+
+        approx::assert_relative_eq!(1.0, output.get_sample(&SampleLocation { frame: 0, channel: 0 }));
+
+        approx::assert_relative_eq!(
+            0.0,
             output.get_sample(&SampleLocation {
                 frame: fixture.sampler.fade.len(),
                 channel: 0
