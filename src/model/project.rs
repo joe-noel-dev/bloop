@@ -218,10 +218,6 @@ impl Project {
 
         self.channels.retain(|channel| &channel.id != channel_id);
 
-        for section in &mut self.sections {
-            section.samples.retain(|pair| &pair.channel_id != channel_id);
-        }
-
         Ok(self)
     }
 

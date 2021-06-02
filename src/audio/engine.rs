@@ -3,7 +3,8 @@ use super::{
     command::{Command, QueueCommand},
     notification::Notification,
     periodic_notification::PeriodicNotification,
-    sampler,
+    pool::Pool,
+    sampler::Sampler,
     timeline::Timeline,
 };
 use crate::{
@@ -19,7 +20,7 @@ use crate::{
     types::beats::Beats,
 };
 use futures_channel::mpsc::{Receiver, Sender};
-use std::{collections::HashMap, convert::TryInto, mem, usize};
+use std::{convert::TryInto, mem, usize};
 
 pub trait Engine {
     fn render<T>(&mut self, output: &mut T)
@@ -28,7 +29,7 @@ pub trait Engine {
 }
 
 const SAMPLE_RATE: u32 = 44100;
-const MAX_SAMPLES: usize = 128;
+
 const NOTIFICATION_RATE_HZ: f64 = 30.0;
 
 pub struct AudioEngine {
@@ -41,8 +42,9 @@ pub struct AudioEngine {
     last_section_start: usize,
     loop_count: i32,
     sample_rate: f64,
-    audio_samples: HashMap<ID, Box<OwnedAudioBuffer>>,
+    sample_pool: Pool<OwnedAudioBuffer>,
     progress_notification: PeriodicNotification,
+    sampler: Sampler,
 }
 
 macro_rules! unwrap_or_return {
@@ -56,9 +58,6 @@ macro_rules! unwrap_or_return {
 
 impl AudioEngine {
     pub fn new(command_rx: Receiver<Command>, notification_tx: Sender<Notification>) -> Self {
-        let mut audio_samples = HashMap::new();
-        audio_samples.reserve(MAX_SAMPLES);
-
         let mut progress_notification = PeriodicNotification::default();
         progress_notification.reset(SAMPLE_RATE, NOTIFICATION_RATE_HZ);
 
@@ -72,8 +71,9 @@ impl AudioEngine {
             last_section_start: 0,
             loop_count: 0,
             sample_rate: 44100.0,
-            audio_samples,
+            sample_pool: Pool::<OwnedAudioBuffer>::default(),
             progress_notification,
+            sampler: Sampler::new(SAMPLE_RATE),
         }
     }
 
@@ -133,6 +133,7 @@ impl AudioEngine {
     }
 
     fn stop(&mut self) {
+        self.sampler.stop();
         self.playback_state = PlaybackState::default();
     }
 
@@ -220,88 +221,72 @@ impl AudioEngine {
         }
     }
 
-    fn process_current_section<T>(&mut self, output: &mut T, start_position: usize, end_position: usize) -> usize
-    where
-        T: AudioBuffer,
-    {
-        let section = match self.current_section() {
-            Some(section) => section,
-            None => return 0,
-        };
-
-        let sample = match self.current_sample() {
-            Some(sample) => sample,
-            None => return 0,
-        };
-
-        let source = match self.audio_samples.get(&sample.id) {
-            Some(buffer) => buffer,
-            None => return 0,
-        };
-
-        let section_offset = if self.last_section_start < start_position {
-            start_position - self.last_section_start
-        } else {
-            0
-        };
-
-        let section_start = self.next_sample_after(Beats::from_num(section.start), sample.tempo.bpm);
-        let section_end =
-            self.next_sample_after(Beats::from_num(section.start + section.beat_length), sample.tempo.bpm);
-
-        let num_frames = sampler::render(output, source.as_ref(), section_start + section_offset, section_end);
-
-        if num_frames < end_position - start_position {
-            self.increment_section();
-            self.update_tempo(start_position + num_frames);
-            self.last_section_start = start_position + num_frames;
-        }
-
-        num_frames
+    fn next_event(&self) -> Option<usize> {
+        let section = self.current_section()?;
+        Some(
+            self.last_section_start
+                + self.next_sample_after(Beats::from_num(section.beat_length), self.timeline.tempo()),
+        )
     }
 
-    fn process_project<T>(&mut self, output: &mut T) -> bool
+    fn sample_position(&self, current_position: usize) -> Option<usize> {
+        let section = self.current_section()?;
+        let section_start = self.next_sample_after(Beats::from_num(section.start), self.timeline.tempo());
+        Some(section_start + current_position - self.last_section_start)
+    }
+
+    fn render_project<T>(&mut self, output: &mut T)
     where
         T: AudioBuffer,
     {
         output.clear();
-
-        if self.playback_state.playing != PlayingState::Playing {
-            return false;
-        }
 
         let mut output_offset: usize = 0;
 
         while output_offset < output.num_frames() {
             let remaining = output.num_frames() - output_offset;
 
-            let mut output_slice = AudioBufferSlice::new(output, output_offset, remaining);
-
             let start_sample = self.sample_position + output_offset;
-            let end_sample = start_sample + remaining;
+            let mut end_sample = start_sample + remaining;
 
-            let mut num_frames_processed = self.process_current_section(&mut output_slice, start_sample, end_sample);
+            let mut increment_section = false;
 
-            if num_frames_processed == 0 {
-                num_frames_processed = self.process_current_section(output, start_sample, end_sample);
-
-                if num_frames_processed == 0 {
-                    return false;
+            if let Some(next_event_position) = self.next_event() {
+                if next_event_position <= end_sample {
+                    end_sample = next_event_position;
+                    increment_section = true;
                 }
-            }
+            };
 
-            output_offset += num_frames_processed;
+            let num_frames = end_sample - start_sample;
+
+            let mut output_slice = AudioBufferSlice::new(output, output_offset, num_frames);
+
+            let sample_id = self.current_song().and_then(|song| song.sample_id);
+            let position = self.sample_position(start_sample).unwrap_or(0);
+
+            self.sampler.prepare(position, sample_id);
+            self.sampler.render(&mut output_slice, &self.sample_pool);
+            output_offset += num_frames;
+
+            if increment_section {
+                self.increment_section();
+                self.update_tempo(end_sample);
+                self.last_section_start = end_sample;
+            }
         }
 
-        true
+        if self.playback_state.song_id.is_none() || self.playback_state.section_id.is_none() {
+            self.stop();
+        }
     }
 
     fn add_sample(&mut self, sample_id: ID, audio_data: Box<OwnedAudioBuffer>) {
-        self.audio_samples.insert(sample_id, audio_data);
+        self.sample_pool.add(sample_id, audio_data);
     }
 
     fn remove_sample(&mut self, sample_id: ID) {
-        if let Some(sample) = self.audio_samples.remove(&sample_id) {
+        if let Some(sample) = self.sample_pool.remove(&sample_id) {
             self.send_notification(Notification::ReturnSample(sample));
         }
     }
@@ -324,7 +309,7 @@ impl AudioEngine {
     fn notify_progress(&mut self) {
         let section = unwrap_or_return!(self.current_section());
         let sample = unwrap_or_return!(self.current_sample());
-        let audio_sample = unwrap_or_return!(self.audio_samples.get(&sample.id));
+        let audio_sample = unwrap_or_return!(self.sample_pool.get(&sample.id));
 
         if self.last_section_start > self.sample_position {
             return;
@@ -360,10 +345,7 @@ impl Engine for AudioEngine {
             };
         }
 
-        let continue_processing = self.process_project(output);
-        if self.playback_state.playing != PlayingState::Stopped && !continue_processing {
-            self.stop();
-        }
+        self.render_project(output);
 
         if self.playback_state != previous_state {
             self.notify_playback_state();
