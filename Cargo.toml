@@ -20,7 +20,7 @@ home = "0.5.3"
 hound = "3.4.0"
 midir = "0.7.0"
 num-traits = "0.2.14"
-rand = "0.8.3"
+rand = "0.8.4"
 regex = "1.5"
 serde = { version= "1.0.126", features = ["derive"] }
 serde_bytes = "0.11.5"
