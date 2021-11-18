@@ -134,11 +134,11 @@ impl AudioManager {
     }
 
     fn add_sample(&mut self, sample_id: &ID, sample_path: PathBuf) {
-        if self.samples_in_engine.contains(&sample_id) {
+        if self.samples_in_engine.contains(sample_id) {
             return;
         }
 
-        if self.samples_being_converted.contains(&sample_id) {
+        if self.samples_being_converted.contains(sample_id) {
             return;
         }
 
@@ -162,7 +162,7 @@ impl AudioManager {
         let samples_to_remove: HashSet<ID> = self
             .samples_in_engine
             .iter()
-            .filter(|sample_id| project.samples.iter().find(|sample| sample.id == **sample_id).is_none())
+            .filter(|sample_id| !project.samples.iter().any(|sample| &sample.id == *sample_id))
             .copied()
             .collect();
 

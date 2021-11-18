@@ -39,7 +39,7 @@ impl SamplesCache {
 
     pub fn begin_upload(&mut self, id: &ID, format: &AudioFileFormat, filename: &str) {
         let mut sample = Sample::new(filename);
-        let path = self.path_for_sample(id, &format);
+        let path = self.path_for_sample(id, format);
         sample.set_cache_location(&path);
         self.samples.insert(*id, sample);
     }
@@ -115,7 +115,7 @@ impl SamplesCache {
         from_path: &Path,
     ) -> anyhow::Result<()> {
         let mut sample = Sample::new("");
-        let path = self.path_for_sample(id, &format);
+        let path = self.path_for_sample(id, format);
 
         if path.is_file() {
             tokio::fs::remove_file(path.as_path())
@@ -145,7 +145,7 @@ impl SamplesCache {
 
     fn path_for_sample(&self, id: &ID, format: &AudioFileFormat) -> PathBuf {
         let mut path = self.root_directory.clone();
-        let filename = id.to_string() + "." + extension_for_format(&format);
+        let filename = id.to_string() + "." + extension_for_format(format);
         path.push(filename);
         path
     }

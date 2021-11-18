@@ -184,12 +184,12 @@ impl Project {
     }
 
     pub fn song_with_section(&self, section_id: &ID) -> Option<&Song> {
-        self.songs.iter().find(|song| song.section_ids.contains(&section_id))
+        self.songs.iter().find(|song| song.section_ids.contains(section_id))
     }
 
     pub fn remove_section(mut self, section_id: &ID) -> anyhow::Result<Self> {
         let mut song = self
-            .song_with_section(&section_id)
+            .song_with_section(section_id)
             .with_context(|| format!("Couldn't find song with section ID: {}", section_id))?
             .clone();
 
@@ -235,7 +235,7 @@ impl Project {
             return Err(anyhow!("Can't remove last song"));
         }
 
-        if !self.contains_song(&song_id) {
+        if !self.contains_song(song_id) {
             return Err(anyhow!("Song ID not found to remove - {}", song_id));
         }
 
@@ -320,7 +320,7 @@ impl Project {
     }
 
     pub fn select_section(mut self, section_id: &ID) -> anyhow::Result<Self> {
-        if self.section_with_id(&section_id).is_none() {
+        if self.section_with_id(section_id).is_none() {
             return Err(anyhow!("Couldn't find section with ID: {}", section_id));
         }
 
@@ -416,12 +416,12 @@ impl Project {
     }
 
     pub fn remove_sample(mut self, sample_id: &ID, song_id: &ID) -> anyhow::Result<Self> {
-        if self.sample_with_id(&sample_id).is_none() {
+        if self.sample_with_id(sample_id).is_none() {
             return Err(anyhow!("Sample not found with ID: {}", sample_id));
         }
 
         let mut song = self
-            .song_with_id_mut(&song_id)
+            .song_with_id_mut(song_id)
             .with_context(|| format!("Song not found with ID: {}", song_id))?;
 
         song.sample_id = None;
