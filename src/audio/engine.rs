@@ -20,7 +20,7 @@ use crate::{
     types::beats::Beats,
 };
 use futures_channel::mpsc::{Receiver, Sender};
-use std::{convert::TryInto, mem, usize};
+use std::{cmp, convert::TryInto, mem, usize};
 
 pub trait Engine {
     fn render<T>(&mut self, output: &mut T)
@@ -253,7 +253,7 @@ impl AudioEngine {
 
             if let Some(next_event_position) = self.next_event() {
                 if next_event_position <= end_sample {
-                    end_sample = next_event_position;
+                    end_sample = cmp::max(next_event_position, start_sample);
                     increment_section = true;
                 }
             };

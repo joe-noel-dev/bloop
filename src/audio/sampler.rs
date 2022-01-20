@@ -15,7 +15,7 @@ pub struct Sampler {
 }
 
 const NUM_VOICES: usize = 4;
-const FADE_LENGTH_MS: f32 = 10.0;
+const FADE_LENGTH_MS: f32 = 50.0;
 
 impl Default for Sampler {
     fn default() -> Self {
@@ -93,20 +93,17 @@ enum Phase {
     FadingOut(usize),
 }
 
+impl Default for Phase {
+    fn default() -> Self {
+        Self::Stopped
+    }
+}
+
+#[derive(Default)]
 struct Voice {
     position: usize,
     sample_id: Option<ID>,
     phase: Phase,
-}
-
-impl Default for Voice {
-    fn default() -> Self {
-        Self {
-            position: 0,
-            sample_id: None,
-            phase: Phase::Stopped,
-        }
-    }
 }
 
 impl Voice {
@@ -277,18 +274,11 @@ impl Voice {
 mod tests {
     use super::*;
     use crate::audio::buffer::OwnedAudioBuffer;
+
+    #[derive(Default)]
     struct Fixture {
         pub sampler: Sampler,
         pub pool: Pool<OwnedAudioBuffer>,
-    }
-
-    impl Default for Fixture {
-        fn default() -> Self {
-            Self {
-                sampler: Sampler::default(),
-                pool: Pool::default(),
-            }
-        }
     }
 
     impl Fixture {

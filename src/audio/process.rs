@@ -15,22 +15,13 @@ pub struct Process {
     _output_stream: Stream,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 struct Preferences {
     #[serde(skip_serializing_if = "Option::is_none")]
     output_device: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     sample_rate: Option<u32>,
-}
-
-impl Default for Preferences {
-    fn default() -> Self {
-        Self {
-            output_device: None,
-            sample_rate: None,
-        }
-    }
 }
 
 fn read_preferences(preferences_dir: &Path) -> anyhow::Result<Preferences> {

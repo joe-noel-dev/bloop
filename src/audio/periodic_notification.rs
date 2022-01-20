@@ -1,15 +1,7 @@
+#[derive(Default)]
 pub struct PeriodicNotification {
     interval_samples: i64,
     countdown: i64,
-}
-
-impl Default for PeriodicNotification {
-    fn default() -> Self {
-        Self {
-            interval_samples: 0,
-            countdown: 0,
-        }
-    }
 }
 
 impl PeriodicNotification {
