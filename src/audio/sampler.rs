@@ -395,7 +395,7 @@ mod tests {
 
     #[test]
     fn fade_out_beyond_sample() {
-        let num_samples = 1000;
+        let num_samples = 5000;
 
         let mut fixture = Fixture::default();
         let sample_id = fixture.add_sample(num_samples, 1.0);
