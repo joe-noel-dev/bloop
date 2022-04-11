@@ -7,13 +7,13 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.52"
+anyhow = "1.0.56"
 approx = "0.5.1"
 bson = "2.1.0"
 conv = "0.3.3"
 cpal = "0.13.4"
 fixed = "1.10.0"
-futures = "0.3.19"
+futures = "0.3.21"
 futures-channel = "0.3.17"
 futures-util = "0.3.17"
 home = "0.5.3"
