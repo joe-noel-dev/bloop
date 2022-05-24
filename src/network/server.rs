@@ -3,10 +3,14 @@ use crate::api::{request, response};
 use tokio::net::TcpListener;
 use tokio::sync::{broadcast, mpsc};
 
-pub async fn run(request_tx: mpsc::Sender<request::Request>, response_tx: broadcast::Sender<response::Response>) {
-    let listener = TcpListener::bind("0.0.0.0:8999").await.expect("Failed to bind");
+const PORT: i32 = 8999;
+const BIND_ADDRESS: &str = "0.0.0.0";
 
-    println!("Server listening");
+pub async fn run(request_tx: mpsc::Sender<request::Request>, response_tx: broadcast::Sender<response::Response>) {
+    let address = format!("{BIND_ADDRESS}:{PORT}");
+    let listener = TcpListener::bind(address).await.expect("Failed to bind");
+
+    println!("Server listening on port {PORT}");
 
     while let Ok((stream, _)) = listener.accept().await {
         let tx = request_tx.clone();
