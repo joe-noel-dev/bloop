@@ -1,6 +1,6 @@
 use crate::{
-    model::{id, sample, section, song},
-    types::audio_file_format::AudioFileFormat,
+    model::{Sample, Section, Song, ID},
+    types::AudioFileFormat,
 };
 use serde::{Deserialize, Serialize};
 
@@ -23,7 +23,7 @@ pub struct GetRequest {
     pub entity: Entity,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<id::ID>,
+    pub id: Option<ID>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -32,36 +32,36 @@ pub struct AddRequest {
     pub entity: Entity,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<id::ID>,
+    pub id: Option<ID>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SelectRequest {
     pub entity: Entity,
-    pub id: id::ID,
+    pub id: ID,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RemoveRequest {
     pub entity: Entity,
-    pub id: id::ID,
+    pub id: ID,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "entity", content = "value")]
 pub enum UpdateRequest {
-    Song(song::Song),
-    Section(section::Section),
-    Sample(sample::Sample),
+    Song(Song),
+    Section(Section),
+    Sample(Sample),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct LoadRequest {
-    pub id: id::ID,
+    pub id: ID,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -69,22 +69,22 @@ pub struct LoadRequest {
 pub struct RenameRequest {
     pub entity: Entity,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<id::ID>,
+    pub id: Option<ID>,
     pub name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RemoveSampleRequest {
-    pub sample_id: id::ID,
-    pub song_id: id::ID,
+    pub sample_id: ID,
+    pub song_id: ID,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct QueueRequest {
-    pub song_id: id::ID,
-    pub section_id: id::ID,
+    pub song_id: ID,
+    pub section_id: ID,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -101,7 +101,7 @@ pub enum TransportMethod {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct BeginUploadRequest {
-    pub upload_id: id::ID,
+    pub upload_id: ID,
     pub filename: String,
     pub format: AudioFileFormat,
 }
@@ -109,7 +109,7 @@ pub struct BeginUploadRequest {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct UploadRequest {
-    pub upload_id: id::ID,
+    pub upload_id: ID,
     #[serde(with = "serde_bytes")]
     pub data: Vec<u8>,
 }
@@ -117,14 +117,14 @@ pub struct UploadRequest {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CompleteUploadRequest {
-    pub upload_id: id::ID,
+    pub upload_id: ID,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct AddSampleRequest {
-    pub song_id: id::ID,
-    pub upload_id: id::ID,
+    pub song_id: ID,
+    pub upload_id: ID,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

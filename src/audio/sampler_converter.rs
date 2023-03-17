@@ -4,7 +4,7 @@ use anyhow::Result;
 use futures_channel::mpsc;
 use rawdio::OwnedAudioBuffer;
 
-use crate::model::id::ID;
+use crate::model::ID;
 
 use super::convert::convert_sample;
 

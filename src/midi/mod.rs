@@ -1,3 +1,6 @@
-pub mod action;
-pub mod manager;
+mod action;
+mod manager;
 mod matcher;
+
+pub use action::Action;
+pub use manager::MidiManager;

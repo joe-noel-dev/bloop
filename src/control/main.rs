@@ -1,17 +1,11 @@
 use super::{directories::Directories, project_store::ProjectStore, waveform_store::WaveformStore};
 use crate::{
-    api::{
-        request::{
-            AddRequest, AddSampleRequest, BeginUploadRequest, CompleteUploadRequest, Entity, GetRequest, LoadRequest,
-            RemoveRequest, RenameRequest, Request, SelectRequest, TransportMethod, UpdateRequest, UploadRequest,
-        },
-        response::{Response, ResponseBroadcaster, UploadAck},
-    },
+    api::*,
     audio::{manager::Audio, manager::AudioManager},
-    generators::projects,
-    midi::{action::Action, manager::MidiManager},
-    model::{project::Project, sample::Sample},
-    samples::cache::SamplesCache,
+    generators::generate_project,
+    midi::{Action, MidiManager},
+    model::{Project, Sample},
+    samples::SamplesCache,
 };
 use anyhow::anyhow;
 use tokio::sync::{broadcast, mpsc};
@@ -49,7 +43,7 @@ impl MainController {
             project_store,
             request_rx,
             response_tx,
-            project: projects::generate_project(4, 3, 3),
+            project: generate_project(4, 3, 3),
             audio_manager,
             waveform_store,
             _midi_manager: midi_manager,

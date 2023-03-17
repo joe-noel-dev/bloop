@@ -1,5 +1,5 @@
 use super::error;
-use crate::api::{request, response};
+use crate::api::{Request, Response};
 use futures::{Sink, SinkExt};
 use futures_util::StreamExt;
 use std::marker::Unpin;
@@ -11,11 +11,7 @@ extern crate bson;
 extern crate serde;
 extern crate serde_derive;
 
-pub async fn run(
-    socket: TcpStream,
-    request_tx: mpsc::Sender<request::Request>,
-    mut response_rx: broadcast::Receiver<response::Response>,
-) {
+pub async fn run(socket: TcpStream, request_tx: mpsc::Sender<Request>, mut response_rx: broadcast::Receiver<Response>) {
     let addr = match socket.peer_addr() {
         Ok(addr) => addr,
         Err(_) => {
@@ -68,7 +64,7 @@ pub async fn run(
                 let api_request = match handle_message(&mut message) {
                     Ok(request) => request,
                     Err(error) => {
-                        send_response(response::Response::default().with_error(&error.to_string()), &mut outgoing).await;
+                        send_response(Response::default().with_error(&error.to_string()), &mut outgoing).await;
                         continue;
                     }
                 };
@@ -88,7 +84,7 @@ pub async fn run(
     println!("{addr} disconnected");
 }
 
-async fn send_response(response: response::Response, mut outgoing: impl Sink<Message> + Unpin) {
+async fn send_response(response: Response, mut outgoing: impl Sink<Message> + Unpin) {
     let document = match bson::to_document(&response) {
         Ok(doc) => doc,
         Err(error) => {
@@ -103,7 +99,7 @@ async fn send_response(response: response::Response, mut outgoing: impl Sink<Mes
     let _ = outgoing.send(Message::binary(data)).await;
 }
 
-fn handle_message(message: &mut [u8]) -> Result<request::Request, error::NetworkError> {
+fn handle_message(message: &mut [u8]) -> Result<Request, error::NetworkError> {
     let document = match bson::Document::from_reader(&mut &message[..]) {
         Ok(doc) => doc,
         Err(error) => {
@@ -112,7 +108,7 @@ fn handle_message(message: &mut [u8]) -> Result<request::Request, error::Network
         }
     };
 
-    let request: request::Request = match bson::from_document(document) {
+    let request: Request = match bson::from_document(document) {
         Ok(request) => request,
         Err(error) => {
             let message = format!("Error parsing request: {error}");

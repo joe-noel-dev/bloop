@@ -1,7 +1,7 @@
 use super::sample::Sample;
 use crate::{
-    model::id::ID,
-    types::audio_file_format::{extension_for_format, AudioFileFormat},
+    model::ID,
+    types::{extension_for_format, AudioFileFormat},
 };
 use anyhow::{anyhow, Context};
 use std::fs;

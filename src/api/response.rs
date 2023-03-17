@@ -1,6 +1,6 @@
 use crate::{
-    model::{id::ID, playback_state::PlaybackState, progress::Progress, project::Project, project::ProjectInfo},
-    waveform::data::WaveformData,
+    model::{PlaybackState, Progress, Project, ProjectInfo, ID},
+    waveform::WaveformData,
 };
 use serde::{Deserialize, Serialize};
 

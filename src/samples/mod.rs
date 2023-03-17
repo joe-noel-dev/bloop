@@ -1,2 +1,4 @@
-pub mod cache;
-pub mod sample;
+mod cache;
+mod sample;
+
+pub use cache::SamplesCache;
