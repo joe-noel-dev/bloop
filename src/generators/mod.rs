@@ -1,3 +1,5 @@
-pub mod colours;
-pub mod names;
-pub mod projects;
+mod colours;
+mod names;
+mod projects;
+
+pub use projects::generate_project;

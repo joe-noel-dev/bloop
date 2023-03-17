@@ -1,10 +1,9 @@
 use crate::{
-    api::response::{Response, WaveformResponse},
-    model::id::ID,
-    samples::cache::SamplesCache,
+    api::{Response, WaveformResponse},
+    model::ID,
+    samples::SamplesCache,
     waveform::{
-        data::Algorithm,
-        generate::{generate_waveform_from_file, Options},
+        Algorithm, generate_waveform_from_file, Options, 
     },
 };
 use anyhow::anyhow;

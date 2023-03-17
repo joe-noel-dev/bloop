@@ -1,10 +1,18 @@
-pub mod channel;
-pub mod id;
-pub mod playback_state;
-pub mod progress;
-pub mod project;
-pub mod sample;
-pub mod section;
-pub mod selections;
-pub mod song;
-pub mod tempo;
+mod channel;
+mod id;
+mod playback_state;
+mod progress;
+mod project;
+mod sample;
+mod section;
+mod selections;
+mod song;
+mod tempo;
+
+pub use id::ID;
+pub use playback_state::{PlaybackState, PlayingState};
+pub use progress::Progress;
+pub use project::{Project, ProjectInfo};
+pub use sample::Sample;
+pub use section::Section;
+pub use song::Song;

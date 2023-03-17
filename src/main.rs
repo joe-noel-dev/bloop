@@ -9,10 +9,10 @@ mod samples;
 mod types;
 mod waveform;
 
+use crate::control::MainController;
+use crate::network::run_server;
 use tokio::join;
 use tokio::sync::{broadcast, mpsc};
-
-use crate::control::main::MainController;
 
 #[tokio::main]
 async fn main() {
@@ -22,6 +22,6 @@ async fn main() {
     let mut main_controller = MainController::new(request_rx, response_tx.clone());
 
     let control_fut = main_controller.run();
-    let network_fut = network::manager::run(request_tx, response_tx);
+    let network_fut = run_server(request_tx, response_tx);
     join!(control_fut, network_fut);
 }

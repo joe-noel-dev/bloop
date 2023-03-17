@@ -1,10 +1,7 @@
 use crate::{
-    model::{
-        id::ID,
-        project::{Project, ProjectInfo},
-    },
-    samples::cache::SamplesCache,
-    types::audio_file_format::AudioFileFormat,
+    model::{Project, ProjectInfo, ID},
+    samples::SamplesCache,
+    types::AudioFileFormat,
 };
 use anyhow::{anyhow, Context};
 use std::convert::TryInto;
@@ -251,7 +248,7 @@ impl ProjectStore {
 #[cfg(test)]
 mod tests {
 
-    use crate::generators;
+    use crate::generators::generate_project;
 
     use super::*;
 
@@ -278,7 +275,7 @@ mod tests {
 
         let mut project_store = ProjectStore::new(&project_directory);
 
-        let project = generators::projects::generate_project(3, 4, 5);
+        let project = generate_project(3, 4, 5);
         let project_id = project.info.id;
         project_store.save(project, &samples_cache).await.unwrap();
 
@@ -300,9 +297,9 @@ mod tests {
 
         let project_store = ProjectStore::new(&project_directory);
 
-        let project1 = generators::projects::generate_project(3, 4, 5);
-        let project2 = generators::projects::generate_project(3, 4, 5);
-        let project3 = generators::projects::generate_project(3, 4, 5);
+        let project1 = generate_project(3, 4, 5);
+        let project2 = generate_project(3, 4, 5);
+        let project3 = generate_project(3, 4, 5);
 
         let project1_id = project1.info.id;
         let project2_id = project1.info.id;

@@ -1,1 +1,3 @@
-pub mod audio_file_format;
+mod audio_file_format;
+
+pub use audio_file_format::{extension_for_format, AudioFileFormat};
