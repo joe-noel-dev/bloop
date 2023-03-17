@@ -1,11 +1,9 @@
 use super::{
-    command::{AddSampleCommand, Command, RemoveSampleCommand},
-    notification::{Notification, SampleConversionResult},
     process::Process,
+    sampler_converter::{SampleConversionResult, SampleConverter},
 };
 use crate::{
     api::response::Response,
-    audio::{command::QueueCommand, convert::convert_sample},
     model::{
         id::ID,
         playback_state::{PlaybackState, PlayingState},
@@ -15,6 +13,7 @@ use crate::{
 };
 use futures::StreamExt;
 use futures_channel::mpsc;
+use rawdio::{create_engine, Context};
 use std::{
     collections::HashSet,
     path::{Path, PathBuf},
@@ -33,11 +32,12 @@ pub trait Audio {
 }
 
 pub struct AudioManager {
+    _context: Box<dyn Context>,
     _process: Process,
-    command_tx: mpsc::Sender<Command>,
-    notification_rx: mpsc::Receiver<Notification>,
-    notification_tx: mpsc::Sender<Notification>,
-    response_tx: broadcast::Sender<Response>,
+
+    sample_converter: SampleConverter,
+    conversion_rx: mpsc::Receiver<SampleConversionResult>,
+    _response_tx: broadcast::Sender<Response>,
     samples_in_engine: HashSet<ID>,
     samples_being_converted: HashSet<ID>,
     playback_state: PlaybackState,
@@ -45,15 +45,16 @@ pub struct AudioManager {
 
 impl AudioManager {
     pub fn new(response_tx: broadcast::Sender<Response>, preferences_dir: &Path) -> Self {
-        let (command_tx, command_rx) = mpsc::channel(128);
-        let (notification_tx, notification_rx) = futures_channel::mpsc::channel(128);
+        let sample_rate = 48_000;
+        let (context, process) = create_engine(sample_rate);
+        let (conversion_tx, conversion_rx) = futures_channel::mpsc::channel(64);
 
         Self {
-            _process: Process::new(command_rx, notification_tx.clone(), preferences_dir),
-            command_tx,
-            notification_tx,
-            notification_rx,
-            response_tx,
+            _context: context,
+            _process: Process::new(process, preferences_dir),
+            sample_converter: SampleConverter::new(conversion_tx),
+            conversion_rx,
+            _response_tx: response_tx,
             samples_in_engine: HashSet::new(),
             samples_being_converted: HashSet::new(),
             playback_state: PlaybackState::default(),
@@ -62,35 +63,14 @@ impl AudioManager {
 
     pub async fn run(&mut self) {
         loop {
-            let notification = match self.notification_rx.next().await {
-                Some(notification) => notification,
-                None => return,
+            if let Some(conversion_result) = self.conversion_rx.next().await {
+                self.on_sample_converted(conversion_result);
             };
-
-            self.on_notification(notification);
         }
     }
 
     pub fn playback_state(&self) -> &PlaybackState {
         &self.playback_state
-    }
-
-    pub fn on_notification(&mut self, notification: Notification) {
-        match notification {
-            Notification::ReturnProject(_) => (/* Project is dropped here */),
-            Notification::ReturnSample(_) => (/* Sample is dropped here */),
-            Notification::Transport(playback_state) => {
-                let _ = self
-                    .response_tx
-                    .send(Response::default().with_playback_state(&playback_state));
-
-                self.playback_state = playback_state;
-            }
-            Notification::SampleConverted(result) => self.on_sample_converted(result),
-            Notification::Progress(progress) => {
-                let _ = self.response_tx.send(Response::default().with_progress(progress));
-            }
-        }
     }
 
     fn on_sample_converted(&mut self, result: SampleConversionResult) {
@@ -108,10 +88,7 @@ impl AudioManager {
 
         println!("Adding sample to the audio engine: {}", result.sample_id);
 
-        self.send(Command::AddSample(AddSampleCommand {
-            sample_id: result.sample_id,
-            audio_data,
-        }))
+        // TODO: Add sample
     }
 
     fn add_samples(&mut self, project: &Project, samples_cache: &SamplesCache) {
@@ -143,19 +120,7 @@ impl AudioManager {
         }
 
         self.samples_being_converted.insert(*sample_id);
-
-        let mut notification_tx = self.notification_tx.clone();
-        let sample_id = *sample_id;
-
-        std::thread::spawn(move || {
-            let result = convert_sample(&sample_path);
-            notification_tx
-                .try_send(Notification::SampleConverted(SampleConversionResult {
-                    sample_id,
-                    result,
-                }))
-                .unwrap();
-        });
+        self.sample_converter.convert(*sample_id, sample_path);
     }
 
     fn remove_samples(&mut self, project: &Project) {
@@ -178,42 +143,35 @@ impl AudioManager {
 
         self.samples_in_engine.remove(sample_id);
 
-        self.send(Command::RemoveSample(RemoveSampleCommand { sample_id: *sample_id }));
+        // TODO: Remove sample
     }
 
     pub fn on_project_updated(&mut self, project: &Project, samples_cache: &SamplesCache) {
         self.add_samples(project, samples_cache);
-        self.send(Command::UpdateProject(Box::new(project.clone())));
+        // TODO: Update project
         self.remove_samples(project);
-    }
-
-    fn send(&mut self, command: Command) {
-        self.command_tx.try_send(command).unwrap();
     }
 }
 
 impl Audio for AudioManager {
     fn play(&mut self) {
-        self.send(Command::Play);
+        // TODO: Start playback
     }
 
     fn stop(&mut self) {
-        self.send(Command::Stop);
+        // TODO: Stop playback
     }
 
     fn enter_loop(&mut self) {
-        self.send(Command::EnterLoop);
+        // TODO: Loop
     }
 
     fn exit_loop(&mut self) {
-        self.send(Command::ExitLoop);
+        // TODO: Exit loop
     }
 
     fn queue(&mut self, song_id: &ID, section_id: &ID) {
-        self.send(Command::Queue(QueueCommand {
-            song_id: *song_id,
-            section_id: *section_id,
-        }));
+        // TODO: Queue a song
     }
 
     fn toggle_loop(&mut self) {

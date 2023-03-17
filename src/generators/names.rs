@@ -2,11 +2,11 @@ use rand::seq::SliceRandom;
 
 pub fn random_name() -> String {
     let mut rng = rand::thread_rng();
-    return format!(
+    format!(
         "{} {}",
         ADJECTIVES.choose(&mut rng).unwrap(),
         NOUNS.choose(&mut rng).unwrap()
-    );
+    )
 }
 
 pub fn random_section_name() -> &'static str {

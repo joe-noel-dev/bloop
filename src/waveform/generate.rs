@@ -1,8 +1,9 @@
+use rawdio::{AudioBuffer, BorrowedAudioBuffer, OwnedAudioBuffer, SampleLocation};
+
 use super::data::{Algorithm, Properties, WaveformData};
-use crate::audio::buffer::{AudioBuffer, ImmutableAudioBufferSlice, OwnedAudioBuffer, SampleLocation};
 use crate::audio::convert::convert_sample;
 use std::convert::TryInto;
-use std::{borrow::Borrow, collections::HashSet, sync::Arc};
+use std::{collections::HashSet, sync::Arc};
 use std::{path::Path, thread::spawn};
 
 #[derive(Clone)]
@@ -14,20 +15,15 @@ pub struct Options {
 
 pub fn generate_waveform_from_file(sample_path: &Path, options: Options) -> anyhow::Result<WaveformData> {
     let audio = convert_sample(sample_path)?;
-    generate_waveform_from_audio(*audio, options)
+    generate_waveform_from_audio(audio, options)
 }
 
 pub fn generate_waveform_from_audio(audio: OwnedAudioBuffer, mut options: Options) -> anyhow::Result<WaveformData> {
     let min_num_peaks = 10;
-    let num_frames: i32 = audio.num_frames().try_into().unwrap();
-    let max_peak_length: i32 = num_frames / min_num_peaks;
+    let frame_count = audio.frame_count() as i32;
+    let max_peak_length: i32 = frame_count / min_num_peaks;
 
-    options.lengths = options
-        .lengths
-        .iter()
-        .filter(|length| **length <= max_peak_length)
-        .copied()
-        .collect();
+    options.lengths.retain(|length| *length <= max_peak_length);
 
     let audio: Arc<OwnedAudioBuffer> = Arc::from(audio);
 
@@ -60,8 +56,8 @@ fn process_waveform(options: Options, audio: Arc<dyn AudioBuffer>) -> WaveformDa
 
     for length in options.lengths.iter() {
         let length: usize = (*length).try_into().unwrap();
-        for frame in (0..audio.num_frames()).step_by(length) {
-            let slice = ImmutableAudioBufferSlice::new(audio.borrow(), frame);
+        for frame in (0..audio.frame_count()).step_by(length) {
+            let slice = BorrowedAudioBuffer::slice_frames(audio.as_ref(), frame, length);
 
             for channel in 0..options.num_channels {
                 process_channel(
@@ -89,10 +85,10 @@ fn process_channel(
     let mut max_sample = 0.0_f32;
     let mut squared_total = 0.0_f64;
 
-    let num_frames = length.min(audio.num_frames());
+    let num_frames = length.min(audio.frame_count());
 
     for frame in 0..num_frames {
-        let sample = audio.get_sample(&SampleLocation { channel, frame });
+        let sample = audio.get_sample(SampleLocation::new(channel, frame));
         min_sample = min_sample.min(sample);
         max_sample = max_sample.max(sample);
         squared_total += sample as f64 * sample as f64;

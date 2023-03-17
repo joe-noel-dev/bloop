@@ -24,7 +24,7 @@ pub async fn run(
         }
     };
 
-    println!("New connection: {}", addr);
+    println!("New connection: {addr}");
 
     let ws_stream = match tokio_tungstenite::accept_async(socket).await {
         Ok(stream) => stream,
@@ -46,7 +46,7 @@ pub async fn run(
                 let message = match message {
                     Some(message) => message,
                     None => {
-                        println!("Connection closed to client: {}", addr);
+                        println!("Connection closed to client: {addr}");
                         break;
                     }
                 };
@@ -55,7 +55,7 @@ pub async fn run(
                 let message = match message {
                     Ok(message) => message,
                     Err(_) => {
-                        println!("Error receiving from client: {}", addr);
+                        println!("Error receiving from client: {addr}");
                         break;
                     }
                 };
@@ -75,7 +75,7 @@ pub async fn run(
                 match request_tx.send(api_request).await {
                     Ok(_) => continue,
                     Err(_) => {
-                        println!("Client disconnected: {}", addr);
+                        println!("Client disconnected: {addr}");
                         break;
                     }
                 }
@@ -85,14 +85,14 @@ pub async fn run(
         }
     }
 
-    println!("{} disconnected", addr);
+    println!("{addr} disconnected");
 }
 
 async fn send_response(response: response::Response, mut outgoing: impl Sink<Message> + Unpin) {
     let document = match bson::to_document(&response) {
         Ok(doc) => doc,
         Err(error) => {
-            println!("Error serialising response: {}", error);
+            println!("Error serialising response: {error}");
             return;
         }
     };
@@ -107,7 +107,7 @@ fn handle_message(message: &mut [u8]) -> Result<request::Request, error::Network
     let document = match bson::Document::from_reader(&mut &message[..]) {
         Ok(doc) => doc,
         Err(error) => {
-            let message = format!("Failed to parse JSON: {}", error);
+            let message = format!("Failed to parse JSON: {error}");
             return Err(error::NetworkError::new(&message));
         }
     };
@@ -115,7 +115,7 @@ fn handle_message(message: &mut [u8]) -> Result<request::Request, error::Network
     let request: request::Request = match bson::from_document(document) {
         Ok(request) => request,
         Err(error) => {
-            let message = format!("Error parsing request: {}", error);
+            let message = format!("Error parsing request: {error}");
             return Err(error::NetworkError::new(&message));
         }
     };

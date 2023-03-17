@@ -81,7 +81,7 @@ impl ProjectStore {
             let project = match self.read_project_json(&id).await {
                 Ok(project) => project,
                 Err(error) => {
-                    println!("Error reading project JSON: {}", error);
+                    println!("Error reading project JSON: {error}");
                     continue;
                 }
             };
@@ -106,7 +106,7 @@ impl ProjectStore {
         if !project_directory.exists() {
             tokio::fs::create_dir_all(project_directory)
                 .await
-                .with_context(|| format!("Unable to create project directory: {}", project_id))?;
+                .with_context(|| format!("Unable to create project directory: {project_id}"))?;
         }
 
         Ok(())
@@ -117,7 +117,7 @@ impl ProjectStore {
         if !samples_directory.exists() {
             tokio::fs::create_dir_all(samples_directory)
                 .await
-                .with_context(|| format!("Unable to create samples directory: {}", project_id))?;
+                .with_context(|| format!("Unable to create samples directory: {project_id}"))?;
         }
 
         Ok(())
@@ -161,10 +161,9 @@ impl ProjectStore {
 
         let data = tokio::fs::read_to_string(json_path)
             .await
-            .with_context(|| format!("Failed to read project with ID: {}", project_id))?;
+            .with_context(|| format!("Failed to read project with ID: {project_id}"))?;
 
-        Ok(serde_json::from_str::<Project>(&data)
-            .with_context(|| format!("Failed to parse project JSON: {}", project_id))?)
+        serde_json::from_str::<Project>(&data).with_context(|| format!("Failed to parse project JSON: {project_id}"))
     }
 
     fn sample_path(&self, project_id: &ID, sample_id: &ID) -> PathBuf {
@@ -218,12 +217,12 @@ impl ProjectStore {
 
         let mut read_dir = tokio::fs::read_dir(samples_directory)
             .await
-            .with_context(|| format!("Error reading samples directory: {}", project_id))?;
+            .with_context(|| format!("Error reading samples directory: {project_id}"))?;
 
         while let Some(entry) = read_dir
             .next_entry()
             .await
-            .with_context(|| format!("Error iterating samples directory: {}", project_id))?
+            .with_context(|| format!("Error iterating samples directory: {project_id}"))?
         {
             let project_path = entry.path();
             if !project_path.is_file() {

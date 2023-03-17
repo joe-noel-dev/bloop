@@ -44,7 +44,7 @@ impl WaveformStore {
         let sample_id = *sample_id;
         let sample_path = sample.get_path().to_path_buf();
 
-        println!("Generating waveform for sample: {}", sample_id);
+        println!("Generating waveform for sample: {sample_id}");
 
         spawn(move || {
             let mut lengths = HashSet::new();

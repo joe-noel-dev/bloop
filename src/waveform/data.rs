@@ -39,7 +39,7 @@ impl WaveformData {
     }
 
     fn get_group_mut(&mut self, properties: &Properties) -> Option<&mut WaveformGroup> {
-        self.peaks.iter_mut().find(|group| (*group).properties == *properties)
+        self.peaks.iter_mut().find(|group| group.properties == *properties)
     }
 
     pub fn sort(&mut self) {

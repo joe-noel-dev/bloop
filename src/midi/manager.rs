@@ -56,7 +56,7 @@ fn get_mappings() -> Vec<Mapping> {
 fn on_midi_input(_: u64, message: &[u8], mappings: &[Mapping], context: &mut Context) {
     mappings
         .iter()
-        .filter(|mapping| (*mapping).matcher.matches(message))
+        .filter(|mapping| mapping.matcher.matches(message))
         .for_each(|mapping| {
             let _ = context.action_tx.try_send(mapping.action);
         });
@@ -74,7 +74,7 @@ impl MidiManager {
                 Err(_) => return,
             };
 
-            println!("{}: {}", index, name);
+            println!("{index}: {name}");
         });
 
         println!();
@@ -105,7 +105,7 @@ impl MidiManager {
             ) {
                 Ok(connection) => Some(connection),
                 Err(error) => {
-                    eprintln!("Unable to connect to MIDI input: {}", error);
+                    eprintln!("Unable to connect to MIDI input: {error}");
                     None
                 }
             }

@@ -97,7 +97,7 @@ impl SamplesCache {
             return Err(anyhow!("Sample doesn't exist on disk: {}", id));
         }
 
-        let wav_reader = hound::WavReader::open(path).with_context(|| format!("Couldn't read audio file: {}", id))?;
+        let wav_reader = hound::WavReader::open(path).with_context(|| format!("Couldn't read audio file: {id}"))?;
 
         Ok(SampleMetadata {
             name: String::from(sample.get_name()),

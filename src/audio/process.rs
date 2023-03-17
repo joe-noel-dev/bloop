@@ -1,11 +1,8 @@
-use super::{
-    buffer::BorrowedAudioBuffer, command::Command, engine::AudioEngine, engine::Engine, notification::Notification,
-};
 use cpal::{
     traits::{DeviceTrait, HostTrait, StreamTrait},
     Host, SampleRate, Stream,
 };
-use futures_channel::mpsc::{Receiver, Sender};
+use rawdio::{AudioBuffer, AudioProcess, BorrowedAudioBuffer, MutableBorrowedAudioBuffer, OwnedAudioBuffer};
 use serde::{Deserialize, Serialize};
 use std::{fs::File, io::BufReader, path::Path};
 
@@ -42,13 +39,13 @@ fn print_output_devices(host: &Host) {
             Err(_) => return,
         };
 
-        println!("{}", device_name);
+        println!("{device_name}");
     });
     println!();
 }
 
 impl Process {
-    pub fn new(command_rx: Receiver<Command>, notification_tx: Sender<Notification>, preferences_dir: &Path) -> Self {
+    pub fn new(mut audio_process: Box<dyn AudioProcess + Send>, preferences_dir: &Path) -> Self {
         let host = cpal::default_host();
         println!("Using audio host: {}", host.id().name());
 
@@ -81,17 +78,33 @@ impl Process {
         println!("Sample rate: {}", config.sample_rate().0);
         println!();
 
-        let mut engine = AudioEngine::new(command_rx, notification_tx);
+        let maximum_frame_count = match config.buffer_size() {
+            cpal::SupportedBufferSize::Range { min: _, max } => *max as usize,
+            cpal::SupportedBufferSize::Unknown => 4096,
+        };
+
+        let channel_count = config.channels() as usize;
+        let sample_rate = config.sample_rate().0 as usize;
+
+        let input_buffer = OwnedAudioBuffer::new(maximum_frame_count, 0, sample_rate);
+        let mut output_buffer = OwnedAudioBuffer::new(maximum_frame_count, channel_count, sample_rate);
 
         let stream = device
             .build_output_stream(
                 &config.config(),
                 move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                    let mut audio_buffer =
-                        BorrowedAudioBuffer::new(data, usize::from(config.channels()), config.sample_rate().0);
-                    engine.render(&mut audio_buffer);
+                    let frame_count = data.len() / channel_count;
+
+                    let input_slice = BorrowedAudioBuffer::slice_frames(&input_buffer, 0, frame_count);
+                    let mut output_slice = MutableBorrowedAudioBuffer::slice_frames(&mut output_buffer, 0, frame_count);
+
+                    output_slice.clear();
+
+                    audio_process.process(&input_slice, &mut output_slice);
+
+                    output_slice.copy_to_interleaved(data, channel_count, frame_count);
                 },
-                move |err| eprintln!("Stream error: {:?}", err),
+                move |err| eprintln!("Stream error: {err:?}"),
             )
             .expect("Couldn't create output stream");
 
