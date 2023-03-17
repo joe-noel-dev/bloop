@@ -102,7 +102,7 @@ impl Project {
     pub fn add_section_to_song(mut self, song_id: &ID) -> anyhow::Result<Self> {
         let song = self
             .song_with_id(song_id)
-            .with_context(|| format!("Couldn't find song ID {}", song_id))?;
+            .with_context(|| format!("Couldn't find song ID {song_id}"))?;
 
         let mut song = song.clone();
 
@@ -190,7 +190,7 @@ impl Project {
     pub fn remove_section(mut self, section_id: &ID) -> anyhow::Result<Self> {
         let mut song = self
             .song_with_section(section_id)
-            .with_context(|| format!("Couldn't find song with section ID: {}", section_id))?
+            .with_context(|| format!("Couldn't find song with section ID: {section_id}"))?
             .clone();
 
         if song.section_ids.len() < 2 {
@@ -422,7 +422,7 @@ impl Project {
 
         let mut song = self
             .song_with_id_mut(song_id)
-            .with_context(|| format!("Song not found with ID: {}", song_id))?;
+            .with_context(|| format!("Song not found with ID: {song_id}"))?;
 
         song.sample_id = None;
 

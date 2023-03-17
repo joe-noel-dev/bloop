@@ -41,13 +41,7 @@ impl Song {
     }
 
     pub fn remove_section_id(mut self, section_id: &ID) -> Self {
-        self.section_ids = self
-            .section_ids
-            .iter()
-            .filter(|id| id != &section_id)
-            .copied()
-            .collect();
-
+        self.section_ids.retain(|id| id != section_id);
         self
     }
 

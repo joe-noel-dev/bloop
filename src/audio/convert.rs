@@ -1,7 +1,7 @@
-use crate::audio::buffer::OwnedAudioBuffer;
 use anyhow::{anyhow, Context};
 use hound::SampleFormat;
 use num_traits::pow::Pow;
+use rawdio::{AudioBuffer, OwnedAudioBuffer};
 use std::convert::From;
 use std::path::Path;
 
@@ -18,7 +18,7 @@ where
         .collect()
 }
 
-pub fn convert_sample(sample_path: &Path) -> anyhow::Result<Box<OwnedAudioBuffer>> {
+pub fn convert_sample(sample_path: &Path) -> anyhow::Result<OwnedAudioBuffer> {
     let mut reader = hound::WavReader::open(sample_path).context("Unable to open file for conversion")?;
 
     let spec = reader.spec();
@@ -32,9 +32,12 @@ pub fn convert_sample(sample_path: &Path) -> anyhow::Result<Box<OwnedAudioBuffer
         SampleFormat::Int => read_samples::<i32, _>(&mut reader, 2.0_f64.pow(spec.bits_per_sample - 1)),
     };
 
-    Ok(Box::new(OwnedAudioBuffer::new(
-        samples,
-        spec.channels.into(),
-        spec.sample_rate,
-    )))
+    let channel_count = spec.channels as usize;
+    let frame_count = samples.len() / channel_count;
+    let sample_rate = spec.sample_rate as usize;
+
+    let mut buffer = OwnedAudioBuffer::new(frame_count, channel_count, sample_rate);
+    buffer.fill_from_interleaved(&samples, channel_count, frame_count);
+
+    Ok(buffer)
 }
