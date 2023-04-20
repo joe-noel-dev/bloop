@@ -3,3 +3,4 @@ pub mod convert;
 pub mod manager;
 mod process;
 mod sampler_converter;
+mod sequence;

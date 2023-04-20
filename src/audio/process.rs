@@ -53,7 +53,7 @@ impl Process {
 
         let preferences = read_preferences(preferences_dir).unwrap_or_default();
 
-        let preferred_device = match preferences.output_device {
+        let preferred_device = match preferences.clone().output_device {
             Some(preferred_device_name) => host
                 .output_devices()
                 .unwrap()
@@ -71,7 +71,19 @@ impl Process {
 
         let mut output_configs = device.supported_output_configs().unwrap();
         let config = output_configs
-            .next()
+            .find(|config| {
+                if let Some(sample_rate) = preferences.sample_rate {
+                    if sample_rate < config.min_sample_rate().0 {
+                        return false;
+                    }
+
+                    if sample_rate > config.max_sample_rate().0 {
+                        return false;
+                    }
+                }
+
+                true
+            })
             .expect("No configs supported")
             .with_sample_rate(SampleRate(preferences.sample_rate.unwrap_or(SAMPLE_RATE)));
 
