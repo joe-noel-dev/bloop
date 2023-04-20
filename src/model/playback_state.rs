@@ -25,5 +25,4 @@ pub struct PlaybackState {
     pub queued_section_id: Option<ID>,
 
     pub looping: bool,
-    pub loop_count: i32,
 }

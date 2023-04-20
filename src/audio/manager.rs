@@ -1,6 +1,7 @@
 use super::{
     process::Process,
     sampler_converter::{SampleConversionResult, SampleConverter},
+    sequence::{Sequence, SequencePoint},
 };
 use crate::{
     api::Response,
@@ -9,10 +10,11 @@ use crate::{
 };
 use futures::StreamExt;
 use futures_channel::mpsc;
-use rawdio::{create_engine, Context};
+use rawdio::{create_engine, AudioBuffer, Context, Gain, Sampler};
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     path::{Path, PathBuf},
+    time::Duration,
 };
 use tokio::sync::broadcast;
 
@@ -28,40 +30,82 @@ pub trait Audio {
 }
 
 pub struct AudioManager {
-    _context: Box<dyn Context>,
+    context: Box<dyn Context>,
     _process: Process,
 
     sample_converter: SampleConverter,
     conversion_rx: mpsc::Receiver<SampleConversionResult>,
     _response_tx: broadcast::Sender<Response>,
-    samples_in_engine: HashSet<ID>,
     samples_being_converted: HashSet<ID>,
     playback_state: PlaybackState,
+    samplers: HashMap<ID, Sampler>,
+    project: Project,
+    output_gain: Gain,
 }
 
 impl AudioManager {
     pub fn new(response_tx: broadcast::Sender<Response>, preferences_dir: &Path) -> Self {
-        let sample_rate = 48_000;
-        let (context, process) = create_engine(sample_rate);
+        let sample_rate = 44_100;
+        let (mut context, process) = create_engine(sample_rate);
+
+        context.start();
+
         let (conversion_tx, conversion_rx) = futures_channel::mpsc::channel(64);
 
+        let channel_count = 2;
+        let gain = Gain::new(context.as_ref(), channel_count);
+        gain.node.connect_to_output();
+
         Self {
-            _context: context,
+            context,
             _process: Process::new(process, preferences_dir),
             sample_converter: SampleConverter::new(conversion_tx),
             conversion_rx,
             _response_tx: response_tx,
-            samples_in_engine: HashSet::new(),
             samples_being_converted: HashSet::new(),
             playback_state: PlaybackState::default(),
+            samplers: HashMap::new(),
+            project: Project::empty(),
+            output_gain: gain,
         }
     }
 
     pub async fn run(&mut self) {
+        let mut interval = tokio::time::interval(Duration::from_secs_f64(1.0 / 60.0));
+
         loop {
-            if let Some(conversion_result) = self.conversion_rx.next().await {
-                self.on_sample_converted(conversion_result);
-            };
+            tokio::select! {
+                Some(conversion_result) = self.conversion_rx.next() => {
+                    self.on_sample_converted(conversion_result)
+                },
+                _ = interval.tick() => {
+                    self.notify_position();
+                },
+            }
+        }
+    }
+
+    pub fn notify_position(&self) {}
+
+    pub fn play_sequence(&mut self, sequence: Sequence) {
+        for point in sequence.points {
+            self.schedule_sequence_point(&point);
+        }
+    }
+
+    fn schedule_sequence_point(&mut self, sequence_point: &SequencePoint) {
+        if let Some(sample_id) = sequence_point.sample_id {
+            if let Some(sampler) = self.samplers.get_mut(&sample_id) {
+                sampler.start_from_position_at_time(sequence_point.start_time, sequence_point.position_in_sample);
+
+                if let Some((loop_start, loop_end)) = sequence_point.loop_point {
+                    sampler.enable_loop_at_time(sequence_point.start_time, loop_start, loop_end);
+                }
+
+                if let Some(end_time) = sequence_point.end_time {
+                    sampler.stop_at_time(end_time);
+                }
+            }
         }
     }
 
@@ -80,16 +124,19 @@ impl AudioManager {
             }
         };
 
-        self.samples_in_engine.insert(result.sample_id);
-
         println!("Adding sample to the audio engine: {}", result.sample_id);
 
-        // TODO: Add sample
+        let sample_rate = audio_data.sample_rate();
+        let sampler = Sampler::new(self.context.as_ref(), sample_rate, audio_data);
+
+        sampler.node.connect_to(&self.output_gain.node);
+
+        self.samplers.insert(result.sample_id, sampler);
     }
 
     fn add_samples(&mut self, project: &Project, samples_cache: &SamplesCache) {
         for sample in project.samples.iter() {
-            if self.samples_in_engine.contains(&sample.id) {
+            if self.samplers.contains_key(&sample.id) {
                 continue;
             }
 
@@ -107,7 +154,7 @@ impl AudioManager {
     }
 
     fn add_sample(&mut self, sample_id: &ID, sample_path: PathBuf) {
-        if self.samples_in_engine.contains(sample_id) {
+        if self.samplers.contains_key(sample_id) {
             return;
         }
 
@@ -121,9 +168,10 @@ impl AudioManager {
 
     fn remove_samples(&mut self, project: &Project) {
         let samples_to_remove: HashSet<ID> = self
-            .samples_in_engine
+            .samplers
             .iter()
-            .filter(|sample_id| !project.samples.iter().any(|sample| &sample.id == *sample_id))
+            .filter(|(sample_id, _)| !project.samples.iter().any(|sample| &sample.id == *sample_id))
+            .map(|(sample_id, _)| sample_id)
             .copied()
             .collect();
 
@@ -133,29 +181,28 @@ impl AudioManager {
     }
 
     fn remove_sample(&mut self, sample_id: &ID) {
-        if !self.samples_in_engine.contains(sample_id) {
-            return;
+        if let Some(mut sampler) = self.samplers.remove(sample_id) {
+            sampler.stop_now();
         }
-
-        self.samples_in_engine.remove(sample_id);
-
-        // TODO: Remove sample
     }
 
     pub fn on_project_updated(&mut self, project: &Project, samples_cache: &SamplesCache) {
         self.add_samples(project, samples_cache);
-        // TODO: Update project
+        self.project = project.clone();
         self.remove_samples(project);
     }
 }
 
 impl Audio for AudioManager {
     fn play(&mut self) {
-        // TODO: Start playback
+        if let Some(selected_song_id) = self.project.selections.song {
+            let sequence = Sequence::play_song(self.context.current_time(), &self.project, &selected_song_id);
+            self.play_sequence(sequence);
+        }
     }
 
     fn stop(&mut self) {
-        // TODO: Stop playback
+        self.play_sequence(Sequence::default());
     }
 
     fn enter_loop(&mut self) {
