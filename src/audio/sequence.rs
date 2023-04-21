@@ -6,6 +6,8 @@ use crate::model::{Project, Section, Song, ID};
 pub struct SequencePoint {
     pub start_time: Timestamp,
     pub end_time: Option<Timestamp>,
+    pub song_id: Option<ID>,
+    pub section_id: Option<ID>,
     pub sample_id: Option<ID>,
     pub position_in_sample: Timestamp,
     pub loop_point: Option<(Timestamp, Timestamp)>,
@@ -72,6 +74,8 @@ impl Sequence {
             SequencePoint {
                 start_time,
                 end_time,
+                song_id: Some(song.id),
+                section_id: Some(section.id),
                 sample_id: song.sample_id,
                 position_in_sample: start_position_in_sample,
                 loop_point: if section.looping {
@@ -117,6 +121,25 @@ impl Sequence {
         }
 
         None
+    }
+
+    pub fn point_at_time(&self, time: Timestamp) -> Option<SequencePoint> {
+        self.points
+            .iter()
+            .find(|point| {
+                if point.start_time > time {
+                    return false;
+                }
+
+                if let Some(end_time) = point.end_time {
+                    if end_time < time {
+                        return false;
+                    }
+                }
+
+                true
+            })
+            .copied()
     }
 }
 
@@ -169,6 +192,8 @@ mod test {
             SequencePoint {
                 start_time,
                 end_time: Some(start_time.incremented_by_beats(2.0, tempo)),
+                song_id: Some(song_id),
+                section_id: Some(project.sections[0].id),
                 sample_id: Some(sample_id),
                 position_in_sample: Timestamp::from_beats(1.0, tempo),
                 loop_point: None,
@@ -176,6 +201,8 @@ mod test {
             SequencePoint {
                 start_time: start_time.incremented_by_beats(2.0, tempo),
                 end_time: Some(start_time.incremented_by_beats(5.0, tempo)),
+                song_id: Some(song_id),
+                section_id: Some(project.sections[1].id),
                 sample_id: Some(sample_id),
                 position_in_sample: Timestamp::from_beats(5.0, tempo),
                 loop_point: None,
@@ -183,6 +210,8 @@ mod test {
             SequencePoint {
                 start_time: start_time.incremented_by_beats(5.0, tempo),
                 end_time: Some(start_time.incremented_by_beats(9.0, tempo)),
+                song_id: Some(song_id),
+                section_id: Some(project.sections[2].id),
                 sample_id: Some(sample_id),
                 position_in_sample: Timestamp::from_beats(9.0, tempo),
                 loop_point: None,
@@ -235,6 +264,8 @@ mod test {
             SequencePoint {
                 start_time,
                 end_time: Some(start_time.incremented_by_beats(5.0, tempo)),
+                song_id: Some(song_id),
+                section_id: Some(project.sections[0].id),
                 sample_id: Some(sample_id),
                 position_in_sample: Timestamp::from_beats(7.0, tempo),
                 loop_point: None,
@@ -242,6 +273,8 @@ mod test {
             SequencePoint {
                 start_time: start_time.incremented_by_beats(5.0, tempo),
                 end_time: None,
+                song_id: Some(song_id),
+                section_id: Some(project.sections[1].id),
                 sample_id: Some(sample_id),
                 position_in_sample: Timestamp::from_beats(9.0, tempo),
                 loop_point: Some((Timestamp::from_beats(9.0, tempo), Timestamp::from_beats(15.0, tempo))),

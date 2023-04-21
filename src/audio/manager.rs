@@ -35,12 +35,14 @@ pub struct AudioManager {
 
     sample_converter: SampleConverter,
     conversion_rx: mpsc::Receiver<SampleConversionResult>,
-    _response_tx: broadcast::Sender<Response>,
+    response_tx: broadcast::Sender<Response>,
     samples_being_converted: HashSet<ID>,
     playback_state: PlaybackState,
     samplers: HashMap<ID, Sampler>,
     project: Project,
     output_gain: Gain,
+
+    sequence: Sequence,
 }
 
 impl AudioManager {
@@ -61,12 +63,14 @@ impl AudioManager {
             _process: Process::new(process, preferences_dir),
             sample_converter: SampleConverter::new(conversion_tx),
             conversion_rx,
-            _response_tx: response_tx,
+            response_tx,
             samples_being_converted: HashSet::new(),
             playback_state: PlaybackState::default(),
             samplers: HashMap::new(),
             project: Project::empty(),
             output_gain: gain,
+
+            sequence: Sequence::default(),
         }
     }
 
@@ -79,18 +83,47 @@ impl AudioManager {
                     self.on_sample_converted(conversion_result)
                 },
                 _ = interval.tick() => {
-                    self.notify_position();
+                    self.context.process_notifications();
+                    self.notify_playback_state();
                 },
             }
         }
     }
 
-    pub fn notify_position(&self) {}
+    pub fn notify_playback_state(&mut self) {
+        let current_time = self.context.current_time();
+        let current_point = self.sequence.point_at_time(current_time);
+
+        let playback_state = match current_point {
+            Some(current_point) => PlaybackState {
+                playing: PlayingState::Playing,
+                song_id: current_point.song_id,
+                section_id: current_point.section_id,
+                queued_song_id: None,
+                queued_section_id: None,
+                looping: current_point.loop_point.is_some(),
+            },
+            None => PlaybackState::default(),
+        };
+
+        if self.playback_state != playback_state {
+            self.playback_state = playback_state;
+            let _ = self
+                .response_tx
+                .send(Response::default().with_playback_state(&self.playback_state));
+        }
+    }
 
     pub fn play_sequence(&mut self, sequence: Sequence) {
-        for point in sequence.points {
-            self.schedule_sequence_point(&point);
+        for (id, sampler) in self.samplers.iter_mut() {
+            sampler.cancel_all();
         }
+
+        for point in sequence.points.iter() {
+            self.schedule_sequence_point(point);
+        }
+
+        self.sequence = sequence;
     }
 
     fn schedule_sequence_point(&mut self, sequence_point: &SequencePoint) {
