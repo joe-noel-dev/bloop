@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::{
     model::{PlaybackState, Progress, Project, ProjectInfo, ID},
     waveform::WaveformData,

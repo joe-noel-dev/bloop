@@ -127,7 +127,7 @@ impl AudioManager {
         println!("Adding sample to the audio engine: {}", result.sample_id);
 
         let sample_rate = audio_data.sample_rate();
-        let sampler = Sampler::new(self.context.as_ref(), sample_rate, audio_data);
+        let sampler = Sampler::new(self.context.as_ref(), audio_data);
 
         sampler.node.connect_to(&self.output_gain.node);
 
