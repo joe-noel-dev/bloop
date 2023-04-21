@@ -21,7 +21,7 @@ hound = "3.5.0"
 midir = "0.9.1"
 num-traits = "0.2.15"
 rand = "0.8.5"
-rawdio = { git = "https://github.com/joefocusrite/rawdio" }
+rawdio = "0.4.0"
 regex = "1.7"
 serde = { version= "1.0.156", features = ["derive"] }
 serde_bytes = "0.11.6"
