@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use super::channel::Channel;
 use super::id::ID;
 use super::sample::Sample;
@@ -83,6 +85,10 @@ impl Project {
 
     pub fn section_with_id(&self, id: &ID) -> Option<&Section> {
         self.sections.iter().find(|s| s.id == *id)
+    }
+
+    pub fn section_with_id_mut(&mut self, id: &ID) -> Option<&mut Section> {
+        self.sections.iter_mut().find(|s| s.id == *id)
     }
 
     pub fn replace_song(mut self, song: &Song) -> anyhow::Result<Self> {
@@ -304,6 +310,8 @@ impl Project {
             .ok_or_else(|| anyhow!("Couldn't find song with ID: {}", song_id))?;
 
         song.sample_id = Some(sample.id);
+        song.tempo = sample.tempo;
+
         self.samples.push(sample);
         Ok(self)
     }
