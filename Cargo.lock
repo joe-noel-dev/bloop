@@ -1321,9 +1321,7 @@ dependencies = [
 
 [[package]]
 name = "rawdio"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "670bb4be042795e8f90f998f0b800b8d1707bc314e7fc831ab509cb3cf0fa35b"
+version = "0.5.0"
 dependencies = [
  "atomic_float",
  "crossbeam",
