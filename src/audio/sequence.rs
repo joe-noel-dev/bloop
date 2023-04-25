@@ -5,15 +5,21 @@ use crate::model::{Project, Section, Song, ID};
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct SequencePoint {
     pub start_time: Timestamp,
-    pub end_time: Option<Timestamp>,
+    pub duration: Timestamp,
     pub song_id: Option<ID>,
     pub section_id: Option<ID>,
     pub sample_id: Option<ID>,
     pub position_in_sample: Timestamp,
-    pub loop_point: Option<(Timestamp, Timestamp)>,
+    pub loop_enabled: bool,
 }
 
-#[derive(Default, PartialEq)]
+impl SequencePoint {
+    pub fn end_time(&self) -> Timestamp {
+        self.start_time + self.duration
+    }
+}
+
+#[derive(Clone, Default, PartialEq)]
 pub struct Sequence {
     pub points: Vec<SequencePoint>,
 }
@@ -30,117 +36,112 @@ impl Sequence {
             None => return Self::default(),
         };
 
-        let mut remove = false;
-
         let points = project
             .sections
             .iter()
             .filter_map(|section| {
-                Self::sequence_point_for_section(project, song_id, section, &reference_section_id, start_time, song)
-            })
-            .filter(|section| {
-                if !remove && section.loop_point.is_some() {
-                    remove = true;
-                    return true;
-                }
-
-                !remove
+                sequence_point_for_section_from_reference(project, section, &reference_section_id, start_time, song)
             })
             .collect();
 
         Self { points }
     }
 
-    fn sequence_point_for_section(
-        project: &Project,
-        song_id: &ID,
-        section: &Section,
-        reference_section_id: &ID,
-        start_time: Timestamp,
-        song: &Song,
-    ) -> Option<SequencePoint> {
-        Self::start_time_of_section(project, song_id, &section.id, reference_section_id, start_time).map(|start_time| {
-            let section_duration = Timestamp::from_beats(section.beat_length, song.tempo.bpm);
-
-            let start_position_in_sample = Timestamp::from_beats(section.start, song.tempo.bpm);
-            let end_position_in_sample = start_position_in_sample.incremented(&section_duration);
-
-            let end_time = if section.looping {
-                None
-            } else {
-                Some(start_time.incremented(&section_duration))
-            };
-
-            SequencePoint {
-                start_time,
-                end_time,
-                song_id: Some(song.id),
-                section_id: Some(section.id),
-                sample_id: song.sample_id,
-                position_in_sample: start_position_in_sample,
-                loop_point: if section.looping {
-                    Some((start_position_in_sample, end_position_in_sample))
-                } else {
-                    None
-                },
-            }
-        })
-    }
-
-    fn beat_position_of_section(project: &Project, section_id: &ID, reference_section_id: &ID) -> Option<f64> {
-        let mut position = None;
-
-        for section in project.sections.iter() {
-            if section.id == *reference_section_id {
-                position = Some(0.0);
-            }
-
-            if section.id == *section_id {
-                return position;
-            }
-
-            if let Some(beat_position) = position {
-                position = Some(beat_position + section.beat_length);
-            }
-        }
-
-        position
-    }
-
-    fn start_time_of_section(
-        project: &Project,
-        song_id: &ID,
-        section_id: &ID,
-        reference_section_id: &ID,
-        reference_time: Timestamp,
-    ) -> Option<Timestamp> {
-        if let Some(beat_position) = Self::beat_position_of_section(project, section_id, reference_section_id) {
-            if let Some(song) = project.song_with_id(song_id) {
-                return Some(reference_time.incremented_by_beats(beat_position, song.tempo.bpm));
-            }
-        }
-
-        None
-    }
-
     pub fn point_at_time(&self, time: Timestamp) -> Option<SequencePoint> {
         self.points
             .iter()
-            .find(|point| {
-                if point.start_time > time {
-                    return false;
-                }
-
-                if let Some(end_time) = point.end_time {
-                    if end_time < time {
-                        return false;
-                    }
-                }
-
-                true
-            })
+            .find(|point| is_playing_at_time(point, time))
             .copied()
     }
+
+    pub fn enable_loop_at_time(&self, time: Timestamp) -> Sequence {
+        let mut sequence = self.clone();
+
+        let mut loop_enabled = false;
+
+        sequence.points.iter_mut().for_each(|point| {
+            if !loop_enabled && is_playing_at_time(point, time) {
+                point.loop_enabled = true;
+                loop_enabled = true;
+            } else {
+                point.loop_enabled = false;
+            }
+        });
+
+        sequence
+    }
+}
+
+fn sequence_point_for_section_from_reference(
+    project: &Project,
+    section: &Section,
+    reference_section_id: &ID,
+    reference_time: Timestamp,
+    song: &Song,
+) -> Option<SequencePoint> {
+    start_time_of_section(project, song, &section.id, reference_section_id, reference_time)
+        .map(|start_time| sequence_point_for_section(section, song, start_time))
+}
+
+fn start_time_of_section(
+    project: &Project,
+    song: &Song,
+    section_id: &ID,
+    reference_section_id: &ID,
+    reference_time: Timestamp,
+) -> Option<Timestamp> {
+    if let Some(beat_position) = beat_position_of_section(project, section_id, reference_section_id) {
+        return Some(reference_time.incremented_by_beats(beat_position, song.tempo.bpm));
+    }
+
+    None
+}
+
+fn beat_position_of_section(project: &Project, section_id: &ID, reference_section_id: &ID) -> Option<f64> {
+    let mut position = None;
+
+    for section in project.sections.iter() {
+        if section.id == *reference_section_id {
+            position = Some(0.0);
+        }
+
+        if section.id == *section_id {
+            return position;
+        }
+
+        if let Some(beat_position) = position {
+            position = Some(beat_position + section.beat_length);
+        }
+    }
+
+    position
+}
+
+fn sequence_point_for_section(section: &Section, song: &Song, start_time: Timestamp) -> SequencePoint {
+    let section_duration = Timestamp::from_beats(section.beat_length, song.tempo.bpm);
+    let start_position_in_sample = Timestamp::from_beats(section.start, song.tempo.bpm);
+
+    SequencePoint {
+        start_time,
+        duration: section_duration,
+        song_id: Some(song.id),
+        section_id: Some(section.id),
+        sample_id: song.sample_id,
+        position_in_sample: start_position_in_sample,
+        loop_enabled: section.looping,
+    }
+}
+
+fn is_playing_at_time(point: &SequencePoint, time: Timestamp) -> bool {
+    if point.start_time > time {
+        return false;
+    }
+
+    if !point.loop_enabled && point.end_time() < time {
+        return false;
+    }
+
+    true
 }
 
 #[cfg(test)]
@@ -191,30 +192,30 @@ mod test {
         let expected_values: Vec<SequencePoint> = vec![
             SequencePoint {
                 start_time,
-                end_time: Some(start_time.incremented_by_beats(2.0, tempo)),
+                duration: Timestamp::from_beats(2.0, tempo),
                 song_id: Some(song_id),
                 section_id: Some(project.sections[0].id),
                 sample_id: Some(sample_id),
                 position_in_sample: Timestamp::from_beats(1.0, tempo),
-                loop_point: None,
+                loop_enabled: false,
             },
             SequencePoint {
                 start_time: start_time.incremented_by_beats(2.0, tempo),
-                end_time: Some(start_time.incremented_by_beats(5.0, tempo)),
+                duration: Timestamp::from_beats(3.0, tempo),
                 song_id: Some(song_id),
                 section_id: Some(project.sections[1].id),
                 sample_id: Some(sample_id),
                 position_in_sample: Timestamp::from_beats(5.0, tempo),
-                loop_point: None,
+                loop_enabled: false,
             },
             SequencePoint {
                 start_time: start_time.incremented_by_beats(5.0, tempo),
-                end_time: Some(start_time.incremented_by_beats(9.0, tempo)),
+                duration: Timestamp::from_beats(4.0, tempo),
                 song_id: Some(song_id),
                 section_id: Some(project.sections[2].id),
                 sample_id: Some(sample_id),
                 position_in_sample: Timestamp::from_beats(9.0, tempo),
-                loop_point: None,
+                loop_enabled: false,
             },
         ];
 
@@ -258,26 +259,35 @@ mod test {
         let song_id = project.songs[0].id;
         let sequence = Sequence::play_song(start_time, &project, &song_id);
 
-        assert_eq!(sequence.points.len(), 2);
+        assert_eq!(sequence.points.len(), 3);
 
         let expected_values: Vec<SequencePoint> = vec![
             SequencePoint {
                 start_time,
-                end_time: Some(start_time.incremented_by_beats(5.0, tempo)),
+                duration: Timestamp::from_beats(5.0, tempo),
                 song_id: Some(song_id),
                 section_id: Some(project.sections[0].id),
                 sample_id: Some(sample_id),
                 position_in_sample: Timestamp::from_beats(7.0, tempo),
-                loop_point: None,
+                loop_enabled: false,
             },
             SequencePoint {
                 start_time: start_time.incremented_by_beats(5.0, tempo),
-                end_time: None,
+                duration: Timestamp::from_beats(6.0, tempo),
                 song_id: Some(song_id),
                 section_id: Some(project.sections[1].id),
                 sample_id: Some(sample_id),
                 position_in_sample: Timestamp::from_beats(9.0, tempo),
-                loop_point: Some((Timestamp::from_beats(9.0, tempo), Timestamp::from_beats(15.0, tempo))),
+                loop_enabled: true,
+            },
+            SequencePoint {
+                start_time: start_time.incremented_by_beats(11.0, tempo),
+                duration: Timestamp::from_beats(3.0, tempo),
+                song_id: Some(song_id),
+                section_id: Some(project.sections[2].id),
+                sample_id: Some(sample_id),
+                position_in_sample: Timestamp::from_beats(8.0, tempo),
+                loop_enabled: false,
             },
         ];
 

@@ -101,7 +101,7 @@ impl AudioManager {
                 section_id: current_point.section_id,
                 queued_song_id: None,
                 queued_section_id: None,
-                looping: current_point.loop_point.is_some(),
+                looping: current_point.loop_enabled,
             },
             None => PlaybackState::default(),
         };
@@ -121,6 +121,10 @@ impl AudioManager {
 
         for point in sequence.points.iter() {
             self.schedule_sequence_point(point);
+
+            if point.loop_enabled {
+                break;
+            }
         }
 
         self.sequence = sequence;
@@ -131,12 +135,13 @@ impl AudioManager {
             if let Some(sampler) = self.samplers.get_mut(&sample_id) {
                 sampler.start_from_position_at_time(sequence_point.start_time, sequence_point.position_in_sample);
 
-                if let Some((loop_start, loop_end)) = sequence_point.loop_point {
-                    sampler.enable_loop_at_time(sequence_point.start_time, loop_start, loop_end);
-                }
+                if sequence_point.loop_enabled {
+                    let loop_start = sequence_point.position_in_sample;
+                    let loop_end = sequence_point.position_in_sample + sequence_point.duration;
 
-                if let Some(end_time) = sequence_point.end_time {
-                    sampler.stop_at_time(end_time);
+                    sampler.enable_loop_at_time(sequence_point.start_time, loop_start, loop_end);
+                } else {
+                    sampler.stop_at_time(sequence_point.end_time());
                 }
             }
         }
@@ -239,7 +244,8 @@ impl Audio for AudioManager {
     }
 
     fn enter_loop(&mut self) {
-        // TODO: Loop
+        let new_sequence = self.sequence.enable_loop_at_time(self.context.current_time());
+        self.play_sequence(new_sequence);
     }
 
     fn exit_loop(&mut self) {
