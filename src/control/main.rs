@@ -2,7 +2,6 @@ use super::{directories::Directories, project_store::ProjectStore, waveform_stor
 use crate::{
     api::*,
     audio::{manager::Audio, manager::AudioManager},
-    generators::generate_project,
     midi::{Action, MidiManager},
     model::{Project, Sample},
     samples::SamplesCache,
@@ -43,7 +42,7 @@ impl MainController {
             project_store,
             request_rx,
             response_tx,
-            project: generate_project(4, 3, 3),
+            project: Project::new(),
             audio_manager,
             waveform_store,
             _midi_manager: midi_manager,

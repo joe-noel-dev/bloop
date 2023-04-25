@@ -1,6 +1,7 @@
 use super::{colours, names};
 use crate::model::Project;
 
+#[allow(dead_code)]
 pub fn generate_project(num_channels: usize, num_songs: usize, num_sections_per_song: usize) -> Project {
     let mut project = Project::new()
         .with_channels(num_channels)
