@@ -2,6 +2,7 @@ use super::{
     process::Process,
     sampler_converter::{SampleConversionResult, SampleConverter},
     sequence::{Sequence, SequencePoint},
+    sequence_generator::{generate_sequence_for_song, SequenceData},
 };
 use crate::{
     api::Response,
@@ -42,7 +43,7 @@ pub struct AudioManager {
     project: Project,
     output_gain: Gain,
 
-    sequence: Sequence,
+    sequence: Sequence<SequenceData>,
 }
 
 impl AudioManager {
@@ -97,8 +98,8 @@ impl AudioManager {
         let playback_state = match current_point {
             Some(current_point) => PlaybackState {
                 playing: PlayingState::Playing,
-                song_id: current_point.song_id,
-                section_id: current_point.section_id,
+                song_id: current_point.data.song_id,
+                section_id: current_point.data.section_id,
                 queued_song_id: None,
                 queued_section_id: None,
                 looping: current_point.loop_enabled,
@@ -114,7 +115,7 @@ impl AudioManager {
         }
     }
 
-    pub fn play_sequence(&mut self, sequence: Sequence) {
+    pub fn play_sequence(&mut self, sequence: Sequence<SequenceData>) {
         for (id, sampler) in self.samplers.iter_mut() {
             sampler.cancel_all();
         }
@@ -130,14 +131,14 @@ impl AudioManager {
         self.sequence = sequence;
     }
 
-    fn schedule_sequence_point(&mut self, sequence_point: &SequencePoint) {
-        if let Some(sample_id) = sequence_point.sample_id {
+    fn schedule_sequence_point(&mut self, sequence_point: &SequencePoint<SequenceData>) {
+        if let Some(sample_id) = sequence_point.data.sample_id {
             if let Some(sampler) = self.samplers.get_mut(&sample_id) {
-                sampler.start_from_position_at_time(sequence_point.start_time, sequence_point.position_in_sample);
+                sampler.start_from_position_at_time(sequence_point.start_time, sequence_point.data.position_in_sample);
 
                 if sequence_point.loop_enabled {
-                    let loop_start = sequence_point.position_in_sample;
-                    let loop_end = sequence_point.position_in_sample + sequence_point.duration;
+                    let loop_start = sequence_point.data.position_in_sample;
+                    let loop_end = sequence_point.data.position_in_sample + sequence_point.duration;
 
                     sampler.enable_loop_at_time(sequence_point.start_time, loop_start, loop_end);
                 } else {
@@ -234,8 +235,16 @@ impl AudioManager {
 impl Audio for AudioManager {
     fn play(&mut self) {
         if let Some(selected_song_id) = self.project.selections.song {
-            let sequence = Sequence::play_song(self.context.current_time(), &self.project, &selected_song_id);
-            self.play_sequence(sequence);
+            if let Some(selected_section_id) = self.project.selections.section {
+                let sequence = generate_sequence_for_song(
+                    self.context.current_time(),
+                    &self.project,
+                    &selected_song_id,
+                    &selected_section_id,
+                );
+
+                self.play_sequence(sequence);
+            }
         }
     }
 
@@ -249,7 +258,8 @@ impl Audio for AudioManager {
     }
 
     fn exit_loop(&mut self) {
-        // TODO: Exit loop
+        let new_sequence = self.sequence.cancel_loop_at_time(self.context.current_time());
+        self.play_sequence(new_sequence);
     }
 
     fn queue(&mut self, song_id: &ID, section_id: &ID) {
