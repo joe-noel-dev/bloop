@@ -23,10 +23,15 @@ pub fn generate_sequence_for_song(
         None => return Sequence::default(),
     };
 
-    let points = project
-        .sections
+    let points = song
+        .section_ids
         .iter()
-        .filter_map(|section| {
+        .filter_map(|section_id| {
+            let section = match project.section_with_id(section_id) {
+                Some(section) => section,
+                None => return None,
+            };
+
             sequence_point_for_section_from_reference(project, section, from_section, start_time, song)
         })
         .collect();

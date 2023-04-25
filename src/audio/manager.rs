@@ -263,7 +263,11 @@ impl Audio for AudioManager {
     }
 
     fn queue(&mut self, song_id: &ID, section_id: &ID) {
-        // TODO: Queue a song
+        let transition_time = self.sequence.next_transition(self.context.current_time());
+        let existing_sequence = self.sequence.truncate_to_time(transition_time);
+        let new_sequence = generate_sequence_for_song(transition_time, &self.project, song_id, section_id);
+        let sequence = existing_sequence.append(new_sequence);
+        self.play_sequence(sequence);
     }
 
     fn toggle_loop(&mut self) {
