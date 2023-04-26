@@ -57,28 +57,31 @@ fn start_time_of_section(
     reference_section_id: &ID,
     reference_time: Timestamp,
 ) -> Option<Timestamp> {
-    if let Some(beat_position) = beat_position_of_section(project, section_id, reference_section_id) {
+    if let Some(beat_position) = beat_position_of_section(project, song, section_id, reference_section_id) {
         return Some(reference_time.incremented_by_beats(beat_position, song.tempo.bpm));
     }
 
     None
 }
 
-fn beat_position_of_section(project: &Project, section_id: &ID, reference_section_id: &ID) -> Option<f64> {
+fn beat_position_of_section(project: &Project, song: &Song, section_id: &ID, reference_section_id: &ID) -> Option<f64> {
     let mut position = None;
 
-    for section in project.sections.iter() {
-        if section.id == *reference_section_id {
+    for sec_id in song.section_ids.iter() {
+        if *sec_id == *reference_section_id {
             position = Some(0.0);
         }
 
-        if section.id == *section_id {
+        if *sec_id == *section_id {
             return position;
         }
 
-        if let Some(beat_position) = position {
-            position = Some(beat_position + section.beat_length);
-        }
+        let section_length = project
+            .section_with_id(sec_id)
+            .map(|section| section.beat_length)
+            .unwrap_or(0.0);
+
+        position = position.map(|current_position| current_position + section_length);
     }
 
     position

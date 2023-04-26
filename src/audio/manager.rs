@@ -6,12 +6,12 @@ use super::{
 };
 use crate::{
     api::Response,
-    model::{PlaybackState, PlayingState, Project, ID},
+    model::{PlaybackState, PlayingState, Progress, Project, ID},
     samples::SamplesCache,
 };
 use futures::StreamExt;
 use futures_channel::mpsc;
-use rawdio::{create_engine, AudioBuffer, Context, Gain, Sampler};
+use rawdio::{create_engine, AudioBuffer, Context, Gain, Sampler, Timestamp};
 use std::{
     collections::{HashMap, HashSet},
     path::{Path, PathBuf},
@@ -39,6 +39,7 @@ pub struct AudioManager {
     response_tx: broadcast::Sender<Response>,
     samples_being_converted: HashSet<ID>,
     playback_state: PlaybackState,
+    progress: Progress,
     samplers: HashMap<ID, Sampler>,
     project: Project,
     output_gain: Gain,
@@ -67,6 +68,7 @@ impl AudioManager {
             response_tx,
             samples_being_converted: HashSet::new(),
             playback_state: PlaybackState::default(),
+            progress: Progress::default(),
             samplers: HashMap::new(),
             project: Project::empty(),
             output_gain: gain,
@@ -91,7 +93,50 @@ impl AudioManager {
         }
     }
 
-    pub fn notify_playback_state(&mut self) {
+    fn progress_through_sequence(&self, time: &Timestamp, point: &SequencePoint<SequenceData>) -> Progress {
+        let section = point
+            .data
+            .section_id
+            .and_then(|section_id| self.project.section_with_id(&section_id));
+
+        let song = point
+            .data
+            .song_id
+            .and_then(|song_id| self.project.song_with_id(&song_id));
+
+        let sample = point
+            .data
+            .sample_id
+            .and_then(|sample_id| self.project.sample_with_id(&sample_id));
+
+        match (section, song, sample) {
+            (Some(section), Some(song), Some(sample)) => {
+                let seconds_into_section =
+                    (time.as_seconds() - point.start_time.as_seconds()) % point.duration.as_seconds();
+                let beats_into_section = Timestamp::from_seconds(seconds_into_section).as_beats(song.tempo.bpm);
+
+                let position_in_sample = seconds_into_section + point.data.position_in_sample.as_seconds();
+                let sample_duration =
+                    Timestamp::from_samples(sample.sample_count as f64, sample.sample_rate as usize).as_seconds();
+
+                Progress {
+                    song_progress: if sample_duration > 0.0 {
+                        position_in_sample / sample_duration
+                    } else {
+                        0.0
+                    },
+                    section_progress: if section.beat_length > 0.0 {
+                        beats_into_section / section.beat_length
+                    } else {
+                        0.0
+                    },
+                }
+            }
+            _ => Progress::default(),
+        }
+    }
+
+    fn notify_playback_state(&mut self) {
         let current_time = self.context.current_time();
         let current_point = self.sequence.point_at_time(current_time);
 
@@ -112,6 +157,16 @@ impl AudioManager {
             let _ = self
                 .response_tx
                 .send(Response::default().with_playback_state(&self.playback_state));
+        }
+
+        let progress = match current_point {
+            Some(current_point) => self.progress_through_sequence(&current_time, &current_point),
+            None => Progress::default(),
+        };
+
+        if self.progress != progress {
+            self.progress = progress;
+            let _ = self.response_tx.send(Response::default().with_progress(self.progress));
         }
     }
 
