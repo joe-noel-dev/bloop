@@ -221,6 +221,7 @@ impl AudioManager {
 
     fn remove_sample(&mut self, sample_id: &ID) {
         if let Some(mut sampler) = self.samplers.remove(sample_id) {
+            sampler.node.disconnect_from_node(&self.output_gain.node);
             sampler.stop_now();
         }
     }
