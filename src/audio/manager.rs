@@ -176,6 +176,10 @@ impl AudioManager {
         }
 
         for point in sequence.points.iter() {
+            if point.end_time() < self.context.current_time() {
+                continue;
+            }
+
             self.schedule_sequence_point(point);
 
             if point.loop_enabled {
