@@ -45,6 +45,8 @@ pub struct AudioManager {
     output_gain: Gain,
 
     sequence: Sequence<SequenceData>,
+    queued_song: Option<ID>,
+    queued_section: Option<ID>,
 }
 
 impl AudioManager {
@@ -74,6 +76,8 @@ impl AudioManager {
             output_gain: gain,
 
             sequence: Sequence::default(),
+            queued_song: None,
+            queued_section: None,
         }
     }
 
@@ -141,14 +145,24 @@ impl AudioManager {
         let current_point = self.sequence.point_at_time(current_time);
 
         let playback_state = match current_point {
-            Some(current_point) => PlaybackState {
-                playing: PlayingState::Playing,
-                song_id: current_point.data.song_id,
-                section_id: current_point.data.section_id,
-                queued_song_id: None,
-                queued_section_id: None,
-                looping: current_point.loop_enabled,
-            },
+            Some(current_point) => {
+                if current_point.data.song_id == self.queued_song {
+                    self.queued_song = None;
+                }
+
+                if current_point.data.section_id == self.queued_section {
+                    self.queued_section = None;
+                }
+
+                PlaybackState {
+                    playing: PlayingState::Playing,
+                    song_id: current_point.data.song_id,
+                    section_id: current_point.data.section_id,
+                    queued_song_id: self.queued_song,
+                    queued_section_id: self.queued_section,
+                    looping: current_point.loop_enabled,
+                }
+            }
             None => PlaybackState::default(),
         };
 
@@ -328,6 +342,9 @@ impl Audio for AudioManager {
         let new_sequence = generate_sequence_for_song(transition_time, &self.project, song_id, section_id);
         let sequence = existing_sequence.append(new_sequence);
         self.play_sequence(sequence);
+
+        self.queued_section = Some(*section_id);
+        self.queued_song = Some(*song_id);
     }
 
     fn toggle_loop(&mut self) {
