@@ -55,8 +55,30 @@ where
         }
     }
 
-    pub fn truncate_to_time(&self, time: Timestamp) -> Self {
+    fn remove_all_points_after_loop(&self) -> Self {
         let mut sequence = self.clone();
+
+        let mut found_loop = false;
+
+        sequence.points.retain(|point| {
+            if found_loop {
+                return false;
+            }
+
+            if point.loop_enabled {
+                found_loop = true;
+            }
+
+            true
+        });
+
+        sequence
+    }
+
+    pub fn truncate_to_time(&self, time: Timestamp) -> Self {
+        let sequence = self.clone();
+
+        let mut sequence = sequence.remove_all_points_after_loop();
 
         sequence.points.iter_mut().for_each(|point| {
             if !point.is_playing_at_time(time) {
@@ -66,6 +88,11 @@ where
             if point.loop_enabled {
                 let loop_count = point.completed_loop_count(time);
                 point.start_time = point.start_time + Timestamp::from_seconds(loop_count * point.duration.as_seconds());
+
+                if point.start_time == time {
+                    point.start_time = point.start_time - point.duration;
+                }
+
                 point.loop_enabled = false;
             }
 
@@ -125,7 +152,102 @@ where
     }
 }
 
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Sequence<SequenceData> {
     pub points: Vec<SequencePoint<SequenceData>>,
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn truncate_sequence() {
+        let sequence = Sequence {
+            points: vec![
+                SequencePoint {
+                    start_time: Timestamp::from_seconds(1.0),
+                    duration: Timestamp::from_seconds(2.0),
+                    loop_enabled: false,
+                    data: {},
+                },
+                SequencePoint {
+                    start_time: Timestamp::from_seconds(3.0),
+                    duration: Timestamp::from_seconds(4.0),
+                    loop_enabled: true,
+                    data: {},
+                },
+                SequencePoint {
+                    start_time: Timestamp::from_seconds(7.0),
+                    duration: Timestamp::from_seconds(6.0),
+                    loop_enabled: false,
+                    data: {},
+                },
+            ],
+        };
+
+        let truncated = sequence.truncate_to_time(Timestamp::from_seconds(9.0));
+
+        let expected = vec![
+            SequencePoint {
+                start_time: Timestamp::from_seconds(1.0),
+                duration: Timestamp::from_seconds(2.0),
+                loop_enabled: false,
+                data: {},
+            },
+            SequencePoint {
+                start_time: Timestamp::from_seconds(7.0),
+                duration: Timestamp::from_seconds(2.0),
+                loop_enabled: false,
+                data: {},
+            },
+        ];
+
+        assert_eq!(expected, truncated.points);
+    }
+
+    #[test]
+    fn truncate_on_loop_boundary() {
+        let sequence = Sequence {
+            points: vec![
+                SequencePoint {
+                    start_time: Timestamp::from_seconds(1.0),
+                    duration: Timestamp::from_seconds(2.0),
+                    loop_enabled: false,
+                    data: {},
+                },
+                SequencePoint {
+                    start_time: Timestamp::from_seconds(3.0),
+                    duration: Timestamp::from_seconds(4.0),
+                    loop_enabled: true,
+                    data: {},
+                },
+                SequencePoint {
+                    start_time: Timestamp::from_seconds(7.0),
+                    duration: Timestamp::from_seconds(6.0),
+                    loop_enabled: false,
+                    data: {},
+                },
+            ],
+        };
+
+        let truncated = sequence.truncate_to_time(Timestamp::from_seconds(11.0));
+
+        let expected = vec![
+            SequencePoint {
+                start_time: Timestamp::from_seconds(1.0),
+                duration: Timestamp::from_seconds(2.0),
+                loop_enabled: false,
+                data: {},
+            },
+            SequencePoint {
+                start_time: Timestamp::from_seconds(7.0),
+                duration: Timestamp::from_seconds(4.0),
+                loop_enabled: false,
+                data: {},
+            },
+        ];
+
+        assert_eq!(expected, truncated.points);
+    }
 }
