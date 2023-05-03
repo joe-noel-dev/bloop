@@ -1,0 +1,23 @@
+.container {
+  display: flex;
+  height: var(--unit-space-x4);
+  line-height: var(--unit-space-x4);
+}
+
+.radio-box {
+  display: flex;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--text-on-card);
+}
+
+.radio-segment {
+  text-align: center;
+  width: var(--unit-space-x6);
+  background: var(--primary);
+  color: var(--text-on-primary);
+}
+
+.radio-segment-selected {
+  background: none;
+  color: var(--text-on-card);
+}

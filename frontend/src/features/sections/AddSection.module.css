@@ -1,0 +1,17 @@
+.add-section {
+  background: var(--card-layer);
+
+  color: var(--card);
+  font-size: medium;
+
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-level-1);
+  border: none;
+  padding: var(--unit-space-x2);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  opacity: 75%;
+}

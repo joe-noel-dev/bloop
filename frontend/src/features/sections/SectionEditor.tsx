@@ -1,16 +1,6 @@
 import React, {useState} from 'react';
 import {FiChevronDown, FiRepeat, FiTrash} from 'react-icons/fi';
-import styled from 'styled-components';
-import {
-  MainTextStyle,
-  MediumMain,
-  MediumText,
-} from '../../typography/Typography';
-import {
-  NameEditor,
-  NameEditorName,
-  NameEditorTextInput,
-} from '../../components/NameEditor';
+import {NameEditor} from '../../components/NameEditor';
 import {useCore} from '../core/use-core';
 import {cloneDeep} from 'lodash';
 import {ValueEditor} from '../../components/ValueEditor';
@@ -22,10 +12,11 @@ import Measure from 'react-measure';
 import {Waveform} from '../waveforms/Waveform';
 import {beatLength} from '../../model/sample';
 import {WarningButton} from '../../components/Button';
-import {horizontalGap, verticalGap} from '../../components/Gap';
 import {selectSectionRequest, updateSectionRequest} from '../../api/request';
 import {useSampleWithId} from '../samples/sample-hooks';
 import {useSectionById, useSelectedSectionId} from './section-hooks';
+import styles from './SectionEditor.module.css';
+import {Spacer} from '../../components/Spacer';
 
 interface Props {
   sectionId: string;
@@ -64,13 +55,16 @@ export const SectionEditor = (props: Props) => {
   };
 
   return (
-    <Container
-      selected={isSelected}
+    <div
+      className={`${styles.container} ${
+        isSelected && styles['container-selected']
+      }`}
       onClick={() => {
         core?.sendRequest(selectSectionRequest(props.sectionId));
       }}
     >
-      <Header
+      <div
+        className={styles.header}
         onClick={() => {
           props.onRequestEdit(!props.editing);
         }}
@@ -88,39 +82,45 @@ export const SectionEditor = (props: Props) => {
         <Spacer />
         {section.loop && <FiRepeat size={16} />}
 
-        <RevealButton
-          editing={props.editing}
+        <button
+          className={`${styles['reveal-button']} ${
+            props.editing && styles['reveal-button-editing']
+          }`}
           onClick={(event) => {
             props.onRequestEdit(!props.editing);
             event.stopPropagation();
           }}
         >
           <FiChevronDown size={24} />
-        </RevealButton>
-      </Header>
-      <SectionProperties
+        </button>
+      </div>
+      <div
+        className={`${styles['section-properties']} ${
+          props.editing && styles['section-properties-open']
+        }`}
         style={{height: props.editing ? height : 0}}
-        open={props.editing}
       >
         <Measure
           bounds
           onResize={(contentRect) => setHeight(contentRect.bounds?.height || 0)}
         >
           {({measureRef}) => (
-            <InnerSectionProperties ref={measureRef}>
-              <LoopPositionSection>
-                <EditGroup>
-                  <SectionHeading>Start at bar</SectionHeading>
+            <div
+              className={styles['inner-section-properties']}
+              ref={measureRef}
+            >
+              <div className={styles['loop-position-section']}>
+                <div className={styles['edit-group']}>
+                  <h3>Start at bar</h3>
                   <ValueEditor
                     value={section.start / 4.0 + 1.0}
                     onSubmit={(value) =>
                       submitSection({start: (value - 1) * 4.0})
                     }
                   />
-                </EditGroup>
-                <div
-                  style={{flex: 1, alignSelf: 'stretch', position: 'relative'}}
-                >
+                </div>
+
+                <div className={styles.waveform}>
                   <Waveform
                     sampleId={props.sampleId}
                     start={length > 0.0 ? section.start / length : 0.0}
@@ -137,25 +137,26 @@ export const SectionEditor = (props: Props) => {
                     />
                   )}
                 </div>
-                <EditGroup>
-                  <SectionHeading>Duration</SectionHeading>
+
+                <div className={styles['edit-group']}>
+                  <h3>Duration</h3>
                   <ValueEditor
                     value={section.beatLength / 4.0}
                     onSubmit={(value) =>
                       submitSection({beatLength: value * 4.0})
                     }
                   />
-                </EditGroup>
-              </LoopPositionSection>
+                </div>
+              </div>
 
               <div style={{display: 'flex', alignItems: 'flex-end'}}>
-                <EditGroup>
-                  <SectionHeading>Loop</SectionHeading>
+                <div className={styles['edit-group']}>
+                  <h3>Loop</h3>
                   <LoopSelection
                     loop={section.loop}
                     onChange={(loop) => submitSection({loop})}
                   />
-                </EditGroup>
+                </div>
                 <Spacer />
                 {props.editing && props.canRemove && (
                   <WarningButton
@@ -165,102 +166,20 @@ export const SectionEditor = (props: Props) => {
                     }}
                   >
                     <FiTrash size={16} />
-                    <ButtonText>Remove Section</ButtonText>
+                    <label>Remove Section</label>
                   </WarningButton>
                 )}
               </div>
-            </InnerSectionProperties>
+            </div>
           )}
         </Measure>
-      </SectionProperties>
+      </div>
       {isPlaying && !props.editing && (
         <ProgressBar
           progress={progress?.sectionProgress || 0}
           colour={appTheme.colours.primaryDark}
         />
       )}
-    </Container>
+    </div>
   );
 };
-
-const SectionHeading = styled.h3`
-  ${MediumMain};
-`;
-
-const ButtonText = styled.p`
-  ${MediumMain}
-`;
-
-interface ContainerProps {
-  selected: boolean;
-}
-
-const Container = styled.div<ContainerProps>`
-  border: 1px solid
-    ${(props) =>
-      props.selected
-        ? props.theme.textColours.card
-        : props.theme.colours.cardLayer};
-  border-radius: ${(props) => props.theme.borderRadius};
-  padding: ${(props) => props.theme.units(2)};
-  position: relative;
-`;
-
-const Header = styled.div`
-  display: flex;
-  align-items: center;
-
-  height: ${(props) => props.theme.units(2)};
-
-  ${NameEditorName} {
-    ${MediumText};
-    ${MainTextStyle};
-  }
-
-  ${NameEditorTextInput} {
-    ${MediumText};
-    ${MainTextStyle};
-  }
-`;
-
-const Spacer = styled.div`
-  flex: 1;
-`;
-
-interface ButtonProps {
-  editing: boolean;
-}
-
-const RevealButton = styled.button<ButtonProps>`
-  transform: ${(props) => (props.editing ? 'rotate(-180deg)' : 'rotate(0)')};
-  transition: transform 0.2s ease-in-out;
-`;
-
-interface SectionPropertiesProps {
-  open: boolean;
-}
-
-const LoopPositionSection = styled.div`
-  display: flex;
-  ${(props) => horizontalGap(props.theme.units(2))};
-
-  align-items: center;
-`;
-
-const SectionProperties = styled.div<SectionPropertiesProps>`
-  transition: all 0.2s ease-out;
-  overflow: hidden;
-  margin-top: ${(props) => (props.open ? props.theme.units(2) : '0')};
-`;
-
-const EditGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  ${(props) => verticalGap(props.theme.units(1))};
-`;
-
-const InnerSectionProperties = styled.div`
-  display: flex;
-  flex-direction: column;
-  ${(props) => verticalGap(props.theme.units(2))};
-`;

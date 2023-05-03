@@ -1,0 +1,25 @@
+.container {
+  padding: 0 var(--unit-space-x2);
+  height: var(--unit-space-x6);
+
+  align-items: center;
+
+  position: relative;
+
+  background: var(--card);
+  color: var(--text-on-card);
+
+  border-radius: var(--border-radius);
+  border: 1px solid var(--card-layer);
+
+  display: flex;
+}
+
+.container-playing {
+  background: var(--primary-light);
+  color: var(--text-on-primary-light);
+}
+
+.container-selected {
+  border-color: var(--text-on-card);
+}
