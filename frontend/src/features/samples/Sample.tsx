@@ -1,9 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {FiRepeat, FiTrash, FiUpload} from 'react-icons/fi';
-import styled from 'styled-components';
 import {Waveform} from '../waveforms/Waveform';
-import {MediumMain} from '../../typography/Typography';
-import {SecondaryButton} from '../../components/Button';
 import {NameEditor} from '../../components/NameEditor';
 import {useCore} from '../core/use-core';
 import {cloneDeep} from 'lodash';
@@ -11,10 +8,10 @@ import {ProgressBar} from '../../components/ProgressBar';
 import {appTheme} from '../theme';
 import {IndeterminateSpinner} from '../../components/IndeterminateSpinner';
 import {Centred} from '../../components/Centred';
-import {horizontalGap, verticalGap} from '../../components/Gap';
 import {updateSampleRequest} from '../../api/request';
 import {useSampleWithId} from './sample-hooks';
 import {usePlaybackState, useProgress} from '../transport/transport-hooks';
+import styles from './Sample.module.css';
 
 interface SampleProps {
   editable: boolean;
@@ -66,8 +63,8 @@ export const Sample = (props: SampleProps) => {
   };
 
   return (
-    <Container>
-      <WaveformContainer>
+    <div className={styles['container']}>
+      <div className={styles['waveform']}>
         <Waveform sampleId={props.sampleId} />
         {playbackState?.playing && playbackState.songId === props.songId && (
           <ProgressBar
@@ -85,10 +82,13 @@ export const Sample = (props: SampleProps) => {
           />
         )}
         {props.editable && !sample && !uploading && (
-          <UploadButton onClick={() => fileInputRef.current?.click()}>
+          <button
+            className={styles['upload']}
+            onClick={() => fileInputRef.current?.click()}
+          >
             <FiUpload size={16} />
-            <ButtonText>Upload Audio</ButtonText>
-          </UploadButton>
+            <p>Upload Audio</p>
+          </button>
         )}
         {!sample && uploading && (
           <Centred>
@@ -96,93 +96,41 @@ export const Sample = (props: SampleProps) => {
           </Centred>
         )}
         {props.editable && sample && (
-          <RemoveButton
+          <button
+            className={styles['remove-button']}
             onClick={() => {
-              if (props.onRemoveRequested) props.onRemoveRequested();
+              if (props.onRemoveRequested) {
+                props.onRemoveRequested();
+              }
             }}
           >
             <FiTrash size={16} />
-            <ButtonText>Remove</ButtonText>
-          </RemoveButton>
+            <p>Remove</p>
+          </button>
         )}
         {props.editable && sample && (
-          <ReplaceButton
+          <button
+            className={styles['replace-button']}
             onClick={() => {
               fileInputRef.current?.click();
             }}
           >
             <FiRepeat size={16} />
-            <ButtonText>Replace</ButtonText>
-          </ReplaceButton>
+            <p>Replace</p>
+          </button>
         )}
-      </WaveformContainer>
+      </div>
       {sample && (
-        <SampleProperties>
-          <ButtonText>Original tempo</ButtonText>
+        <div className={styles['sample-properties']}>
+          <p>Original tempo</p>
           <NameEditor
             onSave={(value) => onTempoChanged(value)}
             name={`${sample?.tempo.bpm}` || ''}
             editable={props.editable}
             inputType="number"
           ></NameEditor>
-        </SampleProperties>
+        </div>
       )}
-    </Container>
+    </div>
   );
 };
-
-const ButtonText = styled.p`
-  ${MediumMain}
-`;
-
-const Container = styled.div``;
-
-const SampleProperties = styled.div`
-  padding: ${(props) => props.theme.units(2)};
-  padding-bottom: 0;
-
-  display: flex;
-  flex-direction: column;
-
-  ${(props) => verticalGap(props.theme.units(1))};
-`;
-
-const WaveformContainer = styled.div`
-  position: relative;
-  height: ${(props) => props.theme.units(20)};
-`;
-
-const UploadButton = styled(SecondaryButton)`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-`;
-
-const OverlayButton = styled.button`
-  display: flex;
-
-  ${(props) => horizontalGap(props.theme.units(1))};
-
-  padding: ${(props) => props.theme.units(2)};
-  background: ${(props) => props.theme.colours.primaryLight}B0;
-  color: ${(props) => props.theme.textColours.primaryLight};
-
-  :active {
-    background: ${(props) => props.theme.colours.primaryLight};
-  }
-`;
-
-const RemoveButton = styled(OverlayButton)`
-  position: absolute;
-  right: 0px;
-  bottom: 0px;
-  border-top-left-radius: ${(props) => props.theme.units(2)};
-`;
-
-const ReplaceButton = styled(OverlayButton)`
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  border-bottom-right-radius: ${(props) => props.theme.units(2)};
-`;

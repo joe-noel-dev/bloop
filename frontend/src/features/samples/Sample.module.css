@@ -1,0 +1,55 @@
+.container p {
+  font-size: medium;
+}
+
+.sample-properties {
+  padding: var(--unit-space-x2);
+  padding-bottom: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--unit-space);
+}
+
+.waveform {
+  position: relative;
+  height: 160px;
+}
+
+.upload {
+  composes: secondary-button from '../theme/buttons.module.css';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.overlay-button {
+  display: flex;
+  flex-direction: row;
+  gap: var(--unit-space);
+
+  padding: var(--unit-space-x2);
+  background: var(--primary-light);
+  color: var(--text-on-primary-light);
+}
+
+.overlay-button:active {
+  background: var(--primary-light);
+}
+
+.remove-button {
+  composes: overlay-button;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  border-top-left-radius: 16px;
+}
+
+.replace-button {
+  composes: overlay-button;
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-bottom-right-radius: 16px;
+}
