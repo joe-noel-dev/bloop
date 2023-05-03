@@ -6,6 +6,8 @@ import {useCore} from '../core/use-core';
 import {FiTrash} from 'react-icons/fi';
 import {loadProjectRequest, removeProjectRequest} from '../../api/request';
 import {CoreDataContext} from '../core/CoreData';
+import styles from './Projects.module.css';
+import {Spacer} from '../../components/Spacer';
 
 const formatTimeAgo = (lastSaved: number) => {
   const date = new Date(0);
@@ -42,88 +44,38 @@ export const Projects = (props: Props) => {
   };
 
   return (
-    <Container>
-      <ProjectsTitleText>Projects</ProjectsTitleText>
-      <ProjectsContainer>
+    <div className={styles['container']}>
+      <title>Projects</title>
+      <div className={styles['projects-list']}>
         {projects?.map((project) => {
           return (
-            <ProjectButton
+            <div
+              className={styles['project-tab']}
               key={project.id}
               onClick={() => loadProject(project.id)}
               tabIndex={0}
               onKeyDown={(event) => onKeyDown(event, project.id)}
             >
-              <TextContainer>
-                <ProjectNameText>{project.name}</ProjectNameText>
-                <LastSavedText>
-                  Last saved {formatTimeAgo(project.lastSaved)}
-                </LastSavedText>
-              </TextContainer>
+              <div className={styles['text-container']}>
+                <h2>{project.name}</h2>
+                <p>Last saved {formatTimeAgo(project.lastSaved)}</p>
+              </div>
+
               <Spacer />
-              <DeleteButton
+
+              <button
+                className={styles['delete-button']}
                 onClick={(event) => {
                   deleteProject(project.id);
                   event.stopPropagation();
                 }}
               >
-                <FiTrash size={16} />
-              </DeleteButton>
-            </ProjectButton>
+                <FiTrash />
+              </button>
+            </div>
           );
         })}
-      </ProjectsContainer>
-    </Container>
+      </div>
+    </div>
   );
 };
-
-const ProjectsTitleText = styled.title`
-  ${XLargeMain};
-`;
-
-const ProjectNameText = styled.h2`
-  ${LargeMain}
-`;
-
-const LastSavedText = styled.p`
-  ${SmallMain}
-`;
-
-const Container = styled.div`
-  backgroud: white;
-  padding: ${(props) => props.theme.units(2)};
-
-  width: 80vw;
-`;
-
-const ProjectButton = styled.div`
-  display: block;
-  margin: ${(props) => props.theme.units(2)} 0;
-  width: 100%;
-  background: none;
-  border: 1px solid ${(props) => props.theme.colours.cardLayer};
-  border-radius: ${(props) => props.theme.borderRadius}
-  text-align: left;
-  padding: ${(props) => props.theme.units(2)};
-
-  height: ${(props) => props.theme.units(12)};
-
-  display: flex;
-`;
-
-const TextContainer = styled.div`
-  margin: auto 0;
-`;
-
-const Spacer = styled.div`
-  flex: 1;
-`;
-
-const DeleteButton = styled.button`
-  background: none;
-  min-width: ${(props) => props.theme.units(6)};
-`;
-
-const ProjectsContainer = styled.div`
-  max-height: ${(props) => props.theme.units(60)};
-  overflow-y: scroll;
-`;

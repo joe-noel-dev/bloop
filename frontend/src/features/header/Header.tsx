@@ -1,6 +1,4 @@
 import React, {useContext, useState} from 'react';
-import styled from 'styled-components';
-import {LargeMain} from '../../typography/Typography';
 import {FiMenu} from 'react-icons/fi';
 import {PopupMenu} from '../menu/PopupMenu';
 import {useCore} from '../core/use-core';
@@ -14,6 +12,8 @@ import {
   saveRequest,
 } from '../../api/request';
 import {CoreDataContext} from '../core/CoreData';
+import styles from './Header.module.css';
+import {Spacer} from '../../components/Spacer';
 
 export const Header: React.FunctionComponent = () => {
   const {project} = useContext(CoreDataContext);
@@ -51,15 +51,16 @@ export const Header: React.FunctionComponent = () => {
   ];
 
   return (
-    <Container>
-      <ProjectInfoTitle>{project?.info.name}</ProjectInfoTitle>
+    <div className={styles['container']}>
+      <h1 className={styles['project-name']}>{project?.info.name}</h1>
+
       <Spacer />
 
-      <MenuButton>
+      <button>
         <PopupMenu menuItems={menuItems}>
           <FiMenu size={24} />
         </PopupMenu>
-      </MenuButton>
+      </button>
 
       <ReactModal
         isOpen={renameModalOpen}
@@ -103,13 +104,9 @@ export const Header: React.FunctionComponent = () => {
       >
         <Projects onDismiss={() => setProjectModalOpen(false)} />
       </ReactModal>
-    </Container>
+    </div>
   );
 };
-
-const ProjectInfoTitle = styled.h1`
-  ${LargeMain}
-`;
 
 const modalStyle = {
   content: {
@@ -122,30 +119,3 @@ const modalStyle = {
     padding: 'none',
   },
 };
-
-const Container = styled.div`
-  height: ${(props) => props.theme.units(8)};
-
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-
-  background: ${(props) => props.theme.colours.primaryLight};
-  color: ${(props) => props.theme.textColours.primaryLight};
-
-  box-shadow: ${(props) => props.theme.dropShadow};
-
-  padding: ${(props) => props.theme.units(2)};
-
-  position: relative;
-`;
-
-const Spacer = styled.div`
-  flex: 1;
-`;
-
-const MenuButton = styled.button`
-  background: none;
-  border: none;
-`;

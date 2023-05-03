@@ -1,28 +1,14 @@
 import React from 'react';
 import styled from 'styled-components';
-import {verticalGap} from '../../components/Gap';
 import {IndeterminateSpinner} from '../../components/IndeterminateSpinner';
 import {LargeMain} from '../../typography/Typography';
+import styles from './NoConnectionOverlay.module.css';
 
 export const NoConnectionOverlay = () => {
   return (
-    <Container>
-      <Text>Waiting for connection...</Text>
+    <div className={styles['container']}>
+      <h1 className={styles['message']}>Waiting for connection...</h1>
       <IndeterminateSpinner />
-    </Container>
+    </div>
   );
 };
-
-const Text = styled.h3`
-  ${LargeMain}
-`;
-
-const Container = styled.div`
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
-  ${(props) => verticalGap(props.theme.units(2))};
-`;

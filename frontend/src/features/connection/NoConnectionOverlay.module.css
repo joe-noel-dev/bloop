@@ -1,0 +1,12 @@
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: calc(2 * var(--unit-space));
+}
+
+.message {
+  font-size: x-large;
+}
