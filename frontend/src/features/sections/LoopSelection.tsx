@@ -1,6 +1,5 @@
 import React from 'react';
-import styled from 'styled-components';
-import {MediumMain} from '../../typography/Typography';
+import styles from './LoopSelection.module.css';
 
 interface Props {
   loop: boolean;
@@ -16,21 +15,23 @@ export const LoopSelection = (props: Props) => {
 
   const segment = (options: SegmentOptions) => {
     return (
-      <RadioSegment
+      <div
         onClick={(event) => {
           options.action();
           event.stopPropagation();
         }}
-        selected={options.selected}
+        className={`${styles['radio-segment']} ${
+          options.selected && styles['radio-segment-selected']
+        }`}
       >
-        <SegmentName>{options.name}</SegmentName>
-      </RadioSegment>
+        <p>{options.name}</p>
+      </div>
     );
   };
 
   return (
-    <Container>
-      <RadioBox>
+    <div className={styles['container']}>
+      <div className={styles['radio-box']}>
         {segment({
           name: 'Off',
           action: () => props.onChange(false),
@@ -42,38 +43,7 @@ export const LoopSelection = (props: Props) => {
           action: () => props.onChange(true),
           selected: props.loop,
         })}
-      </RadioBox>
-    </Container>
+      </div>
+    </div>
   );
 };
-
-const SegmentName = styled.p`
-  ${MediumMain};
-`;
-
-const Container = styled.div`
-  display: flex;
-  height: ${(props) => props.theme.units(4)};
-  line-height: ${(props) => props.theme.units(4)};
-`;
-
-const RadioBox = styled.div`
-  display: flex;
-  border-radius: ${(props) => props.theme.borderRadius};
-  border: 1px solid ${(props) => props.theme.textColours.card};
-`;
-
-interface SegmentProps {
-  selected: boolean;
-}
-
-const RadioSegment = styled.div<SegmentProps>`
-  text-align: center;
-  width: ${(props) => props.theme.units(6)};
-  background: ${(props) =>
-    props.selected ? props.theme.colours.primary : 'none'};
-  color: ${(props) =>
-    props.selected
-      ? props.theme.textColours.primary
-      : props.theme.textColours.card};
-`;

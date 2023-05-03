@@ -1,0 +1,69 @@
+.container {
+  border: 1px solid var(--card-layer);
+  border-radius: var(--border-radius);
+  padding: var(--unit-space-x2);
+  position: relative;
+}
+
+.container-selected {
+  border-color: var(--text-on-card);
+}
+
+.container h3 {
+  font-size: medium;
+}
+
+.container label {
+  font-size: medium;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+
+  height: var(--unit-space-x2);
+
+  font-size: medium;
+}
+
+.reveal-button {
+  transform: rotate(0);
+  transition: transform 0.2s ease-in-out;
+}
+
+.reveal-button-editing {
+  transform: rotate(-180deg);
+}
+
+.loop-position-section {
+  display: flex;
+  gap: var(--unit-space-x2);
+  align-items: center;
+}
+
+.section-properties {
+  transition: all 0.2s ease-out;
+  overflow: hidden;
+}
+
+.section-properties-open {
+  margin-top: var(--unit-space-x2);
+}
+
+.edit-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--unit-space);
+}
+
+.waveform {
+  flex: 1;
+  align-self: stretch;
+  position: relative;
+}
+
+.inner-section-properties {
+  display: flex;
+  flex-direction: column;
+  gap: var(--unit-space-x2);
+}
