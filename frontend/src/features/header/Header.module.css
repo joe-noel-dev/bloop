@@ -1,0 +1,21 @@
+.container {
+  height: var(--unit-space-x8);
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--primary-light);
+  color: var(--text-on-primary-light);
+
+  box-shadow: var(--shadow-level-1);
+
+  padding: var(--unit-space-x2);
+
+  position: relative;
+}
+
+.project-name {
+  font-size: x-large;
+}

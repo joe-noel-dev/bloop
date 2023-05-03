@@ -1,0 +1,46 @@
+.container {
+  background: white;
+  padding: var(--unit-space-x2);
+  width: 80vw;
+}
+
+.project-tab {
+  display: block;
+  margin: var(--unit-space-x2) 0;
+  width: 100%;
+  background: none;
+  border: 1px solid var(--card-layer);
+  border-radius: var(--border-radius);
+  text-align: left;
+  padding: var(--unit-space-x2);
+
+  height: calc(var(--unit-space) * 12);
+
+  display: flex;
+  align-items: center;
+}
+
+.text-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--unit-space);
+}
+
+.delete-button {
+  width: 48px;
+  height: 48px;
+  font-size: large;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: var(--secondary-dark);
+  color: var(--text-on-secondary-dark);
+  border-radius: 50%;
+}
+
+.projects-list {
+  max-height: 400px;
+  overflow-y: scroll;
+}
