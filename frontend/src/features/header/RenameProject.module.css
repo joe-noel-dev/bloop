@@ -1,0 +1,19 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  padding: var(--unit-space-x4);
+}
+
+.container p {
+  font-size: medium;
+}
+
+.name-box {
+  height: var(--unit-space-x6);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--card-layer);
+  padding: 0 var(--unit-space);
+  margin-bottom: var(--unit-space-x2);
+  font-size: medium;
+}
