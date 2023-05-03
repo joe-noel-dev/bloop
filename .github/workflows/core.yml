@@ -1,4 +1,4 @@
-name: Run Tests
+name: Core
 
 on:
   push:
@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build-core:
 
     runs-on: ubuntu-latest
 
