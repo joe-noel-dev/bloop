@@ -70,7 +70,7 @@ export interface BeginUploadRequest {
 
 export interface UploadDataRequest {
   uploadId: string;
-  data: ArrayBuffer;
+  data: Uint8Array;
 }
 
 export interface CompleteUploadRequest {
@@ -332,7 +332,7 @@ export function uploadRequest(uploadId: string, data: ArrayBuffer): Request {
     method: Method.upload,
     payload: {
       uploadId,
-      data,
+      data: new Uint8Array(data),
     },
   };
 }
