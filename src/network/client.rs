@@ -7,8 +7,7 @@ use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio::select;
 use tokio::sync::{broadcast, mpsc};
-use tokio_tungstenite::{accept_async, WebSocketStream};
-use tungstenite::protocol::Message;
+use tokio_tungstenite::{accept_async, tungstenite::Error as TungsteniteError, tungstenite::Message, WebSocketStream};
 
 struct Client {
     request_tx: mpsc::Sender<Request>,
@@ -46,10 +45,7 @@ impl Client {
         })
     }
 
-    async fn on_incoming_message(
-        &mut self,
-        message: Option<Result<Message, tungstenite::Error>>,
-    ) -> anyhow::Result<()> {
+    async fn on_incoming_message(&mut self, message: Option<Result<Message, TungsteniteError>>) -> anyhow::Result<()> {
         let message = match message {
             Some(message) => message,
             None => anyhow::bail!("Connection closed to client: {}", self.address),
