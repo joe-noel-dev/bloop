@@ -6,8 +6,10 @@
   gap: var(--unit-space-x2);
 
   padding: var(--unit-space-x2);
+}
 
-  @media only screen and (min-width: 600px) {
+@media only screen and (min-width: 600px) {
+  .container {
     grid-template-columns: repeat(2, 1fr);
   }
 }

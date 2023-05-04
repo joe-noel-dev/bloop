@@ -11,8 +11,10 @@
   overflow-y: hidden;
 
   margin: var(--unit-space-x4);
+}
 
-  @media (min-width: 1000px) {
+@media (min-width: 1000px) {
+  .scroll-container {
     width: calc(1000px - var(--unit-space-x4));
     margin: var(--unit-space-x4) auto;
   }

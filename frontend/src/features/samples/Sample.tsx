@@ -3,7 +3,7 @@ import {FiRepeat, FiTrash, FiUpload} from 'react-icons/fi';
 import {Waveform} from '../waveforms/Waveform';
 import {NameEditor} from '../../components/NameEditor';
 import {useCore} from '../core/use-core';
-import {cloneDeep} from 'lodash';
+import cloneDeep from 'lodash.clonedeep';
 import {ProgressBar} from '../../components/ProgressBar';
 import {IndeterminateSpinner} from '../../components/IndeterminateSpinner';
 import {updateSampleRequest} from '../../api/request';

@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {FiChevronDown, FiRepeat, FiTrash} from 'react-icons/fi';
 import {NameEditor} from '../../components/NameEditor';
 import {useCore} from '../core/use-core';
-import {cloneDeep} from 'lodash';
+import cloneDeep from 'lodash.clonedeep';
 import {ValueEditor} from '../../components/ValueEditor';
 import {LoopSelection} from './LoopSelection';
 import {ProgressBar} from '../../components/ProgressBar';
