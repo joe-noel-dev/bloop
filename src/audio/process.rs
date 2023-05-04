@@ -100,6 +100,7 @@ impl Process {
 
         let input_buffer = OwnedAudioBuffer::new(maximum_frame_count, 0, sample_rate);
         let mut output_buffer = OwnedAudioBuffer::new(maximum_frame_count, channel_count, sample_rate);
+        let timeout = None;
 
         let stream = device
             .build_output_stream(
@@ -117,6 +118,7 @@ impl Process {
                     output_slice.copy_to_interleaved(data, channel_count, frame_count);
                 },
                 move |err| eprintln!("Stream error: {err:?}"),
+                timeout,
             )
             .expect("Couldn't create output stream");
 
