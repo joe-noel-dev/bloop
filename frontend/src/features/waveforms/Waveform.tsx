@@ -1,16 +1,10 @@
 import React, {useEffect, useRef, useState} from 'react';
-import styled from 'styled-components';
 import {requestWaveformRequest} from '../../api/request';
 import {WaveformData, WaveformPeaks} from '../../model/waveform';
 import {useCore} from '../core/use-core';
 import {useSampleWithId} from '../samples/sample-hooks';
 import {useWaveformData} from './waveform-hooks';
-
-const Container = styled.div`
-  background: ${(props) => props.theme.colours.cardLayer};
-  width: 100%;
-  height: 100%;
-`;
+import styles from './Waveform.module.css';
 
 interface Props {
   sampleId?: string;
@@ -156,13 +150,13 @@ export const Waveform = (props: Props) => {
   }, [setWidth]);
 
   return (
-    <Container ref={container}>
-      <WaveformCanvas ref={canvas} width={width} height={height} />
-    </Container>
+    <div className={styles.container} ref={container}>
+      <canvas
+        className={styles.canvas}
+        ref={canvas}
+        width={width}
+        height={height}
+      />
+    </div>
   );
 };
-
-const WaveformCanvas = styled.canvas`
-  width: 100%;
-  height: 100%;
-`;

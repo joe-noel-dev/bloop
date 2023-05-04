@@ -1,0 +1,5 @@
+.container {
+  background: var(--card-background);
+  border-radius: 10px;
+  overflow: hidden;
+}

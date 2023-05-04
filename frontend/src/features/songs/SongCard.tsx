@@ -1,28 +1,16 @@
 import React from 'react';
-import {FunctionComponent} from 'react';
-import styled from 'styled-components';
-
-interface ContainerProps {
-  isSelected: boolean;
-}
-
-const Container = styled.div<ContainerProps>`
-  background: ${(props) => props.theme.colours.cardBackground};
-
-  border-radius: 10px;
-
-  overflow: hidden;
-`;
+import styles from './SongCard.module.css';
 
 interface Props {
   isSelected: boolean;
   onSelectSong?(): void;
+  children?: React.ReactNode;
 }
 
-export const SongCard: FunctionComponent<Props> = (props) => {
+export const SongCard = (props: Props) => {
   return (
-    <Container onClick={props.onSelectSong} isSelected={props.isSelected}>
+    <div className={styles.container} onClick={props.onSelectSong}>
       {props.children}
-    </Container>
+    </div>
   );
 };

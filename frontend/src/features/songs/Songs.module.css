@@ -1,0 +1,19 @@
+.scroller {
+  overflow-y: scroll;
+  position: relative;
+
+  scroll-snap-type: y proximity;
+}
+
+.scroll-container {
+  scroll-snap-align: none;
+
+  overflow-y: hidden;
+
+  margin: var(--unit-space-x4);
+
+  @media (min-width: 1000px) {
+    width: calc(1000px - var(--unit-space-x4));
+    margin: var(--unit-space-x4) auto;
+  }
+}

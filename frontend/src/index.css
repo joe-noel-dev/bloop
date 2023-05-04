@@ -1,9 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Chivo&display=swap');
+
+* {
+  font-family: 'Chivo', sans-serif;
+  font-weight: 400;
+}
+
 body {
   background: rgba(0, 0, 0, 0.05);
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+
+  font-family: 'Chivo', sans-serif;
+  font-weight: 400;
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -50,11 +58,6 @@ body {
   --text-on-secondary-light: white;
   --text-on-secondary-dark: white;
   --text-on-card: black;
-}
-
-* {
-  font-family: 'Chivo', 'sans-serif';
-  font-weight: 400;
 }
 
 html {

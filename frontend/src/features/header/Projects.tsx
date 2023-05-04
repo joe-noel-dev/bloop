@@ -1,6 +1,4 @@
 import React, {useContext} from 'react';
-import styled from 'styled-components';
-import {LargeMain, SmallMain, XLargeMain} from '../../typography/Typography';
 import moment from 'moment';
 import {useCore} from '../core/use-core';
 import {FiTrash} from 'react-icons/fi';

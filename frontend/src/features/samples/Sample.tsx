@@ -5,7 +5,6 @@ import {NameEditor} from '../../components/NameEditor';
 import {useCore} from '../core/use-core';
 import {cloneDeep} from 'lodash';
 import {ProgressBar} from '../../components/ProgressBar';
-import {appTheme} from '../theme';
 import {IndeterminateSpinner} from '../../components/IndeterminateSpinner';
 import {updateSampleRequest} from '../../api/request';
 import {useSampleWithId} from './sample-hooks';
@@ -69,7 +68,7 @@ export const Sample = (props: SampleProps) => {
         {playbackState?.playing && playbackState.songId === props.songId && (
           <ProgressBar
             progress={progress?.songProgress || 0}
-            colour={appTheme.colours.primary}
+            colour={'var(--primary)'}
           />
         )}
         {props.editable && (

@@ -1,5 +1,4 @@
 import React from 'react';
-import styled from 'styled-components';
 import {useCore} from '../core/use-core';
 import nextSectionIcon from './next-section-icon.svg';
 import nextSongIcon from './next-song-icon.svg';
@@ -26,6 +25,7 @@ import {
 import {useSelectedSectionId} from '../sections/section-hooks';
 import {Song} from '../../model/song';
 import {usePlaybackState} from './transport-hooks';
+import styles from './Transport.module.css';
 
 export const Transport: React.FunctionComponent = () => {
   const playbackState = usePlaybackState();
@@ -146,81 +146,33 @@ export const Transport: React.FunctionComponent = () => {
   ];
 
   return (
-    <Container>
+    <div className={styles.container}>
       {playing && (
-        <LoopIcon looping={looping} onClick={toggleLoop}>
-          <FiRepeat size={16} />
-        </LoopIcon>
+        <button
+          className={`${styles['loop-button']} ${
+            looping && styles['loop-button-looping']
+          }`}
+          onClick={toggleLoop}
+        >
+          <FiRepeat />
+        </button>
       )}
 
       {icons.map((icon) => (
-        <Icon key={icon.name} onClick={icon.onClick}>
+        <div className={styles.icon} key={icon.name} onClick={icon.onClick}>
           {icon.icon}
-        </Icon>
+        </div>
       ))}
 
       {playing && !selectedSectionIsPlaying && (
-        <QueueButton onClick={queueSection}>
+        <button className={styles['queue-button']} onClick={queueSection}>
           {playbackState.queuedSectionId === selectedSectionId ? (
-            <FiCheck size={16} />
+            <FiCheck />
           ) : (
-            <FiCornerUpRight size={16} />
+            <FiCornerUpRight />
           )}
-        </QueueButton>
+        </button>
       )}
-    </Container>
+    </div>
   );
 };
-
-const Container = styled.div`
-  height: ${(props) => props.theme.units(10)};
-
-  background: ${(props) => props.theme.colours.primaryLight};
-
-  box-shadow: ${(props) => props.theme.dropShadow};
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  position: relative;
-`;
-
-const QueueButton = styled.button`
-  position: absolute;
-  right: ${(props) => props.theme.units(2)};
-  top: 50%;
-  transform: translate(0, -50%);
-  width: ${(props) => props.theme.units(6)};
-  height: ${(props) => props.theme.units(6)};
-
-  border-radius: 50%;
-  background: #2e2e2e;
-
-  color: white;
-`;
-
-const Icon = styled.div`
-  margin: 0 1rem;
-  fill: ${(props) => props.theme.textColours.primary};
-`;
-
-interface LoopIconProps {
-  looping: boolean;
-}
-
-const LoopIcon = styled.button<LoopIconProps>`
-  position: absolute;
-  left: ${(props) => props.theme.units(2)};
-  top: 50%;
-  transform: translate(0, -50%);
-
-  width: ${(props) => props.theme.units(6)};
-  height: ${(props) => props.theme.units(6)};
-
-  border-radius: 50%;
-  background: #2e2e2e;
-
-  color: white;
-  opacity: ${(props) => (props.looping ? '100%' : '40%')};
-`;

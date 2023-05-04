@@ -1,0 +1,16 @@
+.container {
+  background: rgba(0, 0, 0, 0.2);
+
+  color: var(--text-on-primary);
+
+  height: var(--unit-space-x6);
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 var(--unit-space-x2);
+}
+
+.container-selected {
+  background: var(--primary);
+}

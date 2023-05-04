@@ -1,0 +1,7 @@
+.container {
+  min-height: 100vh;
+  max-height: 100vh;
+
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}

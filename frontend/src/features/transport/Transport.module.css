@@ -1,0 +1,55 @@
+.container {
+  height: 80px;
+
+  background: var(--primary-light);
+
+  box-shadow: var(--shadow-level-1);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: relative;
+}
+
+.queue-button {
+  position: absolute;
+  right: var(--unit-space-x2);
+  top: 50%;
+  transform: translate(0, -50%);
+  width: var(--unit-space-x6);
+  height: var(--unit-space-x6);
+
+  border-radius: 50%;
+  background: #2e2e2e;
+
+  color: white;
+
+  font-size: medium;
+}
+
+.icon {
+  margin: 0 var(--unit-space-x2);
+  fill: var(--text-on-primary);
+}
+
+.loop-button {
+  position: absolute;
+  left: var(--unit-space-x2);
+  top: 50%;
+  transform: translate(0, -50%);
+  width: var(--unit-space-x6);
+  height: var(--unit-space-x6);
+
+  border-radius: 50%;
+  background: #2e2e2e;
+
+  color: white;
+
+  font-size: medium;
+  opacity: 40%;
+}
+
+.loop-button-looping {
+  opacity: 100%;
+}
