@@ -5,4 +5,7 @@ import viteTsconfigPaths from 'vite-tsconfig-paths';
 export default defineConfig({
   root: 'frontend',
   plugins: [react(), viteTsconfigPaths()],
+  build: {
+    target: 'esnext',
+  },
 });
