@@ -2,7 +2,6 @@ import {Channel} from '../model/channel';
 import {ProjectInfo} from '../model/project-info';
 import {Section} from '../model/section';
 import {Song} from '../model/song';
-import {Buffer} from 'buffer';
 import {Sample} from '../model/sample';
 
 export enum Method {
@@ -71,7 +70,7 @@ export interface BeginUploadRequest {
 
 export interface UploadDataRequest {
   uploadId: string;
-  data: Buffer;
+  data: ArrayBuffer;
 }
 
 export interface CompleteUploadRequest {
@@ -333,7 +332,7 @@ export function uploadRequest(uploadId: string, data: ArrayBuffer): Request {
     method: Method.upload,
     payload: {
       uploadId,
-      data: Buffer.from(data),
+      data,
     },
   };
 }
