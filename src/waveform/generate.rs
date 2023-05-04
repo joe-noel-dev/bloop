@@ -57,8 +57,8 @@ fn process_waveform(options: Options, audio: Arc<dyn AudioBuffer>) -> WaveformDa
     for length in options.lengths.iter() {
         let length: usize = (*length).try_into().unwrap();
         for frame in (0..audio.frame_count()).step_by(length) {
-            let length = std::cmp::min(length, audio.frame_count() - frame);
-            let slice = BorrowedAudioBuffer::slice_frames(audio.as_ref(), frame, length);
+            let frame_count = std::cmp::min(length, audio.frame_count() - frame);
+            let slice = BorrowedAudioBuffer::slice_frames(audio.as_ref(), frame, frame_count);
 
             for channel in 0..options.num_channels {
                 process_channel(
