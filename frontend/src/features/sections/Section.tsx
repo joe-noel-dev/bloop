@@ -4,7 +4,6 @@ import {selectSectionRequest} from '../../api/request';
 import {ProgressBar} from '../../components/ProgressBar';
 import {Spacer} from '../../components/Spacer';
 import {useCore} from '../core/use-core';
-import {appTheme} from '../theme';
 import {usePlaybackState, useProgress} from '../transport/transport-hooks';
 import {useSectionById, useSelectedSectionId} from './section-hooks';
 import styles from './Section.module.css';
@@ -47,7 +46,7 @@ export const Section = (props: SectionProps) => {
       {isPlaying && (
         <ProgressBar
           progress={progress?.sectionProgress || 0.0}
-          colour={appTheme.colours.primaryDark}
+          colour={'var(--primary-dark)'}
         />
       )}
     </div>

@@ -12,19 +12,6 @@
   justify-content: center;
 }
 
-.button {
-  height: var(--unit-space-x6);
-  border-radius: 2px;
-  border: none;
-
-  padding: 0 var(--unit-space-x2);
-
-  display: flex;
-  gap: var(--unit-space);
-  align-items: center;
-  justify-content: center;
-}
-
 .primary {
   background-color: var(--primary);
   color: var(--text-on-primary);

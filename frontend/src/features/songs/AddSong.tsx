@@ -1,10 +1,9 @@
 import React from 'react';
 import {FiPlus} from 'react-icons/fi';
-import styled from 'styled-components';
 import {addSongRequest} from '../../api/request';
 import {SecondaryButton} from '../../components/Button';
-import {MediumMain} from '../../typography/Typography';
 import {useCore} from '../core/use-core';
+import styles from './AddSong.module.css';
 
 export const AddSong = () => {
   const core = useCore();
@@ -14,13 +13,9 @@ export const AddSong = () => {
   };
 
   return (
-    <SecondaryButton onClick={addSong}>
-      <FiPlus size={16} />
-      <ButtonText>Add Song</ButtonText>
+    <SecondaryButton className={styles.button} onClick={addSong}>
+      <FiPlus />
+      <label>Add Song</label>
     </SecondaryButton>
   );
 };
-
-const ButtonText = styled.p`
-  ${MediumMain};
-`;

@@ -1,24 +1,13 @@
 import React from 'react';
-import styled from 'styled-components';
 import {SongHeader} from './SongHeader';
 import {Waveform} from '../waveforms/Waveform';
 import {FiEdit2} from 'react-icons/fi';
-import {MediumMain} from '../../typography/Typography';
 import {Sections} from '../sections/Sections';
 import {SecondaryButton} from '../../components/Button';
 import {ProgressBar} from '../../components/ProgressBar';
-import {appTheme} from '../theme';
 import {usePlaybackState, useProgress} from '../transport/transport-hooks';
 import {useSelectedSongId, useSong} from './song-hooks';
-
-const WaveformContainer = styled.div`
-  height: ${(props) => props.theme.units(10)};
-  position: relative;
-`;
-
-const Container = styled.div`
-  padding-bottom: ${(props) => props.theme.units(2)};
-`;
+import styles from './DisplaySong.module.css';
 
 interface Props {
   songId: string;
@@ -33,18 +22,19 @@ export const DisplaySong = ({songId, setEditingSongId}: Props) => {
   const playbackState = usePlaybackState();
 
   return (
-    <Container>
+    <div className={styles.container}>
       <SongHeader selected={isSelected} name={song?.name || ''} />
 
-      <WaveformContainer>
+      <div className={styles.waveform}>
         <Waveform sampleId={song?.sampleId} />
+
         {playbackState?.playing && playbackState?.songId === songId && (
           <ProgressBar
             progress={progress?.songProgress || 0}
-            colour={appTheme.colours.primary}
+            colour={'var(--primary)'}
           />
         )}
-      </WaveformContainer>
+      </div>
 
       <Sections songId={songId} sectionIds={song?.sectionIds || []} />
 
@@ -55,15 +45,14 @@ export const DisplaySong = ({songId, setEditingSongId}: Props) => {
           paddingRight: 16,
         }}
       >
-        <SecondaryButton onClick={() => setEditingSongId(songId)}>
-          <FiEdit2 size={16} />
-          <ButtonText>Edit</ButtonText>
+        <SecondaryButton
+          className={styles['edit-button']}
+          onClick={() => setEditingSongId(songId)}
+        >
+          <FiEdit2 />
+          <label>Edit</label>
         </SecondaryButton>
       </div>
-    </Container>
+    </div>
   );
 };
-
-const ButtonText = styled.p`
-  ${MediumMain};
-`;

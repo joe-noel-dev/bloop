@@ -1,15 +1,12 @@
 import cloneDeep from 'lodash.clonedeep';
 import React, {useState, forwardRef} from 'react';
-import styled from 'styled-components';
 import {SecondaryButton, WarningButton} from '../../components/Button';
-import {MediumMain} from '../../typography/Typography';
 import {useCore} from '../core/use-core';
 import {SectionEditor} from '../sections/SectionEditor';
 import {NameEditor} from '../../components/NameEditor';
 import {useSelectedSongId, useSong, useSongs} from './song-hooks';
 import {Sample} from '../samples/Sample';
 import {FiCheck, FiPlus, FiTrash} from 'react-icons/fi';
-import {horizontalGap, verticalGap} from '../../components/Gap';
 import {
   addSampleRequest,
   addSectionRequest,
@@ -22,6 +19,8 @@ import {
   uploadRequest,
 } from '../../api/request';
 import {v4 as uuidv4} from 'uuid';
+import styles from './SongEditor.module.css';
+import {Spacer} from '../../components/Spacer';
 
 interface Props {
   songId: string;
@@ -39,14 +38,14 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
   const isLastSong = songs?.length === 1;
 
   if (!song) {
-    return <Container />;
+    return <div className={styles.container} />;
   }
 
   const saveButton = () => {
     return (
       <SecondaryButton onClick={() => props.setEditingSongId('')}>
-        <FiCheck size={16} />
-        <ButtonText>Done</ButtonText>
+        <FiCheck />
+        <label>Done</label>
       </SecondaryButton>
     );
   };
@@ -56,8 +55,8 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
       <WarningButton
         onClick={() => core?.sendRequest(removeSongRequest(props.songId))}
       >
-        <FiTrash size={16} />
-        <ButtonText>Remove Song</ButtonText>
+        <FiTrash />
+        <label>Remove Song</label>
       </WarningButton>
     );
   };
@@ -85,8 +84,12 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
   };
 
   return (
-    <Container ref={ref}>
-      <NameRegion isSelected={isSelected}>
+    <div className={styles.container} ref={ref}>
+      <div
+        className={`${styles['name-region']} ${
+          isSelected && styles['name-region-selected']
+        }`}
+      >
         <NameEditor
           name={song.name}
           onSave={(name) => {
@@ -96,7 +99,7 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
           }}
           editable={true}
         />
-      </NameRegion>
+      </div>
       <Sample
         editable={true}
         sampleId={song.sampleId}
@@ -106,7 +109,8 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
           core?.sendRequest(removeSampleRequest(song.sampleId, song.id))
         }
       />
-      <SectionRegion>
+
+      <div className={styles['section-region']}>
         {song.sectionIds.map((sectionId: string) => (
           <SectionEditor
             key={sectionId}
@@ -122,77 +126,21 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
             }
           />
         ))}
-        <AddSectionButton
+
+        <button
+          className={styles['add-section-button']}
           onClick={() => core?.sendRequest(addSectionRequest(song.id))}
         >
-          <FiPlus size={16} />
-          <ButtonText>Add Section</ButtonText>
-        </AddSectionButton>
-      </SectionRegion>
-      <ButtonRegion>
+          <FiPlus />
+          <label>Add Section</label>
+        </button>
+      </div>
+
+      <div className={styles['button-region']}>
         {!isLastSong && removeButton()}
-        <div style={{flex: 1}} />
+        <Spacer />
         {saveButton()}
-      </ButtonRegion>
-    </Container>
+      </div>
+    </div>
   );
 });
-
-const ButtonText = styled.p`
-  ${MediumMain};
-`;
-
-const Container = styled.div`
-  padding-bottom: ${(props) => props.theme.units(2)};
-
-  display: flex;
-  flex-direction: column;
-`;
-
-interface NameRegionProps {
-  isSelected: boolean;
-}
-
-const NameRegion = styled.div<NameRegionProps>`
-  padding: ${(props) => props.theme.units(2)};
-  background: ${(props) =>
-    props.isSelected
-      ? props.theme.colours.primary
-      : props.theme.colours.cardBackground};
-  color: ${(props) =>
-    props.isSelected
-      ? props.theme.textColours.primary
-      : props.theme.textColours.card};
-`;
-
-const ButtonRegion = styled.div`
-  display: flex;
-
-  padding: 0 ${(props) => props.theme.units(2)};
-`;
-
-const SectionRegion = styled.div`
-  padding: 0 ${(props) => props.theme.units(2)};
-
-  display: flex;
-  flex-direction: column;
-  ${(props) => verticalGap(props.theme.units(2))};
-
-  margin: ${(props) => props.theme.units(2)} 0;
-`;
-
-const AddSectionButton = styled.button`
-  height: ${(props) => props.theme.units(6)};
-  padding: ${(props) => props.theme.units(2)};
-  border: 1px solid ${(props) => props.theme.colours.cardLayer};
-  borderradius: ${(props) => props.theme.borderRadius};
-
-  display: flex;
-  align-items: center;
-
-  ${(props) => horizontalGap(props.theme.units(1))};
-
-  display: flex;
-
-  margin-right: auto;
-`;

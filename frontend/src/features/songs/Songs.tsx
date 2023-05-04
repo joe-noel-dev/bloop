@@ -1,32 +1,8 @@
 import React, {useState} from 'react';
-import styled from 'styled-components';
 import {AddSong} from './AddSong';
 import {Song} from './Song';
 import {useSongs} from './song-hooks';
-
-const Scroller = styled.div`
-  overflow-y: scroll;
-  position: relative;
-
-  scroll-snap-type: y proximity;
-`;
-
-interface ScrollContainerProps {
-  height?: number;
-}
-
-const ScrollContainer = styled.div<ScrollContainerProps>`
-  scroll-snap-align: none;
-
-  overflow-y: hidden;
-
-  margin: ${(props) => props.theme.units(4)};
-
-  @media (min-width: 1000px) {
-    width: calc(1000px - ${(props) => props.theme.units(4)});
-    margin: ${(props) => props.theme.units(4)} auto;
-  }
-`;
+import styles from './Songs.module.css';
 
 const scrollContainerStyle = (height?: number): React.CSSProperties => ({
   height: height ? height + 'px' : 'auto',
@@ -46,10 +22,10 @@ export const Songs = () => {
   }));
 
   return (
-    <Scroller>
+    <div className={styles.scroller}>
       {displayItems?.map(({song, height}, index) => (
         <div key={song.id} style={scrollContainerStyle(height)}>
-          <ScrollContainer>
+          <div className={styles['scroll-container']}>
             <Song
               songId={song.id}
               editingSongId={editingSongId}
@@ -60,12 +36,13 @@ export const Songs = () => {
                 setHeights(newHeights);
               }}
             />
-          </ScrollContainer>
+          </div>
         </div>
       ))}
-      <ScrollContainer>
+
+      <div className={styles['scroll-container']}>
         <AddSong />
-      </ScrollContainer>
-    </Scroller>
+      </div>
+    </div>
   );
 };

@@ -7,7 +7,6 @@ import {ValueEditor} from '../../components/ValueEditor';
 import {LoopSelection} from './LoopSelection';
 import {ProgressBar} from '../../components/ProgressBar';
 import {usePlaybackState, useProgress} from '../transport/transport-hooks';
-import {appTheme} from '../theme';
 import Measure from 'react-measure';
 import {Waveform} from '../waveforms/Waveform';
 import {beatLength} from '../../model/sample';
@@ -133,7 +132,7 @@ export const SectionEditor = (props: Props) => {
                   {isPlaying && props.editing && (
                     <ProgressBar
                       progress={progress?.sectionProgress || 0}
-                      colour={appTheme.colours.primaryDark}
+                      colour={'var(--primary-dark)'}
                     />
                   )}
                 </div>
@@ -177,7 +176,7 @@ export const SectionEditor = (props: Props) => {
       {isPlaying && !props.editing && (
         <ProgressBar
           progress={progress?.sectionProgress || 0}
-          colour={appTheme.colours.primaryDark}
+          colour={'var(--primary-dark)'}
         />
       )}
     </div>

@@ -2,7 +2,6 @@ import React, {useEffect, useState} from 'react';
 import {Header} from './features/header/Header';
 import {Songs} from './features/songs/Songs';
 import {Transport} from './features/transport/Transport';
-import styled from 'styled-components';
 import {NoConnectionOverlay} from './features/connection/NoConnectionOverlay';
 import {CoreContext} from './features/core/use-core';
 import {Core, createCore} from './features/core/Core';
@@ -12,14 +11,7 @@ import {Progress} from './model/progress';
 import {ProjectInfo} from './model/project-info';
 import {WaveformData} from './model/waveform';
 import {CoreDataContext} from './features/core/CoreData';
-
-const Container = styled.div`
-  min-height: 100vh;
-  max-height: 100vh;
-
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-`;
+import styles from './App.module.css';
 
 const App = () => {
   const [core, setCore] = useState<Core | null>(null);
@@ -61,16 +53,16 @@ const App = () => {
           }}
         >
           {!isConnected && (
-            <Container>
+            <div className={styles.container}>
               <NoConnectionOverlay />
-            </Container>
+            </div>
           )}
           {isConnected && (
-            <Container>
+            <div className={styles.container}>
               <Header />
               <Songs />
               <Transport />
-            </Container>
+            </div>
           )}
         </CoreDataContext.Provider>
       </CoreContext.Provider>

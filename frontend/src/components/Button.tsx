@@ -11,28 +11,28 @@ export const Button = ({children, ...props}: ButtonProps) => (
 );
 
 export const PrimaryButton = ({children, ...props}: ButtonProps) => (
-  <Button className={`${styles.primary} ${props.className}`} {...props}>
+  <Button {...props} className={`${styles.primary} ${props.className}`}>
     {children}
   </Button>
 );
 
 export const SecondaryButton = ({children, ...props}: ButtonProps) => (
-  <Button className={styles.secondary} {...props}>
+  <Button {...props} className={`${styles.secondary} ${props.className}`}>
     {children}
   </Button>
 );
 
 export const SecondaryDarkButton = ({children, ...props}: ButtonProps) => (
   <Button
-    className={`${styles['seconary-dark']} ${props.className}`}
     {...props}
+    className={`${styles['seconary-dark']} ${props.className}`}
   >
     {children}
   </Button>
 );
 
 export const WarningButton = ({children, ...props}: ButtonProps) => (
-  <SecondaryDarkButton className={styles['warning']} {...props}>
+  <SecondaryDarkButton {...props} className={styles['warning']}>
     {children}
   </SecondaryDarkButton>
 );

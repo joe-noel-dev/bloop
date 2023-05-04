@@ -1,8 +1,8 @@
 import React, {useRef, useState} from 'react';
 import {FiCheck, FiX} from 'react-icons/fi';
-import styled from 'styled-components';
 import {SecondaryButton, SecondaryDarkButton} from '../../components/Button';
 import styles from './RenameProject.module.css';
+import {Spacer} from '../../components/Spacer';
 
 interface Props {
   name?: string;
@@ -30,9 +30,7 @@ export const RenameProject = (props: Props) => {
 
   return (
     <div className={styles['container']}>
-      <Title>
-        <h2>{props.title || 'Project Name'}</h2>
-      </Title>
+      <h2>{props.title || 'Project Name'}</h2>
 
       <input
         className={styles['name-box']}
@@ -43,7 +41,8 @@ export const RenameProject = (props: Props) => {
         value={value}
         onChange={(event) => setValue(event.target.value)}
       />
-      <ButtonContainer>
+
+      <div className={styles['button-container']}>
         <SecondaryDarkButton onClick={props.onCancel}>
           <FiX size={16} />
           <p>Cancel</p>
@@ -51,23 +50,9 @@ export const RenameProject = (props: Props) => {
         <Spacer />
         <SecondaryButton onClick={() => props.onSave(value)}>
           <FiCheck size={16} />
-          <p>{props.confirmButtonText || 'Create'}</p>
+          <label>{props.confirmButtonText || 'Create'}</label>
         </SecondaryButton>
-      </ButtonContainer>
+      </div>
     </div>
   );
 };
-
-const NameBox = styled.input``;
-
-const ButtonContainer = styled.div`
-  display: flex;
-`;
-
-const Spacer = styled.div`
-  flex: 1;
-`;
-
-const Title = styled.div`
-  margin-bottom: ${(props) => props.theme.units(2)};
-`;

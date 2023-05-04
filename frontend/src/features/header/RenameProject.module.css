@@ -3,6 +3,7 @@
   flex-direction: column;
   width: 400px;
   padding: var(--unit-space-x4);
+  gap: var(--unit-space-x2);
 }
 
 .container p {
@@ -14,6 +15,9 @@
   border-radius: var(--border-radius);
   border: 1px solid var(--card-layer);
   padding: 0 var(--unit-space);
-  margin-bottom: var(--unit-space-x2);
   font-size: medium;
+}
+
+.button-container {
+  display: flex;
 }
