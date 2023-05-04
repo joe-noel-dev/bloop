@@ -1,7 +1,6 @@
 import React from 'react';
-import styled from 'styled-components';
-import {MediumMain} from '../../typography/Typography';
 import {MenuItem} from './MenuItem';
+import styles from './Menu.module.css';
 
 interface MenuProps {
   menuItems: MenuItem[];
@@ -9,37 +8,19 @@ interface MenuProps {
 
 export const Menu = (props: MenuProps) => {
   return (
-    <Container>
+    <div className={styles.container}>
       {props.menuItems.map((item) => (
-        <MenuRow
+        <div
+          className={styles.row}
           onClick={(event) => {
             event.preventDefault();
             item.onClick();
           }}
           key={item.title}
         >
-          <ItemTitle>{item.title}</ItemTitle>
-        </MenuRow>
+          <p>{item.title}</p>
+        </div>
       ))}
-    </Container>
+    </div>
   );
 };
-
-const ItemTitle = styled.p`
-  ${MediumMain};
-`;
-
-const Container = styled.div`
-  padding: ${(props) => props.theme.units(2)};
-  background-color: ${(props) => props.theme.colours.background};
-  color: ${(props) => props.theme.textColours.background};
-
-  border-radius: ${(props) => props.theme.borderRadius};
-  box-shadow: ${(props) => props.theme.dropShadow};
-
-  color: ${(props) => props.theme.textColours.card};
-`;
-
-const MenuRow = styled.div`
-  padding: ${(props) => props.theme.units(1)};
-`;

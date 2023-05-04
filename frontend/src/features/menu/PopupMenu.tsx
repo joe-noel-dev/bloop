@@ -2,23 +2,29 @@ import React, {useState} from 'react';
 import {Popover} from 'react-tiny-popover';
 import {Menu} from './Menu';
 import {MenuItem} from './MenuItem';
-import styled from 'styled-components';
 
 interface MenuProps {
   menuItems: MenuItem[];
   canOpen?(): boolean;
+  children?: React.ReactNode;
 }
 
-export const PopupMenu: React.FunctionComponent<MenuProps> = (props) => {
+export const PopupMenu = ({menuItems, canOpen, children}: MenuProps) => {
   const [isOpen, setOpen] = useState(false);
 
-  const canOpen = () => {
-    if (!isOpen) return false;
-    if (props.canOpen && !props.canOpen()) return false;
+  const canOpenMenu = () => {
+    if (!isOpen) {
+      return false;
+    }
+
+    if (canOpen && !canOpen()) {
+      return false;
+    }
+
     return true;
   };
 
-  const menuItems = props.menuItems.map((item) => {
+  const items = menuItems.map((item) => {
     return {
       ...item,
       onClick: () => {
@@ -30,14 +36,12 @@ export const PopupMenu: React.FunctionComponent<MenuProps> = (props) => {
 
   return (
     <Popover
-      isOpen={canOpen()}
+      isOpen={canOpenMenu()}
       positions={['bottom']}
-      content={<Menu menuItems={menuItems} />}
+      content={<Menu menuItems={items} />}
       onClickOutside={() => setOpen(false)}
     >
-      <Content onClick={() => setOpen(true)}>{props.children}</Content>
+      <div onClick={() => setOpen(true)}>{children}</div>
     </Popover>
   );
 };
-
-const Content = styled.div``;

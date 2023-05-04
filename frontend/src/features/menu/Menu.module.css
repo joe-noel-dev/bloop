@@ -1,0 +1,14 @@
+.container {
+  padding: var(--unit-space-x2);
+  background-color: var(--background);
+  color: var(--text-on-background);
+
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-level-1);
+
+  color: var(--card);
+}
+
+.row {
+  padding: var(--unit-space);
+}
