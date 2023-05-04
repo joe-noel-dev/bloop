@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from 'styled-components';
+import styles from './ProgressBar.module.css';
 
 interface Props {
   progress: number;
@@ -8,7 +8,8 @@ interface Props {
 
 export const ProgressBar = ({progress, colour}: Props) => {
   return (
-    <Container
+    <div
+      className={styles.container}
       style={
         {
           '--progress': `${progress * 100.0}%`,
@@ -18,13 +19,3 @@ export const ProgressBar = ({progress, colour}: Props) => {
     />
   );
 };
-
-const Container = styled.div`
-  position: absolute;
-  bottom: 0;
-  height: 5px;
-  left: 0;
-  background: var(--colour);
-  width: var(--progress);
-  transition: width 0.05;
-`;

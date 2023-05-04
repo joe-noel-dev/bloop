@@ -25,11 +25,6 @@ interface Props {
   setEditingSongId: (id: string) => void;
 }
 
-const EditButton = styled(SecondaryButton)`
-  margin-left: auto;
-  margin-right: ${(props) => props.theme.units(2)};
-`;
-
 export const DisplaySong = ({songId, setEditingSongId}: Props) => {
   const song = useSong(songId);
   const selectedSongId = useSelectedSongId();
@@ -52,10 +47,19 @@ export const DisplaySong = ({songId, setEditingSongId}: Props) => {
       </WaveformContainer>
 
       <Sections songId={songId} sectionIds={song?.sectionIds || []} />
-      <EditButton onClick={() => setEditingSongId(songId)}>
-        <FiEdit2 size={16} />
-        <ButtonText>Edit</ButtonText>
-      </EditButton>
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row-reverse',
+          paddingRight: 16,
+        }}
+      >
+        <SecondaryButton onClick={() => setEditingSongId(songId)}>
+          <FiEdit2 size={16} />
+          <ButtonText>Edit</ButtonText>
+        </SecondaryButton>
+      </div>
     </Container>
   );
 };

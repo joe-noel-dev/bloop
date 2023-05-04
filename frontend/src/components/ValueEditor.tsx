@@ -1,7 +1,6 @@
 import React, {useRef, useState} from 'react';
 import {FiMinus, FiPlus} from 'react-icons/fi';
-import styled from 'styled-components';
-import {MainTextStyle, MediumMain, MediumText} from '../typography/Typography';
+import styles from './ValueEditor.module.css';
 
 interface Props {
   value: number;
@@ -18,6 +17,7 @@ export const ValueEditor = (props: Props) => {
 
   const submit = (value: string) => {
     let numericValue = parseFloat(value);
+
     if (isNaN(numericValue)) {
       return;
     }
@@ -55,17 +55,19 @@ export const ValueEditor = (props: Props) => {
   };
 
   return (
-    <Container>
+    <div className={styles.container}>
       <div style={{display: 'flex'}}>
-        <IncrementButton
+        <button
+          className={styles['increment-button']}
           onClick={(event) => {
             submit(`${props.value - 1}`);
             event.preventDefault();
           }}
         >
-          <FiMinus size={16} />
-        </IncrementButton>
-        <ValueContainer
+          <FiMinus />
+        </button>
+        <div
+          className={styles['value-container']}
           onClick={() => {
             if (!editing && !props.disabled) setEditing(true);
           }}
@@ -82,54 +84,20 @@ export const ValueEditor = (props: Props) => {
               onBlur={onClickOutside}
             />
           ) : (
-            <ValueText>{props.value}</ValueText>
+            <p>{props.value}</p>
           )}
-        </ValueContainer>
+        </div>
 
-        <IncrementButton
+        <button
+          className={styles['increment-button']}
           onClick={(event) => {
             submit(`${props.value + 1}`);
             event.preventDefault();
           }}
         >
-          <FiPlus size={16} />
-        </IncrementButton>
+          <FiPlus />
+        </button>
       </div>
-    </Container>
+    </div>
   );
 };
-
-const ValueText = styled.p`
-  ${MediumMain};
-`;
-
-const Container = styled.div`
-  width: ${(props) => props.theme.units(12)};
-`;
-
-const ValueContainer = styled.div`
-  text-align: center;
-  flex: 1;
-  height: ${(props) => props.theme.units(4)};
-
-  * {
-    width: 100%;
-    height: 100%;
-    margin: 0 auto;
-    line-height: ${(props) => props.theme.units(4)};
-    text-align: center;
-    ${MediumText};
-    ${MainTextStyle};
-  }
-
-  input {
-    border: 1px solid black;
-    border-radius: ${(props) => props.theme.borderRadius};
-  }
-`;
-
-const IncrementButton = styled.button`
-  width: ${(props) => props.theme.units(4)};
-  border: 1px solid black;
-  border-radius: ${(props) => props.theme.borderRadius};
-`;

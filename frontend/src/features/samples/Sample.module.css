@@ -17,7 +17,6 @@
 }
 
 .upload {
-  composes: secondary-button from '../theme/buttons.module.css';
   position: absolute;
   top: 50%;
   left: 50%;
@@ -52,4 +51,11 @@
   top: 0;
   left: 0;
   border-bottom-right-radius: 16px;
+}
+
+.spinner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }

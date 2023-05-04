@@ -1,0 +1,93 @@
+.spinner {
+  --radius: 32px;
+  --border: 4px;
+
+  position: relative;
+
+  width: calc(2 * var(--radius));
+  height: calc(2 * var(--radius));
+
+  animation: spin 10s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(2520deg);
+  }
+}
+
+.spinner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border: var(--border) solid #d4d7dc;
+  border-radius: var(--radius);
+}
+
+.circle {
+  position: absolute;
+  border: var(--border) solid var(--primary-dark);
+  width: calc(2 * var(--radius));
+  height: calc(2 * var(--radius));
+  border-radius: var(--radius);
+}
+
+.half {
+  position: absolute;
+  top: 0;
+  overflow: hidden;
+  width: var(--radius);
+  height: calc(2 * var(--radius));
+}
+
+.left-half {
+  composes: half;
+  left: 0;
+}
+
+.right-half {
+  composes: half;
+}
+
+.left {
+  composes: left-half;
+  transform-origin: 100% 50%;
+  animation: spin-left 2.5s cubic-bezier(0.2, 0, 0.8, 1) infinite;
+}
+
+@keyframes spin-left {
+  0% {
+    transform: rotate(20deg);
+  }
+  50% {
+    transform: rotate(160deg);
+  }
+  100% {
+    transform: rotate(20deg);
+  }
+}
+
+.right {
+  composes: right-half;
+  transform-origin: 100% 50%;
+  animation: spin-right 2.5s cubic-bezier(0.2, 0, 0.8, 1) infinite;
+  left: calc(0 - var(--radius));
+}
+
+@keyframes spin-right {
+  0% {
+    transform: rotate(160deg);
+  }
+  50% {
+    transform: rotate(20deg);
+  }
+  100% {
+    transform: rotate(160deg);
+  }
+}

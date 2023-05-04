@@ -7,11 +7,11 @@ import {cloneDeep} from 'lodash';
 import {ProgressBar} from '../../components/ProgressBar';
 import {appTheme} from '../theme';
 import {IndeterminateSpinner} from '../../components/IndeterminateSpinner';
-import {Centred} from '../../components/Centred';
 import {updateSampleRequest} from '../../api/request';
 import {useSampleWithId} from './sample-hooks';
 import {usePlaybackState, useProgress} from '../transport/transport-hooks';
 import styles from './Sample.module.css';
+import {SecondaryButton} from '../../components/Button';
 
 interface SampleProps {
   editable: boolean;
@@ -82,18 +82,17 @@ export const Sample = (props: SampleProps) => {
           />
         )}
         {props.editable && !sample && !uploading && (
-          <button
-            className={styles['upload']}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <FiUpload size={16} />
-            <p>Upload Audio</p>
-          </button>
+          <div className={styles.upload}>
+            <SecondaryButton onClick={() => fileInputRef.current?.click()}>
+              <FiUpload size={16} />
+              <p>Upload Audio</p>{' '}
+            </SecondaryButton>
+          </div>
         )}
         {!sample && uploading && (
-          <Centred>
+          <div className={styles.spinner}>
             <IndeterminateSpinner />
-          </Centred>
+          </div>
         )}
         {props.editable && sample && (
           <button

@@ -1,47 +1,38 @@
-import styled from 'styled-components';
-import {horizontalGap} from '../components/Gap';
+import styles from './Button.module.css';
 
-export const Button = styled.button`
-  height: ${(props) => props.theme.units(6)};
-  border-radius: ${(props) => props.theme.borderRadius};
-  border: none;
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children?: React.ReactNode;
+}
 
-  padding: 0 ${(props) => props.theme.units(2)};
+export const Button = ({children, ...props}: ButtonProps) => (
+  <button {...props} className={`${styles.button} ${props.className}`}>
+    {children}
+  </button>
+);
 
-  ${(props) => horizontalGap(props.theme.units(1))};
+export const PrimaryButton = ({children, ...props}: ButtonProps) => (
+  <Button className={`${styles.primary} ${props.className}`} {...props}>
+    {children}
+  </Button>
+);
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
+export const SecondaryButton = ({children, ...props}: ButtonProps) => (
+  <Button className={styles.secondary} {...props}>
+    {children}
+  </Button>
+);
 
-export const PrimaryButton = styled(Button)`
-  background-color: ${(props) => props.theme.colours.primary};
-  color: ${(props) => props.theme.textColours.primary};
+export const SecondaryDarkButton = ({children, ...props}: ButtonProps) => (
+  <Button
+    className={`${styles['seconary-dark']} ${props.className}`}
+    {...props}
+  >
+    {children}
+  </Button>
+);
 
-  :active {
-    background: ${(props) => props.theme.colours.primaryLight};
-  }
-`;
-
-export const SecondaryButton = styled(Button)`
-  background-color: ${(props) => props.theme.colours.secondary};
-  color: ${(props) => props.theme.textColours.secondary};
-
-  :active {
-    background: ${(props) => props.theme.colours.secondaryLight};
-  }
-`;
-
-export const SecondaryDarkButton = styled(Button)`
-  background-color: ${(props) => props.theme.colours.secondaryDark};
-  color: ${(props) => props.theme.textColours.secondaryDark};
-
-  :active {
-    background: ${(props) => props.theme.colours.secondary};
-  }
-`;
-
-export const WarningButton = styled(SecondaryButton)`
-  background-color: #6e1404;
-`;
+export const WarningButton = ({children, ...props}: ButtonProps) => (
+  <SecondaryDarkButton className={styles['warning']} {...props}>
+    {children}
+  </SecondaryDarkButton>
+);

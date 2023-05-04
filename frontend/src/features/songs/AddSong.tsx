@@ -14,17 +14,13 @@ export const AddSong = () => {
   };
 
   return (
-    <EditButton onClick={addSong}>
+    <SecondaryButton onClick={addSong}>
       <FiPlus size={16} />
       <ButtonText>Add Song</ButtonText>
-    </EditButton>
+    </SecondaryButton>
   );
 };
 
 const ButtonText = styled.p`
   ${MediumMain};
-`;
-
-const EditButton = styled(SecondaryButton)`
-  margin-left: auto;
 `;
