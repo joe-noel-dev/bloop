@@ -1,4 +1,3 @@
-import React from 'react';
 import styles from './IndeterminateSpinner.module.css';
 
 export const IndeterminateSpinner = () => {

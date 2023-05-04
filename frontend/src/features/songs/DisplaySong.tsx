@@ -1,4 +1,3 @@
-import React from 'react';
 import {SongHeader} from './SongHeader';
 import {Waveform} from '../waveforms/Waveform';
 import {FiEdit2} from 'react-icons/fi';

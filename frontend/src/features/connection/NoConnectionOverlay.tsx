@@ -1,4 +1,3 @@
-import React from 'react';
 import {IndeterminateSpinner} from '../../components/IndeterminateSpinner';
 import styles from './NoConnectionOverlay.module.css';
 

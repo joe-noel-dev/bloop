@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {FiRepeat, FiTrash, FiUpload} from 'react-icons/fi';
 import {Waveform} from '../waveforms/Waveform';
 import {NameEditor} from '../../components/NameEditor';

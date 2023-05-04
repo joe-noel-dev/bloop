@@ -1,4 +1,3 @@
-import React from 'react';
 import {useCore} from '../core/use-core';
 import {FaPlus} from 'react-icons/fa';
 import {addSectionRequest} from '../../api/request';

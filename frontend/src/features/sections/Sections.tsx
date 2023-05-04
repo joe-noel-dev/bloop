@@ -1,4 +1,3 @@
-import React from 'react';
 import {Section} from './Section';
 import styles from './Sections.module.css';
 

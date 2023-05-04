@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import {useState} from 'react';
 import {Popover} from 'react-tiny-popover';
 import {Menu} from './Menu';
 import {MenuItem} from './MenuItem';

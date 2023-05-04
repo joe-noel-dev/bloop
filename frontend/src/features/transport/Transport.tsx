@@ -1,4 +1,3 @@
-import React from 'react';
 import {useCore} from '../core/use-core';
 import nextSectionIcon from './next-section-icon.svg';
 import nextSongIcon from './next-song-icon.svg';

@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {requestWaveformRequest} from '../../api/request';
 import {WaveformData, WaveformPeaks} from '../../model/waveform';
 import {useCore} from '../core/use-core';

@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import {useContext, useState} from 'react';
 import {FiMenu} from 'react-icons/fi';
 import {PopupMenu} from '../menu/PopupMenu';
 import {useCore} from '../core/use-core';
