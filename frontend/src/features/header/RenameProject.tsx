@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import {useRef, useState} from 'react';
 import {FiCheck, FiX} from 'react-icons/fi';
 import {SecondaryButton, SecondaryDarkButton} from '../../components/Button';
 import styles from './RenameProject.module.css';

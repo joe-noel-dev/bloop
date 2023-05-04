@@ -1,4 +1,3 @@
-import React from 'react';
 import styles from './LoopSelection.module.css';
 
 interface Props {

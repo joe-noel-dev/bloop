@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import {useState} from 'react';
 import {FiChevronDown, FiRepeat, FiTrash} from 'react-icons/fi';
 import {NameEditor} from '../../components/NameEditor';
 import {useCore} from '../core/use-core';

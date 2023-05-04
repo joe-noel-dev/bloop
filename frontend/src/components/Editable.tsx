@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {useOnClickOutside} from '../hooks/ClickOutside';
 import styles from './Editable.module.css';
 

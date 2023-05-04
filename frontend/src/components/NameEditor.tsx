@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import {useRef, useState} from 'react';
 import {FiEdit2} from 'react-icons/fi';
 import styles from './NameEditor.module.css';
 

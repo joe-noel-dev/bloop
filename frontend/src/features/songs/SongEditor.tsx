@@ -1,5 +1,5 @@
 import cloneDeep from 'lodash.clonedeep';
-import React, {useState, forwardRef} from 'react';
+import {useState, forwardRef} from 'react';
 import {SecondaryButton, WarningButton} from '../../components/Button';
 import {useCore} from '../core/use-core';
 import {SectionEditor} from '../sections/SectionEditor';

@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import {useRef, useState} from 'react';
 import {FiMinus, FiPlus} from 'react-icons/fi';
 import styles from './ValueEditor.module.css';
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import {FiPlus} from 'react-icons/fi';
 import {addSongRequest} from '../../api/request';
 import {SecondaryButton} from '../../components/Button';

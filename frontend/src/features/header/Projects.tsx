@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import {useContext} from 'react';
 import moment from 'moment';
 import {useCore} from '../core/use-core';
 import {FiTrash} from 'react-icons/fi';

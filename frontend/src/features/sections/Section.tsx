@@ -1,4 +1,3 @@
-import React from 'react';
 import {FiRepeat} from 'react-icons/fi';
 import {selectSectionRequest} from '../../api/request';
 import {ProgressBar} from '../../components/ProgressBar';
