@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
-import styled from 'styled-components';
 import {useOnClickOutside} from '../hooks/ClickOutside';
+import styles from './Editable.module.css';
 
 interface EditableProps {
   onSubmit(): void;
@@ -9,10 +9,6 @@ interface EditableProps {
   displayComponent: React.ReactNode;
   editComponent: React.ReactNode;
 }
-
-const Container = styled.div`
-  cursor: pointer;
-`;
 
 export const Editable = (props: EditableProps) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -46,13 +42,14 @@ export const Editable = (props: EditableProps) => {
   }, [isEditing, props]);
 
   return (
-    <Container
+    <div
+      className={styles.container}
       onKeyDown={handleKeyPress}
       ref={wrapperRef}
       onClick={() => setIsEditing(true)}
     >
       {!isEditing && props.displayComponent}
       {isEditing && props.editComponent}
-    </Container>
+    </div>
   );
 };

@@ -44,10 +44,10 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
 
   const saveButton = () => {
     return (
-      <SaveButton onClick={() => props.setEditingSongId('')}>
+      <SecondaryButton onClick={() => props.setEditingSongId('')}>
         <FiCheck size={16} />
         <ButtonText>Done</ButtonText>
-      </SaveButton>
+      </SecondaryButton>
     );
   };
 
@@ -141,8 +141,6 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
 const ButtonText = styled.p`
   ${MediumMain};
 `;
-
-const SaveButton = styled(SecondaryButton)``;
 
 const Container = styled.div`
   padding-bottom: ${(props) => props.theme.units(2)};

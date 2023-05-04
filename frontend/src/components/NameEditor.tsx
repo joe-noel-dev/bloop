@@ -1,13 +1,13 @@
 import React, {useRef, useState} from 'react';
 import {FiEdit2} from 'react-icons/fi';
-import {LargeMain, LargeText, MainTextStyle} from '../typography/Typography';
-import styled from 'styled-components';
+import styles from './NameEditor.module.css';
 
 interface NameEditorProps {
   onSave(name: string): void;
   name: string;
   editable: boolean;
   inputType?: string;
+  textClassName?: string;
 }
 
 export const NameEditor = (props: NameEditorProps) => {
@@ -52,24 +52,25 @@ export const NameEditor = (props: NameEditorProps) => {
   };
 
   return (
-    <Container
+    <div
       onClick={(event) => {
         startEditing();
         event.stopPropagation();
       }}
     >
       {!editing && (
-        <NameEditorName>
+        <h3 className={`${styles.name} ${props.textClassName}`}>
           {props.name}
           {props.editable && (
-            <EditButton>
-              <FiEdit2 size={16} />
-            </EditButton>
+            <button className={styles['edit-button']}>
+              <FiEdit2 />
+            </button>
           )}
-        </NameEditorName>
+        </h3>
       )}
       {editing && (
-        <NameEditorTextInput
+        <input
+          className={`${styles.input} ${props.textClassName}`}
           autoFocus
           onKeyDown={onKeyDown}
           onBlur={onClickOutside}
@@ -79,24 +80,6 @@ export const NameEditor = (props: NameEditorProps) => {
           onChange={(event) => setValue(event.target.value)}
         />
       )}
-    </Container>
+    </div>
   );
 };
-
-const Container = styled.div``;
-
-export const NameEditorName = styled.h3`
-  ${LargeMain};
-`;
-
-export const NameEditorTextInput = styled.input`
-  border: none;
-  ${LargeText}
-  ${MainTextStyle}
-`;
-
-const EditButton = styled.button`
-  background: none;
-  border: none;
-  padding: 0 ${(props) => props.theme.units(1)};
-`;

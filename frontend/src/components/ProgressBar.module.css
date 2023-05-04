@@ -1,0 +1,9 @@
+.container {
+  position: absolute;
+  bottom: 0;
+  height: 5px;
+  left: 0;
+  background: var(--colour);
+  width: var(--progress);
+  transition: width 0.05;
+}

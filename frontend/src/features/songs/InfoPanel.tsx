@@ -36,7 +36,7 @@ export const InfoPanel = ({songId}: InfoPanelProps) => {
     }
 
     if (30 <= value && value <= 300) {
-      let newSong = cloneDeep(song);
+      const newSong = cloneDeep(song);
       newSong.tempo.bpm = value;
       core.sendRequest(updateSongRequest(newSong));
     }

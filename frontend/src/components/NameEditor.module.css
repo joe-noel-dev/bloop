@@ -1,0 +1,12 @@
+.name {
+  font-size: large;
+}
+
+.input {
+  border: none;
+  font-size: large;
+}
+
+.edit-button {
+  padding: 0 var(--unit-space);
+}
