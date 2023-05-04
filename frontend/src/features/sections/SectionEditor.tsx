@@ -4,7 +4,6 @@ import {NameEditor} from '../../components/NameEditor';
 import {useCore} from '../core/use-core';
 import cloneDeep from 'lodash.clonedeep';
 import {ValueEditor} from '../../components/ValueEditor';
-import {LoopSelection} from './LoopSelection';
 import {ProgressBar} from '../../components/ProgressBar';
 import {usePlaybackState, useProgress} from '../transport/transport-hooks';
 import Measure from 'react-measure';
@@ -16,6 +15,7 @@ import {useSampleWithId} from '../samples/sample-hooks';
 import {useSectionById, useSelectedSectionId} from './section-hooks';
 import styles from './SectionEditor.module.css';
 import {Spacer} from '../../components/Spacer';
+import {ToggleSwitch} from '../../components/ToggleSwitch';
 
 interface Props {
   sectionId: string;
@@ -151,8 +151,8 @@ export const SectionEditor = (props: Props) => {
               <div style={{display: 'flex', alignItems: 'flex-end'}}>
                 <div className={styles['edit-group']}>
                   <h3>Loop</h3>
-                  <LoopSelection
-                    loop={section.loop}
+                  <ToggleSwitch
+                    isOn={section.loop}
                     onChange={(loop) => submitSection({loop})}
                   />
                 </div>
