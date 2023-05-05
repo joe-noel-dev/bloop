@@ -98,8 +98,10 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
             core?.sendRequest(updateSongRequest(newSong));
           }}
           editable={true}
+          textClassName={styles.name}
         />
       </div>
+
       <Sample
         editable={true}
         sampleId={song.sampleId}

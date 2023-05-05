@@ -15,6 +15,10 @@
   display: flex;
 }
 
+.container h3 {
+  font-size: large;
+}
+
 .container-playing {
   background: var(--primary-light);
   color: var(--text-on-primary-light);

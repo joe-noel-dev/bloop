@@ -16,6 +16,7 @@ import styles from './SectionEditor.module.css';
 import {Spacer} from '../../components/Spacer';
 import {ToggleSwitch} from '../../components/ToggleSwitch';
 import {NumberChooser} from '../../components/NumberChooser';
+import {Section} from '../../model/section';
 
 interface Props {
   sectionId: string;
@@ -49,12 +50,6 @@ export const SectionEditor = (props: Props) => {
     return <></>;
   }
 
-  const submitSection = (changes: object) => {
-    const newSection = cloneDeep(section);
-    Object.assign(newSection, changes);
-    core?.sendRequest(updateSectionRequest(newSection));
-  };
-
   return (
     <div
       className={`${styles.container} ${
@@ -64,37 +59,12 @@ export const SectionEditor = (props: Props) => {
         core?.sendRequest(selectSectionRequest(props.sectionId));
       }}
     >
-      <div
-        className={styles.header}
-        onClick={() => {
-          props.onRequestEdit(!props.editing);
-        }}
-      >
-        <NameEditor
-          onSave={(name) => {
-            const newSection = cloneDeep(section);
-            newSection.name = name;
-            core?.sendRequest(updateSectionRequest(newSection));
-          }}
-          name={section.name}
-          editable={props.editing}
-        ></NameEditor>
+      <Header
+        editing={props.editing}
+        section={section}
+        onRequestEdit={props.onRequestEdit}
+      />
 
-        <Spacer />
-        {section.loop && <FiRepeat size={16} />}
-
-        <button
-          className={`${styles['reveal-button']} ${
-            props.editing && styles['reveal-button-editing']
-          }`}
-          onClick={(event) => {
-            props.onRequestEdit(!props.editing);
-            event.stopPropagation();
-          }}
-        >
-          <FiChevronDown size={24} />
-        </button>
-      </div>
       <div
         className={`${styles['section-properties']} ${
           props.editing && styles['section-properties-open']
@@ -110,67 +80,37 @@ export const SectionEditor = (props: Props) => {
               className={styles['inner-section-properties']}
               ref={measureRef}
             >
-              <div className={styles['loop-position-section']}>
-                <div className={styles['edit-group']}>
-                  <h3>Start at bar</h3>
-                  <NumberChooser
-                    value={section.start / BEATS_PER_BAR + 1.0}
-                    onValueChange={(value) =>
-                      submitSection({start: (value - 1) * BEATS_PER_BAR})
-                    }
+              <div className={styles.waveform}>
+                <Waveform
+                  sampleId={props.sampleId}
+                  start={length > 0.0 ? section.start / length : 0.0}
+                  end={
+                    length > 0.0
+                      ? (section.start + section.beatLength) / length
+                      : 1.0
+                  }
+                />
+                {isPlaying && props.editing && (
+                  <ProgressBar
+                    progress={progress?.sectionProgress || 0}
+                    colour={'var(--primary-dark)'}
                   />
-                </div>
-
-                <div className={styles.waveform}>
-                  <Waveform
-                    sampleId={props.sampleId}
-                    start={length > 0.0 ? section.start / length : 0.0}
-                    end={
-                      length > 0.0
-                        ? (section.start + section.beatLength) / length
-                        : 1.0
-                    }
-                  />
-                  {isPlaying && props.editing && (
-                    <ProgressBar
-                      progress={progress?.sectionProgress || 0}
-                      colour={'var(--primary-dark)'}
-                    />
-                  )}
-                </div>
-
-                <div className={styles['edit-group']}>
-                  <h3>Duration</h3>
-                  <NumberChooser
-                    value={section.beatLength / BEATS_PER_BAR}
-                    onValueChange={(value) =>
-                      submitSection({beatLength: value * BEATS_PER_BAR})
-                    }
-                  />
-                </div>
-              </div>
-
-              <div style={{display: 'flex', alignItems: 'flex-end'}}>
-                <div className={styles['edit-group']}>
-                  <h3>Loop</h3>
-                  <ToggleSwitch
-                    isOn={section.loop}
-                    onChange={(loop) => submitSection({loop})}
-                  />
-                </div>
-                <Spacer />
-                {props.editing && props.canRemove && (
-                  <WarningButton
-                    onClick={(event) => {
-                      props.onRequestRemove();
-                      event.stopPropagation();
-                    }}
-                  >
-                    <FiTrash size={16} />
-                    <label>Remove Section</label>
-                  </WarningButton>
                 )}
               </div>
+
+              <Properties section={section} />
+
+              {props.editing && props.canRemove && (
+                <WarningButton
+                  onClick={(event) => {
+                    props.onRequestRemove();
+                    event.stopPropagation();
+                  }}
+                >
+                  <FiTrash size={16} />
+                  <label>Remove Section</label>
+                </WarningButton>
+              )}
             </div>
           )}
         </Measure>
@@ -182,5 +122,95 @@ export const SectionEditor = (props: Props) => {
         />
       )}
     </div>
+  );
+};
+
+interface HeaderProps {
+  editing: boolean;
+  section: Section;
+  onRequestEdit(edit: boolean): void;
+}
+
+const Header = ({editing, section, onRequestEdit}: HeaderProps) => {
+  const core = useCore();
+
+  return (
+    <div className={styles.header} onClick={() => onRequestEdit(!editing)}>
+      <NameEditor
+        onSave={(name) => {
+          const newSection = cloneDeep(section);
+          newSection.name = name;
+          core?.sendRequest(updateSectionRequest(newSection));
+        }}
+        name={section.name}
+        editable={editing}
+      />
+
+      <Spacer />
+
+      {section.loop && <FiRepeat />}
+
+      <button
+        className={`${styles['reveal-button']} ${
+          editing && styles['reveal-button-editing']
+        }`}
+        onClick={(event) => {
+          onRequestEdit(!editing);
+          event.stopPropagation();
+        }}
+      >
+        <FiChevronDown size={24} />
+      </button>
+    </div>
+  );
+};
+
+interface PropertiesProps {
+  section: Section;
+}
+
+const Properties = ({section}: PropertiesProps) => {
+  const core = useCore();
+
+  const submitSection = (changes: object) => {
+    const newSection = cloneDeep(section);
+    Object.assign(newSection, changes);
+    core?.sendRequest(updateSectionRequest(newSection));
+  };
+
+  return (
+    <>
+      <div className={styles['edit-group']}>
+        <h3>Start</h3>
+        <NumberChooser
+          value={section.start / BEATS_PER_BAR + 1.0}
+          onValueChange={(value) =>
+            submitSection({start: (value - 1) * BEATS_PER_BAR})
+          }
+        />
+      </div>
+
+      <div className={styles.separator} />
+
+      <div className={styles['edit-group']}>
+        <h3>Duration</h3>
+        <NumberChooser
+          value={section.beatLength / BEATS_PER_BAR}
+          onValueChange={(value) =>
+            submitSection({beatLength: value * BEATS_PER_BAR})
+          }
+        />
+      </div>
+
+      <div className={styles.separator} />
+
+      <div className={styles['edit-group']}>
+        <h3>Loop</h3>
+        <ToggleSwitch
+          isOn={section.loop}
+          onChange={(loop) => submitSection({loop})}
+        />
+      </div>
+    </>
   );
 };
