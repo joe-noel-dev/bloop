@@ -3,17 +3,13 @@
 * {
   font-family: 'Chivo', sans-serif;
   font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: rgba(0, 0, 0, 0.05);
   margin: 0;
-
-  font-family: 'Chivo', sans-serif;
-  font-weight: 400;
-
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background: var(--neutral-1);
 }
 
 :root {
@@ -35,8 +31,6 @@ body {
 
   --border-radius: 2px;
 
-  --transition: all 0.2s ease-in-out;
-
   --background: white;
 
   --primary: #ffab91;
@@ -47,17 +41,23 @@ body {
   --secondary-light: #534bae;
   --secondary-dark: #000051;
 
-  --card-background: white;
-  --card-layer: rgb(0, 0, 0, 0.1);
+  --neutral-0: white;
+  --neutral-1: hsl(240, 5%, 88.5%);
+  --neutral-2: hsl(240, 5%, 75%);
+  --neutral-3: hsl(240, 5%, 67.5%);
+  --neutral-4: hsl(240, 5%, 50%);
+  --neutral-5: hsl(240, 5%, 37.5%);
+  --neutral-6: hsl(240, 5%, 25%);
+  --neutral-7: hsl(240, 5%, 12.5%);
+  --neutral-8: black;
 
-  --text-on-background: white;
+  --text-on-background: black;
   --text-on-primary: black;
   --text-on-primary-light: black;
   --text-on-primary-dark: black;
   --text-on-secondary: white;
   --text-on-secondary-light: white;
   --text-on-secondary-dark: white;
-  --text-on-card: black;
 }
 
 html {

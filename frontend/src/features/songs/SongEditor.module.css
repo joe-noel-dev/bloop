@@ -11,8 +11,8 @@ label {
 
 .name-region {
   padding: var(--unit-space-x2);
-  background: var(--card-background);
-  color: var((--text-on-card));
+  background: var(--neutral-0);
+  color: var(--neutral-8);
 }
 
 .name-region-selected {
@@ -38,7 +38,7 @@ label {
 .add-section-button {
   height: var(--unit-space-x6);
   padding: var(--unit-space-x2);
-  border: 1px solid var(--card-layer);
+  border: 1px solid var(--neutral-2);
   border-radius: var(--border-radius);
 
   display: flex;

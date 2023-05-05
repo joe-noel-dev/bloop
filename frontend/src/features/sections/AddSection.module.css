@@ -1,7 +1,7 @@
 .add-section {
-  background: var(--card-layer);
+  background: var(--neutral-2);
+  color: var(--neutral-8);
 
-  color: var(--card);
   font-size: medium;
 
   border-radius: var(--border-radius);
