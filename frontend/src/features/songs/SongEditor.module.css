@@ -15,6 +15,10 @@ label {
   color: var(--neutral-8);
 }
 
+.name {
+  font-size: x-large;
+}
+
 .name-region-selected {
   background: var(--primary);
   color: var(--text-on-primary);

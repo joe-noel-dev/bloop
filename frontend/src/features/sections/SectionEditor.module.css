@@ -10,7 +10,7 @@
 }
 
 .container h3 {
-  font-size: medium;
+  font-size: large;
 }
 
 .container label {
@@ -35,12 +35,6 @@
   transform: rotate(-180deg);
 }
 
-.loop-position-section {
-  display: flex;
-  gap: var(--unit-space-x2);
-  align-items: center;
-}
-
 .section-properties {
   transition: all 0.2s ease-out;
   overflow: hidden;
@@ -52,18 +46,27 @@
 
 .edit-group {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+
   gap: var(--unit-space);
 }
 
+.edit-group > *:first-child {
+  flex-grow: 1;
+}
+
 .waveform {
-  flex: 1;
-  align-self: stretch;
+  height: 80px;
   position: relative;
 }
 
 .inner-section-properties {
   display: flex;
   flex-direction: column;
-  gap: var(--unit-space-x2);
+  gap: var(--unit-space);
+}
+
+.separator {
+  border-top: 1px solid var(--neutral-1);
 }
