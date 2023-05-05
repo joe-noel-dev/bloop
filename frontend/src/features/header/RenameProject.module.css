@@ -13,7 +13,7 @@
 .name-box {
   height: var(--unit-space-x6);
   border-radius: var(--border-radius);
-  border: 1px solid var(--card-layer);
+  border: 1px solid var(--neutral-2);
   padding: 0 var(--unit-space);
   font-size: medium;
 }

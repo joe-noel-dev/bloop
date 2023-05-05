@@ -117,5 +117,9 @@ const modalStyle = {
     marginRight: '-50%',
     transform: 'translate(-50%, -50%)',
     padding: 'none',
+    border: 'none',
+  },
+  overlay: {
+    background: 'rgba(0, 0, 0, 0.9)',
   },
 };

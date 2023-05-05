@@ -5,8 +5,6 @@
 
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-level-1);
-
-  color: var(--card);
 }
 
 .row {

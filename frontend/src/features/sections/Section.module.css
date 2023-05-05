@@ -6,11 +6,11 @@
 
   position: relative;
 
-  background: var(--card);
-  color: var(--text-on-card);
+  background: var(--neutral-0);
+  color: var(--neutral-8);
 
   border-radius: var(--border-radius);
-  border: 1px solid var(--card-layer);
+  border: 1px solid var(--neutral-2);
 
   display: flex;
 }
@@ -21,5 +21,5 @@
 }
 
 .container-selected {
-  border-color: var(--text-on-card);
+  border-color: var(--neutral-8);
 }
