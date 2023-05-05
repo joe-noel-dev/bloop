@@ -1,0 +1,48 @@
+.container {
+  --border: 1px solid var(--neutral-2);
+
+  display: flex;
+  align-items: stretch;
+
+  border-radius: 8px;
+  border: var(--border);
+
+  overflow: hidden;
+}
+
+.container > * {
+  border-left: var(--border);
+}
+
+.container > *:first-child {
+  border-left: none;
+}
+
+.container button {
+  height: var(--unit-space-x6);
+  width: var(--unit-space-x6);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: var(--neutral-1);
+
+  font-size: large;
+}
+
+.container button:active {
+  background: var(--neutral-3);
+}
+
+.container label {
+  min-width: var(--unit-space-x6);
+
+  flex: 1;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-size: large;
+}

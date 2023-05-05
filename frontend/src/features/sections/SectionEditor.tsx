@@ -3,7 +3,6 @@ import {FiChevronDown, FiRepeat, FiTrash} from 'react-icons/fi';
 import {NameEditor} from '../../components/NameEditor';
 import {useCore} from '../core/use-core';
 import cloneDeep from 'lodash.clonedeep';
-import {ValueEditor} from '../../components/ValueEditor';
 import {ProgressBar} from '../../components/ProgressBar';
 import {usePlaybackState, useProgress} from '../transport/transport-hooks';
 import Measure from 'react-measure';
@@ -16,6 +15,7 @@ import {useSectionById, useSelectedSectionId} from './section-hooks';
 import styles from './SectionEditor.module.css';
 import {Spacer} from '../../components/Spacer';
 import {ToggleSwitch} from '../../components/ToggleSwitch';
+import {NumberChooser} from '../../components/NumberChooser';
 
 interface Props {
   sectionId: string;
@@ -25,6 +25,8 @@ interface Props {
   onRequestEdit(edit: boolean): void;
   onRequestRemove(): void;
 }
+
+const BEATS_PER_BAR = 4.0;
 
 export const SectionEditor = (props: Props) => {
   const section = useSectionById(props.sectionId);
@@ -111,10 +113,10 @@ export const SectionEditor = (props: Props) => {
               <div className={styles['loop-position-section']}>
                 <div className={styles['edit-group']}>
                   <h3>Start at bar</h3>
-                  <ValueEditor
-                    value={section.start / 4.0 + 1.0}
-                    onSubmit={(value) =>
-                      submitSection({start: (value - 1) * 4.0})
+                  <NumberChooser
+                    value={section.start / BEATS_PER_BAR + 1.0}
+                    onValueChange={(value) =>
+                      submitSection({start: (value - 1) * BEATS_PER_BAR})
                     }
                   />
                 </div>
@@ -139,10 +141,10 @@ export const SectionEditor = (props: Props) => {
 
                 <div className={styles['edit-group']}>
                   <h3>Duration</h3>
-                  <ValueEditor
-                    value={section.beatLength / 4.0}
-                    onSubmit={(value) =>
-                      submitSection({beatLength: value * 4.0})
+                  <NumberChooser
+                    value={section.beatLength / BEATS_PER_BAR}
+                    onValueChange={(value) =>
+                      submitSection({beatLength: value * BEATS_PER_BAR})
                     }
                   />
                 </div>
