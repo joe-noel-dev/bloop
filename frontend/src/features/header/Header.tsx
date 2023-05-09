@@ -1,5 +1,5 @@
 import {useContext, useState} from 'react';
-import {FiMenu} from 'react-icons/fi';
+import {FiLock, FiMenu, FiUnlock} from 'react-icons/fi';
 import {PopupMenu} from '../menu/PopupMenu';
 import {useCore} from '../core/use-core';
 import ReactModal from 'react-modal';
@@ -14,8 +14,14 @@ import {
 import {CoreDataContext} from '../core/CoreData';
 import styles from './Header.module.css';
 import {Spacer} from '../../components/Spacer';
+import {Button} from '../../components/Button';
 
-export const Header: React.FunctionComponent = () => {
+interface Props {
+  editEnabled: boolean;
+  onEditEnabledChange(editEnabled: boolean): void;
+}
+
+export const Header = ({editEnabled, onEditEnabledChange}: Props) => {
   const {project} = useContext(CoreDataContext);
   const core = useCore();
   const [projectModalOpen, setProjectModalOpen] = useState(false);
@@ -55,6 +61,16 @@ export const Header: React.FunctionComponent = () => {
       <h1 className={styles['project-name']}>{project?.info.name}</h1>
 
       <Spacer />
+
+      <Button
+        className={`${styles['lock-button']} ${
+          !editEnabled && styles['lock-button-locked']
+        }`}
+        onClick={() => onEditEnabledChange(!editEnabled)}
+      >
+        <label>{editEnabled ? 'Editing' : 'Locked'}</label>
+        {editEnabled ? <FiUnlock /> : <FiLock />}
+      </Button>
 
       <button>
         <PopupMenu menuItems={menuItems}>

@@ -21,6 +21,7 @@ const App = () => {
   const [progress, setProgress] = useState<Progress>();
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
   const [waveforms, setWaveforms] = useState(new Map<string, WaveformData>());
+  const [editEnabled, setEditEnabled] = useState(false);
 
   useEffect(() => {
     const core = createCore({
@@ -59,8 +60,11 @@ const App = () => {
           )}
           {isConnected && (
             <div className={styles.container}>
-              <Header />
-              <Songs />
+              <Header
+                editEnabled={editEnabled}
+                onEditEnabledChange={setEditEnabled}
+              />
+              <Songs editEnabled={editEnabled} />
               <Transport />
             </div>
           )}

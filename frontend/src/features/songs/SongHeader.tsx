@@ -1,17 +1,76 @@
+import {PopupMenu} from '../menu/PopupMenu';
 import styles from './SongHeader.module.css';
+import {FiMoreHorizontal, FiPlus} from 'react-icons/fi';
+import {Spacer} from '../../components/Spacer';
+import {useCore} from '../core/use-core';
+import {useSelectedSongId, useSong} from './song-hooks';
+import {
+  addSongRequest,
+  removeSongRequest,
+  selectSongRequest,
+  updateSongRequest,
+} from '../../api/request';
+import {NameEditor} from '../../components/NameEditor';
+import cloneDeep from 'lodash.clonedeep';
 
 interface SongHeaderProps {
-  name: string;
-  selected: boolean;
+  songId: string;
+  editEnabled: boolean;
 }
-export const SongHeader = (props: SongHeaderProps) => {
+export const SongHeader = ({songId, editEnabled}: SongHeaderProps) => {
+  const core = useCore();
+  const song = useSong(songId);
+  const selectedSongId = useSelectedSongId();
+  const isSelected = song?.id === selectedSongId;
+
+  const updateSongName = (name: string) => {
+    if (!song) {
+      return;
+    }
+
+    const newSong = cloneDeep(song);
+    newSong.name = name;
+    const request = updateSongRequest(newSong);
+    core.sendRequest(request);
+  };
+
+  const selectSong = () => core.sendRequest(selectSongRequest(song?.id ?? ''));
+
   return (
     <div
       className={`${styles.container} ${
-        props.selected && styles['container-selected']
+        isSelected && styles['container-selected']
       }`}
+      onClick={selectSong}
     >
-      <h2>{props.name}</h2>
+      <NameEditor
+        onSave={updateSongName}
+        name={song?.name ?? ''}
+        editable={editEnabled}
+        textClassName={styles.name}
+      />
+
+      <Spacer />
+
+      {editEnabled && (
+        <>
+          <button onClick={() => core.sendRequest(addSongRequest())}>
+            <FiPlus />
+          </button>
+          <PopupMenu
+            menuItems={[
+              {
+                title: 'Delete Song',
+                onClick: () => core?.sendRequest(removeSongRequest(songId)),
+              },
+            ]}
+          >
+            <button>
+              <FiMoreHorizontal />
+            </button>
+          </PopupMenu>
+        </>
+      )}
     </div>
   );
 };

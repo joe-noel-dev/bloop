@@ -1,5 +1,10 @@
-.name {
+.container {
   font-size: large;
+}
+
+.name {
+  display: flex;
+  gap: var(--unit-space-x2);
 }
 
 .input {

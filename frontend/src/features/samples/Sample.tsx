@@ -120,7 +120,7 @@ export const Sample = (props: SampleProps) => {
       </div>
       {sample && (
         <div className={styles['sample-properties']}>
-          <p>Original tempo</p>
+          <label>Sample tempo</label>
           <NameEditor
             onSave={(value) => onTempoChanged(value)}
             name={`${sample?.tempo.bpm}` || ''}

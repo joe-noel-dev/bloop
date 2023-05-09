@@ -57,6 +57,7 @@ export const NameEditor = (props: NameEditorProps) => {
         startEditing();
         event.stopPropagation();
       }}
+      className={styles.container}
     >
       {!editing && (
         <h3 className={`${styles.name} ${props.textClassName}`}>

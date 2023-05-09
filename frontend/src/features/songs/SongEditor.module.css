@@ -24,11 +24,6 @@ label {
   color: var(--text-on-primary);
 }
 
-.button-region {
-  display: flex;
-  padding: 0 var(--unit-space-x2);
-}
-
 .section-region {
   padding: 0 var(--unit-space-x2);
 

@@ -27,6 +27,12 @@
 }
 
 .reveal-button {
+  width: var(--unit-space-x6);
+  height: var(--unit-space-x6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
   transform: rotate(0);
   transition: transform 0.2s ease-in-out;
 }

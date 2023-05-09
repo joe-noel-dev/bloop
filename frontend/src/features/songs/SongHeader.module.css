@@ -1,6 +1,5 @@
 .container {
-  background: rgba(0, 0, 0, 0.2);
-
+  background: var(--neutral-3);
   color: var(--text-on-primary);
 
   height: var(--unit-space-x6);
@@ -13,4 +12,16 @@
 
 .container-selected {
   background: var(--primary);
+}
+
+.container button {
+  font-size: x-large;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.name {
+  font-size: x-large;
 }
