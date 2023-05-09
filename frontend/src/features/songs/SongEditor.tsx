@@ -1,12 +1,10 @@
-import cloneDeep from 'lodash.clonedeep';
 import {useState, forwardRef} from 'react';
-import {SecondaryButton, WarningButton} from '../../components/Button';
+import {WarningButton} from '../../components/Button';
 import {useCore} from '../core/use-core';
 import {SectionEditor} from '../sections/SectionEditor';
-import {NameEditor} from '../../components/NameEditor';
-import {useSelectedSongId, useSong, useSongs} from './song-hooks';
+import {useSong} from './song-hooks';
 import {Sample} from '../samples/Sample';
-import {FiCheck, FiPlus, FiTrash} from 'react-icons/fi';
+import {FiPlus, FiTrash} from 'react-icons/fi';
 import {
   addSampleRequest,
   addSectionRequest,
@@ -15,40 +13,23 @@ import {
   removeSampleRequest,
   removeSectionRequest,
   removeSongRequest,
-  updateSongRequest,
   uploadRequest,
 } from '../../api/request';
 import {v4 as uuidv4} from 'uuid';
 import styles from './SongEditor.module.css';
-import {Spacer} from '../../components/Spacer';
 
 interface Props {
   songId: string;
-  setEditingSongId: (id: string) => void;
 }
 
 export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
   const song = useSong(props.songId);
   const core = useCore();
   const [editingSectionId, setEditingSectionId] = useState('');
-  const selectedSongId = useSelectedSongId();
-  const songs = useSongs();
-
-  const isSelected = selectedSongId === props.songId;
-  const isLastSong = songs?.length === 1;
 
   if (!song) {
     return <div className={styles.container} />;
   }
-
-  const saveButton = () => {
-    return (
-      <SecondaryButton onClick={() => props.setEditingSongId('')}>
-        <FiCheck />
-        <label>Done</label>
-      </SecondaryButton>
-    );
-  };
 
   const removeButton = () => {
     return (
@@ -85,23 +66,6 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
 
   return (
     <div className={styles.container} ref={ref}>
-      <div
-        className={`${styles['name-region']} ${
-          isSelected && styles['name-region-selected']
-        }`}
-      >
-        <NameEditor
-          name={song.name}
-          onSave={(name) => {
-            const newSong = cloneDeep(song!);
-            newSong.name = name;
-            core?.sendRequest(updateSongRequest(newSong));
-          }}
-          editable={true}
-          textClassName={styles.name}
-        />
-      </div>
-
       <Sample
         editable={true}
         sampleId={song.sampleId}
@@ -136,12 +100,6 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
           <FiPlus />
           <label>Add Section</label>
         </button>
-      </div>
-
-      <div className={styles['button-region']}>
-        {!isLastSong && removeButton()}
-        <Spacer />
-        {saveButton()}
       </div>
     </div>
   );

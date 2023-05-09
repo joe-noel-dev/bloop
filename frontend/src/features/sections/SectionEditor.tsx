@@ -61,6 +61,7 @@ export const SectionEditor = (props: Props) => {
     >
       <Header
         editing={props.editing}
+        selected={isSelected}
         section={section}
         onRequestEdit={props.onRequestEdit}
       />
@@ -127,15 +128,23 @@ export const SectionEditor = (props: Props) => {
 
 interface HeaderProps {
   editing: boolean;
+  selected: boolean;
   section: Section;
   onRequestEdit(edit: boolean): void;
 }
 
-const Header = ({editing, section, onRequestEdit}: HeaderProps) => {
+const Header = ({editing, selected, section, onRequestEdit}: HeaderProps) => {
   const core = useCore();
 
   return (
-    <div className={styles.header} onClick={() => onRequestEdit(!editing)}>
+    <div
+      className={styles.header}
+      onClick={() => {
+        if (selected && !editing) {
+          onRequestEdit(true);
+        }
+      }}
+    >
       <NameEditor
         onSave={(name) => {
           const newSection = cloneDeep(section);

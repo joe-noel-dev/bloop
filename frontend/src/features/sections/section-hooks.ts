@@ -23,5 +23,5 @@ export const useSelectedSectionId = () => {
 
 export const useSelectedSection = () => {
   const selectedSectionId = useSelectedSectionId();
-  return useSectionById(selectedSectionId || '');
+  return useSectionById(selectedSectionId ?? '');
 };

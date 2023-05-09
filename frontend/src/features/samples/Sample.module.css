@@ -8,7 +8,12 @@
 
   display: flex;
   flex-direction: column;
+
   gap: var(--unit-space);
+}
+
+.sample-properties label {
+  font-size: large;
 }
 
 .waveform {
