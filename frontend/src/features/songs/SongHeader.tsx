@@ -60,7 +60,7 @@ export const SongHeader = ({songId, editEnabled}: SongHeaderProps) => {
           <PopupMenu
             menuItems={[
               {
-                title: 'Delete Song',
+                title: 'Remove Song',
                 onClick: () => core?.sendRequest(removeSongRequest(songId)),
               },
             ]}
