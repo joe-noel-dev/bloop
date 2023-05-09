@@ -24,6 +24,10 @@
   color: var(--text-on-primary-light);
 }
 
+.container-cued {
+  background: var(--neutral-1);
+}
+
 .container-selected {
   border-color: var(--neutral-8);
 }

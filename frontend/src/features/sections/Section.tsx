@@ -26,11 +26,17 @@ export const Section = (props: SectionProps) => {
     playbackState?.playing === 'playing' &&
     playbackState.sectionId === props.sectionId;
 
+  const isCued =
+    playbackState?.playing === 'playing' &&
+    playbackState.queuedSectionId === props.sectionId;
+
   return (
     <div
       className={`${styles['container']} ${
         isSelected && styles['container-selected']
-      } ${isPlaying && styles['container-playing']}`}
+      } ${isPlaying && styles['container-playing']} ${
+        isCued && styles['container-cued']
+      }`}
       onClick={(event) => {
         if (core && section) {
           core.sendRequest(selectSectionRequest(section.id));
