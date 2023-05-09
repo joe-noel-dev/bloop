@@ -15,3 +15,20 @@
   max-width: 1024px;
   width: 100%;
 }
+
+.add-song-button {
+  font-size: large;
+
+  background: var(--secondary);
+  color: var(--text-on-secondary);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: var(--unit-space-x2);
+}
+
+.add-song-button label {
+  font-size: large;
+}

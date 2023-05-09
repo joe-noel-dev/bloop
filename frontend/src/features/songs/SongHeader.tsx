@@ -1,11 +1,10 @@
 import {PopupMenu} from '../menu/PopupMenu';
 import styles from './SongHeader.module.css';
-import {FiMoreHorizontal, FiPlus} from 'react-icons/fi';
+import {FiMoreHorizontal} from 'react-icons/fi';
 import {Spacer} from '../../components/Spacer';
 import {useCore} from '../core/use-core';
 import {useSelectedSongId, useSong} from './song-hooks';
 import {
-  addSongRequest,
   removeSongRequest,
   selectSongRequest,
   updateSongRequest,
@@ -54,9 +53,6 @@ export const SongHeader = ({songId, editEnabled}: SongHeaderProps) => {
 
       {editEnabled && (
         <>
-          <button onClick={() => core.sendRequest(addSongRequest())}>
-            <FiPlus />
-          </button>
           <PopupMenu
             menuItems={[
               {
