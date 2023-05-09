@@ -1,10 +1,9 @@
 import {useState, forwardRef} from 'react';
-import {WarningButton} from '../../components/Button';
 import {useCore} from '../core/use-core';
 import {SectionEditor} from '../sections/SectionEditor';
 import {useSong} from './song-hooks';
 import {Sample} from '../samples/Sample';
-import {FiPlus, FiTrash} from 'react-icons/fi';
+import {FiPlus} from 'react-icons/fi';
 import {
   addSampleRequest,
   addSectionRequest,
@@ -12,7 +11,6 @@ import {
   completeUploadRequest,
   removeSampleRequest,
   removeSectionRequest,
-  removeSongRequest,
   uploadRequest,
 } from '../../api/request';
 import {v4 as uuidv4} from 'uuid';
@@ -30,17 +28,6 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
   if (!song) {
     return <div className={styles.container} />;
   }
-
-  const removeButton = () => {
-    return (
-      <WarningButton
-        onClick={() => core?.sendRequest(removeSongRequest(props.songId))}
-      >
-        <FiTrash />
-        <label>Remove Song</label>
-      </WarningButton>
-    );
-  };
 
   const addSampleToSong = async (file: File) => {
     const uploadId = uuidv4();
