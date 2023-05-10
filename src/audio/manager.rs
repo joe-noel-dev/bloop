@@ -1,8 +1,7 @@
 use super::{
     process::Process,
     sampler_converter::{SampleConversionResult, SampleConverter},
-    sequence::{Sequence, SequencePoint},
-    sequence_generator::{generate_sequence_for_song, SequenceData},
+    sequencer::Sequencer,
 };
 use crate::{
     api::Response,
@@ -11,7 +10,7 @@ use crate::{
 };
 use futures::StreamExt;
 use futures_channel::mpsc;
-use rawdio::{create_engine, AudioBuffer, Context, Gain, Sampler, Timestamp};
+use rawdio::{create_engine, Context, Gain, Sampler};
 use std::{
     collections::{HashMap, HashSet},
     path::{Path, PathBuf},
@@ -43,10 +42,7 @@ pub struct AudioManager {
     samplers: HashMap<ID, Sampler>,
     project: Project,
     output_gain: Gain,
-
-    sequence: Sequence<SequenceData>,
-    queued_song: Option<ID>,
-    queued_section: Option<ID>,
+    sequencer: Sequencer,
 }
 
 impl AudioManager {
@@ -56,7 +52,7 @@ impl AudioManager {
 
         context.start();
 
-        let (conversion_tx, conversion_rx) = futures_channel::mpsc::channel(64);
+        let (conversion_tx, conversion_rx) = mpsc::channel(64);
 
         let channel_count = 2;
         let gain = Gain::new(context.as_ref(), channel_count);
@@ -74,10 +70,7 @@ impl AudioManager {
             samplers: HashMap::new(),
             project: Project::empty(),
             output_gain: gain,
-
-            sequence: Sequence::default(),
-            queued_song: None,
-            queued_section: None,
+            sequencer: Sequencer::default(),
         }
     }
 
@@ -91,81 +84,15 @@ impl AudioManager {
                 },
                 _ = interval.tick() => {
                     self.context.process_notifications();
+                    self.sequencer.set_current_time(self.context.current_time());
                     self.notify_playback_state();
                 },
             }
         }
     }
 
-    fn progress_through_sequence(&self, time: &Timestamp, point: &SequencePoint<SequenceData>) -> Progress {
-        let section = point
-            .data
-            .section_id
-            .and_then(|section_id| self.project.section_with_id(&section_id));
-
-        let song = point
-            .data
-            .song_id
-            .and_then(|song_id| self.project.song_with_id(&song_id));
-
-        let sample = point
-            .data
-            .sample_id
-            .and_then(|sample_id| self.project.sample_with_id(&sample_id));
-
-        match (section, song, sample) {
-            (Some(section), Some(song), Some(sample)) => {
-                let seconds_into_section =
-                    (time.as_seconds() - point.start_time.as_seconds()) % point.duration.as_seconds();
-                let beats_into_section = Timestamp::from_seconds(seconds_into_section).as_beats(song.tempo.bpm);
-
-                let position_in_sample = seconds_into_section + point.data.position_in_sample.as_seconds();
-                let sample_duration =
-                    Timestamp::from_samples(sample.sample_count as f64, sample.sample_rate as usize).as_seconds();
-
-                Progress {
-                    song_progress: if sample_duration > 0.0 {
-                        position_in_sample / sample_duration
-                    } else {
-                        0.0
-                    },
-                    section_progress: if section.beat_length > 0.0 {
-                        beats_into_section / section.beat_length
-                    } else {
-                        0.0
-                    },
-                }
-            }
-            _ => Progress::default(),
-        }
-    }
-
     fn notify_playback_state(&mut self) {
-        let current_time = self.context.current_time();
-        let current_point = self.sequence.point_at_time(current_time);
-
-        let playback_state = match current_point {
-            Some(current_point) => {
-                if current_point.data.song_id == self.queued_song {
-                    self.queued_song = None;
-                }
-
-                if current_point.data.section_id == self.queued_section {
-                    self.queued_section = None;
-                }
-
-                PlaybackState {
-                    playing: PlayingState::Playing,
-                    song_id: current_point.data.song_id,
-                    section_id: current_point.data.section_id,
-                    queued_song_id: self.queued_song,
-                    queued_section_id: self.queued_section,
-                    looping: current_point.loop_enabled,
-                }
-            }
-            None => PlaybackState::default(),
-        };
-
+        let playback_state = self.sequencer.get_playback_state();
         if self.playback_state != playback_state {
             self.playback_state = playback_state;
             let _ = self
@@ -173,51 +100,10 @@ impl AudioManager {
                 .send(Response::default().with_playback_state(&self.playback_state));
         }
 
-        let progress = match current_point {
-            Some(current_point) => self.progress_through_sequence(&current_time, &current_point),
-            None => Progress::default(),
-        };
-
+        let progress = self.sequencer.get_progress();
         if self.progress != progress {
             self.progress = progress;
             let _ = self.response_tx.send(Response::default().with_progress(self.progress));
-        }
-    }
-
-    pub fn play_sequence(&mut self, sequence: Sequence<SequenceData>) {
-        for (id, sampler) in self.samplers.iter_mut() {
-            sampler.cancel_all();
-        }
-
-        for point in sequence.points.iter() {
-            if point.end_time() < self.context.current_time() {
-                continue;
-            }
-
-            self.schedule_sequence_point(point);
-
-            if point.loop_enabled {
-                break;
-            }
-        }
-
-        self.sequence = sequence;
-    }
-
-    fn schedule_sequence_point(&mut self, sequence_point: &SequencePoint<SequenceData>) {
-        if let Some(sample_id) = sequence_point.data.sample_id {
-            if let Some(sampler) = self.samplers.get_mut(&sample_id) {
-                sampler.start_from_position_at_time(sequence_point.start_time, sequence_point.data.position_in_sample);
-
-                if sequence_point.loop_enabled {
-                    let loop_start = sequence_point.data.position_in_sample;
-                    let loop_end = sequence_point.data.position_in_sample + sequence_point.duration;
-
-                    sampler.enable_loop_at_time(sequence_point.start_time, loop_start, loop_end);
-                } else {
-                    sampler.stop_at_time(sequence_point.end_time());
-                }
-            }
         }
     }
 
@@ -238,11 +124,8 @@ impl AudioManager {
 
         println!("Adding sample to the audio engine: {}", result.sample_id);
 
-        let sample_rate = audio_data.sample_rate();
         let sampler = Sampler::new(self.context.as_ref(), audio_data);
-
         sampler.node.connect_to(&self.output_gain.node);
-
         self.samplers.insert(result.sample_id, sampler);
     }
 
@@ -308,43 +191,28 @@ impl AudioManager {
 
 impl Audio for AudioManager {
     fn play(&mut self) {
-        if let Some(selected_song_id) = self.project.selections.song {
-            if let Some(selected_section_id) = self.project.selections.section {
-                let sequence = generate_sequence_for_song(
-                    self.context.current_time(),
-                    &self.project,
-                    &selected_song_id,
-                    &selected_section_id,
-                );
-
-                self.play_sequence(sequence);
-            }
-        }
+        self.sequencer.set_current_time(self.context.current_time());
+        self.sequencer.play(self.project.clone(), &mut self.samplers);
     }
 
     fn stop(&mut self) {
-        self.play_sequence(Sequence::default());
+        self.sequencer.set_current_time(self.context.current_time());
+        self.sequencer.stop(&mut self.samplers);
     }
 
     fn enter_loop(&mut self) {
-        let new_sequence = self.sequence.enable_loop_at_time(self.context.current_time());
-        self.play_sequence(new_sequence);
+        self.sequencer.set_current_time(self.context.current_time());
+        self.sequencer.enter_loop(&mut self.samplers);
     }
 
     fn exit_loop(&mut self) {
-        let new_sequence = self.sequence.cancel_loop_at_time(self.context.current_time());
-        self.play_sequence(new_sequence);
+        self.sequencer.set_current_time(self.context.current_time());
+        self.sequencer.exit_loop(&mut self.samplers);
     }
 
     fn queue(&mut self, song_id: &ID, section_id: &ID) {
-        let transition_time = self.sequence.next_transition(self.context.current_time());
-        let existing_sequence = self.sequence.truncate_to_time(transition_time);
-        let new_sequence = generate_sequence_for_song(transition_time, &self.project, song_id, section_id);
-        let sequence = existing_sequence.append(new_sequence);
-        self.play_sequence(sequence);
-
-        self.queued_section = Some(*section_id);
-        self.queued_song = Some(*song_id);
+        self.sequencer.set_current_time(self.context.current_time());
+        self.sequencer.queue(song_id, section_id, &mut self.samplers);
     }
 
     fn toggle_loop(&mut self) {

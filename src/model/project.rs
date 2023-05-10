@@ -33,6 +33,12 @@ pub struct ProjectInfo {
     pub last_saved: i64,
 }
 
+impl Default for Project {
+    fn default() -> Self {
+        Self::empty()
+    }
+}
+
 impl Project {
     pub fn empty() -> Self {
         Self {

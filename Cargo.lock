@@ -1226,9 +1226,9 @@ checksum = "f2ff9a1f06a88b01621b7ae906ef0211290d1c8a168a15542486a8f61c0833b9"
 
 [[package]]
 name = "rawdio"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8c156065365702e60c2cbbf3e876e2f8d752601a4085bfd899f9fddb6fe6781e"
+checksum = "cdd61f20f964da9dcff697421f96544ce73aba08de20c2b388df190dd35c156e"
 dependencies = [
  "atomic_float",
  "crossbeam",

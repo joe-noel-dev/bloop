@@ -5,3 +5,4 @@ mod process;
 mod sampler_converter;
 mod sequence;
 mod sequence_generator;
+mod sequencer;
