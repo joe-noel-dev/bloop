@@ -39,8 +39,15 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
 
     reader.onload = async () => {
       const result = reader.result as ArrayBuffer;
-      core?.sendRequest(uploadRequest(uploadId, result));
-      await core?.waitForUploadAck(uploadId);
+
+      const chunkSize = 1024 * 1024;
+      let position = 0;
+      while (position < result.byteLength) {
+        const chunk = result.slice(position, position + chunkSize);
+        core?.sendRequest(uploadRequest(uploadId, chunk));
+        await core?.waitForUploadAck(uploadId);
+        position += chunkSize;
+      }
 
       core?.sendRequest(completeUploadRequest(uploadId));
       await core?.waitForUploadAck(uploadId);
