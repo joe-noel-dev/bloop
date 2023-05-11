@@ -27,8 +27,6 @@ interface Props {
   onRequestRemove(): void;
 }
 
-const BEATS_PER_BAR = 4.0;
-
 export const SectionEditor = (props: Props) => {
   const section = useSectionById(props.sectionId);
   const core = useCore();
@@ -192,10 +190,8 @@ const Properties = ({section}: PropertiesProps) => {
       <div className={styles['edit-group']}>
         <h3>Start</h3>
         <NumberChooser
-          value={section.start / BEATS_PER_BAR + 1.0}
-          onValueChange={(value) =>
-            submitSection({start: (value - 1) * BEATS_PER_BAR})
-          }
+          value={section.start}
+          onValueChange={(value) => submitSection({start: value})}
         />
       </div>
 
@@ -204,10 +200,8 @@ const Properties = ({section}: PropertiesProps) => {
       <div className={styles['edit-group']}>
         <h3>Duration</h3>
         <NumberChooser
-          value={section.beatLength / BEATS_PER_BAR}
-          onValueChange={(value) =>
-            submitSection({beatLength: value * BEATS_PER_BAR})
-          }
+          value={section.beatLength}
+          onValueChange={(value) => submitSection({beatLength: value})}
         />
       </div>
 
