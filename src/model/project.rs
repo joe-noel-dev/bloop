@@ -434,7 +434,7 @@ impl Project {
             return Err(anyhow!("Sample not found with ID: {}", sample_id));
         }
 
-        let mut song = self
+        let song = self
             .song_with_id_mut(song_id)
             .with_context(|| format!("Song not found with ID: {song_id}"))?;
 
