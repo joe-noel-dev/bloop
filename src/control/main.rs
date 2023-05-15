@@ -189,7 +189,6 @@ impl MainController {
 
     fn handle_add(&self, project: Project, request: &AddRequest) -> anyhow::Result<Project> {
         match request.entity {
-            Entity::Channel => project.add_channel(),
             Entity::Section => self.handle_add_section(project, request),
             Entity::Song => Ok(project.add_song(1)),
             Entity::Project => Ok(Project::new()),
@@ -214,7 +213,6 @@ impl MainController {
         match remove_request.entity {
             Entity::Song => project.remove_song(&remove_request.id),
             Entity::Section => project.remove_section(&remove_request.id),
-            Entity::Channel => project.remove_channel(&remove_request.id),
             Entity::Project => {
                 self.project_store.remove_project(&remove_request.id).await?;
                 let projects = self.project_store.projects().await?;

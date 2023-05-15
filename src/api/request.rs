@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub enum Entity {
     All,
-    Channel,
     Project,
     Projects,
     Sample,

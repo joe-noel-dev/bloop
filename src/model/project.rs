@@ -1,6 +1,3 @@
-#![allow(dead_code)]
-
-use super::channel::Channel;
 use super::id::ID;
 use super::sample::Sample;
 use super::section::Section;
@@ -11,14 +8,11 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::{cmp::PartialEq, collections::HashSet};
 
-pub const MAX_CHANNELS: usize = 8;
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Project {
     pub info: ProjectInfo,
     pub songs: Vec<Song>,
-    pub channels: Vec<Channel>,
     pub samples: Vec<Sample>,
     pub selections: Selections,
 }
@@ -43,7 +37,6 @@ impl Project {
         Self {
             info: ProjectInfo::new(),
             songs: vec![],
-            channels: vec![],
             samples: vec![],
             selections: Selections::new(),
         }
@@ -65,17 +58,8 @@ impl Project {
         self
     }
 
-    pub fn with_channels(mut self, num_channels: usize) -> Self {
-        assert!((1..=MAX_CHANNELS).contains(&num_channels));
-        self.channels.clear();
-        for _ in 0..num_channels {
-            self = self.add_channel().unwrap()
-        }
-        self
-    }
-
     pub fn new() -> Self {
-        Self::empty().with_songs(1, 1).with_channels(1)
+        Self::empty().with_songs(1, 1)
     }
 
     pub fn song_with_id(&self, id: &ID) -> Option<&Song> {
@@ -90,18 +74,6 @@ impl Project {
         for song in self.songs.iter() {
             if let Some(section) = song.find_section(id) {
                 return Some(section);
-            }
-        }
-
-        None
-    }
-
-    pub fn section_with_id_mut(&mut self, id: &ID) -> Option<&mut Section> {
-        for song in self.songs.iter_mut() {
-            for section in song.sections.iter_mut() {
-                if section.id == *id {
-                    return Some(section);
-                }
             }
         }
 
@@ -144,22 +116,8 @@ impl Project {
         self.replace_song(&song)
     }
 
-    pub fn add_channel(mut self) -> anyhow::Result<Self> {
-        if self.channels.len() >= MAX_CHANNELS {
-            return Err(anyhow!("Max channels reached"));
-        }
-
-        self.channels.push(Channel::new());
-
-        Ok(self)
-    }
-
     pub fn contains_song(&self, song_id: &ID) -> bool {
         self.songs.iter().any(|s| s.id == *song_id)
-    }
-
-    pub fn contains_channel(&self, channel_id: &ID) -> bool {
-        self.channels.iter().any(|channel| channel.id == *channel_id)
     }
 
     pub fn selected_song_index(&self) -> Option<usize> {
@@ -186,11 +144,9 @@ impl Project {
 
     pub fn select_song_with_id(mut self, song_id: &ID) -> Self {
         if let Some(song) = self.song_with_id(song_id) {
-            if self.selections.song.unwrap_or_else(ID::nil) != song.id {
-                self.selections = Selections {
-                    song: Some(*song_id),
-                    section: song.sections.first().map(|section| section.id),
-                }
+            self.selections = Selections {
+                song: Some(*song_id),
+                section: song.sections.first().map(|section| section.id),
             }
         }
 
@@ -213,26 +169,58 @@ impl Project {
             return Err(anyhow!("Can't remove last section"));
         }
 
+        let section_index = song.sections.iter().position(|section| section.id == *section_id);
+
         song = song.remove_section(section_id);
+
         self = self.replace_song(&song)?;
 
-        // FIXME: Selections?
+        if !self.selection_is_valid() {
+            self = match section_index {
+                Some(index) => self.select_section_at_index(index)?,
+                None => self.select_last_song(),
+            }
+        }
 
         Ok(self)
     }
 
-    pub fn remove_channel(mut self, channel_id: &ID) -> anyhow::Result<Self> {
-        if self.channels.len() < 2 {
-            return Err(anyhow!("Can't remove last channel"));
-        }
+    pub fn selected_song(&self) -> Option<&Song> {
+        let song_id = self.selections.song?;
+        self.song_with_id(&song_id)
+    }
 
-        if !self.contains_channel(channel_id) {
-            return Err(anyhow!("Channel ID not found to remove - {}", channel_id));
-        }
+    pub fn select_section_at_index(mut self, index: usize) -> anyhow::Result<Self> {
+        let song = match self.selected_song() {
+            Some(song) => song,
+            None => return Err(anyhow!("No song selected")),
+        };
 
-        self.channels.retain(|channel| &channel.id != channel_id);
+        let index = index.min(song.sections.len() - 1);
+        let new_section_id = song.sections[index].id;
+
+        self = self.select_section(&new_section_id)?;
 
         Ok(self)
+    }
+
+    pub fn selection_is_valid(&self) -> bool {
+        let song_id = match self.selections.song {
+            Some(song_id) => song_id,
+            None => return false,
+        };
+
+        let section_id = match self.selections.section {
+            Some(section_id) => section_id,
+            None => return false,
+        };
+
+        let song = match self.song_with_id(&song_id) {
+            Some(song) => song,
+            None => return false,
+        };
+
+        return song.sections.iter().any(|section| section.id == section_id);
     }
 
     pub fn add_song(mut self, num_sections: usize) -> Self {
@@ -256,8 +244,11 @@ impl Project {
 
         self.songs.retain(|song| &song.id != song_id);
 
-        if let Some(selected_song_index) = selected_song_index {
-            self = self.select_song_index(selected_song_index);
+        if !self.selection_is_valid() {
+            self = match selected_song_index {
+                Some(index) => self.select_song_index(index),
+                None => self.select_last_song(),
+            };
         }
 
         Ok(self.remove_unused_samples())
@@ -335,8 +326,10 @@ impl Project {
             .ok_or_else(|| anyhow!("Couldn't find song with Section ID: {}", section_id))?
             .id;
 
-        self = self.select_song_with_id(&song_id);
-        self.selections.section = Some(*section_id);
+        self.selections = Selections {
+            song: Some(song_id),
+            section: Some(*section_id),
+        };
 
         Ok(self)
     }

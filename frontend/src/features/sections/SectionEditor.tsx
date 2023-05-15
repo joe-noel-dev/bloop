@@ -59,8 +59,9 @@ export const SectionEditor = ({
       className={`${styles.container} ${
         isSelected && styles['container-selected']
       }`}
-      onClick={() => {
+      onClick={(event) => {
         core?.sendRequest(selectSectionRequest(section.id));
+        event.stopPropagation();
       }}
     >
       <Header
