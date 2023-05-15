@@ -1,7 +1,7 @@
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use hound::SampleFormat;
 use num_traits::pow::Pow;
-use rawdio::{AudioBuffer, OwnedAudioBuffer};
+use rawdio::{AudioBuffer, OwnedAudioBuffer, SampleLocation};
 use std::convert::From;
 use std::path::Path;
 
@@ -18,14 +18,10 @@ where
         .collect()
 }
 
-pub fn convert_sample(sample_path: &Path) -> anyhow::Result<OwnedAudioBuffer> {
+pub fn convert_sample(sample_path: &Path, target_sample_rate: usize) -> anyhow::Result<OwnedAudioBuffer> {
     let mut reader = hound::WavReader::open(sample_path).context("Unable to open file for conversion")?;
 
     let spec = reader.spec();
-
-    if spec.sample_rate != 44100 {
-        return Err(anyhow!("Only samples at 44.1 kHz are supported at present"));
-    }
 
     let samples = match spec.sample_format {
         SampleFormat::Float => read_samples::<f32, _>(&mut reader, 1.0),
@@ -34,10 +30,18 @@ pub fn convert_sample(sample_path: &Path) -> anyhow::Result<OwnedAudioBuffer> {
 
     let channel_count = spec.channels as usize;
     let frame_count = samples.len() / channel_count;
-    let sample_rate = spec.sample_rate as usize;
+    let file_sample_rate = spec.sample_rate as usize;
 
-    let mut buffer = OwnedAudioBuffer::new(frame_count, channel_count, sample_rate);
+    let mut buffer = OwnedAudioBuffer::new(frame_count, channel_count, file_sample_rate);
+
     buffer.fill_from_interleaved(&samples, channel_count, frame_count);
 
-    Ok(buffer)
+    if file_sample_rate == target_sample_rate {
+        return Ok(buffer);
+    }
+
+    let new_frame_count = (frame_count as f64 * target_sample_rate as f64 / file_sample_rate as f64).ceil() as usize;
+    let mut convert_buffer = OwnedAudioBuffer::new(new_frame_count, channel_count, target_sample_rate);
+    convert_buffer.sample_rate_convert_from(&buffer, SampleLocation::origin(), SampleLocation::origin());
+    Ok(convert_buffer)
 }

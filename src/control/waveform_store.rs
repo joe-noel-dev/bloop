@@ -2,9 +2,7 @@ use crate::{
     api::{Response, WaveformResponse},
     model::ID,
     samples::SamplesCache,
-    waveform::{
-        Algorithm, generate_waveform_from_file, Options, 
-    },
+    waveform::{generate_waveform_from_file, Algorithm, Options},
 };
 use anyhow::anyhow;
 use std::{collections::HashSet, thread::spawn};
@@ -13,6 +11,7 @@ use tokio::sync::broadcast;
 pub struct WaveformStore {
     response_tx: broadcast::Sender<Response>,
     samples_being_generated: HashSet<ID>,
+    sample_rate: usize,
 }
 
 impl WaveformStore {
@@ -20,6 +19,7 @@ impl WaveformStore {
         Self {
             response_tx,
             samples_being_generated: HashSet::new(),
+            sample_rate: 44_100,
         }
     }
 
@@ -45,6 +45,8 @@ impl WaveformStore {
 
         println!("Generating waveform for sample: {sample_id}");
 
+        let sample_rate = self.sample_rate;
+
         spawn(move || {
             let mut lengths = HashSet::new();
             lengths.insert(128);
@@ -61,6 +63,7 @@ impl WaveformStore {
                 lengths,
                 algorithms,
                 num_channels: 2,
+                sample_rate,
             };
 
             let response = match generate_waveform_from_file(&sample_path, options) {

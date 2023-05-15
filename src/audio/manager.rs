@@ -61,7 +61,7 @@ impl AudioManager {
         Self {
             context,
             _process: Process::new(process, preferences_dir),
-            sample_converter: SampleConverter::new(conversion_tx),
+            sample_converter: SampleConverter::new(conversion_tx, sample_rate),
             conversion_rx,
             response_tx,
             samples_being_converted: HashSet::new(),

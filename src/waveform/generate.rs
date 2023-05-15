@@ -11,10 +11,11 @@ pub struct Options {
     pub lengths: HashSet<i32>,
     pub algorithms: HashSet<Algorithm>,
     pub num_channels: i32,
+    pub sample_rate: usize,
 }
 
 pub fn generate_waveform_from_file(sample_path: &Path, options: Options) -> anyhow::Result<WaveformData> {
-    let audio = convert_sample(sample_path)?;
+    let audio = convert_sample(sample_path, options.sample_rate)?;
     generate_waveform_from_audio(audio, options)
 }
 
