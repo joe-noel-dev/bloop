@@ -27,7 +27,7 @@ export const DisplaySong = ({songId}: Props) => {
         )}
       </div>
 
-      <Sections songId={songId} sectionIds={song?.sectionIds || []} />
+      <Sections sections={song?.sections || []} />
     </div>
   );
 };

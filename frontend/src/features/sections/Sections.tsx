@@ -1,16 +1,16 @@
+import {Section as ModelSection} from '../../model/section';
 import {Section} from './Section';
 import styles from './Sections.module.css';
 
 interface SectionsProps {
-  songId: string;
-  sectionIds: string[];
+  sections: ModelSection[];
 }
 
-export const Sections = (props: SectionsProps) => {
+export const Sections = ({sections}: SectionsProps) => {
   return (
     <div className={styles.container}>
-      {props.sectionIds.map((sectionId) => (
-        <Section key={sectionId} songId={props.songId} sectionId={sectionId} />
+      {sections.map((section) => (
+        <Section key={section.id} section={section} />
       ))}
     </div>
   );

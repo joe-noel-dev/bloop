@@ -1,5 +1,5 @@
-use super::id::ID;
 use super::tempo::Tempo;
+use super::{id::ID, Section};
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 
@@ -10,7 +10,7 @@ pub struct Song {
     pub name: String,
     pub tempo: Tempo,
     pub metronome: Metronome,
-    pub section_ids: Vec<ID>,
+    pub sections: Vec<Section>,
     pub sample_id: Option<ID>,
 }
 
@@ -23,30 +23,40 @@ pub enum Metronome {
     Off,
 }
 
-impl Song {
-    pub fn new() -> Self {
+impl Default for Song {
+    fn default() -> Self {
         Self {
             id: ID::new_v4(),
             name: "Song".to_string(),
             tempo: Tempo { bpm: 120.0 },
             metronome: Metronome::Default,
-            section_ids: vec![],
+            sections: vec![],
             sample_id: None,
         }
     }
+}
 
-    pub fn with_section_ids(mut self, section_ids: Vec<ID>) -> Self {
-        self.section_ids = section_ids;
+impl Song {
+    pub fn with_sections(mut self, sections: Vec<Section>) -> Self {
+        self.sections = sections;
         self
     }
 
-    pub fn remove_section_id(mut self, section_id: &ID) -> Self {
-        self.section_ids.retain(|id| id != section_id);
+    pub fn remove_section(mut self, section_id: &ID) -> Self {
+        self.sections.retain(|section| section.id != *section_id);
         self
     }
 
     pub fn is_valid(&self) -> bool {
         !self.id.is_nil() && self.tempo.is_valid()
+    }
+
+    pub fn find_section(&self, section_id: &ID) -> Option<&Section> {
+        self.sections.iter().find(|section| section.id == *section_id)
+    }
+
+    pub fn find_section_mut(&mut self, section_id: &ID) -> Option<&mut Section> {
+        self.sections.iter_mut().find(|section| section.id == *section_id)
     }
 }
 
