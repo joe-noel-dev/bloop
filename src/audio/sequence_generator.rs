@@ -24,64 +24,50 @@ pub fn generate_sequence_for_song(
     };
 
     let points = song
-        .section_ids
+        .sections
         .iter()
-        .filter_map(|section_id| {
-            let section = match project.section_with_id(section_id) {
-                Some(section) => section,
-                None => return None,
-            };
-
-            sequence_point_for_section_from_reference(project, section, from_section, start_time, song)
-        })
+        .filter_map(|section| sequence_point_for_section_from_reference(section, from_section, start_time, song))
         .collect();
 
     Sequence { points }
 }
 
 fn sequence_point_for_section_from_reference(
-    project: &Project,
     section: &Section,
     reference_section_id: &ID,
     reference_time: Timestamp,
     song: &Song,
 ) -> Option<SequencePoint<SequenceData>> {
-    start_time_of_section(project, song, &section.id, reference_section_id, reference_time)
+    start_time_of_section(song, &section.id, reference_section_id, reference_time)
         .map(|start_time| sequence_point_for_section(section, song, start_time))
 }
 
 fn start_time_of_section(
-    project: &Project,
     song: &Song,
     section_id: &ID,
     reference_section_id: &ID,
     reference_time: Timestamp,
 ) -> Option<Timestamp> {
-    if let Some(beat_position) = beat_position_of_section(project, song, section_id, reference_section_id) {
+    if let Some(beat_position) = beat_position_of_section(song, section_id, reference_section_id) {
         return Some(reference_time.incremented_by_beats(beat_position, song.tempo.bpm));
     }
 
     None
 }
 
-fn beat_position_of_section(project: &Project, song: &Song, section_id: &ID, reference_section_id: &ID) -> Option<f64> {
+fn beat_position_of_section(song: &Song, section_id: &ID, reference_section_id: &ID) -> Option<f64> {
     let mut position = None;
 
-    for sec_id in song.section_ids.iter() {
-        if *sec_id == *reference_section_id {
+    for section in song.sections.iter() {
+        if section.id == *reference_section_id {
             position = Some(0.0);
         }
 
-        if *sec_id == *section_id {
+        if section.id == *section_id {
             return position;
         }
 
-        let section_length = project
-            .section_with_id(sec_id)
-            .map(|section| section.beat_length)
-            .unwrap_or(0.0);
-
-        position = position.map(|current_position| current_position + section_length);
+        position = position.map(|current_position| current_position + section.beat_length);
     }
 
     position
@@ -121,31 +107,35 @@ mod test {
         let sample_id = Uuid::new_v4();
         let tempo = 123.0;
 
-        project.songs[0].tempo.bpm = tempo;
-        project.songs[0].sample_id = Some(sample_id);
-
         {
-            let section_1 = &mut project.sections[0];
-            section_1.start = 1.0;
-            section_1.beat_length = 2.0;
+            let song = &mut project.songs[0];
+            song.tempo.bpm = tempo;
+            song.sample_id = Some(sample_id);
+
+            {
+                let section_1 = &mut song.sections[0];
+                section_1.start = 1.0;
+                section_1.beat_length = 2.0;
+            }
+
+            {
+                let section_2 = &mut song.sections[1];
+                section_2.start = 5.0;
+                section_2.beat_length = 3.0;
+            }
+
+            {
+                let section_3 = &mut song.sections[2];
+                section_3.start = 9.0;
+                section_3.beat_length = 4.0;
+            }
         }
 
-        {
-            let section_2 = &mut project.sections[1];
-            section_2.start = 5.0;
-            section_2.beat_length = 3.0;
-        }
-
-        {
-            let section_3 = &mut project.sections[2];
-            section_3.start = 9.0;
-            section_3.beat_length = 4.0;
-        }
-
+        let song = &project.songs[0];
         let start_time = Timestamp::from_seconds(8.0);
 
-        let song_id = project.songs[0].id;
-        let sequence = generate_sequence_for_song(start_time, &project, &song_id, &project.sections[0].id);
+        let song_id = song.id;
+        let sequence = generate_sequence_for_song(start_time, &project, &song_id, &song.sections[0].id);
 
         assert_eq!(sequence.points.len(), 3);
 
@@ -156,7 +146,7 @@ mod test {
                 loop_enabled: false,
                 data: SequenceData {
                     song_id: Some(song_id),
-                    section_id: Some(project.sections[0].id),
+                    section_id: Some(song.sections[0].id),
                     sample_id: Some(sample_id),
                     position_in_sample: Timestamp::from_beats(1.0, tempo),
                 },
@@ -167,7 +157,7 @@ mod test {
                 loop_enabled: false,
                 data: SequenceData {
                     song_id: Some(song_id),
-                    section_id: Some(project.sections[1].id),
+                    section_id: Some(song.sections[1].id),
                     sample_id: Some(sample_id),
                     position_in_sample: Timestamp::from_beats(5.0, tempo),
                 },
@@ -178,7 +168,7 @@ mod test {
                 loop_enabled: false,
                 data: SequenceData {
                     song_id: Some(song_id),
-                    section_id: Some(project.sections[2].id),
+                    section_id: Some(song.sections[2].id),
                     sample_id: Some(sample_id),
                     position_in_sample: Timestamp::from_beats(9.0, tempo),
                 },
@@ -198,32 +188,35 @@ mod test {
         let sample_id = Uuid::new_v4();
         let tempo = 142.0;
 
-        project.songs[0].tempo.bpm = tempo;
-        project.songs[0].sample_id = Some(sample_id);
-
         {
-            let section_1 = &mut project.sections[0];
-            section_1.start = 7.0;
-            section_1.beat_length = 5.0;
-        }
+            let song = &mut project.songs[0];
+            song.tempo.bpm = tempo;
+            song.sample_id = Some(sample_id);
 
-        {
-            let section_2 = &mut project.sections[1];
-            section_2.start = 9.0;
-            section_2.beat_length = 6.0;
-            section_2.looping = true;
-        }
+            {
+                let section_1 = &mut song.sections[0];
+                section_1.start = 7.0;
+                section_1.beat_length = 5.0;
+            }
 
-        {
-            let section_3 = &mut project.sections[2];
-            section_3.start = 8.0;
-            section_3.beat_length = 3.0;
+            {
+                let section_2 = &mut song.sections[1];
+                section_2.start = 9.0;
+                section_2.beat_length = 6.0;
+                section_2.looping = true;
+            }
+
+            {
+                let section_3 = &mut song.sections[2];
+                section_3.start = 8.0;
+                section_3.beat_length = 3.0;
+            }
         }
 
         let start_time = Timestamp::from_seconds(4.0);
 
-        let song_id = project.songs[0].id;
-        let sequence = generate_sequence_for_song(start_time, &project, &song_id, &project.sections[0].id);
+        let song = &project.songs[0];
+        let sequence = generate_sequence_for_song(start_time, &project, &song.id, &song.sections[0].id);
 
         assert_eq!(sequence.points.len(), 3);
 
@@ -233,8 +226,8 @@ mod test {
                 duration: Timestamp::from_beats(5.0, tempo),
                 loop_enabled: false,
                 data: SequenceData {
-                    song_id: Some(song_id),
-                    section_id: Some(project.sections[0].id),
+                    song_id: Some(song.id),
+                    section_id: Some(song.sections[0].id),
                     sample_id: Some(sample_id),
                     position_in_sample: Timestamp::from_beats(7.0, tempo),
                 },
@@ -244,8 +237,8 @@ mod test {
                 duration: Timestamp::from_beats(6.0, tempo),
                 loop_enabled: true,
                 data: SequenceData {
-                    song_id: Some(song_id),
-                    section_id: Some(project.sections[1].id),
+                    song_id: Some(song.id),
+                    section_id: Some(song.sections[1].id),
                     sample_id: Some(sample_id),
                     position_in_sample: Timestamp::from_beats(9.0, tempo),
                 },
@@ -255,8 +248,8 @@ mod test {
                 duration: Timestamp::from_beats(3.0, tempo),
                 loop_enabled: false,
                 data: SequenceData {
-                    song_id: Some(song_id),
-                    section_id: Some(project.sections[2].id),
+                    song_id: Some(song.id),
+                    section_id: Some(song.sections[2].id),
                     sample_id: Some(sample_id),
                     position_in_sample: Timestamp::from_beats(8.0, tempo),
                 },

@@ -282,7 +282,7 @@ mod tests {
         let project2 = project_store.load(&project_id, &mut samples_cache).await.unwrap();
         assert_eq!(project2.channels.len(), 3);
         assert_eq!(project2.songs.len(), 4);
-        assert_eq!(project2.sections.len(), 20);
+        assert!(project2.songs.iter().all(|song| song.sections.len() == 5));
 
         fs::remove_dir_all(root_dir).unwrap();
     }

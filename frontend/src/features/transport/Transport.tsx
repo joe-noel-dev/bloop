@@ -74,15 +74,18 @@ export const Transport: React.FunctionComponent = () => {
       return;
     }
 
-    const index = selectedSong.sectionIds.indexOf(selectedSectionId || '');
+    const index = selectedSong.sections.findIndex(
+      (section) => section.id === selectedSectionId
+    );
+
     if (index === -1) {
       return;
     }
 
     const newIndex = index + delta;
-    if (0 <= newIndex && newIndex < selectedSong.sectionIds.length) {
+    if (0 <= newIndex && newIndex < selectedSong.sections.length) {
       core?.sendRequest(
-        selectSectionRequest(selectedSong.sectionIds[newIndex])
+        selectSectionRequest(selectedSong.sections[newIndex].id)
       );
     }
   };

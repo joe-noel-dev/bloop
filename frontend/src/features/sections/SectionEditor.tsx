@@ -11,7 +11,7 @@ import {beatLength} from '../../model/sample';
 import {WarningButton} from '../../components/Button';
 import {selectSectionRequest, updateSectionRequest} from '../../api/request';
 import {useSampleWithId} from '../samples/sample-hooks';
-import {useSectionById, useSelectedSectionId} from './section-hooks';
+import {useSelectedSectionId} from './section-hooks';
 import styles from './SectionEditor.module.css';
 import {Spacer} from '../../components/Spacer';
 import {ToggleSwitch} from '../../components/ToggleSwitch';
@@ -19,7 +19,7 @@ import {NumberChooser} from '../../components/NumberChooser';
 import {Section} from '../../model/section';
 
 interface Props {
-  sectionId: string;
+  section: Section;
   sampleId: string;
   editing: boolean;
   canRemove: boolean;
@@ -27,22 +27,28 @@ interface Props {
   onRequestRemove(): void;
 }
 
-export const SectionEditor = (props: Props) => {
-  const section = useSectionById(props.sectionId);
+export const SectionEditor = ({
+  section,
+  sampleId,
+  editing,
+  canRemove,
+  onRequestEdit,
+  onRequestRemove,
+}: Props) => {
   const core = useCore();
   const selectedSection = useSelectedSectionId();
   const playbackState = usePlaybackState();
   const progress = useProgress();
   const [height, setHeight] = useState(0);
-  const sample = useSampleWithId(props.sampleId);
+  const sample = useSampleWithId(sampleId);
 
   const length = sample ? beatLength(sample) : 0.0;
 
   const isPlaying =
     playbackState?.playing === 'playing' &&
-    playbackState.sectionId === props.sectionId;
+    playbackState.sectionId === section.id;
 
-  const isSelected = selectedSection === props.sectionId;
+  const isSelected = selectedSection === section.id;
 
   if (!section) {
     return <></>;
@@ -54,21 +60,21 @@ export const SectionEditor = (props: Props) => {
         isSelected && styles['container-selected']
       }`}
       onClick={() => {
-        core?.sendRequest(selectSectionRequest(props.sectionId));
+        core?.sendRequest(selectSectionRequest(section.id));
       }}
     >
       <Header
-        editing={props.editing}
+        editing={editing}
         selected={isSelected}
         section={section}
-        onRequestEdit={props.onRequestEdit}
+        onRequestEdit={onRequestEdit}
       />
 
       <div
         className={`${styles['section-properties']} ${
-          props.editing && styles['section-properties-open']
+          editing && styles['section-properties-open']
         }`}
-        style={{height: props.editing ? height : 0}}
+        style={{height: editing ? height : 0}}
       >
         <Measure
           bounds
@@ -81,7 +87,7 @@ export const SectionEditor = (props: Props) => {
             >
               <div className={styles.waveform}>
                 <Waveform
-                  sampleId={props.sampleId}
+                  sampleId={sampleId}
                   start={length > 0.0 ? section.start / length : 0.0}
                   end={
                     length > 0.0
@@ -89,7 +95,7 @@ export const SectionEditor = (props: Props) => {
                       : 1.0
                   }
                 />
-                {isPlaying && props.editing && (
+                {isPlaying && editing && (
                   <ProgressBar
                     progress={progress?.sectionProgress || 0}
                     colour={'var(--primary-dark)'}
@@ -99,10 +105,10 @@ export const SectionEditor = (props: Props) => {
 
               <Properties section={section} />
 
-              {props.editing && props.canRemove && (
+              {editing && canRemove && (
                 <WarningButton
                   onClick={(event) => {
-                    props.onRequestRemove();
+                    onRequestRemove();
                     event.stopPropagation();
                   }}
                 >
@@ -114,7 +120,7 @@ export const SectionEditor = (props: Props) => {
           )}
         </Measure>
       </div>
-      {isPlaying && !props.editing && (
+      {isPlaying && !editing && (
         <ProgressBar
           progress={progress?.sectionProgress || 0}
           colour={'var(--primary-dark)'}

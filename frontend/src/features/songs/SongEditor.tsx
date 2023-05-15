@@ -71,18 +71,18 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
       />
 
       <div className={styles['section-region']}>
-        {song.sectionIds.map((sectionId: string) => (
+        {song.sections.map((section) => (
           <SectionEditor
-            key={sectionId}
-            sectionId={sectionId}
+            key={section.id}
+            section={section}
             sampleId={song.sampleId}
-            editing={editingSectionId === sectionId}
+            editing={editingSectionId === section.id}
             onRequestEdit={(shouldEdit) =>
-              setEditingSectionId(shouldEdit ? sectionId : '')
+              setEditingSectionId(shouldEdit ? section.id : '')
             }
-            canRemove={song.sectionIds.length > 1}
+            canRemove={song.sections.length > 1}
             onRequestRemove={() =>
-              core?.sendRequest(removeSectionRequest(sectionId))
+              core?.sendRequest(removeSectionRequest(section.id))
             }
           />
         ))}

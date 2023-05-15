@@ -4,16 +4,15 @@ import {ProgressBar} from '../../components/ProgressBar';
 import {Spacer} from '../../components/Spacer';
 import {useCore} from '../core/use-core';
 import {usePlaybackState, useProgress} from '../transport/transport-hooks';
-import {useSectionById, useSelectedSectionId} from './section-hooks';
+import {useSelectedSectionId} from './section-hooks';
 import styles from './Section.module.css';
+import {Section as ModelSection} from '../../model/section';
 
 interface SectionProps {
-  songId: string;
-  sectionId: string;
+  section: ModelSection;
 }
 
-export const Section = (props: SectionProps) => {
-  const section = useSectionById(props.sectionId);
+export const Section = ({section}: SectionProps) => {
   const selectedSectionId = useSelectedSectionId();
 
   const core = useCore();
@@ -24,11 +23,11 @@ export const Section = (props: SectionProps) => {
 
   const isPlaying =
     playbackState?.playing === 'playing' &&
-    playbackState.sectionId === props.sectionId;
+    playbackState.sectionId === section.id;
 
   const isCued =
     playbackState?.playing === 'playing' &&
-    playbackState.queuedSectionId === props.sectionId;
+    playbackState.queuedSectionId === section.id;
 
   return (
     <div

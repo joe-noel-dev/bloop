@@ -11,10 +11,10 @@ pub fn generate_project(num_channels: usize, num_songs: usize, num_sections_per_
 
     for song in &mut project.songs {
         song.name = names::random_name();
-    }
 
-    for section in &mut project.sections {
-        section.name = String::from(names::random_section_name());
+        for section in &mut song.sections {
+            section.name = String::from(names::random_section_name());
+        }
     }
 
     for channel in &mut project.channels {

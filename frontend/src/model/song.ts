@@ -1,11 +1,12 @@
 import {Entity} from './entity';
 import {Metronome} from './metronome';
+import {Section} from './section';
 import {Tempo} from './tempo';
 
 export interface Song extends Entity {
   name: string;
   tempo: Tempo;
   metronome: Metronome;
-  sectionIds: string[];
+  sections: Section[];
   sampleId: string;
 }
