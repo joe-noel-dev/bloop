@@ -1,4 +1,3 @@
-mod channel;
 mod id;
 mod playback_state;
 mod progress;

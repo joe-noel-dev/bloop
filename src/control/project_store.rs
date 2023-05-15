@@ -275,14 +275,16 @@ mod tests {
 
         let mut project_store = ProjectStore::new(&project_directory);
 
-        let project = generate_project(3, 4, 5);
+        let song_count = 4;
+        let section_count = 5;
+
+        let project = generate_project(song_count, section_count);
         let project_id = project.info.id;
         project_store.save(project, &samples_cache).await.unwrap();
 
         let project2 = project_store.load(&project_id, &mut samples_cache).await.unwrap();
-        assert_eq!(project2.channels.len(), 3);
-        assert_eq!(project2.songs.len(), 4);
-        assert!(project2.songs.iter().all(|song| song.sections.len() == 5));
+        assert_eq!(project2.songs.len(), song_count);
+        assert!(project2.songs.iter().all(|song| song.sections.len() == section_count));
 
         fs::remove_dir_all(root_dir).unwrap();
     }
@@ -297,9 +299,9 @@ mod tests {
 
         let project_store = ProjectStore::new(&project_directory);
 
-        let project1 = generate_project(3, 4, 5);
-        let project2 = generate_project(3, 4, 5);
-        let project3 = generate_project(3, 4, 5);
+        let project1 = generate_project(4, 5);
+        let project2 = generate_project(4, 5);
+        let project3 = generate_project(4, 5);
 
         let project1_id = project1.info.id;
         let project2_id = project1.info.id;

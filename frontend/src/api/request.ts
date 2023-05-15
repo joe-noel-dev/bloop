@@ -1,4 +1,3 @@
-import {Channel} from '../model/channel';
 import {ProjectInfo} from '../model/project-info';
 import {Section} from '../model/section';
 import {Song} from '../model/song';
@@ -23,7 +22,6 @@ export enum Method {
 
 export enum Entity {
   all = 'all',
-  channel = 'channel',
   section = 'section',
   song = 'song',
   project = 'project',
@@ -53,7 +51,7 @@ export interface EntityId {
 
 export interface UpdateRequest {
   entity: Entity;
-  value: Song | Section | ProjectInfo | Channel | Sample;
+  value: Song | Section | ProjectInfo | Sample;
 }
 
 export interface RenameRequest {
@@ -110,25 +108,6 @@ export function getAllRequest(): Request {
     method: Method.get,
     payload: {
       entity: Entity.all,
-    },
-  };
-}
-
-export function getChannelRequest(channelId: string): Request {
-  return {
-    method: Method.get,
-    payload: {
-      entity: Entity.channel,
-      id: channelId,
-    },
-  };
-}
-
-export function addChannelRequest(): Request {
-  return {
-    method: Method.add,
-    payload: {
-      entity: Entity.channel,
     },
   };
 }
@@ -199,10 +178,6 @@ export function removeSectionRequest(sectionId: string): Request {
   return removeRequest(Entity.section, sectionId);
 }
 
-export function removeChannelRequest(channelId: string): Request {
-  return removeRequest(Entity.channel, channelId);
-}
-
 export function removeProjectRequest(projectId: string): Request {
   return removeRequest(Entity.project, projectId);
 }
@@ -219,7 +194,7 @@ export function removeSampleRequest(sampleId: string, songId: string): Request {
 
 export function updateRequest(
   entity: Entity,
-  value: Song | Section | ProjectInfo | Channel | Sample
+  value: Song | Section | ProjectInfo | Sample
 ): Request {
   return {
     method: Method.update,
