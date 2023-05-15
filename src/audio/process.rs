@@ -6,7 +6,7 @@ use rawdio::{AudioBuffer, AudioProcess, BorrowedAudioBuffer, MutableBorrowedAudi
 use serde::{Deserialize, Serialize};
 use std::{fs::File, io::BufReader, path::Path};
 
-const SAMPLE_RATE: u32 = 44100;
+const DEFAULT_SAMPLE_RATE: u32 = 44100;
 
 pub struct Process {
     _output_stream: Stream,
@@ -85,7 +85,7 @@ impl Process {
                 true
             })
             .expect("No configs supported")
-            .with_sample_rate(SampleRate(preferences.sample_rate.unwrap_or(SAMPLE_RATE)));
+            .with_sample_rate(SampleRate(preferences.sample_rate.unwrap_or(DEFAULT_SAMPLE_RATE)));
 
         println!("Sample rate: {}", config.sample_rate().0);
         println!();

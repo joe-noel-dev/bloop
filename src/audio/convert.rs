@@ -42,6 +42,13 @@ pub fn convert_sample(sample_path: &Path, target_sample_rate: usize) -> anyhow::
 
     let new_frame_count = (frame_count as f64 * target_sample_rate as f64 / file_sample_rate as f64).ceil() as usize;
     let mut convert_buffer = OwnedAudioBuffer::new(new_frame_count, channel_count, target_sample_rate);
-    convert_buffer.sample_rate_convert_from(&buffer, SampleLocation::origin(), SampleLocation::origin());
+
+    convert_buffer.sample_rate_convert_from(
+        &buffer,
+        SampleLocation::origin(),
+        SampleLocation::origin(),
+        channel_count,
+    );
+
     Ok(convert_buffer)
 }
