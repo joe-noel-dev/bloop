@@ -279,6 +279,12 @@ impl Project {
             .ok_or_else(|| anyhow!("Sample not found: {}", sample.id))?;
 
         *old_sample = sample.clone();
+
+        self.songs
+            .iter_mut()
+            .filter(|song| song.sample_id == Some(sample.id))
+            .for_each(|song| song.tempo = sample.tempo);
+
         Ok(self)
     }
 
