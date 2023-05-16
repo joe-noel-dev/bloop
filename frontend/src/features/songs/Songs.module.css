@@ -19,6 +19,9 @@
 .add-song-button {
   font-size: large;
 
+  width: 100%;
+  max-width: 1024px;
+
   background: var(--secondary);
   color: var(--text-on-secondary);
 

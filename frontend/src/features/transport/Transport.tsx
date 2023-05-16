@@ -149,32 +149,41 @@ export const Transport: React.FunctionComponent = () => {
 
   return (
     <div className={styles.container}>
-      {playing && (
-        <button
-          className={`${styles['loop-button']} ${
-            looping && styles['loop-button-looping']
-          }`}
-          onClick={toggleLoop}
-        >
-          <FiRepeat />
-        </button>
-      )}
+      <div>
+        {playing && (
+          <button
+            className={`${styles['loop-button']} ${
+              looping && styles['loop-button-looping']
+            }`}
+            onClick={toggleLoop}
+          >
+            <FiRepeat />
+          </button>
+        )}
+      </div>
 
-      {icons.map((icon) => (
-        <div className={styles.icon} key={icon.name} onClick={icon.onClick}>
-          {icon.icon}
-        </div>
-      ))}
-
-      {playing && !selectedSectionIsPlaying && (
-        <button className={styles['queue-button']} onClick={queueSection}>
-          {playbackState.queuedSectionId === selectedSectionId ? (
-            <FiCheck />
-          ) : (
-            <FiCornerUpRight />
-          )}
-        </button>
-      )}
+      <div>
+        {icons.map((icon) => (
+          <button
+            className={styles['transport-button']}
+            key={icon.name}
+            onClick={icon.onClick}
+          >
+            {icon.icon}
+          </button>
+        ))}
+      </div>
+      <div>
+        {playing && !selectedSectionIsPlaying && (
+          <button className={styles['queue-button']} onClick={queueSection}>
+            {playbackState.queuedSectionId === selectedSectionId ? (
+              <FiCheck />
+            ) : (
+              <FiCornerUpRight />
+            )}
+          </button>
+        )}
+      </div>
     </div>
   );
 };
