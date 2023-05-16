@@ -124,8 +124,10 @@ impl AudioManager {
 
         println!("Adding sample to the audio engine: {}", result.sample_id);
 
-        let sampler = Sampler::new(self.context.as_ref(), audio_data);
+        let event_channel_capacity = 1024;
+        let sampler = Sampler::new_with_event_capacity(self.context.as_ref(), audio_data, event_channel_capacity);
         sampler.node.connect_to(&self.output_gain.node);
+
         self.samplers.insert(result.sample_id, sampler);
     }
 
