@@ -1,22 +1,29 @@
 .container {
   height: 80px;
+  width: 100%;
 
   background: var(--primary-light);
 
   box-shadow: var(--shadow-level-1);
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  grid-template-rows: auto;
+  grid-template-columns: var(--unit-space-x6) 1fr var(--unit-space-x6);
 
   position: relative;
+
+  padding: var(--unit-space-x2);
+}
+
+.container > *:nth-child(2) {
+  display: flex;
+
+  gap: var(--unit-space);
+  align-items: center;
+  justify-content: center;
 }
 
 .queue-button {
-  position: absolute;
-  right: var(--unit-space-x2);
-  top: 50%;
-  transform: translate(0, -50%);
   width: var(--unit-space-x6);
   height: var(--unit-space-x6);
 
@@ -28,16 +35,17 @@
   font-size: medium;
 }
 
-.icon {
-  margin: 0 var(--unit-space-x2);
+.transport-button {
+  width: var(--unit-space-x6);
+  height: var(--unit-space-x6);
   fill: var(--text-on-primary);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .loop-button {
-  position: absolute;
-  left: var(--unit-space-x2);
-  top: 50%;
-  transform: translate(0, -50%);
   width: var(--unit-space-x6);
   height: var(--unit-space-x6);
 
