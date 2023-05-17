@@ -28,7 +28,7 @@ impl Default for Song {
         Self {
             id: ID::new_v4(),
             name: "Song".to_string(),
-            tempo: Tempo { bpm: 120.0 },
+            tempo: Tempo::new(120.0),
             metronome: Metronome::Default,
             sections: vec![],
             sample_id: None,
@@ -48,7 +48,7 @@ impl Song {
     }
 
     pub fn is_valid(&self) -> bool {
-        !self.id.is_nil() && self.tempo.is_valid()
+        !self.id.is_nil()
     }
 
     pub fn find_section(&self, section_id: &ID) -> Option<&Section> {
@@ -65,7 +65,7 @@ impl Song {
         for section in self.sections.iter() {
             if let Some(start) = start {
                 let end = section.start;
-                if end > start {
+                if end >= start {
                     return Some(end - start);
                 }
             }
@@ -79,16 +79,27 @@ impl Song {
     }
 }
 
-impl Tempo {
-    pub fn min() -> f64 {
-        30.0
-    }
+#[cfg(test)]
+mod tests {
+    use approx::assert_relative_eq;
 
-    pub fn max() -> f64 {
-        300.0
-    }
+    use super::*;
 
-    pub fn is_valid(&self) -> bool {
-        Self::min() <= self.bpm && self.bpm <= Self::max()
+    #[test]
+    fn calculates_section_lengths() {
+        let mut song = Song::default();
+        let mut section_1 = Section::new();
+        section_1.start = 23.0;
+
+        let mut section_2 = Section::new();
+        section_2.start = 48.0;
+
+        let mut section_3 = Section::new();
+        section_3.start = 89.0;
+        song.sections = vec![section_1.clone(), section_2.clone(), section_3.clone()];
+
+        assert_relative_eq!(song.section_length(&section_1.id).unwrap(), 25.0);
+        assert_relative_eq!(song.section_length(&section_2.id).unwrap(), 41.0);
+        assert!(song.section_length(&section_3.id).is_none());
     }
 }

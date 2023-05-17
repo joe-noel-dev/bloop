@@ -18,7 +18,7 @@ impl Sample {
         Sample {
             id: ID::new_v4(),
             name: "".to_string(),
-            tempo: Tempo { bpm: 120.0 },
+            tempo: Tempo::new(120.0),
             sample_rate: 0,
             sample_count: 0,
             channel_count: 0,

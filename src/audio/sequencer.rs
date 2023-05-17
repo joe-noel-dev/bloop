@@ -136,7 +136,7 @@ impl Sequencer {
             (Some(section), Some(song), Some(sample)) => {
                 let seconds_into_section =
                     (time.as_seconds() - point.start_time.as_seconds()) % point.duration.as_seconds();
-                let beats_into_section = Timestamp::from_seconds(seconds_into_section).as_beats(song.tempo.bpm);
+                let beats_into_section = Timestamp::from_seconds(seconds_into_section).as_beats(song.tempo.get_bpm());
 
                 let position_in_sample = seconds_into_section + point.data.position_in_sample.as_seconds();
                 let sample_duration =

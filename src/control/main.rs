@@ -3,7 +3,7 @@ use crate::{
     api::*,
     audio::{manager::Audio, manager::AudioManager},
     midi::{Action, MidiManager},
-    model::{Project, Sample},
+    model::{Project, Sample, Tempo},
     samples::SamplesCache,
 };
 use anyhow::anyhow;
@@ -279,7 +279,7 @@ impl MainController {
         sample.sample_count = sample_metadata.sample_count as i64;
 
         if let Some(tempo) = sample_metadata.detected_tempo {
-            sample.tempo.bpm = tempo;
+            sample.tempo = Tempo::new(tempo);
         }
 
         project = project.add_sample_to_song(sample, &request.song_id)?;

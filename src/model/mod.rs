@@ -15,3 +15,4 @@ pub use project::{Project, ProjectInfo};
 pub use sample::Sample;
 pub use section::Section;
 pub use song::Song;
+pub use tempo::Tempo;
