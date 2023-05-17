@@ -56,25 +56,21 @@ fn start_time_of_section(
 }
 
 fn beat_position_of_section(song: &Song, section_id: &ID, reference_section_id: &ID) -> Option<f64> {
-    let mut position = None;
+    let reference_section = song.find_section(reference_section_id);
+    let section = song.find_section(section_id);
 
-    for section in song.sections.iter() {
-        if section.id == *reference_section_id {
-            position = Some(0.0);
+    if let (Some(reference_section), Some(section)) = (reference_section, section) {
+        if section.start >= reference_section.start {
+            return Some(section.start - reference_section.start);
         }
-
-        if section.id == *section_id {
-            return position;
-        }
-
-        position = position.map(|current_position| current_position + section.beat_length);
     }
 
-    position
+    None
 }
 
 fn sequence_point_for_section(section: &Section, song: &Song, start_time: Timestamp) -> SequencePoint<SequenceData> {
-    let section_duration = Timestamp::from_beats(section.beat_length, song.tempo.bpm);
+    let section_length = song.section_length(&section.id).unwrap_or_default();
+    let section_duration = Timestamp::from_beats(section_length, song.tempo.bpm);
     let start_position_in_sample = Timestamp::from_beats(section.start, song.tempo.bpm);
 
     SequencePoint {
@@ -115,19 +111,16 @@ mod test {
             {
                 let section_1 = &mut song.sections[0];
                 section_1.start = 1.0;
-                section_1.beat_length = 2.0;
             }
 
             {
                 let section_2 = &mut song.sections[1];
                 section_2.start = 5.0;
-                section_2.beat_length = 3.0;
             }
 
             {
                 let section_3 = &mut song.sections[2];
-                section_3.start = 9.0;
-                section_3.beat_length = 4.0;
+                section_3.start = 10.0;
             }
         }
 
@@ -142,7 +135,7 @@ mod test {
         let expected_values = vec![
             SequencePoint {
                 start_time,
-                duration: Timestamp::from_beats(2.0, tempo),
+                duration: Timestamp::from_beats(4.0, tempo),
                 loop_enabled: false,
                 data: SequenceData {
                     song_id: Some(song_id),
@@ -152,8 +145,8 @@ mod test {
                 },
             },
             SequencePoint {
-                start_time: start_time.incremented_by_beats(2.0, tempo),
-                duration: Timestamp::from_beats(3.0, tempo),
+                start_time: start_time.incremented_by_beats(4.0, tempo),
+                duration: Timestamp::from_beats(5.0, tempo),
                 loop_enabled: false,
                 data: SequenceData {
                     song_id: Some(song_id),
@@ -163,14 +156,14 @@ mod test {
                 },
             },
             SequencePoint {
-                start_time: start_time.incremented_by_beats(5.0, tempo),
-                duration: Timestamp::from_beats(4.0, tempo),
+                start_time: start_time.incremented_by_beats(9.0, tempo),
+                duration: Timestamp::from_beats(0.0, tempo),
                 loop_enabled: false,
                 data: SequenceData {
                     song_id: Some(song_id),
                     section_id: Some(song.sections[2].id),
                     sample_id: Some(sample_id),
-                    position_in_sample: Timestamp::from_beats(9.0, tempo),
+                    position_in_sample: Timestamp::from_beats(10.0, tempo),
                 },
             },
         ];
@@ -196,20 +189,17 @@ mod test {
             {
                 let section_1 = &mut song.sections[0];
                 section_1.start = 7.0;
-                section_1.beat_length = 5.0;
             }
 
             {
                 let section_2 = &mut song.sections[1];
                 section_2.start = 9.0;
-                section_2.beat_length = 6.0;
                 section_2.looping = true;
             }
 
             {
                 let section_3 = &mut song.sections[2];
-                section_3.start = 8.0;
-                section_3.beat_length = 3.0;
+                section_3.start = 15.0;
             }
         }
 
@@ -223,7 +213,7 @@ mod test {
         let expected_values = vec![
             SequencePoint {
                 start_time,
-                duration: Timestamp::from_beats(5.0, tempo),
+                duration: Timestamp::from_beats(2.0, tempo),
                 loop_enabled: false,
                 data: SequenceData {
                     song_id: Some(song.id),
@@ -233,7 +223,7 @@ mod test {
                 },
             },
             SequencePoint {
-                start_time: start_time.incremented_by_beats(5.0, tempo),
+                start_time: start_time.incremented_by_beats(2.0, tempo),
                 duration: Timestamp::from_beats(6.0, tempo),
                 loop_enabled: true,
                 data: SequenceData {
@@ -244,14 +234,14 @@ mod test {
                 },
             },
             SequencePoint {
-                start_time: start_time.incremented_by_beats(11.0, tempo),
-                duration: Timestamp::from_beats(3.0, tempo),
+                start_time: start_time.incremented_by_beats(8.0, tempo),
+                duration: Timestamp::zero(),
                 loop_enabled: false,
                 data: SequenceData {
                     song_id: Some(song.id),
                     section_id: Some(song.sections[2].id),
                     sample_id: Some(sample_id),
-                    position_in_sample: Timestamp::from_beats(8.0, tempo),
+                    position_in_sample: Timestamp::from_beats(15.0, tempo),
                 },
             },
         ];

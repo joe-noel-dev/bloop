@@ -8,7 +8,6 @@ pub struct Section {
     pub id: ID,
     pub name: String,
     pub start: f64,
-    pub beat_length: f64,
     #[serde(rename = "loop")]
     pub looping: bool,
 }
@@ -33,18 +32,12 @@ impl Section {
             id: ID::new_v4(),
             name: "Section".to_string(),
             start: 0.0,
-            beat_length: 8.0,
             looping: false,
         }
     }
 
     pub fn with_start(mut self, start: f64) -> Self {
         self.start = start;
-        self
-    }
-
-    pub fn with_beat_length(mut self, beat_length: f64) -> Self {
-        self.beat_length = beat_length;
         self
     }
 

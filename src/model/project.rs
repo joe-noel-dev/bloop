@@ -102,14 +102,13 @@ impl Project {
         let mut song = song.clone();
 
         let mut start = 0.0;
-        let mut length = 16.0;
 
         if let Some(last_section) = song.sections.last() {
-            start = last_section.start + last_section.beat_length;
-            length = last_section.beat_length;
+            let default_length = 16.0;
+            start = last_section.start + default_length;
         }
 
-        let section = Section::new().with_start(start).with_beat_length(length);
+        let section = Section::new().with_start(start);
 
         song.sections.push(section);
 

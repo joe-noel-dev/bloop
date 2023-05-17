@@ -11,7 +11,7 @@ import {beatLength} from '../../model/sample';
 import {WarningButton} from '../../components/Button';
 import {selectSectionRequest, updateSectionRequest} from '../../api/request';
 import {useSampleWithId} from '../samples/sample-hooks';
-import {useSelectedSectionId} from './section-hooks';
+import {useSectionLength, useSelectedSectionId} from './section-hooks';
 import styles from './SectionEditor.module.css';
 import {Spacer} from '../../components/Spacer';
 import {ToggleSwitch} from '../../components/ToggleSwitch';
@@ -41,8 +41,9 @@ export const SectionEditor = ({
   const progress = useProgress();
   const [height, setHeight] = useState(0);
   const sample = useSampleWithId(sampleId);
+  const sectionLength = useSectionLength(section.id);
 
-  const length = sample ? beatLength(sample) : 0.0;
+  const sampleLength = sample ? beatLength(sample) : 0.0;
 
   const isPlaying =
     playbackState?.playing === 'playing' &&
@@ -89,10 +90,12 @@ export const SectionEditor = ({
               <div className={styles.waveform}>
                 <Waveform
                   sampleId={sampleId}
-                  start={length > 0.0 ? section.start / length : 0.0}
+                  start={
+                    sampleLength > 0.0 ? section.start / sampleLength : 0.0
+                  }
                   end={
-                    length > 0.0
-                      ? (section.start + section.beatLength) / length
+                    sampleLength > 0.0
+                      ? (section.start + sectionLength) / sampleLength
                       : 1.0
                   }
                 />
@@ -199,16 +202,6 @@ const Properties = ({section}: PropertiesProps) => {
         <NumberChooser
           value={section.start}
           onValueChange={(value) => submitSection({start: value})}
-        />
-      </div>
-
-      <div className={styles.separator} />
-
-      <div className={styles['edit-group']}>
-        <h3>Duration</h3>
-        <NumberChooser
-          value={section.beatLength}
-          onValueChange={(value) => submitSection({beatLength: value})}
         />
       </div>
 

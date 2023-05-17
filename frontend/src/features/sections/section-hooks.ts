@@ -25,3 +25,23 @@ export const useSelectedSection = () => {
   const selectedSectionId = useSelectedSectionId();
   return useSectionById(selectedSectionId ?? '');
 };
+
+export const useSectionLength = (sectionId: string) => {
+  const sections = useSections();
+  let start: number | undefined = undefined;
+
+  sections?.forEach((section) => {
+    if (start !== undefined) {
+      const end = section.start;
+      if (end >= start) {
+        return end - start;
+      }
+    }
+
+    if (section.id === sectionId) {
+      start = section.start;
+    }
+  });
+
+  return 0.0;
+};

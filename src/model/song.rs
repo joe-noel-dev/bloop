@@ -58,6 +58,25 @@ impl Song {
     pub fn find_section_mut(&mut self, section_id: &ID) -> Option<&mut Section> {
         self.sections.iter_mut().find(|section| section.id == *section_id)
     }
+
+    pub fn section_length(&self, section_id: &ID) -> Option<f64> {
+        let mut start: Option<f64> = None;
+
+        for section in self.sections.iter() {
+            if let Some(start) = start {
+                let end = section.start;
+                if end > start {
+                    return Some(end - start);
+                }
+            }
+
+            if section.id == *section_id {
+                start = Some(section.start);
+            }
+        }
+
+        None
+    }
 }
 
 impl Tempo {

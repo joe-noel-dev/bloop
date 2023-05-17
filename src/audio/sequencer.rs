@@ -142,14 +142,16 @@ impl Sequencer {
                 let sample_duration =
                     Timestamp::from_samples(sample.sample_count as f64, sample.sample_rate as usize).as_seconds();
 
+                let section_length = song.section_length(&section.id).unwrap_or_default();
+
                 Progress {
                     song_progress: if sample_duration > 0.0 {
                         position_in_sample / sample_duration
                     } else {
                         0.0
                     },
-                    section_progress: if section.beat_length > 0.0 {
-                        beats_into_section / section.beat_length
+                    section_progress: if section_length > 0.0 {
+                        beats_into_section / section_length
                     } else {
                         0.0
                     },
