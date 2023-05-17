@@ -49,7 +49,7 @@ fn start_time_of_section(
     reference_time: Timestamp,
 ) -> Option<Timestamp> {
     if let Some(beat_position) = beat_position_of_section(song, section_id, reference_section_id) {
-        return Some(reference_time.incremented_by_beats(beat_position, song.tempo.bpm));
+        return Some(reference_time.incremented_by_beats(beat_position, song.tempo.get_bpm()));
     }
 
     None
@@ -70,8 +70,8 @@ fn beat_position_of_section(song: &Song, section_id: &ID, reference_section_id: 
 
 fn sequence_point_for_section(section: &Section, song: &Song, start_time: Timestamp) -> SequencePoint<SequenceData> {
     let section_length = song.section_length(&section.id).unwrap_or_default();
-    let section_duration = Timestamp::from_beats(section_length, song.tempo.bpm);
-    let start_position_in_sample = Timestamp::from_beats(section.start, song.tempo.bpm);
+    let section_duration = Timestamp::from_beats(section_length, song.tempo.get_bpm());
+    let start_position_in_sample = Timestamp::from_beats(section.start, song.tempo.get_bpm());
 
     SequencePoint {
         start_time,
@@ -89,6 +89,7 @@ fn sequence_point_for_section(section: &Section, song: &Song, start_time: Timest
 #[cfg(test)]
 mod test {
 
+    use crate::model::Tempo;
     use uuid::Uuid;
 
     use super::*;
@@ -105,7 +106,7 @@ mod test {
 
         {
             let song = &mut project.songs[0];
-            song.tempo.bpm = tempo;
+            song.tempo = Tempo::new(tempo);
             song.sample_id = Some(sample_id);
 
             {
@@ -183,7 +184,7 @@ mod test {
 
         {
             let song = &mut project.songs[0];
-            song.tempo.bpm = tempo;
+            song.tempo = Tempo::new(tempo);
             song.sample_id = Some(sample_id);
 
             {

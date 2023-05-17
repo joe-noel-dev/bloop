@@ -2,5 +2,24 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Copy, Debug, Clone, PartialEq)]
 pub struct Tempo {
-    pub bpm: f64,
+    bpm: f64,
+}
+
+impl Tempo {
+    pub fn min() -> f64 {
+        30.0
+    }
+
+    pub fn max() -> f64 {
+        300.0
+    }
+
+    pub fn get_bpm(&self) -> f64 {
+        self.bpm
+    }
+
+    pub fn new(bpm: f64) -> Self {
+        assert!(Self::min() <= bpm && bpm <= Self::max());
+        Self { bpm }
+    }
 }
