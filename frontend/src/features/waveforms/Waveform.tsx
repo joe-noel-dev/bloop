@@ -2,12 +2,12 @@ import {useEffect, useRef, useState} from 'react';
 import {requestWaveformRequest} from '../../api/request';
 import {WaveformData, WaveformPeaks} from '../../model/waveform';
 import {useCore} from '../core/use-core';
-import {useSampleWithId} from '../samples/sample-hooks';
 import {useWaveformData} from './waveform-hooks';
 import styles from './Waveform.module.css';
+import {Sample} from '../../model/sample';
 
 interface Props {
-  sampleId?: string;
+  sample?: Sample;
   start?: number;
   end?: number;
 }
@@ -104,17 +104,16 @@ function pathFromWaveformData(
 
 export const Waveform = (props: Props) => {
   const core = useCore();
-  const waveformData = useWaveformData(props.sampleId || '');
+  const waveformData = useWaveformData(props.sample?.id ?? '');
   const container = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [width, setWidth] = useState<number>(0);
   const [height, setHeight] = useState<number>(0);
-  const sample = useSampleWithId(props.sampleId || '');
 
   useEffect(() => {
-    if (props.sampleId && !waveformData)
-      core?.sendRequest(requestWaveformRequest(props.sampleId));
-  }, [props.sampleId, waveformData, core]);
+    if (props.sample && !waveformData)
+      core?.sendRequest(requestWaveformRequest(props.sample.id));
+  }, [props.sample?.id, waveformData, core]);
 
   useEffect(() => {
     if (!canvas.current) return;
@@ -134,15 +133,7 @@ export const Waveform = (props: Props) => {
       context.fillStyle = '#ffab91';
       context.fill(path);
     }
-  }, [
-    waveformData,
-    props.sampleId,
-    width,
-    height,
-    props.start,
-    props.end,
-    sample,
-  ]);
+  }, [waveformData, width, height, props.start, props.end]);
 
   useEffect(() => {
     setWidth(container.current?.clientWidth || 0);

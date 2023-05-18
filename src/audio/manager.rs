@@ -132,7 +132,12 @@ impl AudioManager {
     }
 
     fn add_samples(&mut self, project: &Project, samples_cache: &SamplesCache) {
-        for sample in project.samples.iter() {
+        for song in project.songs.iter() {
+            let sample = match &song.sample {
+                Some(sample) => sample,
+                None => continue,
+            };
+
             if self.samplers.contains_key(&sample.id) {
                 continue;
             }
@@ -167,7 +172,7 @@ impl AudioManager {
         let samples_to_remove: HashSet<ID> = self
             .samplers
             .iter()
-            .filter(|(sample_id, _)| !project.samples.iter().any(|sample| &sample.id == *sample_id))
+            .filter(|(sample_id, _)| project.find_sample(sample_id).is_none())
             .map(|(sample_id, _)| sample_id)
             .copied()
             .collect();

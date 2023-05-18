@@ -1,4 +1,5 @@
 use super::tempo::Tempo;
+use super::Sample;
 use super::{id::ID, Section};
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
@@ -11,7 +12,7 @@ pub struct Song {
     pub tempo: Tempo,
     pub metronome: Metronome,
     pub sections: Vec<Section>,
-    pub sample_id: Option<ID>,
+    pub sample: Option<Sample>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -31,7 +32,7 @@ impl Default for Song {
             tempo: Tempo::new(120.0),
             metronome: Metronome::Default,
             sections: vec![],
-            sample_id: None,
+            sample: None,
         }
     }
 }

@@ -130,7 +130,7 @@ impl Sequencer {
         let sample = point
             .data
             .sample_id
-            .and_then(|sample_id| self.project.sample_with_id(&sample_id));
+            .and_then(|sample_id| self.project.find_sample(&sample_id));
 
         match (section, song, sample) {
             (Some(section), Some(song), Some(sample)) => {

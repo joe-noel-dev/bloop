@@ -75,7 +75,6 @@ pub struct RenameRequest {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RemoveSampleRequest {
-    pub sample_id: ID,
     pub song_id: ID,
 }
 

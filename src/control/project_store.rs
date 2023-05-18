@@ -173,7 +173,12 @@ impl ProjectStore {
     async fn copy_samples_from_cache(&self, project: &Project, samples_cache: &SamplesCache) -> anyhow::Result<()> {
         let mut futures = vec![];
 
-        for sample in project.samples.iter() {
+        for song in project.songs.iter() {
+            let sample = match &song.sample {
+                Some(sample) => sample,
+                None => continue,
+            };
+
             let project_path = self.sample_path(&project.info.id, &sample.id);
 
             if project_path.is_file() {

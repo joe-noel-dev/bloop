@@ -6,14 +6,13 @@ use super::song::Song;
 use anyhow::anyhow;
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
-use std::{cmp::PartialEq, collections::HashSet};
+use std::cmp::PartialEq;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Project {
     pub info: ProjectInfo,
     pub songs: Vec<Song>,
-    pub samples: Vec<Sample>,
     pub selections: Selections,
 }
 
@@ -37,7 +36,6 @@ impl Project {
         Self {
             info: ProjectInfo::new(),
             songs: vec![],
-            samples: vec![],
             selections: Selections::new(),
         }
     }
@@ -250,7 +248,7 @@ impl Project {
             };
         }
 
-        Ok(self.remove_unused_samples())
+        Ok(self)
     }
 
     pub fn replace_section(mut self, new_section: &Section) -> anyhow::Result<Self> {
@@ -271,31 +269,19 @@ impl Project {
             return Err(anyhow!("Invalid sample"));
         }
 
-        let old_sample = self
-            .samples
-            .iter_mut()
-            .find(|s| s.id == sample.id)
-            .ok_or_else(|| anyhow!("Sample not found: {}", sample.id))?;
+        let old_sample = match self.find_sample_mut(&sample.id) {
+            Some(sample) => sample,
+            None => return Err(anyhow!("Sample not found: {}", sample.id)),
+        };
 
         *old_sample = sample.clone();
 
         self.songs
             .iter_mut()
-            .filter(|song| song.sample_id == Some(sample.id))
+            .filter(|song| song.sample.is_some() && song.sample.as_ref().unwrap().id == sample.id)
             .for_each(|song| song.tempo = sample.tempo);
 
         Ok(self)
-    }
-
-    pub fn sample_with_id(&self, sample_id: &ID) -> Option<&Sample> {
-        self.samples.iter().find(|sample| sample.id == *sample_id)
-    }
-
-    fn remove_unused_samples(mut self) -> Self {
-        let samples_in_use: HashSet<ID> = self.songs.iter().filter_map(|song| song.sample_id).collect();
-
-        self.samples.retain(|sample| samples_in_use.contains(&sample.id));
-        self
     }
 
     pub fn add_sample_to_song(mut self, sample: Sample, song_id: &ID) -> anyhow::Result<Self> {
@@ -303,10 +289,10 @@ impl Project {
             .song_with_id_mut(song_id)
             .ok_or_else(|| anyhow!("Couldn't find song with ID: {}", song_id))?;
 
-        song.sample_id = Some(sample.id);
-        song.tempo = sample.tempo;
+        let tempo = sample.tempo;
+        song.sample = Some(sample);
+        song.tempo = tempo;
 
-        self.samples.push(sample);
         Ok(self)
     }
 
@@ -418,18 +404,36 @@ impl Project {
         self.select_section(&next_section_id)
     }
 
-    pub fn remove_sample(mut self, sample_id: &ID, song_id: &ID) -> anyhow::Result<Self> {
-        if self.sample_with_id(sample_id).is_none() {
-            return Err(anyhow!("Sample not found with ID: {}", sample_id));
+    pub fn remove_sample_from_song(mut self, song_id: &ID) -> anyhow::Result<Self> {
+        if let Some(song) = self.song_with_id_mut(song_id) {
+            song.sample = None;
         }
 
-        let song = self
-            .song_with_id_mut(song_id)
-            .with_context(|| format!("Song not found with ID: {song_id}"))?;
+        Ok(self)
+    }
 
-        song.sample_id = None;
+    pub fn find_sample(&self, sample_id: &ID) -> Option<&Sample> {
+        for song in self.songs.iter() {
+            if let Some(sample) = &song.sample {
+                if sample.id == *sample_id {
+                    return Some(sample);
+                }
+            }
+        }
 
-        Ok(self.remove_unused_samples())
+        None
+    }
+
+    pub fn find_sample_mut(&mut self, sample_id: &ID) -> Option<&mut Sample> {
+        for song in self.songs.iter_mut() {
+            if let Some(sample) = &mut song.sample {
+                if sample.id == *sample_id {
+                    return Some(sample);
+                }
+            }
+        }
+
+        None
     }
 }
 

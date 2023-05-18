@@ -81,7 +81,6 @@ export interface AddSampleRequest {
 }
 
 export interface RemoveSampleRequest {
-  sampleId: string;
   songId: string;
 }
 
@@ -182,11 +181,10 @@ export function removeProjectRequest(projectId: string): Request {
   return removeRequest(Entity.project, projectId);
 }
 
-export function removeSampleRequest(sampleId: string, songId: string): Request {
+export function removeSampleRequest(songId: string): Request {
   return {
     method: Method.removeSample,
     payload: {
-      sampleId,
       songId,
     },
   };

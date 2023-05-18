@@ -7,10 +7,9 @@ import {ProgressBar} from '../../components/ProgressBar';
 import {usePlaybackState, useProgress} from '../transport/transport-hooks';
 import Measure from 'react-measure';
 import {Waveform} from '../waveforms/Waveform';
-import {beatLength} from '../../model/sample';
+import {Sample, beatLength} from '../../model/sample';
 import {WarningButton} from '../../components/Button';
 import {selectSectionRequest, updateSectionRequest} from '../../api/request';
-import {useSampleWithId} from '../samples/sample-hooks';
 import {useSectionLength, useSelectedSectionId} from './section-hooks';
 import styles from './SectionEditor.module.css';
 import {Spacer} from '../../components/Spacer';
@@ -20,7 +19,7 @@ import {Section} from '../../model/section';
 
 interface Props {
   section: Section;
-  sampleId: string;
+  sample?: Sample;
   editing: boolean;
   canRemove: boolean;
   onRequestEdit(edit: boolean): void;
@@ -29,7 +28,7 @@ interface Props {
 
 export const SectionEditor = ({
   section,
-  sampleId,
+  sample,
   editing,
   canRemove,
   onRequestEdit,
@@ -40,7 +39,6 @@ export const SectionEditor = ({
   const playbackState = usePlaybackState();
   const progress = useProgress();
   const [height, setHeight] = useState(0);
-  const sample = useSampleWithId(sampleId);
   const sectionLength = useSectionLength(section.id);
 
   const sampleLength = sample ? beatLength(sample) : 0.0;
@@ -54,6 +52,11 @@ export const SectionEditor = ({
   if (!section) {
     return <></>;
   }
+
+  console.log('Section: ', section);
+  console.log('Section length: ', sectionLength);
+  console.log('Sample length: ', sampleLength);
+  console.log('');
 
   return (
     <div
@@ -89,7 +92,7 @@ export const SectionEditor = ({
             >
               <div className={styles.waveform}>
                 <Waveform
-                  sampleId={sampleId}
+                  sample={sample}
                   start={
                     sampleLength > 0.0 ? section.start / sampleLength : 0.0
                   }
