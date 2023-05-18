@@ -7,18 +7,20 @@ import {ProgressBar} from '../../components/ProgressBar';
 import {usePlaybackState, useProgress} from '../transport/transport-hooks';
 import Measure from 'react-measure';
 import {Waveform} from '../waveforms/Waveform';
-import {Sample, beatLength} from '../../model/sample';
+import {Sample, getSampleBeatLength} from '../../model/sample';
 import {WarningButton} from '../../components/Button';
 import {selectSectionRequest, updateSectionRequest} from '../../api/request';
-import {useSectionLength, useSelectedSectionId} from './section-hooks';
+import {useSelectedSectionId} from './section-hooks';
 import styles from './SectionEditor.module.css';
 import {Spacer} from '../../components/Spacer';
 import {ToggleSwitch} from '../../components/ToggleSwitch';
 import {NumberChooser} from '../../components/NumberChooser';
 import {Section} from '../../model/section';
+import {Song, getSectionBeatLength} from '../../model/song';
 
 interface Props {
   section: Section;
+  song: Song;
   sample?: Sample;
   editing: boolean;
   canRemove: boolean;
@@ -28,6 +30,7 @@ interface Props {
 
 export const SectionEditor = ({
   section,
+  song,
   sample,
   editing,
   canRemove,
@@ -39,9 +42,9 @@ export const SectionEditor = ({
   const playbackState = usePlaybackState();
   const progress = useProgress();
   const [height, setHeight] = useState(0);
-  const sectionLength = useSectionLength(section.id);
+  const sectionLength = getSectionBeatLength(song, section.id);
 
-  const sampleLength = sample ? beatLength(sample) : 0.0;
+  const sampleLength = sample ? getSampleBeatLength(sample) : 0.0;
 
   const isPlaying =
     playbackState?.playing === 'playing' &&
@@ -52,11 +55,6 @@ export const SectionEditor = ({
   if (!section) {
     return <></>;
   }
-
-  console.log('Section: ', section);
-  console.log('Section length: ', sectionLength);
-  console.log('Sample length: ', sampleLength);
-  console.log('');
 
   return (
     <div

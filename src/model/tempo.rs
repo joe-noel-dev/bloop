@@ -22,4 +22,8 @@ impl Tempo {
         assert!(Self::min() <= bpm && bpm <= Self::max());
         Self { bpm }
     }
+
+    pub fn beat_frequency(&self) -> f64 {
+        self.bpm / 60.0
+    }
 }

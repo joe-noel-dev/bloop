@@ -1,5 +1,5 @@
 import {Entity} from './entity';
-import {Tempo} from './tempo';
+import {Tempo, beatFrequency} from './tempo';
 
 export interface Sample extends Entity {
   id: string;
@@ -10,6 +10,5 @@ export interface Sample extends Entity {
   channelCount: number;
 }
 
-export function beatLength(sample: Sample): number {
-  return (sample.sampleCount * sample.tempo.bpm) / (60.0 * sample.sampleRate);
-}
+export const getSampleBeatLength = (sample: Sample): number =>
+  (sample.sampleCount * beatFrequency(sample.tempo)) / sample.sampleRate;
