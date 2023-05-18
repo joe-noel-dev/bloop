@@ -57,9 +57,7 @@ impl MainController {
             Request::Get(get_request) => self.handle_get(&get_request).await.map(|_| project),
             Request::Load(load_request) => self.handle_load(&load_request).await,
             Request::Remove(remove_request) => self.handle_remove(project, &remove_request).await,
-            Request::RemoveSample(remove_request) => {
-                project.remove_sample(&remove_request.sample_id, &remove_request.song_id)
-            }
+            Request::RemoveSample(remove_request) => project.remove_sample_from_song(&remove_request.song_id),
             Request::Rename(rename_request) => self.handle_rename(project, &rename_request),
             Request::Save => self
                 .project_store

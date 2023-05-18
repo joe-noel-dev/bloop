@@ -7,21 +7,26 @@ import cloneDeep from 'lodash.clonedeep';
 import {ProgressBar} from '../../components/ProgressBar';
 import {IndeterminateSpinner} from '../../components/IndeterminateSpinner';
 import {updateSampleRequest} from '../../api/request';
-import {useSampleWithId} from './sample-hooks';
 import {usePlaybackState, useProgress} from '../transport/transport-hooks';
 import styles from './Sample.module.css';
 import {SecondaryButton} from '../../components/Button';
+import {Sample as ModelSample} from '../../model/sample';
 
 interface SampleProps {
   editable: boolean;
-  sampleId: string;
+  sample?: ModelSample;
   songId: string;
   onFileSelected?(file: File): void;
   onRemoveRequested?(): void;
 }
 
-export const Sample = (props: SampleProps) => {
-  const sample = useSampleWithId(props.sampleId);
+export const Sample = ({
+  editable,
+  sample,
+  songId,
+  onFileSelected,
+  onRemoveRequested,
+}: SampleProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const core = useCore();
   const progress = useProgress();
@@ -35,7 +40,7 @@ export const Sample = (props: SampleProps) => {
     }
   }, [sample]);
 
-  const onFileSelected = async () => {
+  const onSelected = async () => {
     if (
       fileInputRef &&
       fileInputRef.current &&
@@ -45,8 +50,8 @@ export const Sample = (props: SampleProps) => {
 
       const file = fileInputRef?.current?.files[0];
 
-      if (props.onFileSelected) {
-        props.onFileSelected(file);
+      if (onFileSelected) {
+        onFileSelected(file);
       }
     }
   };
@@ -64,23 +69,24 @@ export const Sample = (props: SampleProps) => {
   return (
     <div className={styles['container']}>
       <div className={styles['waveform']}>
-        <Waveform sampleId={props.sampleId} />
-        {playbackState?.playing && playbackState.songId === props.songId && (
+        <Waveform sample={sample} />
+
+        {playbackState?.playing && playbackState.songId === songId && (
           <ProgressBar
             progress={progress?.songProgress || 0}
             colour={'var(--primary)'}
           />
         )}
-        {props.editable && (
+        {editable && (
           <input
             type="file"
             accept="audio/wav"
-            onChange={onFileSelected}
+            onChange={onSelected}
             ref={fileInputRef}
             style={{display: 'none'}}
           />
         )}
-        {props.editable && !sample && !uploading && (
+        {editable && !sample && !uploading && (
           <div className={styles.upload}>
             <SecondaryButton onClick={() => fileInputRef.current?.click()}>
               <FiUpload size={16} />
@@ -93,12 +99,12 @@ export const Sample = (props: SampleProps) => {
             <IndeterminateSpinner />
           </div>
         )}
-        {props.editable && sample && (
+        {editable && sample && (
           <button
             className={styles['remove-button']}
             onClick={() => {
-              if (props.onRemoveRequested) {
-                props.onRemoveRequested();
+              if (onRemoveRequested) {
+                onRemoveRequested();
               }
             }}
           >
@@ -106,7 +112,7 @@ export const Sample = (props: SampleProps) => {
             <p>Remove</p>
           </button>
         )}
-        {props.editable && sample && (
+        {editable && sample && (
           <button
             className={styles['replace-button']}
             onClick={() => {
@@ -124,7 +130,7 @@ export const Sample = (props: SampleProps) => {
           <NameEditor
             onSave={(value) => onTempoChanged(value)}
             name={`${sample?.tempo.bpm}` || ''}
-            editable={props.editable}
+            editable={editable}
             inputType="number"
           ></NameEditor>
         </div>

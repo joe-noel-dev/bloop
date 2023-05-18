@@ -62,11 +62,11 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
     <div className={styles.container} ref={ref}>
       <Sample
         editable={true}
-        sampleId={song.sampleId}
+        sample={song.sample}
         songId={props.songId}
         onFileSelected={(file) => addSampleToSong(file)}
         onRemoveRequested={() =>
-          core?.sendRequest(removeSampleRequest(song.sampleId, song.id))
+          core?.sendRequest(removeSampleRequest(song.id))
         }
       />
 
@@ -75,7 +75,7 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
           <SectionEditor
             key={section.id}
             section={section}
-            sampleId={song.sampleId}
+            sample={song.sample}
             editing={editingSectionId === section.id}
             onRequestEdit={(shouldEdit) =>
               setEditingSectionId(shouldEdit ? section.id : '')

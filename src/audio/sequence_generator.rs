@@ -80,7 +80,7 @@ fn sequence_point_for_section(section: &Section, song: &Song, start_time: Timest
         data: SequenceData {
             song_id: Some(song.id),
             section_id: Some(section.id),
-            sample_id: song.sample_id,
+            sample_id: song.sample.as_ref().map(|sample| sample.id),
             position_in_sample: start_position_in_sample,
         },
     }
@@ -89,8 +89,7 @@ fn sequence_point_for_section(section: &Section, song: &Song, start_time: Timest
 #[cfg(test)]
 mod test {
 
-    use crate::model::Tempo;
-    use uuid::Uuid;
+    use crate::model::{Sample, Tempo};
 
     use super::*;
 
@@ -101,13 +100,13 @@ mod test {
 
         let mut project = Project::new().with_songs(song_count, section_count);
 
-        let sample_id = Uuid::new_v4();
+        let sample = Sample::new();
         let tempo = 123.0;
 
         {
             let song = &mut project.songs[0];
             song.tempo = Tempo::new(tempo);
-            song.sample_id = Some(sample_id);
+            song.sample = Some(sample.clone());
 
             {
                 let section_1 = &mut song.sections[0];
@@ -141,7 +140,7 @@ mod test {
                 data: SequenceData {
                     song_id: Some(song_id),
                     section_id: Some(song.sections[0].id),
-                    sample_id: Some(sample_id),
+                    sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(1.0, tempo),
                 },
             },
@@ -152,7 +151,7 @@ mod test {
                 data: SequenceData {
                     song_id: Some(song_id),
                     section_id: Some(song.sections[1].id),
-                    sample_id: Some(sample_id),
+                    sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(5.0, tempo),
                 },
             },
@@ -163,7 +162,7 @@ mod test {
                 data: SequenceData {
                     song_id: Some(song_id),
                     section_id: Some(song.sections[2].id),
-                    sample_id: Some(sample_id),
+                    sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(10.0, tempo),
                 },
             },
@@ -179,13 +178,13 @@ mod test {
 
         let mut project = Project::new().with_songs(song_count, section_count);
 
-        let sample_id = Uuid::new_v4();
+        let sample = Sample::new();
         let tempo = 142.0;
 
         {
             let song = &mut project.songs[0];
             song.tempo = Tempo::new(tempo);
-            song.sample_id = Some(sample_id);
+            song.sample = Some(sample.clone());
 
             {
                 let section_1 = &mut song.sections[0];
@@ -219,7 +218,7 @@ mod test {
                 data: SequenceData {
                     song_id: Some(song.id),
                     section_id: Some(song.sections[0].id),
-                    sample_id: Some(sample_id),
+                    sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(7.0, tempo),
                 },
             },
@@ -230,7 +229,7 @@ mod test {
                 data: SequenceData {
                     song_id: Some(song.id),
                     section_id: Some(song.sections[1].id),
-                    sample_id: Some(sample_id),
+                    sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(9.0, tempo),
                 },
             },
@@ -241,7 +240,7 @@ mod test {
                 data: SequenceData {
                     song_id: Some(song.id),
                     section_id: Some(song.sections[2].id),
-                    sample_id: Some(sample_id),
+                    sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(15.0, tempo),
                 },
             },

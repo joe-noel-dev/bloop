@@ -17,7 +17,7 @@ export const DisplaySong = ({songId}: Props) => {
   return (
     <div className={styles.container}>
       <div className={styles.waveform}>
-        <Waveform sampleId={song?.sampleId} />
+        <Waveform sample={song?.sample} />
 
         {playbackState?.playing && playbackState?.songId === songId && (
           <ProgressBar

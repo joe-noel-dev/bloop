@@ -3,7 +3,7 @@ import {CoreDataContext} from '../core/CoreData';
 
 export const useSections = () => {
   const {project} = useContext(CoreDataContext);
-  return project?.sections;
+  return project?.songs.flatMap((song) => song.sections);
 };
 
 export const useSectionsById = (sectionIds: string[]) => {
@@ -30,18 +30,27 @@ export const useSectionLength = (sectionId: string) => {
   const sections = useSections();
   let start: number | undefined = undefined;
 
-  sections?.forEach((section) => {
-    if (start !== undefined) {
-      const end = section.start;
-      if (end >= start) {
-        return end - start;
+  console.log('sections: ', sections);
+
+  return (
+    sections?.reduce<number | undefined>((length, section) => {
+      if (length !== undefined) {
+        return length;
       }
-    }
 
-    if (section.id === sectionId) {
-      start = section.start;
-    }
-  });
+      if (start !== undefined) {
+        const end = section.start;
+        if (end >= start) {
+          return end - start;
+        }
+      }
 
-  return 0.0;
+      if (section.id === sectionId) {
+        console.log('start = ', section.start);
+        start = section.start;
+      }
+
+      return undefined;
+    }, undefined) ?? 0.0
+  );
 };
