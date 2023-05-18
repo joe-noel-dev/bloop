@@ -69,7 +69,7 @@ fn beat_position_of_section(song: &Song, section_id: &ID, reference_section_id: 
 }
 
 fn sequence_point_for_section(section: &Section, song: &Song, start_time: Timestamp) -> SequencePoint<SequenceData> {
-    let section_length = song.section_length(&section.id).unwrap_or_default();
+    let section_length = song.section_length(&section.id);
     let section_duration = Timestamp::from_beats(section_length, song.tempo.get_bpm());
     let start_position_in_sample = Timestamp::from_beats(section.start, song.tempo.get_bpm());
 
@@ -100,8 +100,9 @@ mod test {
 
         let mut project = Project::new().with_songs(song_count, section_count);
 
-        let sample = Sample::new();
         let tempo = 123.0;
+        let sample_beat_length = 15.0;
+        let sample = Sample::new().with_beat_length(Tempo::new(tempo), sample_beat_length, 48_000);
 
         {
             let song = &mut project.songs[0];
@@ -157,7 +158,7 @@ mod test {
             },
             SequencePoint {
                 start_time: start_time.incremented_by_beats(9.0, tempo),
-                duration: Timestamp::from_beats(0.0, tempo),
+                duration: Timestamp::from_beats(sample.beat_length() - 10.0, tempo),
                 loop_enabled: false,
                 data: SequenceData {
                     song_id: Some(song_id),
@@ -178,8 +179,9 @@ mod test {
 
         let mut project = Project::new().with_songs(song_count, section_count);
 
-        let sample = Sample::new();
         let tempo = 142.0;
+        let sample_beat_length = 20.0;
+        let sample = Sample::new().with_beat_length(Tempo::new(tempo), sample_beat_length, 48_000);
 
         {
             let song = &mut project.songs[0];
@@ -235,7 +237,7 @@ mod test {
             },
             SequencePoint {
                 start_time: start_time.incremented_by_beats(8.0, tempo),
-                duration: Timestamp::zero(),
+                duration: Timestamp::from_beats(sample.beat_length() - 15.0, tempo),
                 loop_enabled: false,
                 data: SequenceData {
                     song_id: Some(song.id),

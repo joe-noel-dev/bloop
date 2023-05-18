@@ -42,6 +42,6 @@ impl Section {
     }
 
     pub fn is_valid(&self) -> bool {
-        true
+        self.start >= 0.0
     }
 }

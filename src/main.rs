@@ -1,3 +1,5 @@
+#![feature(is_sorted)]
+
 mod api;
 mod audio;
 mod control;

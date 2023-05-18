@@ -43,6 +43,14 @@ impl Song {
         self
     }
 
+    pub fn beat_length(&self) -> f64 {
+        debug_assert!(self.is_valid());
+        match &self.sample {
+            Some(sample) => sample.beat_length(),
+            None => 0.0,
+        }
+    }
+
     pub fn remove_section(mut self, section_id: &ID) -> Self {
         self.sections.retain(|section| section.id != *section_id);
         self
@@ -50,6 +58,8 @@ impl Song {
 
     pub fn is_valid(&self) -> bool {
         !self.id.is_nil()
+            && !self.sections.is_empty()
+            && self.sections.iter().is_sorted_by(|a, b| a.start.partial_cmp(&b.start))
     }
 
     pub fn find_section(&self, section_id: &ID) -> Option<&Section> {
@@ -60,23 +70,32 @@ impl Song {
         self.sections.iter_mut().find(|section| section.id == *section_id)
     }
 
-    pub fn section_length(&self, section_id: &ID) -> Option<f64> {
-        let mut start: Option<f64> = None;
+    pub fn section_length(&self, section_id: &ID) -> f64 {
+        let index = self
+            .sections
+            .iter()
+            .position(|section| section.id == *section_id)
+            .expect("Section not found");
 
-        for section in self.sections.iter() {
-            if let Some(start) = start {
-                let end = section.start;
-                if end >= start {
-                    return Some(end - start);
-                }
-            }
+        let section = self.sections.get(index);
+        let next_section = self.sections.get(index + 1);
 
-            if section.id == *section_id {
-                start = Some(section.start);
-            }
+        let mut start = 0.0;
+        let mut end = self.beat_length();
+
+        if let Some(section) = section {
+            start = section.start;
         }
 
-        None
+        if let Some(next_section) = next_section {
+            end = next_section.start;
+        }
+
+        if start > end {
+            return 0.0;
+        }
+
+        end - start
     }
 }
 
@@ -89,6 +108,16 @@ mod tests {
     #[test]
     fn calculates_section_lengths() {
         let mut song = Song::default();
+
+        let beat_length = 100.0;
+
+        let mut sample = Sample::new();
+        sample.sample_rate = 48_000;
+        sample.tempo = Tempo::new(120.0);
+        sample.sample_count = (sample.sample_rate as f64 * beat_length / sample.tempo.beat_frequency()).ceil() as i64;
+
+        song.sample = Some(sample);
+
         let mut section_1 = Section::new();
         section_1.start = 23.0;
 
@@ -99,8 +128,8 @@ mod tests {
         section_3.start = 89.0;
         song.sections = vec![section_1.clone(), section_2.clone(), section_3.clone()];
 
-        assert_relative_eq!(song.section_length(&section_1.id).unwrap(), 25.0);
-        assert_relative_eq!(song.section_length(&section_2.id).unwrap(), 41.0);
-        assert!(song.section_length(&section_3.id).is_none());
+        assert_relative_eq!(song.section_length(&section_1.id), 25.0);
+        assert_relative_eq!(song.section_length(&section_2.id), 41.0);
+        assert_relative_eq!(song.section_length(&section_3.id), 11.0);
     }
 }

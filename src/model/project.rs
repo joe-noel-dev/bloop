@@ -89,6 +89,7 @@ impl Project {
         };
 
         *old_song = song.clone();
+
         Ok(self)
     }
 
@@ -179,6 +180,10 @@ impl Project {
             }
         }
 
+        if !self.is_valid() {
+            return Err(anyhow!("Project is in an invalid state"));
+        }
+
         Ok(self)
     }
 
@@ -261,7 +266,15 @@ impl Project {
             .filter_map(|song| song.find_section_mut(&new_section.id))
             .for_each(|section| *section = new_section.clone());
 
+        if !self.is_valid() {
+            return Err(anyhow!("Project in an invalid state"));
+        }
+
         Ok(self)
+    }
+
+    fn is_valid(&self) -> bool {
+        self.songs.iter().all(|song| song.is_valid())
     }
 
     pub fn replace_sample(mut self, sample: &Sample) -> anyhow::Result<Self> {

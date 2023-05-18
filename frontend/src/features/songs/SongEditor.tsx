@@ -75,6 +75,7 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
           <SectionEditor
             key={section.id}
             section={section}
+            song={song}
             sample={song.sample}
             editing={editingSectionId === section.id}
             onRequestEdit={(shouldEdit) =>
