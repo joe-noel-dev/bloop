@@ -1,6 +1,6 @@
 pub mod convert;
-#[allow(unused_variables)]
 pub mod manager;
+mod metronome;
 mod process;
 mod sampler_converter;
 mod sequence;

@@ -1,15 +1,17 @@
 use rawdio::Timestamp;
 
-use crate::model::{Project, Section, Song, ID};
+use crate::model::{Project, Section, Song, Tempo, ID};
 
 use super::sequence::{Sequence, SequencePoint};
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct SequenceData {
     pub song_id: Option<ID>,
     pub section_id: Option<ID>,
     pub sample_id: Option<ID>,
     pub position_in_sample: Timestamp,
+    pub metronome: bool,
+    pub tempo: Tempo,
 }
 
 pub fn generate_sequence_for_song(
@@ -82,6 +84,8 @@ fn sequence_point_for_section(section: &Section, song: &Song, start_time: Timest
             section_id: Some(section.id),
             sample_id: song.sample.as_ref().map(|sample| sample.id),
             position_in_sample: start_position_in_sample,
+            metronome: section.metronome,
+            tempo: song.tempo,
         },
     }
 }
@@ -143,6 +147,8 @@ mod test {
                     section_id: Some(song.sections[0].id),
                     sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(1.0, tempo),
+                    metronome: false,
+                    tempo: Tempo::new(tempo),
                 },
             },
             SequencePoint {
@@ -154,6 +160,8 @@ mod test {
                     section_id: Some(song.sections[1].id),
                     sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(5.0, tempo),
+                    metronome: false,
+                    tempo: Tempo::new(tempo),
                 },
             },
             SequencePoint {
@@ -165,6 +173,8 @@ mod test {
                     section_id: Some(song.sections[2].id),
                     sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(10.0, tempo),
+                    metronome: false,
+                    tempo: Tempo::new(tempo),
                 },
             },
         ];
@@ -222,6 +232,8 @@ mod test {
                     section_id: Some(song.sections[0].id),
                     sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(7.0, tempo),
+                    metronome: false,
+                    tempo: Tempo::new(tempo),
                 },
             },
             SequencePoint {
@@ -233,6 +245,8 @@ mod test {
                     section_id: Some(song.sections[1].id),
                     sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(9.0, tempo),
+                    metronome: false,
+                    tempo: Tempo::new(tempo),
                 },
             },
             SequencePoint {
@@ -244,9 +258,14 @@ mod test {
                     section_id: Some(song.sections[2].id),
                     sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(15.0, tempo),
+                    metronome: false,
+                    tempo: Tempo::new(tempo),
                 },
             },
         ];
+
+        println!("Expected: {expected_values:#?}");
+        println!("Actual: {:#?}", sequence.points);
 
         assert_eq!(sequence.points, expected_values);
     }

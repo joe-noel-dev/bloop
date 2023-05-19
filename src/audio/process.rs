@@ -8,8 +8,10 @@ use std::{fs::File, io::BufReader, path::Path};
 
 const DEFAULT_SAMPLE_RATE: u32 = 44100;
 
+#[allow(dead_code)]
 pub struct Process {
-    _output_stream: Stream,
+    output_stream: Stream,
+    output_channel_count: usize,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
@@ -124,6 +126,9 @@ impl Process {
 
         stream.play().expect("Couldn't start output stream");
 
-        Self { _output_stream: stream }
+        Self {
+            output_stream: stream,
+            output_channel_count: channel_count,
+        }
     }
 }

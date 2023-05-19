@@ -5,6 +5,12 @@ pub struct Tempo {
     bpm: f64,
 }
 
+impl Default for Tempo {
+    fn default() -> Self {
+        Self { bpm: 120.0 }
+    }
+}
+
 impl Tempo {
     pub fn min() -> f64 {
         30.0
