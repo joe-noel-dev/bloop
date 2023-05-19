@@ -130,6 +130,7 @@ export const Waveform = (props: Props) => {
         props.start || 0,
         props.end || 1
       );
+
       context.fillStyle = '#ffab91';
       context.fill(path);
     }

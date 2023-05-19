@@ -51,6 +51,12 @@ body {
   --neutral-7: hsl(240, 5%, 12.5%);
   --neutral-8: black;
 
+  --palette-1: #bcd8c1;
+  --palette-2: #7f636e;
+  --palette-3: #388697;
+  --palette-4: #cc2936;
+  --palette-5: #a93f55;
+
   --text-on-background: black;
   --text-on-primary: black;
   --text-on-primary-light: black;

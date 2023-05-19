@@ -52,15 +52,23 @@ export const SectionEditor = ({
 
   const isSelected = selectedSection === section.id;
 
+  const isQueued =
+    playbackState?.playing && playbackState.queuedSectionId === section.id;
+
   if (!section) {
     return <></>;
   }
 
+  const containerStyles = [
+    styles.container,
+    isSelected && styles['container-selected'],
+    isPlaying && styles['container-playing'],
+    isQueued && styles['container-queued'],
+  ];
+
   return (
     <div
-      className={`${styles.container} ${
-        isSelected && styles['container-selected']
-      }`}
+      className={containerStyles.join(' ')}
       onClick={(event) => {
         core?.sendRequest(selectSectionRequest(section.id));
         event.stopPropagation();

@@ -20,7 +20,7 @@ export const Songs = ({editEnabled}: Props) => {
       {songs?.map((song) => (
         <div key={song.id} className={styles.song}>
           <SongHeader songId={song.id} editEnabled={editEnabled} />
-          <Song songId={song.id} editEnabled={editEnabled} />
+          <Song song={song} editEnabled={editEnabled} />
         </div>
       ))}
       {editEnabled && (

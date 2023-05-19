@@ -3,7 +3,9 @@
   bottom: 0;
   height: 5px;
   left: 0;
+  right: 0;
   background: var(--colour);
-  width: var(--progress);
+  transform-origin: bottom left;
+  transform: scaleX(var(--progress));
   transition: width 0.05;
 }
