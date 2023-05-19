@@ -10,18 +10,10 @@ pub struct Song {
     pub id: ID,
     pub name: String,
     pub tempo: Tempo,
-    pub metronome: Metronome,
     pub sections: Vec<Section>,
-    pub sample: Option<Sample>,
-}
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub enum Metronome {
-    Default,
-    CountIn,
-    On,
-    Off,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sample: Option<Sample>,
 }
 
 impl Default for Song {
@@ -30,7 +22,6 @@ impl Default for Song {
             id: ID::new_v4(),
             name: "Song".to_string(),
             tempo: Tempo::new(120.0),
-            metronome: Metronome::Default,
             sections: vec![],
             sample: None,
         }
