@@ -217,6 +217,10 @@ impl ProjectStore {
 
         let samples_directory = self.directory_for_samples(project_id);
 
+        if !samples_directory.is_dir() {
+            return Err(anyhow!("Samples directory doesn't exist for project: {}", project_id));
+        }
+
         let mut read_dir = tokio::fs::read_dir(samples_directory)
             .await
             .with_context(|| format!("Error reading samples directory: {project_id}"))?;

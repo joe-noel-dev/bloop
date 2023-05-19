@@ -1,0 +1,77 @@
+{
+  "info": {
+    "id": "a9a5f4ef-d182-43c8-a82d-d342054511f6",
+    "name": "Live Set",
+    "version": "1",
+    "lastSaved": 1684501297025
+  },
+  "songs": [
+    {
+      "id": "a7f9f25f-38b9-4ac3-a277-c1df66e59650",
+      "name": "Eyes Hang Low",
+      "tempo": {
+        "bpm": 138
+      },
+      "sections": [
+        {
+          "id": "57c27d09-b4ad-484f-83a3-c0ed2c20b003",
+          "name": "Intro",
+          "start": 0,
+          "loop": false
+        },
+        {
+          "id": "7975ea2c-b37b-40d0-9738-65d7b88cb899",
+          "name": "Verse",
+          "start": 40,
+          "loop": false
+        },
+        {
+          "id": "c3dd6607-e99a-4122-aeb7-8a207a914803",
+          "name": "Chorus",
+          "start": 112,
+          "loop": false
+        },
+        {
+          "id": "4670c2f3-5e74-4e51-a45f-e6850f63a0e2",
+          "name": "Post Chorus",
+          "start": 192,
+          "loop": false
+        },
+        {
+          "id": "58949bce-ca36-4dbc-9e34-28eb87379653",
+          "name": "Verse 2",
+          "start": 208,
+          "loop": false
+        },
+        {
+          "id": "6e8b0df2-48fe-4750-9a97-fe3ddfdc4197",
+          "name": "Chorus",
+          "start": 280,
+          "loop": false
+        },
+        {
+          "id": "2e93f63e-d670-4271-8e78-fecad85d6305",
+          "name": "Middle",
+          "start": 360,
+          "loop": false
+        },
+        {
+          "id": "3783ff97-e546-45c9-81cd-73cb18e6faf1",
+          "name": "Chorus",
+          "start": 400,
+          "loop": false
+        },
+        {
+          "id": "f06a8aa0-bb1f-42c7-85ab-72462e24c56c",
+          "name": "Outro",
+          "start": 528,
+          "loop": false
+        }
+      ]
+    }
+  ],
+  "selections": {
+    "song": "a7f9f25f-38b9-4ac3-a277-c1df66e59650",
+    "section": "57c27d09-b4ad-484f-83a3-c0ed2c20b003"
+  }
+}
