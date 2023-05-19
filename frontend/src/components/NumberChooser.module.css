@@ -7,6 +7,8 @@
   border-radius: 8px;
   border: var(--border);
 
+  background: var(--neutral-0);
+
   overflow: hidden;
 }
 
