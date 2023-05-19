@@ -8,6 +8,11 @@
   border-left: 4px solid var(--section-border-color);
   overflow-x: hidden;
   padding: var(--unit-space);
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--unit-space);
 }
 
 .section-selected {

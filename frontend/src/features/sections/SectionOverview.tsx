@@ -1,3 +1,4 @@
+import {FiRepeat} from 'react-icons/fi';
 import {selectSectionRequest} from '../../api/request';
 import {ProgressBar} from '../../components/ProgressBar';
 import {getSampleBeatLength} from '../../model/sample';
@@ -71,14 +72,15 @@ export const SectionOverview = ({song}: Props) => {
               event.stopPropagation();
             }}
           >
-            <div
+            <label
               className={sectionStyles.join(' ')}
               style={{
                 transform: `translateX(${start * 100}%)`,
               }}
             >
-              <label>{section.name}</label>
-            </div>
+              {section.name} {section.loop && <FiRepeat />}
+            </label>
+
             <div
               className={styles['progress-bar-container']}
               style={
