@@ -128,23 +128,19 @@ where
     pub fn cancel_loop_at_time(&self, time: Timestamp) -> Self {
         let mut sequence = self.clone();
 
-        let mut offset = Timestamp::zero();
+        let playing_point = match sequence.points.iter_mut().find(|point| point.is_playing_at_time(time)) {
+            Some(point) => point,
+            None => return sequence,
+        };
 
-        sequence.points.iter_mut().for_each(|point| {
-            if point.is_playing_at_time(time) && offset == Timestamp::zero() {
-                point.loop_enabled = false;
+        playing_point.loop_enabled = false;
 
-                let completed_loop_count = point.completed_loop_count(time);
+        let completed_loop_count = playing_point.completed_loop_count(time);
+        let offset = Timestamp::from_seconds(completed_loop_count * playing_point.duration.as_seconds());
 
-                let previous_start_time = point.start_time;
-                point.start_time =
-                    point.start_time + Timestamp::from_seconds(completed_loop_count * point.duration.as_seconds());
-
-                offset = point.start_time - previous_start_time;
-            } else {
-                point.start_time = point.start_time + offset;
-            }
-        });
+        for point in sequence.points.iter_mut() {
+            point.start_time = point.start_time + offset;
+        }
 
         sequence
     }
@@ -256,7 +252,7 @@ mod test {
 
         let expected = vec![
             SequencePoint {
-                start_time: Timestamp::from_seconds(1.0),
+                start_time: Timestamp::from_seconds(5.0),
                 duration: Timestamp::from_seconds(2.0),
                 loop_enabled: false,
                 data: {},

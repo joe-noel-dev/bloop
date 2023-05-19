@@ -202,7 +202,8 @@ impl Sequencer {
 
                     sampler.enable_loop_at_time(sequence_point.start_time, loop_start, loop_end);
                 } else {
-                    sampler.stop_at_time(sequence_point.end_time());
+                    // Adjust the stop time to ensure that stop events are processed before start events
+                    sampler.stop_at_time(sequence_point.end_time() - Timestamp::from_seconds(0.001));
                 }
             }
         }
