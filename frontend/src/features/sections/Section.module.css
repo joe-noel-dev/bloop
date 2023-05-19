@@ -6,11 +6,12 @@
 
   position: relative;
 
-  background: var(--neutral-0);
+  background: var(--section-background);
+
   color: var(--neutral-8);
 
+  border: 1px solid var(--section-border-color);
   border-radius: var(--border-radius);
-  border: 1px solid var(--neutral-2);
 
   display: flex;
 }
@@ -20,14 +21,14 @@
 }
 
 .container-playing {
-  background: var(--primary-light);
+  background: var(--section-background-playing);
   color: var(--text-on-primary-light);
 }
 
 .container-cued {
-  background: var(--neutral-1);
+  background: var(--section-background-queued);
 }
 
 .container-selected {
-  border-color: var(--neutral-8);
+  border-color: var(--section-border-color-selected);
 }

@@ -1,16 +1,15 @@
 import {Waveform} from '../waveforms/Waveform';
-import {Sections} from '../sections/Sections';
 import {ProgressBar} from '../../components/ProgressBar';
 import {usePlaybackState, useProgress} from '../transport/transport-hooks';
-import {useSong} from './song-hooks';
 import styles from './DisplaySong.module.css';
+import {SectionOverview} from '../sections/SectionOverview';
+import {Song} from '../../model/song';
 
 interface Props {
-  songId: string;
+  song: Song;
 }
 
-export const DisplaySong = ({songId}: Props) => {
-  const song = useSong(songId);
+export const DisplaySong = ({song}: Props) => {
   const progress = useProgress();
   const playbackState = usePlaybackState();
 
@@ -19,7 +18,7 @@ export const DisplaySong = ({songId}: Props) => {
       <div className={styles.waveform}>
         <Waveform sample={song?.sample} />
 
-        {playbackState?.playing && playbackState?.songId === songId && (
+        {playbackState?.playing && playbackState?.songId === song.id && (
           <ProgressBar
             progress={progress?.songProgress || 0}
             colour={'var(--primary)'}
@@ -27,7 +26,7 @@ export const DisplaySong = ({songId}: Props) => {
         )}
       </div>
 
-      <Sections sections={song?.sections || []} />
+      <SectionOverview song={song} />
     </div>
   );
 };

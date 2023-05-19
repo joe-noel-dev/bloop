@@ -1,7 +1,6 @@
 import {useState, forwardRef} from 'react';
 import {useCore} from '../core/use-core';
 import {SectionEditor} from '../sections/SectionEditor';
-import {useSong} from './song-hooks';
 import {Sample} from '../samples/Sample';
 import {FiPlus} from 'react-icons/fi';
 import {
@@ -15,19 +14,17 @@ import {
 } from '../../api/request';
 import {v4 as uuidv4} from 'uuid';
 import styles from './SongEditor.module.css';
+import {Song} from '../../model/song';
+import {SectionOverview} from '../sections/SectionOverview';
 
 interface Props {
-  songId: string;
+  song: Song;
 }
 
 export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
-  const song = useSong(props.songId);
   const core = useCore();
   const [editingSectionId, setEditingSectionId] = useState('');
-
-  if (!song) {
-    return <div className={styles.container} />;
-  }
+  const song = props.song;
 
   const addSampleToSong = async (file: File) => {
     const uploadId = uuidv4();
@@ -60,10 +57,12 @@ export const SongEditor = forwardRef<HTMLDivElement, Props>((props, ref) => {
 
   return (
     <div className={styles.container} ref={ref}>
+      <SectionOverview song={song} />
+
       <Sample
         editable={true}
         sample={song.sample}
-        songId={props.songId}
+        song={song}
         onFileSelected={(file) => addSampleToSong(file)}
         onRemoveRequested={() =>
           core?.sendRequest(removeSampleRequest(song.id))

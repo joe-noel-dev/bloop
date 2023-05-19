@@ -1,12 +1,20 @@
 .container {
-  border: 1px solid var(--neutral-2);
+  border: 1px solid var(--section-border-color);
   border-radius: var(--border-radius);
   padding: var(--unit-space-x2);
   position: relative;
 }
 
 .container-selected {
-  border-color: var(--neutral-8);
+  border-color: var(--section-border-color-selected);
+}
+
+.container-playing {
+  background: var(--section-background-playing);
+}
+
+.container-queued {
+  background: var(--section-background-queued);
 }
 
 .container h3 {

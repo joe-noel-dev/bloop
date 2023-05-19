@@ -3,15 +3,15 @@ import {DisplaySong} from './DisplaySong';
 import {SongCard} from './SongCard';
 import {SongEditor} from './SongEditor';
 import {selectSongRequest} from '../../api/request';
-import {useSelectedSongId, useSong} from './song-hooks';
+import {useSelectedSongId} from './song-hooks';
+import {Song as ModelSong} from '../../model/song';
 
 interface SongProps {
-  songId: string;
+  song: ModelSong;
   editEnabled: boolean;
 }
 
-export const Song = ({songId, editEnabled}: SongProps) => {
-  const song = useSong(songId);
+export const Song = ({song, editEnabled}: SongProps) => {
   const core = useCore();
   const selectedSongId = useSelectedSongId();
 
@@ -20,10 +20,10 @@ export const Song = ({songId, editEnabled}: SongProps) => {
   return (
     <SongCard
       isSelected={isSelected}
-      onSelectSong={() => core?.sendRequest(selectSongRequest(songId))}
+      onSelectSong={() => core?.sendRequest(selectSongRequest(song.id))}
     >
-      {!editEnabled && <DisplaySong songId={songId} />}
-      {editEnabled && <SongEditor songId={songId} />}
+      {!editEnabled && <DisplaySong song={song} />}
+      {editEnabled && <SongEditor song={song} />}
     </SongCard>
   );
 };

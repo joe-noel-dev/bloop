@@ -68,10 +68,16 @@ impl Sequencer {
     }
 
     pub fn stop(&mut self, samplers: &mut HashMap<ID, Sampler>) {
+        self.queued_section = None;
+        self.queued_song = None;
+
         self.set_sequence(Sequence::default(), samplers);
     }
 
     pub fn play(&mut self, project: Project, samplers: &mut HashMap<ID, Sampler>) {
+        self.queued_section = None;
+        self.queued_song = None;
+
         self.project = project;
 
         let selected_song_id = match self.project.selections.song {

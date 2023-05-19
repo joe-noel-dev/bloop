@@ -11,11 +11,12 @@ import {usePlaybackState, useProgress} from '../transport/transport-hooks';
 import styles from './Sample.module.css';
 import {SecondaryButton} from '../../components/Button';
 import {Sample as ModelSample} from '../../model/sample';
+import {Song} from '../../model/song';
 
 interface SampleProps {
   editable: boolean;
   sample?: ModelSample;
-  songId: string;
+  song: Song;
   onFileSelected?(file: File): void;
   onRemoveRequested?(): void;
 }
@@ -23,7 +24,7 @@ interface SampleProps {
 export const Sample = ({
   editable,
   sample,
-  songId,
+  song,
   onFileSelected,
   onRemoveRequested,
 }: SampleProps) => {
@@ -71,7 +72,7 @@ export const Sample = ({
       <div className={styles['waveform']}>
         <Waveform sample={sample} />
 
-        {playbackState?.playing && playbackState.songId === songId && (
+        {playbackState?.playing && playbackState.songId === song.id && (
           <ProgressBar
             progress={progress?.songProgress || 0}
             colour={'var(--primary)'}
