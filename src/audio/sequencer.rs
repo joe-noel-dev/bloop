@@ -32,6 +32,10 @@ impl Sequencer {
         }
     }
 
+    pub fn sequence_point_at_time(&self, time: Timestamp) -> Option<SequencePoint<SequenceData>> {
+        self.sequence.point_at_time(time)
+    }
+
     pub fn get_playback_state(&mut self) -> PlaybackState {
         let current_point = self.sequence.point_at_time(self.current_time);
 
@@ -74,7 +78,7 @@ impl Sequencer {
         self.set_sequence(Sequence::default(), samplers);
     }
 
-    pub fn play(&mut self, project: Project, samplers: &mut HashMap<ID, Sampler>) {
+    pub fn play(&mut self, start_time: Timestamp, project: Project, samplers: &mut HashMap<ID, Sampler>) {
         self.queued_section = None;
         self.queued_song = None;
 
@@ -90,28 +94,23 @@ impl Sequencer {
             None => return,
         };
 
-        let sequence = generate_sequence_for_song(
-            self.current_time,
-            &self.project,
-            &selected_song_id,
-            &selected_section_id,
-        );
+        let sequence = generate_sequence_for_song(start_time, &self.project, &selected_song_id, &selected_section_id);
 
         self.set_sequence(sequence, samplers);
     }
 
-    pub fn enter_loop(&mut self, samplers: &mut HashMap<ID, Sampler>) {
-        let new_sequence = self.sequence.enable_loop_at_time(self.current_time);
+    pub fn enter_loop(&mut self, at_time: Timestamp, samplers: &mut HashMap<ID, Sampler>) {
+        let new_sequence = self.sequence.enable_loop_at_time(at_time);
         self.set_sequence(new_sequence, samplers);
     }
 
-    pub fn exit_loop(&mut self, samplers: &mut HashMap<ID, Sampler>) {
-        let new_sequence = self.sequence.cancel_loop_at_time(self.current_time);
+    pub fn exit_loop(&mut self, at_time: Timestamp, samplers: &mut HashMap<ID, Sampler>) {
+        let new_sequence = self.sequence.cancel_loop_at_time(at_time);
         self.set_sequence(new_sequence, samplers);
     }
 
-    pub fn queue(&mut self, song_id: &ID, section_id: &ID, samplers: &mut HashMap<ID, Sampler>) {
-        let transition_time = self.sequence.next_transition(self.current_time);
+    pub fn queue(&mut self, after_time: Timestamp, song_id: &ID, section_id: &ID, samplers: &mut HashMap<ID, Sampler>) {
+        let transition_time = self.sequence.next_transition(after_time);
         let existing_sequence = self.sequence.truncate_to_time(transition_time);
         let new_sequence = generate_sequence_for_song(transition_time, &self.project, song_id, section_id);
         let sequence = existing_sequence.append(new_sequence);

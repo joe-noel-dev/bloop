@@ -4,4 +4,5 @@ export interface Section extends Entity {
   name: string;
   start: number;
   loop: boolean;
+  metronome: boolean;
 }

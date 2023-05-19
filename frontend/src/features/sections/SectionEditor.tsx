@@ -223,6 +223,14 @@ const Properties = ({section}: PropertiesProps) => {
           onChange={(loop) => submitSection({loop})}
         />
       </div>
+
+      <div className={styles['edit-group']}>
+        <h3>Metronome</h3>
+        <ToggleSwitch
+          isOn={section.metronome}
+          onChange={(metronome) => submitSection({metronome})}
+        />
+      </div>
     </>
   );
 };

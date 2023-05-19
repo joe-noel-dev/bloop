@@ -1,4 +1,5 @@
 use super::{
+    metronome::Metronome,
     process::Process,
     sampler_converter::{SampleConversionResult, SampleConverter},
     sequencer::Sequencer,
@@ -10,7 +11,7 @@ use crate::{
 };
 use futures::StreamExt;
 use futures_channel::mpsc;
-use rawdio::{create_engine, Context, Gain, Sampler};
+use rawdio::{create_engine_with_options, Context, EngineOptions, Mixer, Sampler, Timestamp};
 use std::{
     collections::{HashMap, HashSet},
     path::{Path, PathBuf},
@@ -29,9 +30,10 @@ pub trait Audio {
     fn toggle_play(&mut self);
 }
 
+#[allow(dead_code)]
 pub struct AudioManager {
     context: Box<dyn Context>,
-    _process: Process,
+    realtime_process: Process,
 
     sample_converter: SampleConverter,
     conversion_rx: mpsc::Receiver<SampleConversionResult>,
@@ -40,27 +42,40 @@ pub struct AudioManager {
     playback_state: PlaybackState,
     progress: Progress,
     samplers: HashMap<ID, Sampler>,
+    metronome: Metronome,
     project: Project,
-    output_gain: Gain,
+    mixer: Mixer,
     sequencer: Sequencer,
 }
 
 impl AudioManager {
     pub fn new(response_tx: broadcast::Sender<Response>, preferences_dir: &Path) -> Self {
         let sample_rate = 44_100;
-        let (mut context, process) = create_engine(sample_rate);
+        let maximum_channel_count = 3;
+
+        let (mut context, process) = create_engine_with_options(
+            EngineOptions::default()
+                .with_sample_rate(sample_rate)
+                .with_maximum_channel_count(maximum_channel_count),
+        );
+
+        let metronome = Metronome::new(context.as_ref());
 
         context.start();
 
         let (conversion_tx, conversion_rx) = mpsc::channel(64);
 
-        let channel_count = 2;
-        let gain = Gain::new(context.as_ref(), channel_count);
-        gain.node.connect_to_output();
+        let realtime_process = Process::new(process, preferences_dir);
+
+        let mixer = Mixer::unity(context.as_ref(), maximum_channel_count);
+
+        metronome.output_node().connect_channels_to(&mixer.node, 0, 2, 1);
+
+        mixer.node.connect_to_output();
 
         Self {
             context,
-            _process: Process::new(process, preferences_dir),
+            realtime_process,
             sample_converter: SampleConverter::new(conversion_tx, sample_rate),
             conversion_rx,
             response_tx,
@@ -68,8 +83,9 @@ impl AudioManager {
             playback_state: PlaybackState::default(),
             progress: Progress::default(),
             samplers: HashMap::new(),
+            metronome,
             project: Project::empty(),
-            output_gain: gain,
+            mixer,
             sequencer: Sequencer::default(),
         }
     }
@@ -82,13 +98,19 @@ impl AudioManager {
                 Some(conversion_result) = self.conversion_rx.next() => {
                     self.on_sample_converted(conversion_result)
                 },
-                _ = interval.tick() => {
-                    self.context.process_notifications();
-                    self.sequencer.set_current_time(self.context.current_time());
-                    self.notify_playback_state();
-                },
+                _ = interval.tick() =>
+                    self.interval_tick()
+                ,
             }
         }
+    }
+
+    fn interval_tick(&mut self) {
+        let current_time = self.context.current_time();
+        self.context.process_notifications();
+        self.sequencer.set_current_time(current_time);
+        self.notify_playback_state();
+        self.metronome.schedule(&current_time, &self.sequencer);
     }
 
     fn notify_playback_state(&mut self) {
@@ -126,7 +148,7 @@ impl AudioManager {
 
         let event_channel_capacity = 1024;
         let sampler = Sampler::new_with_event_capacity(self.context.as_ref(), audio_data, event_channel_capacity);
-        sampler.node.connect_to(&self.output_gain.node);
+        sampler.node.connect_to(&self.mixer.node);
 
         self.samplers.insert(result.sample_id, sampler);
     }
@@ -184,7 +206,7 @@ impl AudioManager {
 
     fn remove_sample(&mut self, sample_id: &ID) {
         if let Some(mut sampler) = self.samplers.remove(sample_id) {
-            sampler.node.disconnect_from_node(&self.output_gain.node);
+            sampler.node.disconnect_from_node(&self.mixer.node);
             sampler.stop_now();
         }
     }
@@ -194,32 +216,33 @@ impl AudioManager {
         self.project = project.clone();
         self.remove_samples(project);
     }
+
+    fn lookahead_time(&self) -> Timestamp {
+        self.context.current_time().incremented_by_seconds(0.001)
+    }
 }
 
 impl Audio for AudioManager {
     fn play(&mut self) {
-        self.sequencer.set_current_time(self.context.current_time());
-        self.sequencer.play(self.project.clone(), &mut self.samplers);
+        self.sequencer
+            .play(self.lookahead_time(), self.project.clone(), &mut self.samplers);
     }
 
     fn stop(&mut self) {
-        self.sequencer.set_current_time(self.context.current_time());
         self.sequencer.stop(&mut self.samplers);
     }
 
     fn enter_loop(&mut self) {
-        self.sequencer.set_current_time(self.context.current_time());
-        self.sequencer.enter_loop(&mut self.samplers);
+        self.sequencer.enter_loop(self.lookahead_time(), &mut self.samplers);
     }
 
     fn exit_loop(&mut self) {
-        self.sequencer.set_current_time(self.context.current_time());
-        self.sequencer.exit_loop(&mut self.samplers);
+        self.sequencer.exit_loop(self.lookahead_time(), &mut self.samplers);
     }
 
     fn queue(&mut self, song_id: &ID, section_id: &ID) {
-        self.sequencer.set_current_time(self.context.current_time());
-        self.sequencer.queue(song_id, section_id, &mut self.samplers);
+        self.sequencer
+            .queue(self.lookahead_time(), song_id, section_id, &mut self.samplers);
     }
 
     fn toggle_loop(&mut self) {

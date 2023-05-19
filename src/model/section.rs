@@ -10,6 +10,9 @@ pub struct Section {
     pub start: f64,
     #[serde(rename = "loop")]
     pub looping: bool,
+
+    #[serde(default)]
+    pub metronome: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -33,6 +36,7 @@ impl Section {
             name: "Section".to_string(),
             start: 0.0,
             looping: false,
+            metronome: false,
         }
     }
 
