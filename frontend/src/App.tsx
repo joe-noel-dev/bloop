@@ -24,7 +24,11 @@ const App = () => {
   const [editEnabled, setEditEnabled] = useState(false);
 
   useEffect(() => {
-    const core = createCore({
+    if (core) {
+      core.disconnect();
+    }
+
+    const newCore = createCore({
       onConnected: () => setIsConnected(true),
       onDisconnected: () => setIsConnected(false),
       onProject: setProject,
@@ -34,7 +38,7 @@ const App = () => {
       onWaveform: setWaveforms,
     });
 
-    setCore(core);
+    setCore(newCore);
   }, []);
 
   if (!core) {

@@ -27,14 +27,21 @@ interface CoreCallbacks {
 }
 
 export const createCore = (callbacks: CoreCallbacks) => {
-  let socket: undefined | WebSocket = undefined;
+  let socket: null | WebSocket = null;
 
   let uploadPromises: {[uploadId: string]: () => void} = {};
   let waitingAcks: string[] = [];
+  let pendingRequests: Request[] = [];
 
   let waveforms = new Map<string, WaveformData>();
 
-  const sendRequest = (request: Request) => socket?.send(serialize(request));
+  const sendRequest = (request: Request) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket?.send(serialize(request));
+    } else {
+      pendingRequests.push(request);
+    }
+  };
 
   const reconnect = () => {
     if (!socket) {
@@ -98,33 +105,29 @@ export const createCore = (callbacks: CoreCallbacks) => {
   const onOpen = () => {
     callbacks.onConnected();
     sendRequest(getAllRequest());
+
+    pendingRequests.forEach(sendRequest);
+    pendingRequests = [];
+
     console.log('Connected to core');
   };
 
   const onClose = () => {
     callbacks.onDisconnected();
-    socket = undefined;
+    socket = null;
     console.log('Disconnected from core');
   };
 
   const onError = () => {
     socket?.close();
-    socket = undefined;
+    socket = null;
+  };
+
+  const disconnect = () => {
+    socket?.close();
   };
 
   reconnect();
-
-  setInterval(() => {
-    if (socket && socket.bufferedAmount > 0) {
-      console.log(`${socket.bufferedAmount} bytes in queue`);
-    }
-  }, 1000);
-
-  setInterval(() => {
-    if (!socket) {
-      reconnect();
-    }
-  }, 5000);
 
   const waitForUploadAck = (uploadId: string) => {
     return new Promise<void>((resolve) => {
@@ -139,6 +142,8 @@ export const createCore = (callbacks: CoreCallbacks) => {
   return {
     sendRequest,
     waitForUploadAck,
+    disconnect,
+    reconnect,
   };
 };
 
