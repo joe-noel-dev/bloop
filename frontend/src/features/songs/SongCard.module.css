@@ -7,4 +7,6 @@
 
   background: white;
   overflow: hidden;
+
+  box-shadow: var(--shadow-level-1);
 }

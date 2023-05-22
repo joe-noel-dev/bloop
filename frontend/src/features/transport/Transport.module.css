@@ -4,7 +4,7 @@
 
   background: var(--primary-light);
 
-  box-shadow: var(--shadow-level-1);
+  box-shadow: var(--shadow-level-2);
 
   display: grid;
   grid-template-rows: auto;
