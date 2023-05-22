@@ -10,3 +10,12 @@
 .message {
   font-size: x-large;
 }
+
+.connect-button {
+  font-size: x-large;
+  box-shadow: var(--shadow-level-2);
+}
+
+.connect-button:active {
+  box-shadow: var(--shadow-level-1);
+}
