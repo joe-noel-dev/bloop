@@ -1,12 +1,17 @@
+use std::{fs::File, io::BufReader, path::Path};
+
 use midir::{MidiInput, MidiInputConnection};
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 
 use crate::midi::matcher::ExactMatcher;
 
 use super::{action::Action, matcher::Matcher};
 
+#[derive(Default)]
+#[allow(dead_code)]
 pub struct MidiManager {
-    _input_connection: Option<MidiInputConnection<Context>>,
+    input_connection: Option<MidiInputConnection<Context>>,
 }
 
 struct Mapping {
@@ -18,7 +23,11 @@ struct Context {
     action_tx: mpsc::Sender<Action>,
 }
 
-const DESIRED_INPUT_NAME: &str = "iCON G_Boar V1.03";
+#[derive(Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Preferences {
+    input_device: Option<String>,
+}
 
 fn get_mappings() -> Vec<Mapping> {
     vec![
@@ -80,14 +89,21 @@ impl MidiManager {
         println!();
     }
 
-    pub fn new(action_tx: mpsc::Sender<Action>) -> Self {
+    pub fn new(action_tx: mpsc::Sender<Action>, preferences_dir: &Path) -> Self {
         let midi_input = MidiInput::new("Bloop").expect("Unable to connect to MIDI backend");
+
+        let preferences = read_preferences(preferences_dir).unwrap_or_default();
+
+        let desired_input_device_name = match preferences.input_device {
+            Some(input_device) => input_device,
+            None => return Self::default(),
+        };
 
         Self::print_midi_inputs(&midi_input);
 
         let ports = midi_input.ports();
         let port = ports.iter().find(|port| match midi_input.port_name(port) {
-            Ok(name) => name.contains(DESIRED_INPUT_NAME),
+            Ok(name) => name.contains(&desired_input_device_name),
             Err(_) => false,
         });
 
@@ -111,8 +127,17 @@ impl MidiManager {
             }
         }
 
-        Self {
-            _input_connection: input_connection,
-        }
+        Self { input_connection }
     }
+}
+
+fn read_preferences(preferences_dir: &Path) -> anyhow::Result<Preferences> {
+    let mut preferences_path = preferences_dir.to_path_buf();
+    preferences_path.push("midi.json");
+
+    let file = File::open(preferences_path)?;
+    let reader = BufReader::new(file);
+    let preferences = serde_json::from_reader(reader)?;
+
+    Ok(preferences)
 }

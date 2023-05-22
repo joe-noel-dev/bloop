@@ -9,7 +9,7 @@ pub struct Directories {
 impl Directories {
     pub fn new() -> Self {
         let mut root = home::home_dir().unwrap();
-        root.push("Bloop");
+        root.push("bloop");
 
         let mut projects = root.clone();
         projects.push("projects");
