@@ -9,6 +9,7 @@ use crate::{
 use anyhow::anyhow;
 use tokio::sync::{broadcast, mpsc};
 
+#[allow(dead_code)]
 pub struct MainController {
     samples_cache: SamplesCache,
     project_store: ProjectStore,
@@ -17,7 +18,7 @@ pub struct MainController {
     project: Project,
     audio_manager: AudioManager,
     waveform_store: WaveformStore,
-    _midi_manager: MidiManager,
+    midi_manager: MidiManager,
     midi_action_rx: mpsc::Receiver<Action>,
 }
 
@@ -30,22 +31,18 @@ impl ResponseBroadcaster for MainController {
 impl MainController {
     pub fn new(request_rx: mpsc::Receiver<Request>, response_tx: broadcast::Sender<Response>) -> Self {
         let directories = Directories::new();
-        let samples_cache = SamplesCache::new(&directories.samples);
-        let project_store = ProjectStore::new(&directories.projects);
-        let waveform_store = WaveformStore::new(response_tx.clone());
-        let audio_manager = AudioManager::new(response_tx.clone(), &directories.preferences);
+
         let (midi_action_tx, midi_action_rx) = mpsc::channel(128);
-        let midi_manager = MidiManager::new(midi_action_tx);
 
         Self {
-            samples_cache,
-            project_store,
+            samples_cache: SamplesCache::new(&directories.samples),
+            project_store: ProjectStore::new(&directories.projects),
             request_rx,
-            response_tx,
+            response_tx: response_tx.clone(),
             project: Project::new(),
-            audio_manager,
-            waveform_store,
-            _midi_manager: midi_manager,
+            audio_manager: AudioManager::new(response_tx.clone(), &directories.preferences),
+            waveform_store: WaveformStore::new(response_tx),
+            midi_manager: MidiManager::new(midi_action_tx, &directories.preferences),
             midi_action_rx,
         }
     }
