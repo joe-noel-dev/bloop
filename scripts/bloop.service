@@ -1,0 +1,13 @@
+[Unit]
+Description=Bloop Core
+Requires=jackd.service
+
+[Service]
+ExecStart=/usr/local/bin/bloop-core
+User=joe
+LimitRTPRIO=95
+LimitRTTIME=infinity
+LimitMEMLOCK=infinity
+
+[Install]
+WantedBy=default.target
