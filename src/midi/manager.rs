@@ -44,16 +44,16 @@ fn get_mappings() -> Vec<Mapping> {
             action: Action::QueueSelected,
         },
         Mapping {
-            matcher: Box::new(ExactMatcher::new(&[176_u8, 43_u8, 127_u8])),
-            action: Action::ToggleLoop,
-        },
-        Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 44_u8, 127_u8])),
             action: Action::PreviousSection,
         },
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 45_u8, 127_u8])),
             action: Action::NextSection,
+        },
+        Mapping {
+            matcher: Box::new(ExactMatcher::new(&[176_u8, 46_u8, 127_u8])),
+            action: Action::ToggleLoop,
         },
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 47_u8, 127_u8])),
