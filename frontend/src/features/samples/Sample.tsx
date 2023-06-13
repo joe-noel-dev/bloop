@@ -1,7 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
 import {FiRepeat, FiTrash, FiUpload} from 'react-icons/fi';
 import {Waveform} from '../waveforms/Waveform';
-import {NameEditor} from '../../components/NameEditor';
 import {useCore} from '../core/use-core';
 import cloneDeep from 'lodash.clonedeep';
 import {ProgressBar} from '../../components/ProgressBar';
@@ -12,6 +11,7 @@ import styles from './Sample.module.css';
 import {SecondaryButton} from '../../components/Button';
 import {Sample as ModelSample} from '../../model/sample';
 import {Song} from '../../model/song';
+import {EditText} from 'react-edit-text';
 
 interface SampleProps {
   editable: boolean;
@@ -128,12 +128,14 @@ export const Sample = ({
       {sample && (
         <div className={styles['sample-properties']}>
           <label>Sample tempo</label>
-          <NameEditor
-            onSave={(value) => onTempoChanged(value)}
-            name={`${sample?.tempo.bpm}` || ''}
-            editable={editable}
-            inputType="number"
-          ></NameEditor>
+          <EditText
+            defaultValue={`${sample.tempo.bpm}`}
+            onSave={({value}) => onTempoChanged(value)}
+            readonly={!editable}
+            className={styles.tempo}
+            inputClassName={styles.tempo}
+            type="number"
+          />
         </div>
       )}
     </div>

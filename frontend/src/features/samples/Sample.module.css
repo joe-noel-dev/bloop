@@ -12,8 +12,9 @@
   gap: var(--unit-space);
 }
 
-.sample-properties label {
+.tempo {
   font-size: large;
+  width: 120px;
 }
 
 .waveform {
