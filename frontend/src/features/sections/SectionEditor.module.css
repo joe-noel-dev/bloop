@@ -30,8 +30,6 @@
   align-items: center;
 
   height: var(--unit-space-x2);
-
-  font-size: medium;
 }
 
 .reveal-button {

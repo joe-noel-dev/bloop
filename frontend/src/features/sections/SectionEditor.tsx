@@ -172,6 +172,7 @@ const Header = ({editing, selected, section, onRequestEdit}: HeaderProps) => {
         inputClassName={styles['section-name']}
         defaultValue={section.name}
         readonly={!editing}
+        placeholder="Section"
       />
 
       <Spacer />
