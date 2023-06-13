@@ -17,7 +17,7 @@
   background: var(--section-background-queued);
 }
 
-.container h3 {
+.section-name {
   font-size: large;
 }
 

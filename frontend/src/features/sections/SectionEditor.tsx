@@ -1,6 +1,5 @@
 import {useState} from 'react';
 import {FiChevronDown, FiRepeat, FiTrash} from 'react-icons/fi';
-import {NameEditor} from '../../components/NameEditor';
 import {useCore} from '../core/use-core';
 import cloneDeep from 'lodash.clonedeep';
 import {ProgressBar} from '../../components/ProgressBar';
@@ -17,6 +16,7 @@ import {ToggleSwitch} from '../../components/ToggleSwitch';
 import {NumberChooser} from '../../components/NumberChooser';
 import {Section} from '../../model/section';
 import {Song, getSectionBeatLength} from '../../model/song';
+import {EditText} from 'react-edit-text';
 
 interface Props {
   section: Section;
@@ -158,18 +158,20 @@ const Header = ({editing, selected, section, onRequestEdit}: HeaderProps) => {
       className={styles.header}
       onClick={() => {
         if (selected && !editing) {
-          onRequestEdit(true);
+          onRequestEdit(!editing);
         }
       }}
     >
-      <NameEditor
-        onSave={(name) => {
+      <EditText
+        onSave={({value}) => {
           const newSection = cloneDeep(section);
-          newSection.name = name;
+          newSection.name = value;
           core?.sendRequest(updateSectionRequest(newSection));
         }}
-        name={section.name}
-        editable={editing}
+        className={styles['section-name']}
+        inputClassName={styles['section-name']}
+        defaultValue={section.name}
+        readonly={!editing}
       />
 
       <Spacer />

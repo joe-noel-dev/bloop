@@ -9,8 +9,8 @@ import {
   selectSongRequest,
   updateSongRequest,
 } from '../../api/request';
-import {NameEditor} from '../../components/NameEditor';
 import cloneDeep from 'lodash.clonedeep';
+import {EditText} from 'react-edit-text';
 
 interface SongHeaderProps {
   songId: string;
@@ -42,11 +42,12 @@ export const SongHeader = ({songId, editEnabled}: SongHeaderProps) => {
       }`}
       onClick={selectSong}
     >
-      <NameEditor
-        onSave={updateSongName}
-        name={song?.name ?? ''}
-        editable={editEnabled}
-        textClassName={styles.name}
+      <EditText
+        onSave={({value}) => updateSongName(value)}
+        defaultValue={song?.name}
+        className={styles.name}
+        inputClassName={styles.name}
+        readonly={!editEnabled}
       />
 
       <Spacer />
