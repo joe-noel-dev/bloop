@@ -469,6 +469,13 @@
   dependencies:
     "@types/react" "*"
 
+"@types/react-edit-text@^5.0.1":
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/@types/react-edit-text/-/react-edit-text-5.0.1.tgz#2907c740c013c17707eb76d1b84688417dff4c27"
+  integrity sha512-Eb2tX+PtSsbSTZPO1mTbTufVVAGddeplMCHsL+RCXQytm3X8bkiKWXMbQ/kaoOuxDHTkarItHRX0dEeo5A2B+w==
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-measure@^2.0.6":
   version "2.0.8"
   resolved "https://registry.yarnpkg.com/@types/react-measure/-/react-measure-2.0.8.tgz#3615956c685e6d9fed8380aac53590b333fae34f"
@@ -577,6 +584,11 @@ chalk@^2.0.0:
     ansi-styles "^3.2.1"
     escape-string-regexp "^1.0.5"
     supports-color "^5.3.0"
+
+classnames@^2.2.6:
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/classnames/-/classnames-2.3.2.tgz#351d813bf0137fcc6a76a16b88208d2560a0d924"
+  integrity sha512-CSbhY4cFEJRe6/GQzIk5qXZ4Jeg5pcsP7b5peFSDpffpe1cqjASH/n9UTjBwOp6XpMSTwQ8Za2K5V02ueA7Tmw==
 
 color-convert@^1.9.0:
   version "1.9.3"
@@ -785,7 +797,7 @@ postcss@^8.4.23:
     picocolors "^1.0.0"
     source-map-js "^1.0.2"
 
-prop-types@^15.6.2, prop-types@^15.7.2:
+prop-types@^15.6.2, prop-types@^15.7.2, prop-types@^15.8.1:
   version "15.8.1"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.8.1.tgz#67d87bf1a694f48435cf332c24af10214a3140b5"
   integrity sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==
@@ -801,6 +813,14 @@ react-dom@^18.2.0:
   dependencies:
     loose-envify "^1.1.0"
     scheduler "^0.23.0"
+
+react-edit-text@^5.1.0:
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/react-edit-text/-/react-edit-text-5.1.0.tgz#7dae13778bab8b7014315085bb790ff787e44ac8"
+  integrity sha512-CfHgzFUlWkAaC51YC4mzmr3sa34NNvDkf6/SGm91YAZYWNT4/dfhqg9EqzIdUOMQ2tR4cAnEaoi1qZ47taR46A==
+  dependencies:
+    classnames "^2.2.6"
+    prop-types "^15.8.1"
 
 react-hotkeys-hook@^4.4.0:
   version "4.4.0"

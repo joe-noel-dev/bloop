@@ -1,5 +1,6 @@
 import {FiMinus, FiPlus} from 'react-icons/fi';
 import styles from './NumberChooser.module.css';
+import {EditText} from 'react-edit-text';
 
 interface Props {
   value: number;
@@ -12,7 +13,18 @@ export const NumberChooser = ({value, onValueChange}: Props) => {
       <button onClick={() => onValueChange(value - 1)}>
         <FiMinus />
       </button>
-      <label>{value}</label>
+      <EditText
+        className={styles.text}
+        inputClassName={styles['edit-text']}
+        defaultValue={`${value}`}
+        type="number"
+        onSave={({value}) => {
+          const newValue = parseInt(value);
+          if (!isNaN(newValue)) {
+            onValueChange(newValue);
+          }
+        }}
+      />
       <button onClick={() => onValueChange(value + 1)}>
         <FiPlus />
       </button>
