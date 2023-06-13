@@ -1,5 +1,6 @@
 .container {
   --border: 1px solid var(--neutral-2);
+  --number-box-width: 5rem;
 
   display: flex;
   align-items: stretch;
@@ -37,14 +38,19 @@
   background: var(--neutral-3);
 }
 
-.container label {
-  min-width: var(--unit-space-x6);
-
-  flex: 1;
-
+.container div {
   display: flex;
   justify-content: center;
   align-items: center;
+}
 
+.text {
   font-size: large;
+  width: var(--number-box-width);
+}
+
+.edit-text {
+  font-size: large;
+  text-align: center;
+  width: var(--number-box-width);
 }
