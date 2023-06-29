@@ -1,6 +1,6 @@
 import Foundation
 
-struct Song {
+struct Song: Codable {
     var id: Id
     var name: String
     var tempo: Tempo
