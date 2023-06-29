@@ -1,10 +1,11 @@
-//
-//  Action.swift
-//  Bloop
-//
-//  Created by Joe Noel on 29/06/2023.
-//
-
 import Foundation
 
 protocol Action {}
+
+struct SendRequestAction: Action {
+    let request: Request
+}
+
+struct SetProjectAction: Action {
+    let project: Project
+}

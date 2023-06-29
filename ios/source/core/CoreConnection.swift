@@ -14,18 +14,25 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate {
         let request = URLRequest(url: url)
         let session = URLSession(
             configuration: .default, delegate: self, delegateQueue: OperationQueue())
-        let task = session.webSocketTask(with: request)
-        task.resume()
+        task = session.webSocketTask(with: request)
+        task?.resume()
     }
 
-    private func send(_ data: Data) {
-        task?.send(
-            .data(data),
-            completionHandler: { error in
-                if let error = error {
-                    print("Error sending to core: \(error)")
-                }
-            })
+    private func disconnect() {
+        self.task?.cancel()
+    }
+
+    func send(_ data: Data) {
+        if connected {
+            task?.send(
+                .data(data),
+                completionHandler: { error in
+                    if let error = error {
+                        print("Error sending to core: \(error)")
+                    }
+                })
+        }
+
     }
 
     private func receive() {
@@ -62,15 +69,15 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate {
         didOpenWithProtocol protocol: String?
     ) {
         print("Connected to core")
-        self.connected = true
-        self.receive()
+        connected = true
+        receive()
     }
 
     func urlSession(
         _ session: URLSession, webSocketTask: URLSessionWebSocketTask,
         didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?
     ) {
-        self.connected = false
+        connected = false
         print("Disconnect from core")
 
     }

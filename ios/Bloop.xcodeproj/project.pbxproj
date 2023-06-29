@@ -25,6 +25,7 @@
 		C229B9982A4DA3820044F2C6 /* Sample.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B9972A4DA3820044F2C6 /* Sample.swift */; };
 		C229B99B2A4DD55D0044F2C6 /* Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B99A2A4DD55D0044F2C6 /* Core.swift */; };
 		C229B99D2A4DDE7C0044F2C6 /* CoreConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B99C2A4DDE7C0044F2C6 /* CoreConnection.swift */; };
+		C229B9A02A4DE4DF0044F2C6 /* Request.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B99F2A4DE4DF0044F2C6 /* Request.swift */; };
 		C247A6E42A4D949A00001DB2 /* BloopApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A6E32A4D949A00001DB2 /* BloopApp.swift */; };
 		C247A6E62A4D949A00001DB2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A6E52A4D949A00001DB2 /* ContentView.swift */; };
 		C247A6E82A4D949D00001DB2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C247A6E72A4D949D00001DB2 /* Assets.xcassets */; };
@@ -32,6 +33,12 @@
 		C247A6F62A4D949D00001DB2 /* BloopTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A6F52A4D949D00001DB2 /* BloopTests.swift */; };
 		C247A7002A4D949D00001DB2 /* BloopUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A6FF2A4D949D00001DB2 /* BloopUITests.swift */; };
 		C247A7022A4D949D00001DB2 /* BloopUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A7012A4D949D00001DB2 /* BloopUITestsLaunchTests.swift */; };
+		C257C1692A4DEBD60080ECC2 /* SwiftBSON in Frameworks */ = {isa = PBXBuildFile; productRef = C257C1682A4DEBD60080ECC2 /* SwiftBSON */; };
+		C257C16B2A4DF5C00080ECC2 /* Response.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C16A2A4DF5C00080ECC2 /* Response.swift */; };
+		C257C16D2A4DF6340080ECC2 /* PlaybackState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C16C2A4DF6340080ECC2 /* PlaybackState.swift */; };
+		C257C16F2A4DF6D40080ECC2 /* Waveform.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C16E2A4DF6D40080ECC2 /* Waveform.swift */; };
+		C257C1712A4DF81E0080ECC2 /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C1702A4DF81E0080ECC2 /* Progress.swift */; };
+		C257C1772A4E003F0080ECC2 /* ApiMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C1762A4E003F0080ECC2 /* ApiMiddleware.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +77,7 @@
 		C229B9972A4DA3820044F2C6 /* Sample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sample.swift; sourceTree = "<group>"; };
 		C229B99A2A4DD55D0044F2C6 /* Core.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core.swift; sourceTree = "<group>"; };
 		C229B99C2A4DDE7C0044F2C6 /* CoreConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreConnection.swift; sourceTree = "<group>"; };
+		C229B99F2A4DE4DF0044F2C6 /* Request.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Request.swift; sourceTree = "<group>"; };
 		C247A6E02A4D949A00001DB2 /* Bloop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bloop.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C247A6E32A4D949A00001DB2 /* BloopApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloopApp.swift; sourceTree = "<group>"; };
 		C247A6E52A4D949A00001DB2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -81,6 +89,11 @@
 		C247A6FB2A4D949D00001DB2 /* BloopUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BloopUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C247A6FF2A4D949D00001DB2 /* BloopUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloopUITests.swift; sourceTree = "<group>"; };
 		C247A7012A4D949D00001DB2 /* BloopUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloopUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		C257C16A2A4DF5C00080ECC2 /* Response.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Response.swift; sourceTree = "<group>"; };
+		C257C16C2A4DF6340080ECC2 /* PlaybackState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackState.swift; sourceTree = "<group>"; };
+		C257C16E2A4DF6D40080ECC2 /* Waveform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Waveform.swift; sourceTree = "<group>"; };
+		C257C1702A4DF81E0080ECC2 /* Progress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Progress.swift; sourceTree = "<group>"; };
+		C257C1762A4E003F0080ECC2 /* ApiMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiMiddleware.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -88,6 +101,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C257C1692A4DEBD60080ECC2 /* SwiftBSON in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -159,6 +173,7 @@
 			isa = PBXGroup;
 			children = (
 				C229B9842A4DA0000044F2C6 /* Middleware.swift */,
+				C257C1762A4E003F0080ECC2 /* ApiMiddleware.swift */,
 			);
 			path = middleware;
 			sourceTree = "<group>";
@@ -174,6 +189,9 @@
 				C229B9932A4DA3310044F2C6 /* Tempo.swift */,
 				C229B9952A4DA3510044F2C6 /* Section.swift */,
 				C229B9972A4DA3820044F2C6 /* Sample.swift */,
+				C257C16C2A4DF6340080ECC2 /* PlaybackState.swift */,
+				C257C16E2A4DF6D40080ECC2 /* Waveform.swift */,
+				C257C1702A4DF81E0080ECC2 /* Progress.swift */,
 			);
 			path = model;
 			sourceTree = "<group>";
@@ -185,6 +203,15 @@
 				C229B99C2A4DDE7C0044F2C6 /* CoreConnection.swift */,
 			);
 			path = core;
+			sourceTree = "<group>";
+		};
+		C229B99E2A4DE4D00044F2C6 /* api */ = {
+			isa = PBXGroup;
+			children = (
+				C229B99F2A4DE4DF0044F2C6 /* Request.swift */,
+				C257C16A2A4DF5C00080ECC2 /* Response.swift */,
+			);
+			path = api;
 			sourceTree = "<group>";
 		};
 		C247A6D72A4D949A00001DB2 = {
@@ -210,6 +237,7 @@
 		C247A6E22A4D949A00001DB2 /* source */ = {
 			isa = PBXGroup;
 			children = (
+				C229B99E2A4DE4D00044F2C6 /* api */,
 				C229B9992A4DD54F0044F2C6 /* core */,
 				C229B9882A4DA1EB0044F2C6 /* model */,
 				C229B9832A4D9FF20044F2C6 /* middleware */,
@@ -263,6 +291,9 @@
 			dependencies = (
 			);
 			name = Bloop;
+			packageProductDependencies = (
+				C257C1682A4DEBD60080ECC2 /* SwiftBSON */,
+			);
 			productName = Bloop;
 			productReference = C247A6E02A4D949A00001DB2 /* Bloop.app */;
 			productType = "com.apple.product-type.application";
@@ -335,6 +366,9 @@
 				Base,
 			);
 			mainGroup = C247A6D72A4D949A00001DB2;
+			packageReferences = (
+				C257C1672A4DEBD60080ECC2 /* XCRemoteSwiftPackageReference "swift-bson" */,
+			);
 			productRefGroup = C247A6E12A4D949A00001DB2 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -379,10 +413,14 @@
 			files = (
 				C229B9962A4DA3510044F2C6 /* Section.swift in Sources */,
 				C229B9982A4DA3820044F2C6 /* Sample.swift in Sources */,
+				C257C16D2A4DF6340080ECC2 /* PlaybackState.swift in Sources */,
 				C229B9852A4DA0000044F2C6 /* Middleware.swift in Sources */,
 				C229B97A2A4D9EBF0044F2C6 /* Store.swift in Sources */,
+				C229B9A02A4DE4DF0044F2C6 /* Request.swift in Sources */,
+				C257C1712A4DF81E0080ECC2 /* Progress.swift in Sources */,
 				C229B99D2A4DDE7C0044F2C6 /* CoreConnection.swift in Sources */,
 				C229B99B2A4DD55D0044F2C6 /* Core.swift in Sources */,
+				C257C16F2A4DF6D40080ECC2 /* Waveform.swift in Sources */,
 				C229B9872A4DA0B40044F2C6 /* RootReducer.swift in Sources */,
 				C229B9752A4D9DA30044F2C6 /* ProjectView.swift in Sources */,
 				C229B97F2A4D9F990044F2C6 /* AppState.swift in Sources */,
@@ -393,7 +431,9 @@
 				C229B9902A4DA2E50044F2C6 /* Selections.swift in Sources */,
 				C229B9772A4D9DAF0044F2C6 /* ProjectsView.swift in Sources */,
 				C229B9942A4DA3310044F2C6 /* Tempo.swift in Sources */,
+				C257C1772A4E003F0080ECC2 /* ApiMiddleware.swift in Sources */,
 				C247A6E42A4D949A00001DB2 /* BloopApp.swift in Sources */,
+				C257C16B2A4DF5C00080ECC2 /* Response.swift in Sources */,
 				C229B98A2A4DA1F60044F2C6 /* ProjectInfo.swift in Sources */,
 				C229B98E2A4DA2850044F2C6 /* Song.swift in Sources */,
 				C229B98C2A4DA25F0044F2C6 /* Project.swift in Sources */,
@@ -748,6 +788,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C257C1672A4DEBD60080ECC2 /* XCRemoteSwiftPackageReference "swift-bson" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mongodb/swift-bson";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C257C1682A4DEBD60080ECC2 /* SwiftBSON */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C257C1672A4DEBD60080ECC2 /* XCRemoteSwiftPackageReference "swift-bson" */;
+			productName = SwiftBSON;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C247A6D82A4D949A00001DB2 /* Project object */;
 }

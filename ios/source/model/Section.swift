@@ -1,6 +1,6 @@
 import Foundation
 
-struct Section {
+struct Section: Codable {
     var id: Id
     var name: String
     var start: Double
