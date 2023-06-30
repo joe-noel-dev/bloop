@@ -1,11 +1,8 @@
 import Foundation
 
-protocol Action {}
-
-struct SendRequestAction: Action {
-    let request: Request
-}
-
-struct SetProjectAction: Action {
-    let project: Project
+enum Action {
+    case sendRequest(Request)
+    case setProject(Project)
+    case connect
+    case setConnected(Bool)
 }

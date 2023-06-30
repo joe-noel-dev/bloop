@@ -5,6 +5,10 @@ let store = Store(reducer: rootReducer, state: AppState(), middlewares: [ApiMidd
 @main
 struct BloopApp: App {
 
+    init() {
+        store.dispatch(.connect)
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView().environmentObject(store)

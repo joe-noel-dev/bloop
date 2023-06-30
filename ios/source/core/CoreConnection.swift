@@ -1,15 +1,18 @@
 import Foundation
 
+protocol CoreConnectionDelegate: AnyObject {
+    func coreConnectionDidConnect()
+    func coreConnectionDidDisconnect()
+    func coreConnectionDidReceiveData(data: Data)
+    func coreConnectionDidReceiveString(string: String)
+}
+
 class CoreConnection: NSObject, URLSessionWebSocketDelegate {
     private var task: URLSessionWebSocketTask?
-    private var connected = false
+    private(set) var connected = false
+    weak var delegate: CoreConnectionDelegate?
 
-    override init() {
-        super.init()
-        self.connect()
-    }
-
-    private func connect() {
+    func connect() {
         let url = URL(string: "ws://localhost:8999")!
         let request = URLRequest(url: url)
         let session = URLSession(
@@ -20,6 +23,14 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate {
 
     private func disconnect() {
         self.task?.cancel()
+        
+        print("Disconnect from core")
+
+        connected = false
+
+        DispatchQueue.main.async {
+            self.delegate?.coreConnectionDidDisconnect()
+        }
     }
 
     func send(_ data: Data) {
@@ -29,6 +40,7 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate {
                 completionHandler: { error in
                     if let error = error {
                         print("Error sending to core: \(error)")
+                        self.disconnect()
                     }
                 })
         }
@@ -39,18 +51,20 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate {
         task?.receive { [weak self] result in
             switch result {
             case .success(let message):
-                switch message {
-                case .data(let data):
-                    print("Received data: \(data.count) bytes")
-                case .string(let string):
-                    print("Received string: \(string)")
-                @unknown default:
-                    print("Received unknown message")
+                DispatchQueue.main.async {
+                    switch message {
+                    case .data(let data):
+                        self?.delegate?.coreConnectionDidReceiveData(data: data)
+                    case .string(let string):
+                        self?.delegate?.coreConnectionDidReceiveString(string: string)
+                    @unknown default:
+                        print("Received unknown message")
+                    }
                 }
 
             case .failure(let error):
                 print("Error receiving data: \(error)")
-
+                self?.disconnect()
             }
 
             guard let connected = self?.connected else {
@@ -69,7 +83,13 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate {
         didOpenWithProtocol protocol: String?
     ) {
         print("Connected to core")
+
         connected = true
+
+        DispatchQueue.main.async {
+            self.delegate?.coreConnectionDidConnect()
+        }
+
         receive()
     }
 
@@ -77,8 +97,6 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate {
         _ session: URLSession, webSocketTask: URLSessionWebSocketTask,
         didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?
     ) {
-        connected = false
-        print("Disconnect from core")
-
+        self.disconnect()
     }
 }

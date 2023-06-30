@@ -1,15 +1,8 @@
-//
-//  ProjectsView.swift
-//  Bloop
-//
-//  Created by Joe Noel on 29/06/2023.
-//
-
 import SwiftUI
 
 struct ProjectsView: View {
     var body: some View {
-        Text("Hello, World!")
+        Text("Project")
     }
 }
 
