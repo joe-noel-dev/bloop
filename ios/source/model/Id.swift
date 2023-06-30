@@ -1,3 +1,3 @@
 import Foundation
 
-typealias Id = UUID
+typealias Id = String

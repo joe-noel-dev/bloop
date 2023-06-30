@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DB2A4F123400F8138D /* DisconnectedView.swift */; };
 		C229B9752A4D9DA30044F2C6 /* ProjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B9742A4D9DA30044F2C6 /* ProjectView.swift */; };
 		C229B9772A4D9DAF0044F2C6 /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B9762A4D9DAF0044F2C6 /* ProjectsView.swift */; };
 		C229B97A2A4D9EBF0044F2C6 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B9792A4D9EBF0044F2C6 /* Store.swift */; };
@@ -62,6 +63,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		C20240DB2A4F123400F8138D /* DisconnectedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectedView.swift; sourceTree = "<group>"; };
 		C229B9742A4D9DA30044F2C6 /* ProjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectView.swift; sourceTree = "<group>"; };
 		C229B9762A4D9DAF0044F2C6 /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
 		C229B9792A4D9EBF0044F2C6 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
@@ -145,6 +147,7 @@
 				C247A6E52A4D949A00001DB2 /* ContentView.swift */,
 				C229B9742A4D9DA30044F2C6 /* ProjectView.swift */,
 				C229B9762A4D9DAF0044F2C6 /* ProjectsView.swift */,
+				C20240DB2A4F123400F8138D /* DisconnectedView.swift */,
 			);
 			path = views;
 			sourceTree = "<group>";
@@ -252,15 +255,15 @@
 		C247A6E22A4D949A00001DB2 /* source */ = {
 			isa = PBXGroup;
 			children = (
-				C229B99E2A4DE4D00044F2C6 /* api */,
-				C229B9992A4DD54F0044F2C6 /* core */,
-				C229B9882A4DA1EB0044F2C6 /* model */,
-				C229B9832A4D9FF20044F2C6 /* middleware */,
 				C229B9802A4D9FC70044F2C6 /* actions */,
+				C229B99E2A4DE4D00044F2C6 /* api */,
+				C229B9722A4D966C0044F2C6 /* app */,
+				C229B9992A4DD54F0044F2C6 /* core */,
+				C229B9832A4D9FF20044F2C6 /* middleware */,
+				C229B9882A4DA1EB0044F2C6 /* model */,
 				C229B97B2A4D9F5F0044F2C6 /* reducers */,
 				C229B9782A4D9EAE0044F2C6 /* store */,
 				C229B9732A4D967C0044F2C6 /* views */,
-				C229B9722A4D966C0044F2C6 /* app */,
 			);
 			path = source;
 			sourceTree = "<group>";
@@ -441,6 +444,7 @@
 				C229B99B2A4DD55D0044F2C6 /* Core.swift in Sources */,
 				C257C16F2A4DF6D40080ECC2 /* Waveform.swift in Sources */,
 				C229B9872A4DA0B40044F2C6 /* RootReducer.swift in Sources */,
+				C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */,
 				C229B9752A4D9DA30044F2C6 /* ProjectView.swift in Sources */,
 				C229B97F2A4D9F990044F2C6 /* AppState.swift in Sources */,
 				C229B97D2A4D9F6D0044F2C6 /* Reducer.swift in Sources */,

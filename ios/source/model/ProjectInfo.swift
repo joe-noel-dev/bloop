@@ -4,5 +4,5 @@ struct ProjectInfo: Codable {
     var id: Id
     var name: String
     var version: String
-    var lastSaved: Date
+    var lastSaved: Int64
 }

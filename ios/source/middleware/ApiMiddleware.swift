@@ -2,10 +2,38 @@ import Foundation
 
 class ApiMiddleware: Middleware {
     private let core = Core()
+    var dispatch: ((Action) -> Void)?
+
+    init() {
+        core.delegate = self
+    }
 
     func execute(state: AppState, action: Action, dispatch: @escaping (Action) -> Void) {
-        if case let sendRequestAction as SendRequestAction = action {
-            core.sendRequest(sendRequestAction.request)
+        self.dispatch = dispatch
+
+        if case .connect = action {
+            core.connect()
+        }
+
+        if case .sendRequest(let request) = action {
+            core.sendRequest(request)
+        }
+    }
+
+}
+
+extension ApiMiddleware: CoreDelegate {
+    func coreConnected() {
+        self.dispatch?(.setConnected(true))
+    }
+
+    func coreDisconnected() {
+        self.dispatch?(.setConnected(false))
+    }
+
+    func coreDidSendResponse(_ response: Response) {
+        if let project = response.project {
+            self.dispatch?(.setProject(project))
         }
     }
 
