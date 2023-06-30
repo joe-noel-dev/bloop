@@ -26,6 +26,8 @@
 		C229B99B2A4DD55D0044F2C6 /* Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B99A2A4DD55D0044F2C6 /* Core.swift */; };
 		C229B99D2A4DDE7C0044F2C6 /* CoreConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B99C2A4DDE7C0044F2C6 /* CoreConnection.swift */; };
 		C229B9A02A4DE4DF0044F2C6 /* Request.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B99F2A4DE4DF0044F2C6 /* Request.swift */; };
+		C23F51202A4ED75500F4C383 /* SwiftBSON in Frameworks */ = {isa = PBXBuildFile; productRef = C23F511F2A4ED75500F4C383 /* SwiftBSON */; };
+		C23F51222A4EE10100F4C383 /* Request+Codable.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23F51212A4EE10100F4C383 /* Request+Codable.swift */; };
 		C247A6E42A4D949A00001DB2 /* BloopApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A6E32A4D949A00001DB2 /* BloopApp.swift */; };
 		C247A6E62A4D949A00001DB2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A6E52A4D949A00001DB2 /* ContentView.swift */; };
 		C247A6E82A4D949D00001DB2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C247A6E72A4D949D00001DB2 /* Assets.xcassets */; };
@@ -39,6 +41,7 @@
 		C257C16F2A4DF6D40080ECC2 /* Waveform.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C16E2A4DF6D40080ECC2 /* Waveform.swift */; };
 		C257C1712A4DF81E0080ECC2 /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C1702A4DF81E0080ECC2 /* Progress.swift */; };
 		C257C1772A4E003F0080ECC2 /* ApiMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C1762A4E003F0080ECC2 /* ApiMiddleware.swift */; };
+		C2EAC1942A4ED2A100FD19B6 /* RequestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EAC1932A4ED2A100FD19B6 /* RequestTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -78,6 +81,7 @@
 		C229B99A2A4DD55D0044F2C6 /* Core.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core.swift; sourceTree = "<group>"; };
 		C229B99C2A4DDE7C0044F2C6 /* CoreConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreConnection.swift; sourceTree = "<group>"; };
 		C229B99F2A4DE4DF0044F2C6 /* Request.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Request.swift; sourceTree = "<group>"; };
+		C23F51212A4EE10100F4C383 /* Request+Codable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Request+Codable.swift"; sourceTree = "<group>"; };
 		C247A6E02A4D949A00001DB2 /* Bloop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bloop.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C247A6E32A4D949A00001DB2 /* BloopApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloopApp.swift; sourceTree = "<group>"; };
 		C247A6E52A4D949A00001DB2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -94,6 +98,7 @@
 		C257C16E2A4DF6D40080ECC2 /* Waveform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Waveform.swift; sourceTree = "<group>"; };
 		C257C1702A4DF81E0080ECC2 /* Progress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Progress.swift; sourceTree = "<group>"; };
 		C257C1762A4E003F0080ECC2 /* ApiMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiMiddleware.swift; sourceTree = "<group>"; };
+		C2EAC1932A4ED2A100FD19B6 /* RequestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -109,6 +114,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C23F51202A4ED75500F4C383 /* SwiftBSON in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -210,8 +216,16 @@
 			children = (
 				C229B99F2A4DE4DF0044F2C6 /* Request.swift */,
 				C257C16A2A4DF5C00080ECC2 /* Response.swift */,
+				C23F51212A4EE10100F4C383 /* Request+Codable.swift */,
 			);
 			path = api;
+			sourceTree = "<group>";
+		};
+		C23F511C2A4ED6C300F4C383 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		C247A6D72A4D949A00001DB2 = {
@@ -221,6 +235,7 @@
 				C247A6F42A4D949D00001DB2 /* tests */,
 				C247A6FE2A4D949D00001DB2 /* ui-tests */,
 				C247A6E12A4D949A00001DB2 /* Products */,
+				C23F511C2A4ED6C300F4C383 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -262,6 +277,7 @@
 			isa = PBXGroup;
 			children = (
 				C247A6F52A4D949D00001DB2 /* BloopTests.swift */,
+				C2EAC1932A4ED2A100FD19B6 /* RequestTests.swift */,
 			);
 			path = tests;
 			sourceTree = "<group>";
@@ -312,6 +328,9 @@
 				C247A6F32A4D949D00001DB2 /* PBXTargetDependency */,
 			);
 			name = BloopTests;
+			packageProductDependencies = (
+				C23F511F2A4ED75500F4C383 /* SwiftBSON */,
+			);
 			productName = BloopTests;
 			productReference = C247A6F12A4D949D00001DB2 /* BloopTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -436,6 +455,7 @@
 				C257C16B2A4DF5C00080ECC2 /* Response.swift in Sources */,
 				C229B98A2A4DA1F60044F2C6 /* ProjectInfo.swift in Sources */,
 				C229B98E2A4DA2850044F2C6 /* Song.swift in Sources */,
+				C23F51222A4EE10100F4C383 /* Request+Codable.swift in Sources */,
 				C229B98C2A4DA25F0044F2C6 /* Project.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -445,6 +465,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C247A6F62A4D949D00001DB2 /* BloopTests.swift in Sources */,
+				C2EAC1942A4ED2A100FD19B6 /* RequestTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -801,6 +822,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		C23F511F2A4ED75500F4C383 /* SwiftBSON */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C257C1672A4DEBD60080ECC2 /* XCRemoteSwiftPackageReference "swift-bson" */;
+			productName = SwiftBSON;
+		};
 		C257C1682A4DEBD60080ECC2 /* SwiftBSON */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C257C1672A4DEBD60080ECC2 /* XCRemoteSwiftPackageReference "swift-bson" */;
