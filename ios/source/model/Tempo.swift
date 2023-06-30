@@ -1,5 +1,5 @@
 import Foundation
 
-struct Tempo: Codable {
+struct Tempo: Codable, Equatable {
     var bpm: Double
 }

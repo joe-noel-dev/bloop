@@ -1,6 +1,6 @@
 import Foundation
 
-enum Request: Codable {
+enum Request: Codable, Equatable {
     case get(EntityId)
     case add(EntityId)
     case select(EntityId)
@@ -17,12 +17,12 @@ enum Request: Codable {
     case removeSample(RemoveSampleRequest)
 }
 
-struct EntityId: Codable {
+struct EntityId: Codable, Equatable {
     var entity: Entity
     var id: Id?
 }
 
-enum Entity: Codable {
+enum Entity: String, Codable {
     case all
     case project
     case projects
@@ -32,13 +32,13 @@ enum Entity: Codable {
     case waveform
 }
 
-enum UpdateRequest: Codable {
+enum UpdateRequest: Codable, Equatable {
     case song(Song)
     case section(Section)
     case sample(Sample)
 }
 
-enum TransportRequest: Codable {
+enum TransportRequest: Codable, Equatable {
     case play
     case stop
     case loop
@@ -46,41 +46,41 @@ enum TransportRequest: Codable {
     case queue(QueueRequest)
 }
 
-struct LoadRequest: Codable {
+struct LoadRequest: Codable, Equatable {
     var id: Id
 }
 
-struct RenameRequest: Codable {
+struct RenameRequest: Codable, Equatable {
     var entity: Entity
     var id: Id?
     var name: String
 }
 
-struct BeginUploadRequest: Codable {
+struct BeginUploadRequest: Codable, Equatable {
     var uploadId: Id
     var filename: String
     var format: String
 }
 
-struct UploadRequest: Codable {
+struct UploadRequest: Codable, Equatable {
     var uploadId: Id
     var data: Data
 }
 
-struct CompleteUploadRequest: Codable {
+struct CompleteUploadRequest: Codable, Equatable {
     var uploadId: Id
 }
 
-struct AddSampleRequest: Codable {
+struct AddSampleRequest: Codable, Equatable {
     var songId: Id
     var uploadId: Id
 }
 
-struct RemoveSampleRequest: Codable {
+struct RemoveSampleRequest: Codable, Equatable {
     var songId: Id
 }
 
-struct QueueRequest: Codable {
+struct QueueRequest: Codable, Equatable {
     var songId: Id
     var sectionId: Id
 }
