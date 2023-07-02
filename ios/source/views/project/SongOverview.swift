@@ -4,9 +4,14 @@ struct SongOverview: View {
     var song: Song
     var selections: Selections
     var dispatch: (Action) -> Void
-    
+
     var isSelected: Bool {
         selections.song == song.id
+    }
+
+    func removeSong() {
+        let request = Request.remove(EntityId.init(entity: .song, id: song.id))
+        dispatch(.sendRequest(request))
     }
 
     var body: some View {
@@ -23,6 +28,14 @@ struct SongOverview: View {
         .onTapGesture {
             let request = Request.select(EntityId.init(entity: .song, id: song.id))
             dispatch(.sendRequest(request))
+        }
+        .cornerRadius(Layout.cornerRadiusLarge)
+        .contextMenu {
+            Button {
+                removeSong()
+            } label: {
+                Label("Remove Song", systemImage: "trash")
+            }
         }
 
     }

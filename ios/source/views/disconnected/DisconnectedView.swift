@@ -6,11 +6,15 @@ struct DisconnectedView: View {
     var body: some View {
         VStack(spacing: 16) {
             Text("Disconnected")
+                .font(.largeTitle)
 
             Button(
-                "Connect",
                 action: {
                     dispatch(.connect)
+                },
+                label: {
+                    Text("Connect")
+                        .font(.title)
                 })
         }
 
