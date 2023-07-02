@@ -1,6 +1,6 @@
 import Foundation
 
-struct Section: Codable, Equatable {
+struct Section: Codable, Equatable, Hashable, Identifiable {
     var id: Id
     var name: String
     var start: Double

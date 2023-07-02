@@ -1,17 +1,19 @@
 import SwiftUI
 
-let store = Store(reducer: rootReducer, state: AppState(), middlewares: [ApiMiddleware()])
-
 @main
 struct BloopApp: App {
 
-    init() {
-        store.dispatch(.connect)
-    }
+    @State var store = Store(
+        reducer: rootReducer, state: AppState(), middlewares: [ApiMiddleware()])
 
     var body: some Scene {
         WindowGroup {
-            ContentView().environmentObject(store)
+            ContentView()
+                .environmentObject(store)
+                .onAppear {
+                    store.dispatch(.connect)
+                }
+
         }
     }
 }
