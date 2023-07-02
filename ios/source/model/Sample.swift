@@ -1,6 +1,6 @@
 import Foundation
 
-struct Sample: Codable, Equatable {
+struct Sample: Codable, Equatable, Hashable {
     var id: Id
     var name: String
     var tempo: Tempo

@@ -4,17 +4,26 @@ struct ContentView: View {
     @EnvironmentObject var store: Store
 
     var body: some View {
-        if store.state.connected {
-            ProjectsView()
+        if store.state.connected && (store.state.project != nil) {
+            ProjectView(project: store.state.project!) { action in
+                store.dispatch(action)
+            }
         } else {
-            DisconnectedView()
+            DisconnectedView { action in
+                store.dispatch(action)
+            }
         }
     }
 }
 
 struct ContentView_Previews: PreviewProvider {
-    static var store = Store(reducer: rootReducer, state: AppState(), middlewares: [])
+    static let store = Store(reducer: rootReducer, state: AppState(), middlewares: [])
+
     static var previews: some View {
-        ContentView().environmentObject(store)
+        Group {
+            ContentView()
+                .environmentObject(store)
+        }
+
     }
 }

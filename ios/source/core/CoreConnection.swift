@@ -23,7 +23,7 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate {
 
     private func disconnect() {
         self.task?.cancel()
-        
+
         print("Disconnect from core")
 
         connected = false
