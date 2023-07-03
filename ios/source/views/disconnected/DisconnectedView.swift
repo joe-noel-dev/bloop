@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct DisconnectedView: View {
+    @State private var ipAddress = "localhost"
     var dispatch: (Action) -> Void
 
     var body: some View {
@@ -8,15 +9,20 @@ struct DisconnectedView: View {
             Text("Disconnected")
                 .font(.largeTitle)
 
+            TextField("IP Address", text: $ipAddress)
+                .multilineTextAlignment(.center)
+                .border(.black)
+
             Button(
                 action: {
-                    dispatch(.connect)
+                    dispatch(.connect(ipAddress))
                 },
                 label: {
                     Text("Connect")
                         .font(.title)
                 })
         }
+        .padding()
 
     }
 }

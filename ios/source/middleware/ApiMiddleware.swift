@@ -11,8 +11,8 @@ class ApiMiddleware: Middleware {
     func execute(state: AppState, action: Action, dispatch: @escaping (Action) -> Void) {
         self.dispatch = dispatch
 
-        if case .connect = action {
-            core.connect()
+        if case .connect(let ipAddress) = action {
+            core.connect(ipAddress)
         }
 
         if case .sendRequest(let request) = action {
