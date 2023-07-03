@@ -32,7 +32,9 @@ struct ProjectView: View {
 
             }
         }
+        .background(Colours.neutral7)
         .navigationTitle(project.info.name)
+        .ignoresSafeArea(.all, edges: [.bottom])
     }
 }
 
