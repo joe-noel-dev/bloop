@@ -10,7 +10,7 @@ struct SongView: View {
             $0.id == selections.section
         }
     }
-    
+
     private var isSelected: Bool {
         selections.song == song.id
     }
@@ -21,22 +21,20 @@ struct SongView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading) {
-            Text(song.name)
-                .font(.largeTitle)
-            ScrollView(.horizontal) {
-                HStack(spacing: Layout.units(2)) {
-                    ForEach(song.sections) { section in
-                        SectionOverview(
-                            section: section, selections: selections, dispatch: dispatch)
-                    }
+        HStack {
+            VStack(alignment: .leading) {
+                Text(song.name)
+                    .font(.largeTitle)
+
+                WaveformView()
+                    .frame(height: 120)
+
+                ForEach(song.sections) { section in
+                    SectionView(section: section, dispatch: dispatch)
                 }
             }
 
-            if let section = selectedSection {
-                SectionView(section: section, dispatch: dispatch)
-            }
-
+            Spacer()
         }
         .padding()
         .navigationTitle(song.name)
@@ -44,7 +42,7 @@ struct SongView: View {
             if !isSelected {
                 selectSong()
             }
-            
+
         }
         .background(Colours.neutral1)
         .cornerRadius(Layout.cornerRadiusLarge)
@@ -63,10 +61,10 @@ struct SongView_Previews: PreviewProvider {
     }
 
     static var previews: some View {
-        NavigationStack {
-            SongView(song: song, selections: selections) { action in
-                print("Dispatch: \(action)")
-            }
+        SongView(song: song, selections: selections) { action in
+            print("Dispatch: \(action)")
         }
+        .padding()
+
     }
 }

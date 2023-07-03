@@ -5,7 +5,8 @@ struct SectionView: View {
     var dispatch: (Action) -> Void
     private var loopBinding: Binding<Bool>
     private var metronomeBinding: Binding<Bool>
-    private var startBinding: Binding<Double>
+    @State private var newStart: Double
+    @State private var newName: String
 
     init(section: Section, dispatch: @escaping (Action) -> Void) {
         self.section = section
@@ -16,9 +17,9 @@ struct SectionView: View {
                 section.loop
             },
             set: {
-                var newSection = section
-                newSection.loop = $0
-                updateSection(dispatch: dispatch, newSection: newSection)
+                var section = section
+                section.loop = $0
+                updateSection(section: section, dispatch: dispatch)
             })
 
         self.metronomeBinding = .init(
@@ -26,43 +27,45 @@ struct SectionView: View {
                 section.metronome
             },
             set: {
-                var newSection = section
-                newSection.metronome = $0
-                updateSection(dispatch: dispatch, newSection: newSection)
+                var section = section
+                section.metronome = $0
+                updateSection(section: section, dispatch: dispatch)
             })
 
-        self.startBinding = .init(
-            get: {
-                section.start
-            },
-            set: {
-                var newSection = section
-                newSection.start = $0
-                updateSection(dispatch: dispatch, newSection: newSection)
-            })
-
+        self.newStart = section.start
+        self.newName = section.name
     }
 
     var body: some View {
-        VStack(alignment: .leading) {
-            Text(section.name)
-                .font(.title)
-
-            Toggle(isOn: loopBinding) {
-                Text("Loop")
-            }
-
-            Toggle(isOn: metronomeBinding) {
-                Text("Metronome")
-            }
+        HStack {
+            TextField("Name", text: $newName, onCommit: {
+                var section = section
+                section.name = newName
+                updateSection(section: section, dispatch: dispatch)
+            })
+                .font(.title2)
 
             HStack {
                 Text("Start")
-                Spacer()
-                TextField("Start", value: startBinding, format: .number)
+                TextField("Start", value: $newStart, format: .number)
+                    .onSubmit {
+                        var section = section
+                        section.start = newStart
+                        updateSection(section: section, dispatch: dispatch)
+                    }
                     .frame(maxWidth: 48)
+                    .keyboardType(.numberPad)
             }
 
+            Toggle(isOn: loopBinding) {
+                Label("Loop", systemImage: "repeat")
+            }
+            .toggleStyle(.button)
+
+            Toggle(isOn: metronomeBinding) {
+                Label("Metronome", systemImage: "metronome")
+            }
+            .toggleStyle(.button)
         }
     }
 }
@@ -77,11 +80,12 @@ struct SectionView_Previews: PreviewProvider {
         SectionView(section: section) { action in
             print("Dipatch: \(action)")
         }
+            .padding()
     }
 }
 
-func updateSection(dispatch: (Action) -> Void, newSection: Section) {
-    let updateRequest = UpdateRequest.section(newSection)
+func updateSection(section: Section, dispatch: (Action) -> Void) {
+    let updateRequest = UpdateRequest.section(section)
     let request = Request.update(updateRequest)
     let action = Action.sendRequest(request)
     dispatch(action)

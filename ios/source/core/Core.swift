@@ -15,8 +15,8 @@ class Core: CoreConnectionDelegate {
         connection.delegate = self
     }
 
-    func connect() {
-        connection.connect()
+    func connect(_ ipAddress: String) {
+        connection.connect(ipAddress)
     }
 
     func sendRequest(_ request: Request) {

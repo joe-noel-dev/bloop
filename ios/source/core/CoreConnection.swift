@@ -12,12 +12,13 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate {
     private(set) var connected = false
     weak var delegate: CoreConnectionDelegate?
 
-    func connect() {
-        let url = URL(string: "ws://localhost:8999")!
+    func connect(_ ipAddress: String) {
+        let url = URL(string: "ws://\(ipAddress):8999")!
         let request = URLRequest(url: url)
         let session = URLSession(
             configuration: .default, delegate: self, delegateQueue: OperationQueue())
         task = session.webSocketTask(with: request)
+        task?.maximumMessageSize = 10 * 1024 * 1024
         task?.resume()
     }
 

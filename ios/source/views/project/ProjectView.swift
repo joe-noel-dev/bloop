@@ -11,11 +11,18 @@ struct ProjectView: View {
 
     var body: some View {
 
-        VStack(spacing: 16) {
-            ForEach(project.songs) { song in
-                SongView(song: song, selections: project.selections, dispatch: dispatch)
+        VStack {
+            ScrollView(.vertical) {
+                VStack(spacing: Layout.units(4)) {
+                    ForEach(project.songs) { song in
+                        SongView(song: song, selections: project.selections, dispatch: dispatch)
+                    }
+                    Spacer()
+                }
             }
-            Spacer()
+            .padding()
+            
+            TransportBar()
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -26,8 +33,6 @@ struct ProjectView: View {
             }
         }
         .navigationTitle(project.info.name)
-        .padding()
-
     }
 }
 
