@@ -3,7 +3,7 @@ import SwiftUI
 struct SongView: View {
     var song: Song
     var selections: Selections
-    var dispatch: (Action) -> Void
+    var dispatch: Dispatch
 
     var selectedSection: Section? {
         song.sections.first {
@@ -16,8 +16,8 @@ struct SongView: View {
     }
 
     func selectSong() {
-        let request = Request.select(.init(entity: .song, id: song.id))
-        dispatch(.sendRequest(request))
+        let action = selectSongAction(song.id)
+        dispatch(action)
     }
 
     var body: some View {
@@ -30,14 +30,16 @@ struct SongView: View {
                     .frame(height: 120)
 
                 ForEach(song.sections) { section in
-                    SectionView(section: section, dispatch: dispatch)
+                    SectionView(
+                        section: section,
+                        isSelected: selections.isSectionSelected(sectionId: section.id),
+                        dispatch: dispatch)
                 }
             }
 
             Spacer()
         }
         .padding()
-        .navigationTitle(song.name)
         .onTapGesture {
             if !isSelected {
                 selectSong()
@@ -50,15 +52,15 @@ struct SongView: View {
 }
 
 struct SongView_Previews: PreviewProvider {
-    static var song: Song {
+    static let song: Song = {
         var song = demoSong(0)
         song.name = "My Song Name"
         return song
-    }
+    }()
 
-    static var selections: Selections {
+    static let selections: Selections = {
         .init(song: song.id, section: song.sections[0].id)
-    }
+    }()
 
     static var previews: some View {
         SongView(song: song, selections: selections) { action in

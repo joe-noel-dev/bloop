@@ -43,6 +43,9 @@
 		C257C16F2A4DF6D40080ECC2 /* Waveform.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C16E2A4DF6D40080ECC2 /* Waveform.swift */; };
 		C257C1712A4DF81E0080ECC2 /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C1702A4DF81E0080ECC2 /* Progress.swift */; };
 		C257C1772A4E003F0080ECC2 /* ApiMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C1762A4E003F0080ECC2 /* ApiMiddleware.swift */; };
+		C25FA0C52A5348E40066C539 /* EditSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25FA0C42A5348E40066C539 /* EditSectionView.swift */; };
+		C25FA0C72A53FAEA0066C539 /* Dispatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25FA0C62A53FAEA0066C539 /* Dispatch.swift */; };
+		C25FA0C92A53FBA80066C539 /* RequestActionHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25FA0C82A53FBA80066C539 /* RequestActionHelpers.swift */; };
 		C264EC862A50CCBB002318A0 /* SectionOverview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C264EC852A50CCBB002318A0 /* SectionOverview.swift */; };
 		C27E2A622A51ADB800D48D91 /* SongOverview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C27E2A612A51ADB800D48D91 /* SongOverview.swift */; };
 		C27E2A642A51D1BE00D48D91 /* Colours.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C27E2A632A51D1BE00D48D91 /* Colours.xcassets */; };
@@ -110,6 +113,9 @@
 		C257C16E2A4DF6D40080ECC2 /* Waveform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Waveform.swift; sourceTree = "<group>"; };
 		C257C1702A4DF81E0080ECC2 /* Progress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Progress.swift; sourceTree = "<group>"; };
 		C257C1762A4E003F0080ECC2 /* ApiMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiMiddleware.swift; sourceTree = "<group>"; };
+		C25FA0C42A5348E40066C539 /* EditSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditSectionView.swift; sourceTree = "<group>"; };
+		C25FA0C62A53FAEA0066C539 /* Dispatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dispatch.swift; sourceTree = "<group>"; };
+		C25FA0C82A53FBA80066C539 /* RequestActionHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestActionHelpers.swift; sourceTree = "<group>"; };
 		C264EC852A50CCBB002318A0 /* SectionOverview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionOverview.swift; sourceTree = "<group>"; };
 		C27E2A612A51ADB800D48D91 /* SongOverview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongOverview.swift; sourceTree = "<group>"; };
 		C27E2A632A51D1BE00D48D91 /* Colours.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colours.xcassets; sourceTree = "<group>"; };
@@ -154,10 +160,8 @@
 				C247A6E72A4D949D00001DB2 /* Assets.xcassets */,
 				C247A6E92A4D949D00001DB2 /* Bloop.entitlements */,
 				C247A6E32A4D949A00001DB2 /* BloopApp.swift */,
-				C27E2A652A51D5F200D48D91 /* Colours.swift */,
 				C27E2A632A51D1BE00D48D91 /* Colours.xcassets */,
 				C247A6EA2A4D949D00001DB2 /* Preview Content */,
-				C27E2A672A51DE7700D48D91 /* Layout.swift */,
 			);
 			path = app;
 			sourceTree = "<group>";
@@ -181,6 +185,7 @@
 			children = (
 				C229B9792A4D9EBF0044F2C6 /* Store.swift */,
 				C229B97E2A4D9F990044F2C6 /* AppState.swift */,
+				C25FA0C62A53FAEA0066C539 /* Dispatch.swift */,
 			);
 			path = store;
 			sourceTree = "<group>";
@@ -198,6 +203,7 @@
 			isa = PBXGroup;
 			children = (
 				C229B9812A4D9FD30044F2C6 /* Action.swift */,
+				C25FA0C82A53FBA80066C539 /* RequestActionHelpers.swift */,
 			);
 			path = actions;
 			sourceTree = "<group>";
@@ -214,18 +220,18 @@
 		C229B9882A4DA1EB0044F2C6 /* model */ = {
 			isa = PBXGroup;
 			children = (
-				C229B9892A4DA1F60044F2C6 /* ProjectInfo.swift */,
-				C229B98B2A4DA25F0044F2C6 /* Project.swift */,
-				C229B98D2A4DA2850044F2C6 /* Song.swift */,
-				C229B98F2A4DA2E50044F2C6 /* Selections.swift */,
-				C229B9912A4DA30B0044F2C6 /* Id.swift */,
-				C229B9932A4DA3310044F2C6 /* Tempo.swift */,
-				C229B9952A4DA3510044F2C6 /* Section.swift */,
-				C229B9972A4DA3820044F2C6 /* Sample.swift */,
-				C257C16C2A4DF6340080ECC2 /* PlaybackState.swift */,
-				C257C16E2A4DF6D40080ECC2 /* Waveform.swift */,
-				C257C1702A4DF81E0080ECC2 /* Progress.swift */,
 				C20240DD2A4F14D100F8138D /* DemoProject.swift */,
+				C229B9912A4DA30B0044F2C6 /* Id.swift */,
+				C257C16C2A4DF6340080ECC2 /* PlaybackState.swift */,
+				C257C1702A4DF81E0080ECC2 /* Progress.swift */,
+				C229B98B2A4DA25F0044F2C6 /* Project.swift */,
+				C229B9892A4DA1F60044F2C6 /* ProjectInfo.swift */,
+				C229B9972A4DA3820044F2C6 /* Sample.swift */,
+				C229B9952A4DA3510044F2C6 /* Section.swift */,
+				C229B98F2A4DA2E50044F2C6 /* Selections.swift */,
+				C229B98D2A4DA2850044F2C6 /* Song.swift */,
+				C229B9932A4DA3310044F2C6 /* Tempo.swift */,
+				C257C16E2A4DF6D40080ECC2 /* Waveform.swift */,
 			);
 			path = model;
 			sourceTree = "<group>";
@@ -283,6 +289,7 @@
 				C229B9802A4D9FC70044F2C6 /* actions */,
 				C229B99E2A4DE4D00044F2C6 /* api */,
 				C229B9722A4D966C0044F2C6 /* app */,
+				C25FA0C12A5345320066C539 /* constants */,
 				C229B9992A4DD54F0044F2C6 /* core */,
 				C229B9832A4D9FF20044F2C6 /* middleware */,
 				C229B9882A4DA1EB0044F2C6 /* model */,
@@ -319,6 +326,15 @@
 			path = "ui-tests";
 			sourceTree = "<group>";
 		};
+		C25FA0C12A5345320066C539 /* constants */ = {
+			isa = PBXGroup;
+			children = (
+				C27E2A652A51D5F200D48D91 /* Colours.swift */,
+				C27E2A672A51DE7700D48D91 /* Layout.swift */,
+			);
+			path = constants;
+			sourceTree = "<group>";
+		};
 		C27E2A692A51E1E000D48D91 /* project */ = {
 			isa = PBXGroup;
 			children = (
@@ -349,6 +365,7 @@
 			isa = PBXGroup;
 			children = (
 				C27E2A6E2A51E5FD00D48D91 /* SectionView.swift */,
+				C25FA0C42A5348E40066C539 /* EditSectionView.swift */,
 			);
 			path = section;
 			sourceTree = "<group>";
@@ -534,6 +551,7 @@
 				C229B9752A4D9DA30044F2C6 /* ProjectView.swift in Sources */,
 				C264EC862A50CCBB002318A0 /* SectionOverview.swift in Sources */,
 				C229B97F2A4D9F990044F2C6 /* AppState.swift in Sources */,
+				C25FA0C52A5348E40066C539 /* EditSectionView.swift in Sources */,
 				C20240DE2A4F14D100F8138D /* DemoProject.swift in Sources */,
 				C229B97D2A4D9F6D0044F2C6 /* Reducer.swift in Sources */,
 				C247A6E62A4D949A00001DB2 /* ContentView.swift in Sources */,
@@ -546,7 +564,9 @@
 				C257C1772A4E003F0080ECC2 /* ApiMiddleware.swift in Sources */,
 				C247A6E42A4D949A00001DB2 /* BloopApp.swift in Sources */,
 				C257C16B2A4DF5C00080ECC2 /* Response.swift in Sources */,
+				C25FA0C92A53FBA80066C539 /* RequestActionHelpers.swift in Sources */,
 				C229B98A2A4DA1F60044F2C6 /* ProjectInfo.swift in Sources */,
+				C25FA0C72A53FAEA0066C539 /* Dispatch.swift in Sources */,
 				C27E2A6F2A51E5FD00D48D91 /* SectionView.swift in Sources */,
 				C229B98E2A4DA2850044F2C6 /* Song.swift in Sources */,
 				C27E2A682A51DE7700D48D91 /* Layout.swift in Sources */,

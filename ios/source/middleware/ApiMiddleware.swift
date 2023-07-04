@@ -2,13 +2,13 @@ import Foundation
 
 class ApiMiddleware: Middleware {
     private let core = Core()
-    var dispatch: ((Action) -> Void)?
+    var dispatch: Dispatch?
 
     init() {
         core.delegate = self
     }
 
-    func execute(state: AppState, action: Action, dispatch: @escaping (Action) -> Void) {
+    func execute(state: AppState, action: Action, dispatch: @escaping Dispatch) {
         self.dispatch = dispatch
 
         if case .connect(let ipAddress) = action {

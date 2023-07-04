@@ -2,7 +2,7 @@ import SwiftUI
 
 struct DisconnectedView: View {
     @State private var ipAddress = "localhost"
-    var dispatch: (Action) -> Void
+    var dispatch: Dispatch
 
     var body: some View {
         VStack(spacing: 16) {
