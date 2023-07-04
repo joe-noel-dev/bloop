@@ -2,18 +2,26 @@ import SwiftUI
 
 struct SectionView: View {
     var section: Section
-    var isSelected: Bool
+    var selections: Selections
+    var playbackState: PlaybackState
     var dispatch: Dispatch
     @State private var editing = false
 
-    init(section: Section, isSelected: Bool, dispatch: @escaping Dispatch) {
-        self.section = section
-        self.dispatch = dispatch
-        self.isSelected = isSelected
+    private var isSelected: Bool {
+        selections.section == section.id
+    }
+
+    private var isPlaying: Bool {
+        playbackState.sectionId == section.id
     }
 
     private var border: some View {
-        Rectangle().frame(width: 2).foregroundColor(isSelected ? Colours.theme2 : Colours.neutral6)
+        let borderColour =
+            isPlaying ? Colours.playing : isSelected ? Colours.selected : Colours.neutral6
+
+        return Rectangle()
+            .frame(width: 2)
+            .foregroundColor(borderColour)
     }
 
     private var editButton: some View {
@@ -21,6 +29,7 @@ struct SectionView: View {
             editing = true
         } label: {
             Label("Edit", systemImage: "pencil")
+                .background(.regularMaterial)
         }
         .buttonStyle(.bordered)
         .popover(isPresented: $editing) {
@@ -36,7 +45,7 @@ struct SectionView: View {
             }
 
             if section.metronome {
-                Image(systemName: "metronome")
+                Image(systemName: "metronome.fill")
             }
         }
     }
@@ -61,21 +70,36 @@ struct SectionView: View {
         .overlay(border, alignment: .leading)
         .frame(minHeight: Layout.touchTarget)
         .onTapGesture {
-            let action = selectSectionAction(section.id)
-            dispatch(action)
+            if !isSelected {
+                let action = selectSectionAction(section.id)
+                dispatch(action)
+            }
         }
 
     }
 }
 
 struct SectionView_Previews: PreviewProvider {
-    static var section: Section {
+    static let section = {
         let section = demoSection(0)
         return section
-    }
+    }()
+
+    static let selections = {
+        var selections = Selections()
+        selections.section = section.id
+        return selections
+    }()
+
+    static let playbackState = {
+        var playbackState = PlaybackState()
+        playbackState.sectionId = section.id
+        return playbackState
+    }()
 
     static var previews: some View {
-        SectionView(section: section, isSelected: true) { action in
+        SectionView(section: section, selections: selections, playbackState: playbackState) {
+            action in
             print("Dipatch: \(action)")
         }
         .padding()

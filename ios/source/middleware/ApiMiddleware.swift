@@ -17,6 +17,8 @@ class ApiMiddleware: Middleware {
 
         if case .sendRequest(let request) = action {
             core.sendRequest(request)
+
+            print("Sending request: \(request)")
         }
     }
 
@@ -34,6 +36,10 @@ extension ApiMiddleware: CoreDelegate {
     func coreDidSendResponse(_ response: Response) {
         if let project = response.project {
             self.dispatch?(.setProject(project))
+        }
+
+        if let playback = response.playbackState {
+            self.dispatch?(.setPlaybackState(playback))
         }
     }
 

@@ -156,7 +156,6 @@
 				C247A6E72A4D949D00001DB2 /* Assets.xcassets */,
 				C247A6E92A4D949D00001DB2 /* Bloop.entitlements */,
 				C247A6E32A4D949A00001DB2 /* BloopApp.swift */,
-				C27E2A632A51D1BE00D48D91 /* Colours.xcassets */,
 				C247A6EA2A4D949D00001DB2 /* Preview Content */,
 			);
 			path = app;
@@ -325,6 +324,7 @@
 		C25FA0C12A5345320066C539 /* constants */ = {
 			isa = PBXGroup;
 			children = (
+				C27E2A632A51D1BE00D48D91 /* Colours.xcassets */,
 				C27E2A652A51D5F200D48D91 /* Colours.swift */,
 				C27E2A672A51DE7700D48D91 /* Layout.swift */,
 			);
