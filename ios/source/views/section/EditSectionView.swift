@@ -24,8 +24,9 @@ struct EditSectionView: View {
                     var section = section
                     section.loop = $0
                     let action = updateSectionAction(section)
-                    dispatch (action)
-                })
+                    dispatch(action)
+                }
+            )
         ) {
             Label("Loop", systemImage: "repeat")
         }
@@ -42,7 +43,8 @@ struct EditSectionView: View {
                     var section = section
                     section.metronome = $0
                     updateSection(section)
-                })
+                }
+            )
         ) {
             Label("Metronome", systemImage: "metronome")
         }
@@ -52,9 +54,9 @@ struct EditSectionView: View {
     private var startField: some View {
         HStack {
             Text("Start: ")
-            
+
             Spacer()
-            
+
             TextField("Start", value: $newStart, format: .number)
                 .onSubmit {
                     var section = section
@@ -66,12 +68,12 @@ struct EditSectionView: View {
                 #endif
         }
     }
-    
+
     private func updateSection(_ section: Section) {
-        let action = updateSectionAction( section)
+        let action = updateSectionAction(section)
         dispatch(action)
     }
-    
+
     private var nameField: some View {
         TextField("Name", text: $newName)
             .font(.title)
@@ -82,14 +84,15 @@ struct EditSectionView: View {
                 dispatch(action)
             }
     }
-    
+
     private var removeButton: some View {
-        Button(action: {
+        Button {
             let action = removeSectionAction(section.id)
             dispatch(action)
-        }) {
+        } label: {
             Label("Remove", systemImage: "trash")
-        }.buttonStyle(.bordered)
+        }
+        .buttonStyle(.bordered)
     }
 
     var body: some View {

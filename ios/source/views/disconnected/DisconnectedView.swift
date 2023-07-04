@@ -20,7 +20,8 @@ struct DisconnectedView: View {
                 label: {
                     Text("Connect")
                         .font(.title)
-                })
+                }
+            )
         }
         .padding()
 

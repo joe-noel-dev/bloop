@@ -24,7 +24,8 @@ class Core: CoreConnectionDelegate {
             let encodedRequest = try BSONEncoder().encode(request)
             let data = encodedRequest.toData()
             self.connection.send(data)
-        } catch {
+        }
+        catch {
             print("Error sending request: \(error)")
         }
     }
@@ -51,7 +52,8 @@ extension Core {
             let bsonDocument = try BSONDocument(fromBSON: data)
             let response = try BSONDecoder().decode(Response.self, from: bsonDocument)
             self.delegate?.coreDidSendResponse(response)
-        } catch {
+        }
+        catch {
             print("Error decoding response from core: \(error)")
         }
     }

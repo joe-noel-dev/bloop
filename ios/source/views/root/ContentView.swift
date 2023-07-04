@@ -8,7 +8,8 @@ struct ContentView: View {
             ProjectView(project: store.state.project!) { action in
                 store.dispatch(action)
             }
-        } else {
+        }
+        else {
             DisconnectedView { action in
                 store.dispatch(action)
             }

@@ -33,7 +33,8 @@ struct SongView: View {
                     SectionView(
                         section: section,
                         isSelected: selections.isSectionSelected(sectionId: section.id),
-                        dispatch: dispatch)
+                        dispatch: dispatch
+                    )
                 }
             }
 
