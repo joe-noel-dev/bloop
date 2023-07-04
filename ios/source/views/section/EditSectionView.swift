@@ -29,7 +29,6 @@ struct EditSectionView: View {
         ) {
             Label("Loop", systemImage: "repeat")
         }
-        .toggleStyle(.button)
     }
 
     private var metronomeToggle: some View {
@@ -47,25 +46,18 @@ struct EditSectionView: View {
         ) {
             Label("Metronome", systemImage: "metronome")
         }
-        .toggleStyle(.button)
     }
 
     private var startField: some View {
-        HStack {
-            Text("Start: ")
-
-            Spacer()
-
-            TextField("Start", value: $newStart, format: .number)
-                .onSubmit {
-                    var section = section
-                    section.start = newStart
-                    updateSection(section)
-                }
-                #if os(iOS)
-                    .keyboardType(.numberPad)
-                #endif
-        }
+        TextField("Start", value: $newStart, format: .number)
+            .onSubmit {
+                var section = section
+                section.start = newStart
+                updateSection(section)
+            }
+            #if os(iOS)
+                .keyboardType(.decimalPad)
+            #endif
     }
 
     private func updateSection(_ section: Section) {
@@ -84,24 +76,34 @@ struct EditSectionView: View {
     }
 
     private var removeButton: some View {
-        Button {
+        Button(role: .destructive) {
             let action = removeSectionAction(section.id)
             dispatch(action)
         } label: {
-            Label("Remove", systemImage: "trash")
+            Text("Remove Section")
         }
-        .buttonStyle(.bordered)
     }
 
     var body: some View {
-        VStack(alignment: .leading) {
-            nameField
-            startField
-            loopToggle
-            metronomeToggle
+        Form {
+            SwiftUI.Section {
+                nameField
+            }
+
+            SwiftUI.Section {
+                startField
+            } header: {
+                Text("Beat offset")
+            }
+
+            SwiftUI.Section {
+                loopToggle
+                metronomeToggle
+            }
+
             removeButton
         }
-        .padding(Layout.units(2))
+        .frame(minWidth: 400, minHeight: 400)
     }
 }
 
