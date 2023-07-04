@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ProjectView: View {
     var project: Project
-    var dispatch: (Action) -> Void
+    var dispatch: Dispatch
 
     func addSong() {
         let request = Request.add(EntityId.init(entity: .song))
@@ -21,20 +21,10 @@ struct ProjectView: View {
                 }
             }
             .padding()
-            
+
             TransportBar()
         }
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: addSong) {
-                    Image(systemName: "plus")
-                }
-
-            }
-        }
         .background(Colours.neutral7)
-        .navigationTitle(project.info.name)
-        .ignoresSafeArea(.all, edges: [.bottom])
     }
 }
 

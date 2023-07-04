@@ -16,6 +16,11 @@ struct TransportBar: View {
 
 struct TransportBar_Previews: PreviewProvider {
     static var previews: some View {
-        TransportBar()
+        VStack {
+            Spacer()
+            TransportBar()
+
+        }
+        .ignoresSafeArea(.all, edges: [.bottom])
     }
 }

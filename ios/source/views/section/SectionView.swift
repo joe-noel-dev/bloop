@@ -2,71 +2,71 @@ import SwiftUI
 
 struct SectionView: View {
     var section: Section
-    var dispatch: (Action) -> Void
-    private var loopBinding: Binding<Bool>
-    private var metronomeBinding: Binding<Bool>
-    @State private var newStart: Double
-    @State private var newName: String
+    var isSelected: Bool
+    var dispatch: Dispatch
+    @State private var editing = false
 
-    init(section: Section, dispatch: @escaping (Action) -> Void) {
+    init(section: Section, isSelected: Bool, dispatch: @escaping Dispatch) {
         self.section = section
         self.dispatch = dispatch
+        self.isSelected = isSelected
+    }
 
-        self.loopBinding = .init(
-            get: {
-                section.loop
-            },
-            set: {
-                var section = section
-                section.loop = $0
-                updateSection(section: section, dispatch: dispatch)
-            })
+    private var border: some View {
+        Rectangle().frame(width: 2).foregroundColor(isSelected ? Colours.theme2 : Colours.neutral6)
+    }
 
-        self.metronomeBinding = .init(
-            get: {
-                section.metronome
-            },
-            set: {
-                var section = section
-                section.metronome = $0
-                updateSection(section: section, dispatch: dispatch)
-            })
+    private var editButton: some View {
+        Button {
+            editing = true
+        } label: {
+            Label("Edit", systemImage: "pencil")
+        }
+        .buttonStyle(.bordered)
+    }
 
-        self.newStart = section.start
-        self.newName = section.name
+    private var statusIcons: some View {
+        HStack {
+            if section.loop {
+                Image(systemName: "repeat")
+            }
+
+            if section.metronome {
+                Image(systemName: "metronome")
+            }
+        }
     }
 
     var body: some View {
         HStack {
-            TextField("Name", text: $newName, onCommit: {
-                var section = section
-                section.name = newName
-                updateSection(section: section, dispatch: dispatch)
-            })
+            Text(section.name)
                 .font(.title2)
 
-            HStack {
-                Text("Start")
-                TextField("Start", value: $newStart, format: .number)
-                    .onSubmit {
-                        var section = section
-                        section.start = newStart
-                        updateSection(section: section, dispatch: dispatch)
-                    }
-                    .frame(maxWidth: 48)
-                    .keyboardType(.numberPad)
+            Spacer()
+
+            statusIcons
+
+            if isSelected {
+                editButton
             }
 
-            Toggle(isOn: loopBinding) {
-                Label("Loop", systemImage: "repeat")
-            }
-            .toggleStyle(.button)
-
-            Toggle(isOn: metronomeBinding) {
-                Label("Metronome", systemImage: "metronome")
-            }
-            .toggleStyle(.button)
         }
+        .contentShape(Rectangle())
+        .padding([.leading])
+        .padding([.top, .bottom], Layout.units(0.5))
+        .overlay(border, alignment: .leading)
+        .frame(minHeight: Layout.touchTarget)
+        .onTapGesture {
+            let action = selectSectionAction(section.id)
+            dispatch(action)
+        }
+        .sheet(isPresented: $editing) {
+            VStack {
+                EditSectionView(section: section, dispatch: dispatch)
+            }
+            .presentationDetents([.medium])
+        }
+
     }
 }
 
@@ -77,16 +77,9 @@ struct SectionView_Previews: PreviewProvider {
     }
 
     static var previews: some View {
-        SectionView(section: section) { action in
+        SectionView(section: section, isSelected: true) { action in
             print("Dipatch: \(action)")
         }
-            .padding()
+        .padding()
     }
-}
-
-func updateSection(section: Section, dispatch: (Action) -> Void) {
-    let updateRequest = UpdateRequest.section(section)
-    let request = Request.update(updateRequest)
-    let action = Action.sendRequest(request)
-    dispatch(action)
 }

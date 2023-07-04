@@ -3,7 +3,7 @@ import SwiftUI
 struct SectionOverview: View {
     var section: Section
     var selections: Selections
-    var dispatch: (Action) -> Void
+    var dispatch: Dispatch
 
     var isSelected: Bool {
         selections.section == section.id

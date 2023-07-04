@@ -3,7 +3,7 @@ import SwiftUI
 struct SongOverview: View {
     var song: Song
     var selections: Selections
-    var dispatch: (Action) -> Void
+    var dispatch: Dispatch
 
     var isSelected: Bool {
         selections.song == song.id
@@ -26,8 +26,8 @@ struct SongOverview: View {
         .padding()
         .background(isSelected ? Colours.theme1 : Colours.neutral1)
         .onTapGesture {
-            let request = Request.select(EntityId.init(entity: .song, id: song.id))
-            dispatch(.sendRequest(request))
+            let action = selectSongAction(song.id)
+            dispatch(action)
         }
         .cornerRadius(Layout.cornerRadiusLarge)
         .contextMenu {
