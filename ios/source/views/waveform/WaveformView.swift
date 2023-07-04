@@ -4,7 +4,7 @@ struct WaveformView: View {
     var body: some View {
         Colours.neutral2
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-
+            .cornerRadius(Layout.corderRadiusMedium)
     }
 }
 
