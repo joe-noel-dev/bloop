@@ -16,7 +16,7 @@ struct TransportBar: View {
             Spacer()
 
             loopButton
-            
+
             Spacer()
 
             if playbackState.playing == .playing {
@@ -25,19 +25,18 @@ struct TransportBar: View {
             else {
                 playButton
             }
-            
+
             Spacer()
 
             queueButton
 
             Spacer()
-
         }
     }
 
     @ViewBuilder
     private var playButton: some View {
-        TransportButton(systemImageName: "play.fill") {
+        TransportButton(name: "Play", systemImageName: "play.fill") {
             let action = playAction()
             dispatch(action)
         }
@@ -45,7 +44,7 @@ struct TransportBar: View {
 
     @ViewBuilder
     private var stopButton: some View {
-        TransportButton(systemImageName: "stop.fill") {
+        TransportButton(name: "Stop", systemImageName: "stop.fill") {
             let action = stopAction()
             dispatch(action)
         }
@@ -57,7 +56,7 @@ struct TransportBar: View {
             emptyButton
         }
         else {
-            TransportButton(systemImageName: "repeat") {
+            TransportButton(name: playbackState.looping ? "Exit Loop" : "Enter Loop",  systemImageName: "repeat") {
                 let action = playbackState.looping ? exitLoopAction() : enterLoopAction()
                 dispatch(action)
             }
@@ -67,7 +66,8 @@ struct TransportBar: View {
 
     @ViewBuilder
     private var emptyButton: some View {
-        Spacer().frame(width: Layout.touchTarget, height: Layout.touchTarget)
+        Spacer()
+            .frame(width: Layout.touchTarget, height: Layout.touchTarget)
     }
 
     private enum QueueState {
@@ -98,7 +98,7 @@ struct TransportBar: View {
         case .notReady:
             emptyButton
         case .readyToQueue:
-            TransportButton(systemImageName: "arrow.forward") {
+            TransportButton(name: "Jump",  systemImageName: "arrow.forward") {
                 guard let songId = selections.song, let sectionId = selections.section else {
                     return
                 }
@@ -107,7 +107,7 @@ struct TransportBar: View {
                 dispatch(action)
             }
         case .queued:
-            TransportButton(systemImageName: "checkmark") {}
+            TransportButton(name: "Queued", systemImageName: "checkmark") {}
         }
 
     }
@@ -115,6 +115,7 @@ struct TransportBar: View {
 }
 
 struct TransportButton: View {
+    var name: String
     var systemImageName: String
     var action: () -> Void
 
@@ -122,9 +123,8 @@ struct TransportButton: View {
         Button {
             action()
         } label: {
-            Image(systemName: systemImageName)
-                .resizable()
-                .padding(Layout.units(1.5))
+            Label(name, systemImage: systemImageName)
+                .labelStyle(.iconOnly)
         }
         .frame(width: Layout.touchTarget, height: Layout.touchTarget)
     }

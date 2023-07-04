@@ -6,40 +6,46 @@ struct ProjectView: View {
     var progress: Progress
     var dispatch: Dispatch
 
-    func addSong() {
-        let request = Request.add(EntityId.init(entity: .song))
-        dispatch(.sendRequest(request))
-    }
-
     var body: some View {
 
-        VStack {
-            ScrollView(.vertical) {
-                VStack(spacing: Layout.units(4)) {
-                    ForEach(project.songs) { song in
-                        SongView(
-                            song: song,
-                            selections: project.selections,
-                            playbackState: playbackState,
-                            progress: progress,
-                            dispatch: dispatch
-                        )
+        NavigationStack {
+            ZStack {
+                Colours.background.ignoresSafeArea()
+
+                ScrollView(.vertical) {
+                    VStack(spacing: Layout.units(4)) {
+                        ForEach(project.songs) { song in
+                            SongView(
+                                song: song,
+                                selections: project.selections,
+                                playbackState: playbackState,
+                                progress: progress,
+                                dispatch: dispatch
+                            )
+                        }
+                        Spacer()
                     }
-                    Spacer()
                 }
+                .toolbar {
+                    Button {
+                        let action = addSongAction()
+                        dispatch(action)
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+                .navigationTitle(project.info.name)
+                .padding()
             }
-            .padding()
         }
-        .background(Colours.background)
         .safeAreaInset(edge: .bottom) {
-        
-                TransportBar(
-                    playbackState: playbackState,
-                    selections: project.selections,
-                    dispatch: dispatch
-                )
-    
-            
+
+            TransportBar(
+                playbackState: playbackState,
+                selections: project.selections,
+                dispatch: dispatch
+            )
+
         }
     }
 }
