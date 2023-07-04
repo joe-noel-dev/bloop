@@ -4,8 +4,9 @@ struct SongView: View {
     var song: Song
     var selections: Selections
     var dispatch: Dispatch
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
-    var selectedSection: Section? {
+    private var selectedSection: Section? {
         song.sections.first {
             $0.id == selections.section
         }
@@ -15,9 +16,15 @@ struct SongView: View {
         selections.song == song.id
     }
 
-    func selectSong() {
+    private func selectSong() {
         let action = selectSongAction(song.id)
         dispatch(action)
+    }
+
+    private var sectionColumns: [GridItem] {
+        let columnCount = horizontalSizeClass == .compact ? 1 : 2
+
+        return Array(repeating: GridItem(.flexible()), count: columnCount)
     }
 
     var body: some View {
@@ -29,18 +36,27 @@ struct SongView: View {
                 WaveformView()
                     .frame(height: 120)
 
-                ForEach(song.sections) { section in
-                    SectionView(
-                        section: section,
-                        isSelected: selections.isSectionSelected(sectionId: section.id),
-                        dispatch: dispatch
-                    )
+                LazyVGrid(columns: sectionColumns) {
+                    ForEach(song.sections) { section in
+                        SectionView(
+                            section: section,
+                            isSelected: selections.isSectionSelected(sectionId: section.id),
+                            dispatch: dispatch
+                        )
+                    }
                 }
+
             }
 
             Spacer()
         }
         .padding()
+        .overlay(alignment: .leading) {
+            if isSelected {
+                Colours.theme2
+                    .frame(width: Layout.units(0.5))
+            }
+        }
         .onTapGesture {
             if !isSelected {
                 selectSong()

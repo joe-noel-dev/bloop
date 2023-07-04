@@ -23,6 +23,10 @@ struct SectionView: View {
             Label("Edit", systemImage: "pencil")
         }
         .buttonStyle(.bordered)
+        .popover(isPresented: $editing) {
+            EditSectionView(section: section, dispatch: dispatch)
+                .presentationDetents([.medium])
+        }
     }
 
     private var statusIcons: some View {
@@ -59,12 +63,6 @@ struct SectionView: View {
         .onTapGesture {
             let action = selectSectionAction(section.id)
             dispatch(action)
-        }
-        .sheet(isPresented: $editing) {
-            VStack {
-                EditSectionView(section: section, dispatch: dispatch)
-            }
-            .presentationDetents([.medium])
         }
 
     }

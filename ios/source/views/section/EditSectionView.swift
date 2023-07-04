@@ -23,8 +23,7 @@ struct EditSectionView: View {
                 set: {
                     var section = section
                     section.loop = $0
-                    let action = updateSectionAction(section)
-                    dispatch(action)
+                    updateSection(section)
                 }
             )
         ) {
@@ -80,8 +79,7 @@ struct EditSectionView: View {
             .onSubmit {
                 var section = section
                 section.name = newName
-                let action = updateSectionAction(section)
-                dispatch(action)
+                updateSection(section)
             }
     }
 
