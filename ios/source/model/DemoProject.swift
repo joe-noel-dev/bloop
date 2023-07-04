@@ -6,7 +6,11 @@ func demoProject() -> Project {
     let id = UUID().uuidString
     let version = "1"
     let projectInfo = ProjectInfo.init(
-        id: id, name: projectName, version: version, lastSaved: lastSaved)
+        id: id,
+        name: projectName,
+        version: version,
+        lastSaved: lastSaved
+    )
 
     let songs = Array(0..<3).map { demoSong($0) }
     let selections = Selections.init(song: songs[0].id, section: songs[0].sections[0].id)

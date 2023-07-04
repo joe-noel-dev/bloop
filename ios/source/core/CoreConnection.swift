@@ -16,7 +16,10 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate {
         let url = URL(string: "ws://\(ipAddress):8999")!
         let request = URLRequest(url: url)
         let session = URLSession(
-            configuration: .default, delegate: self, delegateQueue: OperationQueue())
+            configuration: .default,
+            delegate: self,
+            delegateQueue: OperationQueue()
+        )
         task = session.webSocketTask(with: request)
         task?.maximumMessageSize = 10 * 1024 * 1024
         task?.resume()
@@ -43,7 +46,8 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate {
                         print("Error sending to core: \(error)")
                         self.disconnect()
                     }
-                })
+                }
+            )
         }
 
     }
@@ -80,7 +84,8 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate {
     }
 
     func urlSession(
-        _ session: URLSession, webSocketTask: URLSessionWebSocketTask,
+        _ session: URLSession,
+        webSocketTask: URLSessionWebSocketTask,
         didOpenWithProtocol protocol: String?
     ) {
         print("Connected to core")
@@ -95,8 +100,10 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate {
     }
 
     func urlSession(
-        _ session: URLSession, webSocketTask: URLSessionWebSocketTask,
-        didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?
+        _ session: URLSession,
+        webSocketTask: URLSessionWebSocketTask,
+        didCloseWith closeCode: URLSessionWebSocketTask.CloseCode,
+        reason: Data?
     ) {
         self.disconnect()
     }
