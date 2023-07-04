@@ -11,6 +11,8 @@ struct DisconnectedView: View {
 
             TextField("IP Address", text: $ipAddress)
                 .multilineTextAlignment(.center)
+                .font(.title)
+                .frame(minHeight: 64)
                 .border(.black)
 
             Button(

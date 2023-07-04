@@ -3,6 +3,7 @@ import SwiftUI
 struct ProjectView: View {
     var project: Project
     var playbackState: PlaybackState
+    var progress: Progress
     var dispatch: Dispatch
 
     func addSong() {
@@ -20,6 +21,7 @@ struct ProjectView: View {
                             song: song,
                             selections: project.selections,
                             playbackState: playbackState,
+                            progress: progress,
                             dispatch: dispatch
                         )
                     }
@@ -30,11 +32,14 @@ struct ProjectView: View {
         }
         .background(Colours.background)
         .safeAreaInset(edge: .bottom) {
-            TransportBar(
-                playbackState: playbackState,
-                selections: project.selections,
-                dispatch: dispatch
-            )
+        
+                TransportBar(
+                    playbackState: playbackState,
+                    selections: project.selections,
+                    dispatch: dispatch
+                )
+    
+            
         }
     }
 }
@@ -42,8 +47,14 @@ struct ProjectView: View {
 struct ProjectView_Previews: PreviewProvider {
     static let project = demoProject()
     static let playbackState = PlaybackState()
+    static let progress = Progress()
 
     static var previews: some View {
-        ProjectView(project: project, playbackState: playbackState, dispatch: loggingDispatch)
+        ProjectView(
+            project: project,
+            playbackState: playbackState,
+            progress: progress,
+            dispatch: loggingDispatch
+        )
     }
 }

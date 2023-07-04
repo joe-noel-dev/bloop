@@ -14,19 +14,22 @@ struct TransportBar: View {
         HStack(alignment: .center) {
 
             Spacer()
-            
-            loopButton
 
-    
+            loopButton
+            
+            Spacer()
+
             if playbackState.playing == .playing {
                 stopButton
             }
             else {
                 playButton
             }
+            
+            Spacer()
 
             queueButton
-            
+
             Spacer()
 
         }
