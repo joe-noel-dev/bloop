@@ -15,5 +15,9 @@ func rootReducer(state: AppState, action: Action) -> AppState {
         state.connected = connected
     }
 
+    if case .setProgress(let progress) = action {
+        state.progress = progress
+    }
+
     return state
 }

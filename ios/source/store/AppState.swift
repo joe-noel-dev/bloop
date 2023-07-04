@@ -5,4 +5,5 @@ struct AppState {
     var projects: [ProjectInfo] = []
     var project: Project?
     var playbackState = PlaybackState()
+    var progress = Progress()
 }

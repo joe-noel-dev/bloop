@@ -5,6 +5,7 @@ enum Action {
 
     case setProject(Project)
     case setPlaybackState(PlaybackState)
+    case setProgress(Progress)
 
     case connect(String)
     case setConnected(Bool)

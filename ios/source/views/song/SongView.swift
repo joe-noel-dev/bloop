@@ -4,6 +4,7 @@ struct SongView: View {
     var song: Song
     var selections: Selections
     var playbackState: PlaybackState
+    var progress: Progress
     var dispatch: Dispatch
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
@@ -47,6 +48,7 @@ struct SongView: View {
                             section: section,
                             selections: selections,
                             playbackState: playbackState,
+                            progress: progress,
                             dispatch: dispatch
                         )
                     }
@@ -97,11 +99,14 @@ struct SongView_Previews: PreviewProvider {
         return playbackState
     }()
 
+    static let progress = Progress()
+
     static var previews: some View {
         SongView(
             song: song,
             selections: selections,
             playbackState: playbackState,
+            progress: progress,
             dispatch: loggingDispatch
         )
         .padding()
