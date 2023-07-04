@@ -9,7 +9,7 @@ struct Colours {
 
     static let selected = theme3
     static let playing = theme4
-    static let background = theme1
+    static let background = neutral1
 
     static let theme1Text = Color("theme-1-text")
     static let theme2Text = Color("theme-2-text")

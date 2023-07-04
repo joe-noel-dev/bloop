@@ -66,3 +66,9 @@ func queueAction(song: Id, section: Id) -> Action {
     let request = Request.transport(transportRequest)
     return .sendRequest(request)
 }
+
+func addSongAction() -> Action {
+    let entity = EntityId.init(entity: .song)
+    let request = Request.add(entity)
+    return .sendRequest(request)
+}

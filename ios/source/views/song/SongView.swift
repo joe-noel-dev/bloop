@@ -36,8 +36,7 @@ struct SongView: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
-                Text(song.name)
-                    .font(.largeTitle)
+                header
 
                 WaveformView()
                     .frame(height: 120)
@@ -79,6 +78,32 @@ struct SongView: View {
         }
         .background(.thickMaterial)
         .cornerRadius(Layout.cornerRadiusLarge)
+        .shadow(radius: 4.0)
+    }
+
+    @ViewBuilder
+    var header: some View {
+        HStack {
+            Text(song.name)
+                .font(.largeTitle)
+            
+            Spacer()
+            
+            if isSelected {
+                Menu {
+                    Button(role: .destructive) {
+                        let action = removeSongAction(song.id)
+                        dispatch(action)
+                    } label: {
+                        Text("Remove Song")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                }
+            }
+            
+        }
+
     }
 }
 
