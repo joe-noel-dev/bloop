@@ -3,6 +3,7 @@ import SwiftUI
 struct SongView: View {
     var song: Song
     var selections: Selections
+    var playbackState: PlaybackState
     var dispatch: Dispatch
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
@@ -14,6 +15,10 @@ struct SongView: View {
 
     private var isSelected: Bool {
         selections.song == song.id
+    }
+
+    private var isPlaying: Bool {
+        playbackState.songId == song.id
     }
 
     private func selectSong() {
@@ -40,7 +45,8 @@ struct SongView: View {
                     ForEach(song.sections) { section in
                         SectionView(
                             section: section,
-                            isSelected: selections.isSectionSelected(sectionId: section.id),
+                            selections: selections,
+                            playbackState: playbackState,
                             dispatch: dispatch
                         )
                     }
@@ -50,12 +56,18 @@ struct SongView: View {
 
             Spacer()
         }
+        .contentShape(Rectangle())
         .padding()
         .overlay(alignment: .leading) {
-            if isSelected {
-                Colours.theme2
+            if isPlaying {
+                Colours.playing
                     .frame(width: Layout.units(0.5))
             }
+            else if isSelected {
+                Colours.selected
+                    .frame(width: Layout.units(0.5))
+            }
+
         }
         .onTapGesture {
             if !isSelected {
@@ -63,7 +75,7 @@ struct SongView: View {
             }
 
         }
-        .background(Colours.neutral1)
+        .background(.thickMaterial)
         .cornerRadius(Layout.cornerRadiusLarge)
     }
 }
@@ -79,10 +91,19 @@ struct SongView_Previews: PreviewProvider {
         .init(song: song.id, section: song.sections[0].id)
     }()
 
+    static let playbackState = {
+        var playbackState = PlaybackState()
+        playbackState.songId = song.id
+        return playbackState
+    }()
+
     static var previews: some View {
-        SongView(song: song, selections: selections) { action in
-            print("Dispatch: \(action)")
-        }
+        SongView(
+            song: song,
+            selections: selections,
+            playbackState: playbackState,
+            dispatch: loggingDispatch
+        )
         .padding()
 
     }

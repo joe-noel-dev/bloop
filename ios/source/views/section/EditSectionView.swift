@@ -44,7 +44,7 @@ struct EditSectionView: View {
                 }
             )
         ) {
-            Label("Metronome", systemImage: "metronome")
+            Label("Metronome", systemImage: "metronome.fill")
         }
     }
 
@@ -113,8 +113,6 @@ struct EditSectionView_Previews: PreviewProvider {
         return section
     }()
     static var previews: some View {
-        EditSectionView(section: section) { action in
-            print("Dispatch: \(action)")
-        }
+        EditSectionView(section: section, dispatch: loggingDispatch)
     }
 }

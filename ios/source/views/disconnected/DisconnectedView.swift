@@ -30,8 +30,6 @@ struct DisconnectedView: View {
 
 struct DisconnectedView_Previews: PreviewProvider {
     static var previews: some View {
-        DisconnectedView { action in
-            print("Dispatch -> \(action)")
-        }
+        DisconnectedView(dispatch: loggingDispatch)
     }
 }

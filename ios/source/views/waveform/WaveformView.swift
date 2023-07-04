@@ -2,7 +2,8 @@ import SwiftUI
 
 struct WaveformView: View {
     var body: some View {
-        Colours.neutral2
+        Rectangle()
+            .background(.regularMaterial)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .cornerRadius(Layout.corderRadiusMedium)
     }

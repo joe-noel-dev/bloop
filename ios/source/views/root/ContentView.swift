@@ -5,7 +5,8 @@ struct ContentView: View {
 
     var body: some View {
         if store.state.connected && (store.state.project != nil) {
-            ProjectView(project: store.state.project!) { action in
+            ProjectView(project: store.state.project!, playbackState: store.state.playbackState) {
+                action in
                 store.dispatch(action)
             }
         }
