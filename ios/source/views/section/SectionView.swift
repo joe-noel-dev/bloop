@@ -16,6 +16,10 @@ struct SectionView: View {
         playbackState.sectionId == section.id
     }
 
+    private var isQueued: Bool {
+        playbackState.queuedSectionId == section.id
+    }
+
     private var border: some View {
         let borderColour =
             isPlaying ? Colours.playing : isSelected ? Colours.selected : Colours.neutral6
@@ -48,7 +52,7 @@ struct SectionView: View {
             }
 
             if section.metronome {
-                Image(systemName: "metronome.fill")
+                Image(systemName: "metronome")
             }
         }
     }
@@ -67,22 +71,26 @@ struct SectionView: View {
                     editButton
                 }
             }
-            .padding([.leading])
+            .padding([.leading, .trailing])
 
+        }
+        .frame(minHeight: 48)
+        .contentShape(Rectangle())
+        .overlay(border, alignment: .leading)
+        .overlay(alignment: .bottom) {
             if isPlaying {
                 ProgressBar(progress: progress.sectionProgress)
                     .frame(maxHeight: 2)
                     .foregroundColor(Colours.playing)
             }
-            else {
-                Spacer()
-                    .frame(height: 2)
+
+        }
+        .background {
+            if isQueued {
+                Colours.neutral1
             }
         }
 
-        .contentShape(Rectangle())
-        .overlay(border, alignment: .leading)
-        .frame(minHeight: Layout.touchTarget)
         .onTapGesture {
             if !isSelected {
                 let action = selectSectionAction(section.id)
@@ -110,7 +118,11 @@ struct SectionView_Previews: PreviewProvider {
         return playbackState
     }()
 
-    static let progress = Progress()
+    static let progress = {
+        var progress = Progress()
+        progress.sectionProgress = 0.5
+        return progress
+    }()
 
     static var previews: some View {
         SectionView(

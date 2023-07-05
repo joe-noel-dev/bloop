@@ -16,6 +16,7 @@ extension Request {
         case select
         case remove
         case update
+        case duplicate
         case transport
         case save
         case load
@@ -30,74 +31,67 @@ extension Request {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
-        if case .get(let entityId) = self {
+        switch self {
+        case .get(let entityId):
             try container.encode(RequestMethod.get.rawValue, forKey: .method)
             try container.encode(entityId, forKey: .payload)
-        }
 
-        if case .add(let entityId) = self {
+        case .add(let entityId):
             try container.encode(RequestMethod.add.rawValue, forKey: .method)
             try container.encode(entityId, forKey: .payload)
-        }
 
-        if case .select(let entityId) = self {
+        case .select(let entityId):
             try container.encode(RequestMethod.select.rawValue, forKey: .method)
             try container.encode(entityId, forKey: .payload)
-        }
 
-        if case .remove(let entityId) = self {
+        case .remove(let entityId):
             try container.encode(RequestMethod.remove.rawValue, forKey: .method)
             try container.encode(entityId, forKey: .payload)
-        }
 
-        if case .update(let updateRequest) = self {
+        case .update(let updateRequest):
             try container.encode(RequestMethod.update.rawValue, forKey: .method)
             try container.encode(updateRequest, forKey: .payload)
-        }
 
-        if case .transport(let transportRequest) = self {
+        case .duplicate(let entityId):
+            try container.encode(RequestMethod.duplicate.rawValue, forKey: .method)
+            try container.encode(entityId, forKey: .payload)
+
+        case .transport(let transportRequest):
             try container.encode(RequestMethod.transport.rawValue, forKey: .method)
             try container.encode(transportRequest, forKey: .payload)
-        }
 
-        if case .save = self {
+        case .save:
             try container.encode(RequestMethod.save.rawValue, forKey: .method)
-        }
 
-        if case .load(let loadRequest) = self {
+        case .load(let loadRequest):
             try container.encode(RequestMethod.load.rawValue, forKey: .method)
             try container.encode(loadRequest, forKey: .payload)
-        }
 
-        if case .rename(let renameRequest) = self {
+        case .rename(let renameRequest):
             try container.encode(RequestMethod.rename.rawValue, forKey: .method)
             try container.encode(renameRequest, forKey: .payload)
-        }
 
-        if case .beginUpload(let beginUploadRequest) = self {
+        case .beginUpload(let beginUploadRequest):
             try container.encode(RequestMethod.beginUpload.rawValue, forKey: .method)
             try container.encode(beginUploadRequest, forKey: .payload)
-        }
 
-        if case .upload(let uploadRequest) = self {
+        case .upload(let uploadRequest):
             try container.encode(RequestMethod.upload.rawValue, forKey: .method)
             try container.encode(uploadRequest, forKey: .payload)
-        }
 
-        if case .completeUpload(let completeUploadRequest) = self {
+        case .completeUpload(let completeUploadRequest):
             try container.encode(RequestMethod.completeUpload.rawValue, forKey: .method)
             try container.encode(completeUploadRequest, forKey: .payload)
-        }
 
-        if case .addSample(let addSampleReqeust) = self {
+        case .addSample(let addSampleReqeust):
             try container.encode(RequestMethod.addSample.rawValue, forKey: .method)
             try container.encode(addSampleReqeust, forKey: .payload)
-        }
 
-        if case .removeSample(let removeSampleRequest) = self {
+        case .removeSample(let removeSampleRequest):
             try container.encode(RequestMethod.removeSample.rawValue, forKey: .method)
             try container.encode(removeSampleRequest, forKey: .payload)
         }
+
     }
 
     init(from decoder: Decoder) throws {
@@ -132,6 +126,12 @@ extension Request {
         if method == RequestMethod.update.rawValue {
             let payload = try values.decode(UpdateRequest.self, forKey: .payload)
             self = .update(payload)
+            return
+        }
+
+        if method == RequestMethod.duplicate.rawValue {
+            let payload = try values.decode(EntityId.self, forKey: .payload)
+            self = .duplicate(payload)
             return
         }
 

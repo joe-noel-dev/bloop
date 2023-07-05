@@ -95,3 +95,9 @@ func newProjectAction() -> Action {
     let request = Request.add(entity)
     return .sendRequest(request)
 }
+
+func duplicateProjectAction(_ projectId: Id) -> Action {
+    let entity = EntityId.init(entity: .project, id: projectId)
+    let request = Request.duplicate(entity)
+    return .sendRequest(request)
+}

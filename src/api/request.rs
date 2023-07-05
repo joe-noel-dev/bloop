@@ -50,6 +50,13 @@ pub struct RemoveRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct DuplicateRequest {
+    pub entity: Entity,
+    pub id: ID,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 #[serde(tag = "entity", content = "value")]
 pub enum UpdateRequest {
     Song(Song),
@@ -134,6 +141,7 @@ pub enum Request {
     Select(SelectRequest),
     Remove(RemoveRequest),
     Update(UpdateRequest),
+    Duplicate(DuplicateRequest),
     Save,
     Load(LoadRequest),
     Rename(RenameRequest),

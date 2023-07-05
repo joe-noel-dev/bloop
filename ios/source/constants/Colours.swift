@@ -1,15 +1,15 @@
 import SwiftUI
 
 struct Colours {
+
     static let theme1 = Color("theme-1")
     static let theme2 = Color("theme-2")
     static let theme3 = Color("theme-3")
     static let theme4 = Color("theme-4")
     static let theme5 = Color("theme-5")
 
-    static let selected = theme3
-    static let playing = theme4
-    static let background = neutral1
+    static let selected = theme5
+    static let playing = theme3
 
     static let theme1Text = Color("theme-1-text")
     static let theme2Text = Color("theme-2-text")

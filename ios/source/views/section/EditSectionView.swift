@@ -44,7 +44,7 @@ struct EditSectionView: View {
                 }
             )
         ) {
-            Label("Metronome", systemImage: "metronome.fill")
+            Label("Metronome", systemImage: "metronome")
         }
     }
 

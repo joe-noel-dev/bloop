@@ -6,6 +6,7 @@ enum Request: Codable, Equatable {
     case select(EntityId)
     case remove(EntityId)
     case update(UpdateRequest)
+    case duplicate(EntityId)
     case transport(TransportRequest)
     case save
     case load(LoadRequest)

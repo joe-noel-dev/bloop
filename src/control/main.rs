@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use super::{directories::Directories, project_store::ProjectStore, waveform_store::WaveformStore};
 use crate::{
     api::*,
@@ -7,7 +9,10 @@ use crate::{
     samples::SamplesCache,
 };
 use anyhow::anyhow;
-use tokio::sync::{broadcast, mpsc};
+use tokio::{
+    sync::{broadcast, mpsc},
+    time,
+};
 
 #[allow(dead_code)]
 pub struct MainController {
@@ -20,6 +25,7 @@ pub struct MainController {
     waveform_store: WaveformStore,
     midi_manager: MidiManager,
     midi_action_rx: mpsc::Receiver<Action>,
+    should_save: bool,
 }
 
 impl ResponseBroadcaster for MainController {
@@ -44,6 +50,7 @@ impl MainController {
             waveform_store: WaveformStore::new(response_tx),
             midi_manager: MidiManager::new(midi_action_tx, &directories.preferences),
             midi_action_rx,
+            should_save: false,
         }
     }
 
@@ -54,13 +61,10 @@ impl MainController {
             Request::Get(get_request) => self.handle_get(&get_request).await.map(|_| project),
             Request::Load(load_request) => self.handle_load(&load_request).await,
             Request::Remove(remove_request) => self.handle_remove(project, &remove_request).await,
+            Request::Duplicate(duplicate_request) => self.handle_duplicate(project, &duplicate_request).await,
             Request::RemoveSample(remove_request) => project.remove_sample_from_song(&remove_request.song_id),
             Request::Rename(rename_request) => self.handle_rename(project, &rename_request),
-            Request::Save => self
-                .project_store
-                .save(project.clone(), &self.samples_cache)
-                .await
-                .map(|_| project),
+            Request::Save => self.save_project(project).await,
             Request::Select(select_request) => self.handle_select(project, &select_request),
             Request::Transport(transport_method) => {
                 self.handle_transport_request(&transport_method);
@@ -83,8 +87,16 @@ impl MainController {
         }
     }
 
+    async fn save_project(&mut self, project: Project) -> anyhow::Result<Project> {
+        self.project_store
+            .save(project.clone(), &self.samples_cache)
+            .await
+            .map(|_| project)
+    }
+
     fn set_project(&mut self, project: Project) {
         if self.project != project {
+            self.should_save = project.info.id == self.project.info.id;
             self.project = project;
             self.send_project_response(&self.project);
             self.audio_manager
@@ -125,12 +137,21 @@ impl MainController {
         let _ = self.response_tx.send(response);
     }
 
+    async fn auto_save_project(&mut self) {
+        if self.should_save && self.save_project(self.project.clone()).await.is_ok() {
+            self.should_save = false
+        }
+    }
+
     pub async fn run(&mut self) {
+        let mut save_interval = time::interval(Duration::from_secs(2));
+
         loop {
             tokio::select! {
                 Some(request) = self.request_rx.recv() => self.handle_request(request).await,
                 _ = self.audio_manager.run() => (),
                 Some(midi_action) = self.midi_action_rx.recv() => self.handle_midi_action(midi_action),
+                _ = save_interval.tick() => self.auto_save_project().await,
                 else => break,
             }
         }
@@ -212,6 +233,24 @@ impl MainController {
                 self.project_store.remove_project(&remove_request.id).await?;
                 let projects = self.project_store.projects().await?;
                 self.send_response(Response::default().with_projects(&projects));
+                Ok(project)
+            }
+            _ => Ok(project),
+        }
+    }
+
+    async fn handle_duplicate(
+        &mut self,
+        project: Project,
+        duplicate_request: &DuplicateRequest,
+    ) -> anyhow::Result<Project> {
+        match duplicate_request.entity {
+            Entity::Project => {
+                let project = self
+                    .project_store
+                    .load(&duplicate_request.id, &mut self.samples_cache)
+                    .await?;
+                let project = project.replace_ids();
                 Ok(project)
             }
             _ => Ok(project),

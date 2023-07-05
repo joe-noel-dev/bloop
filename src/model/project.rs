@@ -34,9 +34,9 @@ impl Default for Project {
 impl Project {
     pub fn empty() -> Self {
         Self {
-            info: ProjectInfo::new(),
+            info: ProjectInfo::default(),
             songs: vec![],
-            selections: Selections::new(),
+            selections: Selections::default(),
         }
     }
 
@@ -448,10 +448,18 @@ impl Project {
 
         None
     }
+
+    pub fn replace_ids(mut self) -> Self {
+        self.info.id = ID::new_v4();
+        self.songs = self.songs.iter().map(|song| song.clone().replace_ids()).collect();
+        self.selections.song = self.songs.first().map(|song| song.id);
+        self.selections.section = (|| Some(self.songs.first()?.sections.first()?.id))();
+        self
+    }
 }
 
-impl ProjectInfo {
-    pub fn new() -> Self {
+impl Default for ProjectInfo {
+    fn default() -> Self {
         Self {
             id: ID::new_v4(),
             name: "Project".to_string(),
