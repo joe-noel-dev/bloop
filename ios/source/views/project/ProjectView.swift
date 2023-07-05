@@ -1,65 +1,110 @@
 import SwiftUI
 
 struct ProjectView: View {
-    var project: Project
-    var playbackState: PlaybackState
-    var progress: Progress
+    var state: AppState
     var dispatch: Dispatch
 
-    var body: some View {
+    @State private var projectsViewOpen = false
 
+    var body: some View {
         NavigationStack {
             ZStack {
                 Colours.background.ignoresSafeArea()
 
                 ScrollView(.vertical) {
-                    VStack(spacing: Layout.units(4)) {
-                        ForEach(project.songs) { song in
-                            SongView(
-                                song: song,
-                                selections: project.selections,
-                                playbackState: playbackState,
-                                progress: progress,
-                                dispatch: dispatch
-                            )
-                        }
-                        Spacer()
-                    }
+                    songViews
                 }
                 .toolbar {
-                    Button {
-                        let action = addSongAction()
-                        dispatch(action)
+                    Menu {
+                        addSongButton
+                        openProjectButton
+                        newProjectButton
                     } label: {
-                        Image(systemName: "plus")
+                        Image(systemName: "ellipsis")
                     }
+                    
                 }
-                .navigationTitle(project.info.name)
+                .navigationTitle(state.project.info.name)
                 .padding()
             }
         }
         .safeAreaInset(edge: .bottom) {
+            transportBar
+        }
+        .sheet(isPresented: $projectsViewOpen) {
+            ProjectsView(projects: state.projects, dispatch: dispatch) {
+                projectsViewOpen = false
+            }
+        }
+    }
 
-            TransportBar(
-                playbackState: playbackState,
-                selections: project.selections,
-                dispatch: dispatch
-            )
+    @ViewBuilder
+    private var songViews: some View {
+        VStack(spacing: Layout.units(4)) {
+            ForEach(state.project.songs) { song in
+                SongView(
+                    song: song,
+                    selections: state.project.selections,
+                    playbackState: state.playbackState,
+                    progress: state.progress,
+                    dispatch: dispatch
+                )
+            }
+            Spacer()
+        }
+    }
 
+    @ViewBuilder
+    private var addSongButton: some View {
+        Button {
+            let action = addSongAction()
+            dispatch(action)
+        } label: {
+            Label("Add Song", systemImage: "plus")
+        }
+    }
+
+    @ViewBuilder
+    private var transportBar: some View {
+        TransportBar(
+            playbackState: state.playbackState,
+            selections: state.project.selections,
+            dispatch: dispatch
+        )
+    }
+
+    @ViewBuilder
+    private var openProjectButton: some View {
+        Button {
+            projectsViewOpen = true
+        } label: {
+            Label("Open Project", systemImage: "folder.fill")
+        }
+    }
+    
+    @ViewBuilder
+    private var newProjectButton: some View {
+        Button {
+            let action = newProjectAction()
+            dispatch(action)
+        } label: {
+            Label("New Project", systemImage: "doc.badge.plus")
         }
     }
 }
 
 struct ProjectView_Previews: PreviewProvider {
-    static let project = demoProject()
-    static let playbackState = PlaybackState()
-    static let progress = Progress()
+    static let state: AppState = .init(
+        connected: true,
+        projects: [],
+        project: demoProject(),
+        playbackState: PlaybackState(),
+        progress: Progress()
+    )
 
     static var previews: some View {
         ProjectView(
-            project: project,
-            playbackState: playbackState,
-            progress: progress,
+            state: state,
             dispatch: loggingDispatch
         )
     }

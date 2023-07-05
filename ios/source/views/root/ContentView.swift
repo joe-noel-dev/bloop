@@ -4,11 +4,9 @@ struct ContentView: View {
     @EnvironmentObject var store: Store
 
     var body: some View {
-        if store.state.connected && (store.state.project != nil) {
+        if store.state.connected {
             ProjectView(
-                project: store.state.project!,
-                playbackState: store.state.playbackState,
-                progress: store.state.progress
+                state: store.state
             ) {
                 action in
                 store.dispatch(action)

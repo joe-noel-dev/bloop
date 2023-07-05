@@ -47,6 +47,7 @@
 		C25FA0C72A53FAEA0066C539 /* Dispatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25FA0C62A53FAEA0066C539 /* Dispatch.swift */; };
 		C25FA0C92A53FBA80066C539 /* RequestActionHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25FA0C82A53FBA80066C539 /* RequestActionHelpers.swift */; };
 		C25FA0CB2A54610C0066C539 /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25FA0CA2A54610C0066C539 /* ProgressBar.swift */; };
+		C25FA0CD2A54888E0066C539 /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25FA0CC2A54888E0066C539 /* ProjectsView.swift */; };
 		C27E2A642A51D1BE00D48D91 /* Colours.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C27E2A632A51D1BE00D48D91 /* Colours.xcassets */; };
 		C27E2A662A51D5F200D48D91 /* Colours.swift in Sources */ = {isa = PBXBuildFile; fileRef = C27E2A652A51D5F200D48D91 /* Colours.swift */; };
 		C27E2A682A51DE7700D48D91 /* Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = C27E2A672A51DE7700D48D91 /* Layout.swift */; };
@@ -116,6 +117,7 @@
 		C25FA0C62A53FAEA0066C539 /* Dispatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dispatch.swift; sourceTree = "<group>"; };
 		C25FA0C82A53FBA80066C539 /* RequestActionHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestActionHelpers.swift; sourceTree = "<group>"; };
 		C25FA0CA2A54610C0066C539 /* ProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressBar.swift; sourceTree = "<group>"; };
+		C25FA0CC2A54888E0066C539 /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
 		C27E2A632A51D1BE00D48D91 /* Colours.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colours.xcassets; sourceTree = "<group>"; };
 		C27E2A652A51D5F200D48D91 /* Colours.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colours.swift; sourceTree = "<group>"; };
 		C27E2A672A51DE7700D48D91 /* Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Layout.swift; sourceTree = "<group>"; };
@@ -337,6 +339,7 @@
 			isa = PBXGroup;
 			children = (
 				C229B9742A4D9DA30044F2C6 /* ProjectView.swift */,
+				C25FA0CC2A54888E0066C539 /* ProjectsView.swift */,
 			);
 			path = project;
 			sourceTree = "<group>";
@@ -549,6 +552,7 @@
 				C229B97F2A4D9F990044F2C6 /* AppState.swift in Sources */,
 				C25FA0C52A5348E40066C539 /* EditSectionView.swift in Sources */,
 				C20240DE2A4F14D100F8138D /* DemoProject.swift in Sources */,
+				C25FA0CD2A54888E0066C539 /* ProjectsView.swift in Sources */,
 				C229B97D2A4D9F6D0044F2C6 /* Reducer.swift in Sources */,
 				C247A6E62A4D949A00001DB2 /* ContentView.swift in Sources */,
 				C25FA0CB2A54610C0066C539 /* ProgressBar.swift in Sources */,

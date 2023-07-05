@@ -62,11 +62,11 @@ struct SongView: View {
         .overlay(alignment: .leading) {
             if isPlaying {
                 Colours.playing
-                    .frame(width: Layout.units(0.5))
+                    .frame(width: Layout.units(1))
             }
             else if isSelected {
                 Colours.selected
-                    .frame(width: Layout.units(0.5))
+                    .frame(width: Layout.units(1))
             }
 
         }
@@ -86,9 +86,9 @@ struct SongView: View {
         HStack {
             Text(song.name)
                 .font(.largeTitle)
-            
+
             Spacer()
-            
+
             if isSelected {
                 Menu {
                     Button(role: .destructive) {
@@ -101,7 +101,7 @@ struct SongView: View {
                     Image(systemName: "ellipsis")
                 }
             }
-            
+
         }
 
     }

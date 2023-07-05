@@ -19,5 +19,9 @@ func rootReducer(state: AppState, action: Action) -> AppState {
         state.progress = progress
     }
 
+    if case .setProjects(let projects) = action {
+        state.projects = projects
+    }
+
     return state
 }
