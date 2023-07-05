@@ -8,26 +8,28 @@ struct ProjectView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Colours.background.ignoresSafeArea()
 
-                ScrollView(.vertical) {
-                    songViews
-                }
-                .toolbar {
-                    Menu {
-                        addSongButton
-                        openProjectButton
-                        newProjectButton
-                    } label: {
-                        Image(systemName: "ellipsis")
-                    }
-                    
-                }
-                .navigationTitle(state.project.info.name)
-                .padding()
+            ScrollView(.vertical) {
+                songViews
+                    .padding()
             }
+            .toolbar {
+                Menu {
+                    addSongButton
+                    openProjectButton
+                    newProjectButton
+                    duplicateProjectButton
+                } label: {
+                    Image(systemName: "ellipsis")
+                }
+
+            }
+            .navigationTitle(state.project.info.name)
+            
+            .background(.thickMaterial)
+            
         }
+        
         .safeAreaInset(edge: .bottom) {
             transportBar
         }
@@ -78,10 +80,10 @@ struct ProjectView: View {
         Button {
             projectsViewOpen = true
         } label: {
-            Label("Open Project", systemImage: "folder.fill")
+            Label("Projects", systemImage: "externaldrive")
         }
     }
-    
+
     @ViewBuilder
     private var newProjectButton: some View {
         Button {
@@ -89,6 +91,16 @@ struct ProjectView: View {
             dispatch(action)
         } label: {
             Label("New Project", systemImage: "doc.badge.plus")
+        }
+    }
+
+    @ViewBuilder
+    private var duplicateProjectButton: some View {
+        Button {
+            let action = duplicateProjectAction(state.project.info.id)
+            dispatch(action)
+        } label: {
+            Label("Duplicate Project", systemImage: "doc.on.doc")
         }
     }
 }

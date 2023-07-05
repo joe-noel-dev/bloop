@@ -11,66 +11,55 @@ struct TransportBar: View {
     }
 
     private var foreground: some View {
-        HStack(alignment: .center) {
-
-            Spacer()
+        HStack {
 
             loopButton
+                .frame(maxWidth: .infinity)
 
-            Spacer()
-
-            if playbackState.playing == .playing {
-                stopButton
-            }
-            else {
-                playButton
-            }
-
-            Spacer()
+            playButton
+                .frame(maxWidth: .infinity)
 
             queueButton
+                .frame(maxWidth: .infinity)
 
-            Spacer()
         }
+        .frame(maxWidth: .infinity)
     }
 
     @ViewBuilder
     private var playButton: some View {
-        TransportButton(name: "Play", systemImageName: "play.fill") {
-            let action = playAction()
-            dispatch(action)
+        if playbackState.playing != .playing {
+            TransportButton(name: "Play", systemImageName: "play.fill") {
+                let action = playAction()
+                dispatch(action)
+            }
         }
-    }
+        else {
+            TransportButton(name: "Stop", systemImageName: "stop.fill") {
+                let action = stopAction()
+                dispatch(action)
+            }
+        }
 
-    @ViewBuilder
-    private var stopButton: some View {
-        TransportButton(name: "Stop", systemImageName: "stop.fill") {
-            let action = stopAction()
-            dispatch(action)
-        }
     }
 
     @ViewBuilder
     private var loopButton: some View {
-        if playbackState.playing != .playing {
-            emptyButton
+        TransportButton(
+            name: playbackState.looping ? "Exit Loop" : "Enter Loop",
+            systemImageName: playbackState.looping ? "repeat.circle.fill" : "repeat.circle"
+        ) {
+            let action = playbackState.looping ? exitLoopAction() : enterLoopAction()
+            dispatch(action)
         }
-        else {
-            TransportButton(
-                name: playbackState.looping ? "Exit Loop" : "Enter Loop",
-                systemImageName: "repeat"
-            ) {
-                let action = playbackState.looping ? exitLoopAction() : enterLoopAction()
-                dispatch(action)
-            }
-            .opacity(playbackState.looping ? 1.0 : 0.5)
-        }
+        .disabled(playbackState.playing != .playing)
+        .opacity(playbackState.looping ? 1.0 : 0.5)
+        
     }
 
     @ViewBuilder
     private var emptyButton: some View {
-        Spacer()
-            .frame(width: Layout.touchTarget, height: Layout.touchTarget)
+        TransportButton(name: "", systemImageName: "", action: {})
     }
 
     private enum QueueState {
@@ -97,11 +86,9 @@ struct TransportBar: View {
 
     @ViewBuilder
     private var queueButton: some View {
-        switch queueState {
-        case .notReady:
-            emptyButton
-        case .readyToQueue:
-            TransportButton(name: "Jump", systemImageName: "arrow.forward") {
+        switch queueState {        
+        case .readyToQueue, .notReady:
+            TransportButton(name: "Jump", systemImageName: "arrow.forward.circle") {
                 guard let songId = selections.song, let sectionId = selections.section else {
                     return
                 }
@@ -109,8 +96,9 @@ struct TransportBar: View {
                 let action = queueAction(song: songId, section: sectionId)
                 dispatch(action)
             }
+            .disabled(queueState == .notReady)
         case .queued:
-            TransportButton(name: "Queued", systemImageName: "checkmark") {}
+            TransportButton(name: "Queued", systemImageName: "checkmark.circle.fill") {}
         }
 
     }
@@ -128,6 +116,7 @@ struct TransportButton: View {
         } label: {
             Label(name, systemImage: systemImageName)
                 .labelStyle(.iconOnly)
+                .font(.title)
         }
         .frame(width: Layout.touchTarget, height: Layout.touchTarget)
     }

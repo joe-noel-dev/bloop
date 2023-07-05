@@ -88,6 +88,20 @@ impl Song {
 
         end - start
     }
+
+    pub fn replace_ids(mut self) -> Self {
+        self.id = ID::new_v4();
+
+        self.sections = self
+            .sections
+            .iter()
+            .map(|section| section.clone().replace_ids())
+            .collect();
+
+        // Don't replace the ID in the sample, since this is also referenced on disk
+
+        self
+    }
 }
 
 #[cfg(test)]

@@ -48,4 +48,9 @@ impl Section {
     pub fn is_valid(&self) -> bool {
         self.start >= 0.0
     }
+
+    pub fn replace_ids(mut self) -> Self {
+        self.id = ID::new_v4();
+        self
+    }
 }

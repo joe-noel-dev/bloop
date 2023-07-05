@@ -4,7 +4,7 @@ struct ProjectsView: View {
     var projects: [ProjectInfo]
     var dispatch: Dispatch
     var dismiss: () -> Void
-    
+
     private var sortedProjects: [ProjectInfo] {
         projects.sorted { a, b in
             a.lastSaved > b.lastSaved
@@ -17,16 +17,16 @@ struct ProjectsView: View {
                 Button {
                     let action = loadProjectAction(project.id)
                     dispatch(action)
-                    
+
                     dismiss()
                 } label: {
                     VStack {
                         Text(project.name)
                             .font(.headline)
-                        
+
                         Text("Last saved: \(formatLastSaved(project.lastSaved))")
                             .font(.footnote)
-                        
+
                     }
                 }
             }
@@ -35,7 +35,7 @@ struct ProjectsView: View {
                     let action = removeProjectAction(projects[offset].id)
                     dispatch(action)
                 }
-                
+
             }
         }
         .onAppear {
@@ -43,7 +43,7 @@ struct ProjectsView: View {
             dispatch(action)
         }
     }
-    
+
     func formatLastSaved(_ millisecondsSince1970: Int64) -> String {
         let secondsSince1970 = millisecondsSince1970 / 1000
         let interval = TimeInterval(secondsSince1970)
@@ -78,7 +78,7 @@ struct ProjectsView_Previews: PreviewProvider {
             id: "id-4",
             name: "Project 4",
             version: "0",
-            lastSaved: Int64((Date() - 37647823).timeIntervalSince1970.magnitude) * 1000
+            lastSaved: Int64((Date() - 37_647_823).timeIntervalSince1970.magnitude) * 1000
         ),
         ProjectInfo(
             id: "id-5",
