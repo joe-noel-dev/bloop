@@ -30,7 +30,6 @@ struct SectionView: View {
             editing = true
         } label: {
             Label("Edit", systemImage: "pencil")
-                .background(.regularMaterial)
         }
         .buttonStyle(.bordered)
         .popover(isPresented: $editing) {
