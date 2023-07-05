@@ -23,7 +23,7 @@ impl Metronome {
 
         oscillator
             .gain
-            .set_value_at_time(Level::from_db(-6.0).as_gain(), Timestamp::zero());
+            .set_value_at_time(Level::from_db(-6.0).as_linear(), Timestamp::zero());
 
         let mut adsr = Adsr::new(context, OUTPUT_COUNT, context.get_sample_rate());
 
