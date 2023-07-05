@@ -21,7 +21,7 @@ struct SectionView: View {
             isPlaying ? Colours.playing : isSelected ? Colours.selected : Colours.neutral6
 
         return Rectangle()
-            .frame(width: 2)
+            .frame(width: Layout.units(0.5))
             .foregroundColor(borderColour)
     }
 
@@ -36,6 +36,9 @@ struct SectionView: View {
         .popover(isPresented: $editing) {
             EditSectionView(section: section, dispatch: dispatch)
                 .presentationDetents([.medium])
+        }
+        .onDisappear {
+            editing = false
         }
     }
 
@@ -87,7 +90,6 @@ struct SectionView: View {
                 dispatch(action)
             }
         }
-
     }
 }
 

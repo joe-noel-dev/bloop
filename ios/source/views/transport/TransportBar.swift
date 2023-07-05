@@ -56,7 +56,10 @@ struct TransportBar: View {
             emptyButton
         }
         else {
-            TransportButton(name: playbackState.looping ? "Exit Loop" : "Enter Loop",  systemImageName: "repeat") {
+            TransportButton(
+                name: playbackState.looping ? "Exit Loop" : "Enter Loop",
+                systemImageName: "repeat"
+            ) {
                 let action = playbackState.looping ? exitLoopAction() : enterLoopAction()
                 dispatch(action)
             }
@@ -98,7 +101,7 @@ struct TransportBar: View {
         case .notReady:
             emptyButton
         case .readyToQueue:
-            TransportButton(name: "Jump",  systemImageName: "arrow.forward") {
+            TransportButton(name: "Jump", systemImageName: "arrow.forward") {
                 guard let songId = selections.song, let sectionId = selections.section else {
                     return
                 }

@@ -43,6 +43,11 @@ extension ApiMiddleware: CoreDelegate {
         if let progress = response.progress {
             self.dispatch?(.setProgress(progress))
         }
+
+        if let projects = response.projects {
+            print("Projects = \(projects)")
+            self.dispatch?(.setProjects(projects))
+        }
     }
 
 }

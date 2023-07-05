@@ -72,3 +72,26 @@ func addSongAction() -> Action {
     let request = Request.add(entity)
     return .sendRequest(request)
 }
+
+func getProjectsAction() -> Action {
+    let entity = EntityId.init(entity: .projects)
+    let request = Request.get(entity)
+    return .sendRequest(request)
+}
+
+func removeProjectAction(_ projectId: Id) -> Action {
+    let entity = EntityId.init(entity: .project, id: projectId)
+    return removeAction(entity)
+}
+
+func loadProjectAction(_ projectId: Id) -> Action {
+    let loadRequest = LoadRequest.init(id: projectId)
+    let request = Request.load(loadRequest)
+    return .sendRequest(request)
+}
+
+func newProjectAction() -> Action {
+    let entity = EntityId.init(entity: .project)
+    let request = Request.add(entity)
+    return .sendRequest(request)
+}
