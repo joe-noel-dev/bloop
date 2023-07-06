@@ -44,7 +44,7 @@ struct ProjectsView: View {
         }
     }
 
-    func formatLastSaved(_ millisecondsSince1970: Int64) -> String {
+    private func formatLastSaved(_ millisecondsSince1970: Int64) -> String {
         let secondsSince1970 = millisecondsSince1970 / 1000
         let interval = TimeInterval(secondsSince1970)
         let date = Date(timeIntervalSince1970: interval)

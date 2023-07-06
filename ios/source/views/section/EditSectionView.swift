@@ -91,9 +91,11 @@ struct EditSectionView: View {
             }
 
             SwiftUI.Section {
-                startField
-            } header: {
-                Text("Beat offset")
+                LabeledContent {
+                    startField
+                } label: {
+                    Text("Beat offset")
+                }   
             }
 
             SwiftUI.Section {
