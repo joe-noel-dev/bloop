@@ -22,7 +22,7 @@
     "react-measure": "^2.5.2",
     "react-modal": "^3.16.1",
     "react-tiny-popover": "^7.0.1",
-    "typescript": "~5.0.4",
+    "typescript": "~5.1.6",
     "uuid": "^9.0.0"
   },
   "scripts": {
