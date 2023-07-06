@@ -17,7 +17,6 @@ struct ProjectView: View {
                 Menu {
                     addSongButton
                     openProjectButton
-                    newProjectButton
                     duplicateProjectButton
                 } label: {
                     Image(systemName: "ellipsis")
@@ -81,16 +80,6 @@ struct ProjectView: View {
             projectsViewOpen = true
         } label: {
             Label("Projects", systemImage: "externaldrive")
-        }
-    }
-
-    @ViewBuilder
-    private var newProjectButton: some View {
-        Button {
-            let action = newProjectAction()
-            dispatch(action)
-        } label: {
-            Label("New Project", systemImage: "doc.badge.plus")
         }
     }
 
