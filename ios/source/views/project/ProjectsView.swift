@@ -1,9 +1,50 @@
 import SwiftUI
 
+struct ProjectPreview: View {
+    var project: ProjectInfo
+    var selected: Bool
+    var dispatch: Dispatch
+    var dismiss: () -> Void
+    
+    var body: some View {
+        HStack(spacing: Layout.units(2)) {
+            Text(project.name)
+                .font(.headline)
+            
+            if selected {
+                Text("Last saved \(formatLastSaved(project.lastSaved))")
+                    .font(.subheadline)
+                
+                Spacer()
+                
+                Button {
+                    let action = loadProjectAction(project.id)
+                    dispatch(action)
+                    dismiss()
+                } label: {
+                    Label ("Open", systemImage: "folder")
+                        .labelStyle(.titleOnly)
+                }
+            }
+        }
+    }
+    
+    private func formatLastSaved(_ millisecondsSince1970: Int64) -> String {
+        let secondsSince1970 = millisecondsSince1970 / 1000
+        let interval = TimeInterval(secondsSince1970)
+        let date = Date(timeIntervalSince1970: interval)
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return formatter.localizedString(for: date, relativeTo: Date())
+    }
+}
+
 struct ProjectsView: View {
     var projects: [ProjectInfo]
     var dispatch: Dispatch
     var dismiss: () -> Void
+    
+    @State private var selected: ProjectInfo.ID?
 
     private var sortedProjects: [ProjectInfo] {
         projects.sorted { a, b in
@@ -12,45 +53,44 @@ struct ProjectsView: View {
     }
 
     var body: some View {
-        List {
-            ForEach(sortedProjects) { project in
+        VStack(alignment: .leading) {
+            
+            HStack {
+                Text("Projects")
+                    .font(.title)
+                
+                Spacer()
+                
                 Button {
-                    let action = loadProjectAction(project.id)
+                    let action = newProjectAction()
                     dispatch(action)
-
                     dismiss()
                 } label: {
-                    VStack {
-                        Text(project.name)
-                            .font(.headline)
-
-                        Text("Last saved: \(formatLastSaved(project.lastSaved))")
-                            .font(.footnote)
-
+                    Label("New Project", systemImage: "plus")
+                }
+            }
+            
+            
+            List(selection: $selected) {
+                ForEach(sortedProjects) { project in
+                    ProjectPreview(project: project, selected: selected == project.id, dispatch: dispatch, dismiss: dismiss)
+                    
+                }
+                .onDelete { offsets in
+                    offsets.forEach { offset in
+                        let action = removeProjectAction(projects[offset].id)
+                        dispatch(action)
                     }
+                    
                 }
             }
-            .onDelete { offsets in
-                offsets.forEach { offset in
-                    let action = removeProjectAction(projects[offset].id)
-                    dispatch(action)
-                }
-
-            }
+            .listStyle(.plain)
         }
+        .padding(Layout.units(2))
         .onAppear {
             let action = getProjectsAction()
             dispatch(action)
         }
-    }
-
-    private func formatLastSaved(_ millisecondsSince1970: Int64) -> String {
-        let secondsSince1970 = millisecondsSince1970 / 1000
-        let interval = TimeInterval(secondsSince1970)
-        let date = Date(timeIntervalSince1970: interval)
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        return formatter.localizedString(for: date, relativeTo: Date())
     }
 }
 
