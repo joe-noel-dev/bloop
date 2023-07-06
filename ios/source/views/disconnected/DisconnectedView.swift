@@ -1,19 +1,19 @@
 import SwiftUI
 
 struct DisconnectedView: View {
-    @State private var ipAddress = "localhost"
+    
+    @AppStorage("ip-address") private var ipAddress = "localhost"
     var dispatch: Dispatch
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text("Disconnected")
-                .font(.largeTitle)
-
+        VStack(spacing: Layout.units(2)) {
+            
             TextField("IP Address", text: $ipAddress)
                 .multilineTextAlignment(.center)
                 .font(.title)
                 .frame(minHeight: 64)
-                .border(.black)
+                .textFieldStyle(.roundedBorder)
+                .keyboardType(.decimalPad)
 
             Button(
                 action: {
@@ -23,9 +23,9 @@ struct DisconnectedView: View {
                     Text("Connect")
                         .font(.title)
                 }
-            )
+            ).buttonStyle(.borderedProminent)
         }
-        .padding()
+        .padding(Layout.units(2))
 
     }
 }
