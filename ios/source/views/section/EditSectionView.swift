@@ -4,13 +4,11 @@ struct EditSectionView: View {
     var section: Section
     var dispatch: Dispatch
 
-    @State private var newStart: Double
-    @State private var newName: String
+    @State private var newSection: Section
 
     init(section: Section, dispatch: @escaping Dispatch) {
         self.section = section
-        self.newStart = section.start
-        self.newName = section.name
+        self.newSection = section
         self.dispatch = dispatch
     }
 
@@ -49,15 +47,14 @@ struct EditSectionView: View {
     }
 
     private var startField: some View {
-        TextField("Start", value: $newStart, format: .number)
+        TextField("Start", value: $newSection.start, format: .number)
             .onSubmit {
-                var section = section
-                section.start = newStart
-                updateSection(section)
+                updateSection(newSection)
             }
             #if os(iOS)
                 .keyboardType(.decimalPad)
             #endif
+        
     }
 
     private func updateSection(_ section: Section) {
@@ -66,12 +63,10 @@ struct EditSectionView: View {
     }
 
     private var nameField: some View {
-        TextField("Name", text: $newName)
+        TextField("Name", text: $newSection.name)
             .font(.title)
             .onSubmit {
-                var section = section
-                section.name = newName
-                updateSection(section)
+                updateSection(newSection)
             }
     }
 
@@ -90,12 +85,8 @@ struct EditSectionView: View {
                 nameField
             }
 
-            SwiftUI.Section {
-                LabeledContent {
-                    startField
-                } label: {
-                    Text("Beat offset")
-                }   
+            SwiftUI.Section(header: Text("Beat Start")) {
+                startField
             }
 
             SwiftUI.Section {

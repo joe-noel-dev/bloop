@@ -4,7 +4,7 @@ struct Sample: Codable, Equatable, Hashable {
     var id: Id
     var name: String
     var tempo: Tempo
-    var sampleRate: Double
+    var sampleRate: Int
     var sampleCount: Int
     var channelCount: Int
 }

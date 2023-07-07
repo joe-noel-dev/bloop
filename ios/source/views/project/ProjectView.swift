@@ -5,6 +5,8 @@ struct ProjectView: View {
     var dispatch: Dispatch
 
     @State private var projectsViewOpen = false
+    @State private var editingProjectName = false
+    @State private var newProjectName = ""
 
     var body: some View {
         NavigationStack {
@@ -15,23 +17,30 @@ struct ProjectView: View {
             }
             .toolbar {
                 Menu {
+                    projectsButton
                     addSongButton
-                    openProjectButton
-                    duplicateProjectButton
+                    renameProjectButton
                 } label: {
                     Image(systemName: "ellipsis")
+                }
+                .popover(isPresented: $editingProjectName) {
+                    NameEditor(value: $newProjectName)
+                        .onSubmit {
+                            let action = renameProjectAction(newProjectName)
+                            dispatch(action)
+                            editingProjectName = false
+                        }
                 }
 
             }
             .navigationTitle(state.project.info.name)
-            
             .background(.thickMaterial)
-            
+
         }
-        
         .safeAreaInset(edge: .bottom) {
             transportBar
         }
+        
         .sheet(isPresented: $projectsViewOpen) {
             ProjectsView(projects: state.projects, dispatch: dispatch) {
                 projectsViewOpen = false
@@ -75,21 +84,20 @@ struct ProjectView: View {
     }
 
     @ViewBuilder
-    private var openProjectButton: some View {
+    private var projectsButton: some View {
         Button {
             projectsViewOpen = true
         } label: {
             Label("Projects", systemImage: "externaldrive")
         }
     }
-
+    
     @ViewBuilder
-    private var duplicateProjectButton: some View {
+    private var renameProjectButton: some View {
         Button {
-            let action = duplicateProjectAction(state.project.info.id)
-            dispatch(action)
+            editingProjectName = true
         } label: {
-            Label("Duplicate Project", systemImage: "doc.on.doc")
+            Label("Rename Project", systemImage: "pencil")
         }
     }
 }

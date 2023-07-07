@@ -54,7 +54,7 @@ struct TransportBar: View {
         }
         .disabled(playbackState.playing != .playing)
         .opacity(playbackState.looping ? 1.0 : 0.5)
-        
+
     }
 
     @ViewBuilder
@@ -86,7 +86,7 @@ struct TransportBar: View {
 
     @ViewBuilder
     private var queueButton: some View {
-        switch queueState {        
+        switch queueState {
         case .readyToQueue, .notReady:
             TransportButton(name: "Jump", systemImageName: "arrow.forward.circle") {
                 guard let songId = selections.song, let sectionId = selections.section else {

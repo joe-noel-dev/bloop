@@ -45,8 +45,11 @@ extension ApiMiddleware: CoreDelegate {
         }
 
         if let projects = response.projects {
-            print("Projects = \(projects)")
             self.dispatch?(.setProjects(projects))
+        }
+
+        if let error = response.error {
+            self.dispatch?(.addError(error))
         }
     }
 

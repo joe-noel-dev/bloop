@@ -6,7 +6,28 @@ struct SongView: View {
     var playbackState: PlaybackState
     var progress: Progress
     var dispatch: Dispatch
-    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+
+    @State private var editingName = false
+    @State private var newName: String = ""
+
+    #if os(iOS)
+        @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    #endif
+
+    init(
+        song: Song,
+        selections: Selections,
+        playbackState: PlaybackState,
+        progress: Progress,
+        dispatch: @escaping Dispatch
+    ) {
+        self.song = song
+        self.selections = selections
+        self.playbackState = playbackState
+        self.progress = progress
+        self.dispatch = dispatch
+        self.newName = song.name
+    }
 
     private var selectedSection: Section? {
         song.sections.first {
@@ -28,7 +49,11 @@ struct SongView: View {
     }
 
     private var sectionColumns: [GridItem] {
-        let columnCount = horizontalSizeClass == .compact ? 1 : 2
+        #if os(iOS)
+            let columnCount = horizontalSizeClass == .compact ? 1 : 2
+        #else
+            let columnCount = 2
+        #endif
 
         return Array(repeating: GridItem(.flexible()), count: columnCount)
     }
@@ -91,17 +116,38 @@ struct SongView: View {
 
             if isSelected {
                 Menu {
+
+                    Button {
+                        editingName = true
+                    } label: {
+                        Text("Rename")
+                    }
+
                     Button(role: .destructive) {
                         let action = removeSongAction(song.id)
                         dispatch(action)
                     } label: {
                         Text("Remove Song")
                     }
+
                 } label: {
                     Image(systemName: "ellipsis")
                 }
+                .font(.title)
             }
 
+        }
+        .popover(isPresented: $editingName) {
+            NameEditor(value: $newName)
+                .onSubmit {
+                    var song = song
+                    song.name = newName
+
+                    let action = updateSongAction(song)
+                    dispatch(action)
+
+                    editingName = false
+                }
         }
 
     }

@@ -3,24 +3,28 @@ import Foundation
 func rootReducer(state: AppState, action: Action) -> AppState {
     var state = state
 
-    if case .setProject(let project) = action {
+    switch action {
+    case .setProject(let project):
         state.project = project
-    }
 
-    if case .setPlaybackState(let playbackState) = action {
+    case .setPlaybackState(let playbackState):
         state.playbackState = playbackState
-    }
 
-    if case .setConnected(let connected) = action {
+    case .setConnected(let connected):
         state.connected = connected
-    }
 
-    if case .setProgress(let progress) = action {
+    case .setProgress(let progress):
         state.progress = progress
-    }
 
-    if case .setProjects(let projects) = action {
+    case .setProjects(let projects):
         state.projects = projects
+
+    case .addError(let error):
+        print("Error from core: \(error)")
+
+    case .sendRequest, .connect:
+        ()
+
     }
 
     return state
