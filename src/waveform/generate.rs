@@ -10,12 +10,17 @@ use std::{path::Path, thread::spawn};
 pub struct Options {
     pub lengths: HashSet<i32>,
     pub algorithms: HashSet<Algorithm>,
-    pub num_channels: i32,
+    pub num_channels: usize,
     pub sample_rate: usize,
 }
 
-pub fn generate_waveform_from_file(sample_path: &Path, options: Options) -> anyhow::Result<WaveformData> {
+pub fn generate_waveform_from_file(sample_path: &Path, mut options: Options) -> anyhow::Result<WaveformData> {
     let audio = convert_sample(sample_path, options.sample_rate)?;
+
+    if options.num_channels == 0 {
+        options.num_channels = audio.channel_count();
+    }
+
     generate_waveform_from_audio(audio, options)
 }
 
@@ -62,13 +67,7 @@ fn process_waveform(options: Options, audio: Arc<dyn AudioBuffer>) -> WaveformDa
             let slice = BorrowedAudioBuffer::slice_frames(audio.as_ref(), frame, frame_count);
 
             for channel in 0..options.num_channels {
-                process_channel(
-                    &mut data,
-                    &slice,
-                    &options.algorithms,
-                    length,
-                    channel.try_into().unwrap(),
-                )
+                process_channel(&mut data, &slice, &options.algorithms, length, channel)
             }
         }
     }

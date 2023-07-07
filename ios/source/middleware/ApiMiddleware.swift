@@ -51,6 +51,11 @@ extension ApiMiddleware: CoreDelegate {
         if let error = response.error {
             self.dispatch?(.addError(error))
         }
+
+        if let waveform = response.waveform {
+            let action = Action.addWaveform((waveform.sampleId, waveform.waveformData))
+            self.dispatch?(action)
+        }
     }
 
 }

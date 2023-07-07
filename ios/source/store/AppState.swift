@@ -6,6 +6,7 @@ struct AppState {
     var project = emptyProject()
     var playbackState = PlaybackState()
     var progress = Progress()
+    var waveforms = Waveforms()
 }
 
 func emptyProject() -> Project {

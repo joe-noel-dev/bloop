@@ -5,6 +5,7 @@ struct SongView: View {
     var selections: Selections
     var playbackState: PlaybackState
     var progress: Progress
+    var waveforms: Waveforms
     var dispatch: Dispatch
 
     @State private var editingName = false
@@ -19,12 +20,14 @@ struct SongView: View {
         selections: Selections,
         playbackState: PlaybackState,
         progress: Progress,
+        waveforms: Waveforms,
         dispatch: @escaping Dispatch
     ) {
         self.song = song
         self.selections = selections
         self.playbackState = playbackState
         self.progress = progress
+        self.waveforms = waveforms
         self.dispatch = dispatch
         self.newName = song.name
     }
@@ -58,14 +61,41 @@ struct SongView: View {
         return Array(repeating: GridItem(.flexible()), count: columnCount)
     }
 
+    private var sampleId: Id? {
+        song.sample?.id
+    }
+
+    private var waveformData: WaveformData? {
+        guard let sampleId = sampleId else {
+            return nil
+        }
+
+        return waveforms[sampleId]
+    }
+    
+    private var waveformColour: Color {
+        if isPlaying {
+            return Colours.playing
+        }
+        
+        if isSelected {
+            return Colours.selected
+        }
+        
+        return Colours.neutral4
+    }
+
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
                 header
 
-                WaveformView()
-                    .frame(height: 120)
-
+                ZStack {
+                    WaveformView(waveform: waveformData)
+                }
+                .frame(height: 120)
+                .foregroundColor(waveformColour)
+                
                 LazyVGrid(columns: sectionColumns) {
                     ForEach(song.sections) { section in
                         SectionView(
@@ -178,6 +208,7 @@ struct SongView_Previews: PreviewProvider {
             selections: selections,
             playbackState: playbackState,
             progress: progress,
+            waveforms: Waveforms(),
             dispatch: loggingDispatch
         )
         .padding()

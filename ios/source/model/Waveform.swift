@@ -21,3 +21,5 @@ enum WaveformAlgorithm: String, Codable {
     case max
     case rms
 }
+
+typealias Waveforms = [Id: WaveformData]

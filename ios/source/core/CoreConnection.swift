@@ -68,7 +68,7 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate {
                 }
 
             case .failure(let error):
-                print("Error receiving data: \(error)")
+                print("Error receiving data: \(error.localizedDescription)")
                 self?.disconnect()
             }
 
