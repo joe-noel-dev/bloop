@@ -54,7 +54,7 @@ struct EditSectionView: View {
             #if os(iOS)
                 .keyboardType(.decimalPad)
             #endif
-        
+
     }
 
     private func updateSection(_ section: Section) {

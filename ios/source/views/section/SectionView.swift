@@ -85,11 +85,8 @@ struct SectionView: View {
             }
 
         }
-        .background {
-            if isQueued {
-                Colours.neutral1
-            }
-        }
+        .background(isQueued ? Material.thickMaterial : Material.thinMaterial)
+            
 
         .onTapGesture {
             if !isSelected {

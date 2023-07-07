@@ -113,3 +113,9 @@ func duplicateProjectAction(_ projectId: Id) -> Action {
     let request = Request.duplicate(entity)
     return .sendRequest(request)
 }
+
+func getWaveformAction(_ sampleId: Id) -> Action {
+    let entity = EntityId.init(entity: .waveform, id: sampleId)
+    let request = Request.get(entity)
+    return .sendRequest(request)
+}

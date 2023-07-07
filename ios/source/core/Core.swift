@@ -11,22 +11,35 @@ class Core: CoreConnectionDelegate {
     private let connection = CoreConnection()
     weak var delegate: CoreDelegate?
 
+    private let group = DispatchGroup()
+    private let queue = DispatchQueue(label: "CoreConnection")
+
     init() {
         connection.delegate = self
     }
 
     func connect(_ ipAddress: String) {
-        connection.connect(ipAddress)
+        queue.async { [weak self] in
+            self?.connection.connect(ipAddress)
+        }
     }
 
     func sendRequest(_ request: Request) {
-        do {
-            let encodedRequest = try BSONEncoder().encode(request)
-            let data = encodedRequest.toData()
-            self.connection.send(data)
+        queue.async { [weak self] in
+            do {
+                let encodedRequest = try BSONEncoder().encode(request)
+                let data = encodedRequest.toData()
+                self?.connection.send(data)
+            }
+            catch {
+                print("Error sending request: \(error)")
+            }
         }
-        catch {
-            print("Error sending request: \(error)")
+    }
+
+    private func onResponse(_ response: Response) {
+        DispatchQueue.main.async { [weak self] in
+            self?.delegate?.coreDidSendResponse(response)
         }
     }
 }
@@ -48,14 +61,17 @@ extension Core {
     }
 
     func coreConnectionDidReceiveData(data: Data) {
-        do {
-            let bsonDocument = try BSONDocument(fromBSON: data)
-            let response = try BSONDecoder().decode(Response.self, from: bsonDocument)
-            self.delegate?.coreDidSendResponse(response)
+        queue.async { [weak self] in
+            do {
+                let bsonDocument = try BSONDocument(fromBSON: data)
+                let response = try BSONDecoder().decode(Response.self, from: bsonDocument)
+                self?.onResponse(response)
+            }
+            catch {
+                print("Error decoding response from core: \(error)")
+            }
         }
-        catch {
-            print("Error decoding response from core: \(error)")
-        }
+
     }
 
     func coreConnectionDidReceiveString(string: String) {

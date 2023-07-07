@@ -40,7 +40,7 @@ struct ProjectView: View {
         .safeAreaInset(edge: .bottom) {
             transportBar
         }
-        
+
         .sheet(isPresented: $projectsViewOpen) {
             ProjectsView(projects: state.projects, dispatch: dispatch) {
                 projectsViewOpen = false
@@ -57,6 +57,7 @@ struct ProjectView: View {
                     selections: state.project.selections,
                     playbackState: state.playbackState,
                     progress: state.progress,
+                    waveforms: state.waveforms,
                     dispatch: dispatch
                 )
             }
@@ -91,7 +92,7 @@ struct ProjectView: View {
             Label("Projects", systemImage: "externaldrive")
         }
     }
-    
+
     @ViewBuilder
     private var renameProjectButton: some View {
         Button {
