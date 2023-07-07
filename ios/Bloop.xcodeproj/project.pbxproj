@@ -52,6 +52,7 @@
 		C27E2A662A51D5F200D48D91 /* Colours.swift in Sources */ = {isa = PBXBuildFile; fileRef = C27E2A652A51D5F200D48D91 /* Colours.swift */; };
 		C27E2A682A51DE7700D48D91 /* Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = C27E2A672A51DE7700D48D91 /* Layout.swift */; };
 		C27E2A6F2A51E5FD00D48D91 /* SectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C27E2A6E2A51E5FD00D48D91 /* SectionView.swift */; };
+		C28705092A58217400178FC9 /* NameEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C28705082A58217400178FC9 /* NameEditor.swift */; };
 		C2D82D422A52D7F600DAEA7E /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D82D412A52D7F600DAEA7E /* WaveformView.swift */; };
 		C2D82D472A5311EB00DAEA7E /* TransportBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D82D462A5311EB00DAEA7E /* TransportBar.swift */; };
 		C2EAC1942A4ED2A100FD19B6 /* RequestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EAC1932A4ED2A100FD19B6 /* RequestTests.swift */; };
@@ -122,6 +123,7 @@
 		C27E2A652A51D5F200D48D91 /* Colours.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colours.swift; sourceTree = "<group>"; };
 		C27E2A672A51DE7700D48D91 /* Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Layout.swift; sourceTree = "<group>"; };
 		C27E2A6E2A51E5FD00D48D91 /* SectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionView.swift; sourceTree = "<group>"; };
+		C28705082A58217400178FC9 /* NameEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameEditor.swift; sourceTree = "<group>"; };
 		C2D82D412A52D7F600DAEA7E /* WaveformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformView.swift; sourceTree = "<group>"; };
 		C2D82D462A5311EB00DAEA7E /* TransportBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransportBar.swift; sourceTree = "<group>"; };
 		C2EAC1932A4ED2A100FD19B6 /* RequestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestTests.swift; sourceTree = "<group>"; };
@@ -168,6 +170,7 @@
 		C229B9732A4D967C0044F2C6 /* views */ = {
 			isa = PBXGroup;
 			children = (
+				C28705072A581BAA00178FC9 /* components */,
 				C2D82D452A5311D800DAEA7E /* transport */,
 				C2D82D402A52D7E900DAEA7E /* waveform */,
 				C27E2A6D2A51E21300D48D91 /* root */,
@@ -378,6 +381,14 @@
 			path = root;
 			sourceTree = "<group>";
 		};
+		C28705072A581BAA00178FC9 /* components */ = {
+			isa = PBXGroup;
+			children = (
+				C28705082A58217400178FC9 /* NameEditor.swift */,
+			);
+			path = components;
+			sourceTree = "<group>";
+		};
 		C2D82D402A52D7E900DAEA7E /* waveform */ = {
 			isa = PBXGroup;
 			children = (
@@ -561,6 +572,7 @@
 				C2D82D472A5311EB00DAEA7E /* TransportBar.swift in Sources */,
 				C229B9902A4DA2E50044F2C6 /* Selections.swift in Sources */,
 				C229B9942A4DA3310044F2C6 /* Tempo.swift in Sources */,
+				C28705092A58217400178FC9 /* NameEditor.swift in Sources */,
 				C257C1772A4E003F0080ECC2 /* ApiMiddleware.swift in Sources */,
 				C247A6E42A4D949A00001DB2 /* BloopApp.swift in Sources */,
 				C257C16B2A4DF5C00080ECC2 /* Response.swift in Sources */,
@@ -729,7 +741,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"source/app/Preview Content\"";
-				DEVELOPMENT_TEAM = 6J84F35UVP;
+				DEVELOPMENT_TEAM = NXBJ7D3Y6K;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -748,7 +760,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = uk.co.joenoel.Bloop;
+				PRODUCT_BUNDLE_IDENTIFIER = com.joenoel.bloop;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -768,7 +780,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"source/app/Preview Content\"";
-				DEVELOPMENT_TEAM = 6J84F35UVP;
+				DEVELOPMENT_TEAM = NXBJ7D3Y6K;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -787,7 +799,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = uk.co.joenoel.Bloop;
+				PRODUCT_BUNDLE_IDENTIFIER = com.joenoel.bloop;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";

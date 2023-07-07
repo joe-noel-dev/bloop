@@ -6,6 +6,18 @@ func updateSectionAction(_ section: Section) -> Action {
     return .sendRequest(request)
 }
 
+func updateSongAction(_ song: Song) -> Action {
+    let updateRequest = UpdateRequest.song(song)
+    let request = Request.update(updateRequest)
+    return .sendRequest(request)
+}
+
+func renameProjectAction(_ name: String) -> Action {
+    let renameRequest = RenameRequest(entity: .project, name: name)
+    let request = Request.rename(renameRequest)
+    return .sendRequest(request)
+}
+
 func selectAction(_ entityId: EntityId) -> Action {
     let request = Request.select(entityId)
     return .sendRequest(request)
