@@ -14,7 +14,7 @@ struct WaveformView: View {
                         with: .foreground
                     )
                 }
-                .frame (maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -45,21 +45,21 @@ func createWaveformPath(waveform: WaveformData, size: CGSize) -> Path {
         width: size.width,
         algorithm: .min
     )
-    
+
     let maxWaveform = chooseWaveformGroupForWidth(
         waveform: waveform,
         width: size.width,
         algorithm: .max
     )
-    
+
     guard
         let minWaveform = minWaveform,
-            let maxWaveform = maxWaveform,
-            minWaveform.values.count == maxWaveform.values.count
+        let maxWaveform = maxWaveform,
+        minWaveform.values.count == maxWaveform.values.count
     else {
         return Path()
     }
-    
+
     var minPath = Path()
     var maxPath = Path()
 
@@ -81,12 +81,12 @@ func createWaveformPath(waveform: WaveformData, size: CGSize) -> Path {
 
     minPath.addLine(to: .init(x: 1, y: 0.5))
     maxPath.addLine(to: .init(x: 1, y: 0.5))
-    
+
     minPath.closeSubpath()
     maxPath.closeSubpath()
-    
+
     let transform = CGAffineTransform.init(scaleX: size.width, y: size.height)
-        
+
     var path = Path()
     path.addPath(minPath, transform: transform)
     path.addPath(maxPath, transform: transform)

@@ -6,7 +6,6 @@ struct SectionView: View {
     var playbackState: PlaybackState
     var progress: Progress
     var dispatch: Dispatch
-    @State private var editing = false
 
     private var isSelected: Bool {
         selections.section == section.id
@@ -27,22 +26,6 @@ struct SectionView: View {
         return Rectangle()
             .frame(width: Layout.units(0.5))
             .foregroundColor(borderColour)
-    }
-
-    private var editButton: some View {
-        Button {
-            editing = true
-        } label: {
-            Label("Edit", systemImage: "pencil")
-        }
-        .buttonStyle(.bordered)
-        .popover(isPresented: $editing) {
-            EditSectionView(section: section, dispatch: dispatch)
-                .presentationDetents([.medium])
-        }
-        .onDisappear {
-            editing = false
-        }
     }
 
     private var statusIcons: some View {
@@ -66,10 +49,6 @@ struct SectionView: View {
                 Spacer()
 
                 statusIcons
-
-                if isSelected {
-                    editButton
-                }
             }
             .padding([.leading, .trailing])
 
@@ -86,7 +65,6 @@ struct SectionView: View {
 
         }
         .background(isQueued ? Material.thickMaterial : Material.thinMaterial)
-            
 
         .onTapGesture {
             if !isSelected {

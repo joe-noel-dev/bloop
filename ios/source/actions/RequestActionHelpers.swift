@@ -85,6 +85,12 @@ func addSongAction() -> Action {
     return .sendRequest(request)
 }
 
+func addSectionAction(_ songId: Id) -> Action {
+    let entity = EntityId.init(entity: .section, id: songId)
+    let request = Request.add(entity)
+    return .sendRequest(request)
+}
+
 func getProjectsAction() -> Action {
     let entity = EntityId.init(entity: .projects)
     let request = Request.get(entity)

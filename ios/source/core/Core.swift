@@ -12,28 +12,33 @@ class Core: CoreConnectionDelegate {
     weak var delegate: CoreDelegate?
 
     private let group = DispatchGroup()
-    private let queue = DispatchQueue(label: "CoreConnection")
+    private let queue = DispatchQueue(label: "CoreEncodeDecode", attributes: .concurrent)
 
     init() {
         connection.delegate = self
     }
 
     func connect(_ ipAddress: String) {
-        queue.async { [weak self] in
-            self?.connection.connect(ipAddress)
-        }
+        self.connection.connect(ipAddress)
     }
 
     func sendRequest(_ request: Request) {
-        queue.async { [weak self] in
+        queue.async {
             do {
                 let encodedRequest = try BSONEncoder().encode(request)
                 let data = encodedRequest.toData()
-                self?.connection.send(data)
+                self.send(data)
             }
             catch {
                 print("Error sending request: \(error)")
             }
+        }
+
+    }
+
+    private func send(_ data: Data) {
+        DispatchQueue.main.async {
+            self.connection.send(data)
         }
     }
 
