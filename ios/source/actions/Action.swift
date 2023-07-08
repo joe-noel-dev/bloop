@@ -13,7 +13,5 @@ enum Action {
 
     case connect(String)
     case setConnected(Bool)
-    
-                      
-        
+
 }

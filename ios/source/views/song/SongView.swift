@@ -9,6 +9,8 @@ struct SongView: View {
     var dispatch: Dispatch
 
     @State private var editingName = false
+    @State private var editingSections = false
+
     @State private var newName: String = ""
 
     #if os(iOS)
@@ -72,16 +74,16 @@ struct SongView: View {
 
         return waveforms[sampleId]
     }
-    
+
     private var waveformColour: Color {
         if isPlaying {
             return Colours.playing
         }
-        
+
         if isSelected {
             return Colours.selected
         }
-        
+
         return Colours.neutral4
     }
 
@@ -95,7 +97,7 @@ struct SongView: View {
                 }
                 .frame(height: 120)
                 .foregroundColor(waveformColour)
-                
+
                 LazyVGrid(columns: sectionColumns) {
                     ForEach(song.sections) { section in
                         SectionView(
@@ -134,6 +136,9 @@ struct SongView: View {
         .background(.thickMaterial)
         .cornerRadius(Layout.cornerRadiusLarge)
         .shadow(radius: 4.0)
+        .sheet(isPresented: $editingSections) {
+            SectionsView(song: song, dispatch: dispatch)
+        }
     }
 
     @ViewBuilder
@@ -150,14 +155,20 @@ struct SongView: View {
                     Button {
                         editingName = true
                     } label: {
-                        Text("Rename")
+                        Label("Rename", systemImage: "pencil")
+                    }
+
+                    Button {
+                        editingSections = true
+                    } label: {
+                        Label("Sections", systemImage: "rectangle.grid.1x2")
                     }
 
                     Button(role: .destructive) {
                         let action = removeSongAction(song.id)
                         dispatch(action)
                     } label: {
-                        Text("Remove Song")
+                        Label("Remove", systemImage: "trash")
                     }
 
                 } label: {

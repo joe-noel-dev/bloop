@@ -24,7 +24,7 @@ func rootReducer(state: AppState, action: Action) -> AppState {
 
     case .addWaveform((let id, let waveform)):
         state.waveforms[id] = waveform
-        
+
     case .removeWaveform(let id):
         state.waveforms.removeValue(forKey: id)
 

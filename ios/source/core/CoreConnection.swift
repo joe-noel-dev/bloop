@@ -21,7 +21,7 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate {
             delegateQueue: OperationQueue()
         )
         task = session.webSocketTask(with: request)
-        task?.maximumMessageSize = 10 * 1024 * 1024
+        task?.maximumMessageSize = 20 * 1024 * 1024
         task?.resume()
     }
 
