@@ -8,7 +8,7 @@ struct BloopApp: App {
     @State var store = Store(
         reducer: rootReducer,
         state: AppState(),
-        middlewares: [ApiMiddleware(), WaveformMiddleware()]
+        middlewares: [ApiMiddleware(), WaveformMiddleware(), UploadMiddleware()]
     )
 
     var body: some Scene {
