@@ -1,14 +1,15 @@
 import SwiftUI
 
 struct NameEditor: View {
+    var prompt: String
     @Binding var value: String
     @FocusState private var textFieldIsFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: Layout.units(2)) {
-            Text("Name")
+            Text(prompt)
 
-            TextField("New Name", text: $value)
+            TextField(prompt, text: $value)
                 .textFieldStyle(.roundedBorder)
                 .textInputAutocapitalization(.words)
                 .disableAutocorrection(true)
@@ -29,7 +30,7 @@ struct NameEditor_Previews: PreviewProvider {
     static var name: String = "Hello"
 
     static var previews: some View {
-        NameEditor(value: $name)
+        NameEditor(prompt: "Name", value: $name)
             .previewLayout(.sizeThatFits)
     }
 }

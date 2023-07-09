@@ -65,13 +65,13 @@ struct SectionView: View {
 
         }
         .background(isQueued ? Material.thickMaterial : Material.thinMaterial)
-
         .onTapGesture {
             if !isSelected {
                 let action = selectSectionAction(section.id)
                 dispatch(action)
             }
         }
+        .cornerRadius(Layout.cornerRadiusSmall)
     }
 }
 

@@ -7,6 +7,8 @@ struct ProjectView: View {
     @State private var projectsViewOpen = false
     @State private var editingProjectName = false
     @State private var newProjectName = ""
+    
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         NavigationStack {
@@ -24,7 +26,7 @@ struct ProjectView: View {
                     Image(systemName: "ellipsis")
                 }
                 .popover(isPresented: $editingProjectName) {
-                    NameEditor(value: $newProjectName)
+                    NameEditor(prompt: "Project Name", value: $newProjectName)
                         .onSubmit {
                             let action = renameProjectAction(newProjectName)
                             dispatch(action)
@@ -33,9 +35,8 @@ struct ProjectView: View {
                 }
 
             }
+            .background(colorScheme == .light ? Colours.backgroundLight : Colours.backgroundDark)
             .navigationTitle(state.project.info.name)
-            .background(.thickMaterial)
-
         }
         .safeAreaInset(edge: .bottom) {
             transportBar

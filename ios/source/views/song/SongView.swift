@@ -95,6 +95,14 @@ struct SongView: View {
 
                 ZStack {
                     WaveformView(waveform: waveformData)
+                    
+                    if song.sample == nil {
+                        Button {
+                            editingSample = true
+                        } label: {
+                            Label("Add Sample", systemImage: "waveform")
+                        }
+                    }
                 }
                 .frame(height: 120)
                 .foregroundColor(waveformColour)
@@ -199,7 +207,7 @@ struct SongView: View {
 
         }
         .popover(isPresented: $editingName) {
-            NameEditor(value: $newName)
+            NameEditor(prompt: "Song Name", value: $newName)
                 .onSubmit {
                     var song = song
                     song.name = newName
