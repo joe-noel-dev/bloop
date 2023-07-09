@@ -32,6 +32,9 @@ struct ProjectView: View {
                             dispatch(action)
                             editingProjectName = false
                         }
+                        .onAppear {
+                            newProjectName = state.project.info.name
+                        }
                 }
 
             }
