@@ -1,6 +1,6 @@
 import Foundation
 
-struct Selections: Codable {
+struct Selections: Codable, Equatable {
     var song: Id?
     var section: Id?
 

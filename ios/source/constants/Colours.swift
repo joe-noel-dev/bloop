@@ -7,7 +7,7 @@ struct Colours {
     static let theme3 = Color("theme-3")
     static let theme4 = Color("theme-4")
     static let theme5 = Color("theme-5")
-    
+
     static let backgroundLight = Color("background-light")
     static let backgroundDark = Color("background-dark")
 

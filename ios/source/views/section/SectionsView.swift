@@ -53,7 +53,7 @@ struct SectionRow: View {
         self.newName = section.name
         self.dispatch = dispatch
     }
-    
+
     private func updateSection(_ newSection: Section) {
         let action = updateSectionAction(newSection)
         dispatch(action)
@@ -74,26 +74,34 @@ struct SectionRow: View {
             Spacer()
 
             Toggle(
-                isOn: .init(get: {
-                    section.metronome
-                }, set: { value in
-                    var newSection = section
-                    newSection.metronome = value
-                    updateSection(newSection)
-                }),
+                isOn: .init(
+                    get: {
+                        section.metronome
+                    },
+                    set: { value in
+                        var newSection = section
+                        newSection.metronome = value
+                        updateSection(newSection)
+                    }
+                ),
                 label: {
                     Image(systemName: "metronome")
                 }
             )
             .toggleStyle(.button)
 
-            Toggle(isOn: .init(get: {
-                section.loop
-            }, set: { value in
-                var newSection = section
-                newSection.loop = value
-                updateSection(newSection)
-            })) {
+            Toggle(
+                isOn: .init(
+                    get: {
+                        section.loop
+                    },
+                    set: { value in
+                        var newSection = section
+                        newSection.loop = value
+                        updateSection(newSection)
+                    }
+                )
+            ) {
                 Image(systemName: "repeat")
             }
             .toggleStyle(.button)

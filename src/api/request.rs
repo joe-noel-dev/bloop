@@ -1,5 +1,5 @@
 use crate::{
-    model::{Sample, Section, Song, ID},
+    model::{Project, Sample, Section, Song, ID},
     types::AudioFileFormat,
 };
 use serde::{Deserialize, Serialize};
@@ -62,6 +62,7 @@ pub enum UpdateRequest {
     Song(Song),
     Section(Section),
     Sample(Sample),
+    Project(Project),
 }
 
 #[derive(Serialize, Deserialize, Debug)]

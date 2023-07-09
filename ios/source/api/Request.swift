@@ -37,6 +37,7 @@ enum UpdateRequest: Codable, Equatable {
     case song(Song)
     case section(Section)
     case sample(Sample)
+    case project(Project)
 }
 
 enum TransportRequest: Codable, Equatable {

@@ -6,8 +6,10 @@ struct ProjectView: View {
 
     @State private var projectsViewOpen = false
     @State private var editingProjectName = false
+    @State private var editingSongs = false
+
     @State private var newProjectName = ""
-    
+
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
@@ -20,8 +22,8 @@ struct ProjectView: View {
             .toolbar {
                 Menu {
                     projectsButton
-                    addSongButton
                     renameProjectButton
+                    songsButton
                 } label: {
                     Image(systemName: "ellipsis")
                 }
@@ -44,11 +46,13 @@ struct ProjectView: View {
         .safeAreaInset(edge: .bottom) {
             transportBar
         }
-
         .sheet(isPresented: $projectsViewOpen) {
             ProjectsView(projects: state.projects, dispatch: dispatch) {
                 projectsViewOpen = false
             }
+        }
+        .sheet(isPresented: $editingSongs) {
+            SongsView(project: state.project, dispatch: dispatch)
         }
     }
 
@@ -70,12 +74,11 @@ struct ProjectView: View {
     }
 
     @ViewBuilder
-    private var addSongButton: some View {
+    private var songsButton: some View {
         Button {
-            let action = addSongAction()
-            dispatch(action)
+            editingSongs = true
         } label: {
-            Label("Add Song", systemImage: "plus")
+            Label("Songs", systemImage: "music.note.list")
         }
     }
 
