@@ -254,7 +254,7 @@ extension UpdateRequest {
             self = .sample(value)
             return
         }
-        
+
         if entity == Entity.project.rawValue {
             let value = try values.decode(Project.self, forKey: .value)
             self = .project(value)
