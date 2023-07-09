@@ -11,8 +11,10 @@ struct SongView: View {
     @State private var editingName = false
     @State private var editingSections = false
     @State private var editingSample = false
+    @State private var editingTempo = false
 
     @State private var newName: String = ""
+    @State private var newTempo: Double = 120.0
 
     #if os(iOS)
         @Environment(\.horizontalSizeClass) var horizontalSizeClass
@@ -32,7 +34,6 @@ struct SongView: View {
         self.progress = progress
         self.waveforms = waveforms
         self.dispatch = dispatch
-        self.newName = song.name
     }
 
     private var selectedSection: Section? {
@@ -125,17 +126,8 @@ struct SongView: View {
         }
         .contentShape(Rectangle())
         .padding()
-        .overlay(alignment: .leading) {
-            if isPlaying {
-                Colours.playing
-                    .frame(width: Layout.units(1))
-            }
-            else if isSelected {
-                Colours.selected
-                    .frame(width: Layout.units(1))
-            }
-
-        }
+        .overlay(alignment: .leading) { sidebar }
+        .overlay(alignment: .trailing) { sidebar }
         .onTapGesture {
             if !isSelected {
                 selectSong()
@@ -157,6 +149,18 @@ struct SongView: View {
             case .failure(let error):
                 print("\(error)")
             }
+        }
+    }
+    
+    @ViewBuilder
+    var sidebar: some View {
+        if isPlaying {
+            Colours.playing
+                .frame(width: Layout.units(1))
+        }
+        else if isSelected {
+            Colours.selected
+                .frame(width: Layout.units(1))
         }
     }
 
@@ -191,6 +195,12 @@ struct SongView: View {
                             systemImage: "waveform"
                         )
                     }
+                    
+                    Button {
+                        editingTempo = true
+                    } label: {
+                        Label("Tempo", systemImage: "metronome")
+                    }
 
                     Button(role: .destructive) {
                         let action = removeSongAction(song.id)
@@ -217,6 +227,34 @@ struct SongView: View {
 
                     editingName = false
                 }
+                .onAppear {
+                    newName = song.name
+                }
+        }
+        .popover(isPresented: $editingTempo) {
+            VStack(alignment: .leading, spacing: Layout.units(2)) {
+                Text("Tempo")
+
+                TextField("Tempo", value: $newTempo, formatter: NumberFormatter())
+                    .textFieldStyle(.roundedBorder)
+            }
+            .font(.title2)
+            .padding(Layout.units(2))
+            .frame(minWidth: 400)
+            .background(.regularMaterial)
+            .onAppear {
+                if let tempo = song.sample?.tempo.bpm {
+                    self.newTempo = tempo
+                }
+            }
+            .onSubmit {
+                var song = song
+                song.sample?.tempo.bpm = newTempo
+                song.tempo.bpm = newTempo
+                
+                let action = updateSongAction(song)
+                dispatch(action)
+            }
         }
 
     }
