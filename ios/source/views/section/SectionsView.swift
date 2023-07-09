@@ -3,12 +3,10 @@ import SwiftUI
 struct SectionsView: View {
     var song: Song
     var dispatch: Dispatch
-    @State var newSong: Song
 
     init(song: Song, dispatch: @escaping Dispatch) {
         self.song = song
         self.dispatch = dispatch
-        self.newSong = song
     }
 
     var body: some View {
@@ -39,14 +37,11 @@ struct SectionsView: View {
                 }
             }
         }
-
     }
-
 }
 
 struct SectionRow: View {
     var section: Section
-    var newSection: Binding<Section>
     var dispatch: Dispatch
 
     @State private var newStart: Double
@@ -54,18 +49,14 @@ struct SectionRow: View {
 
     init(section: Section, dispatch: @escaping Dispatch) {
         self.section = section
-
-        self.newSection = .init(
-            get: { section },
-            set: { value in
-                let action = updateSectionAction(value)
-                dispatch(action)
-            }
-        )
-
         self.newStart = section.start
         self.newName = section.name
         self.dispatch = dispatch
+    }
+    
+    private func updateSection(_ newSection: Section) {
+        let action = updateSectionAction(newSection)
+        dispatch(action)
     }
 
     var body: some View {
@@ -75,20 +66,34 @@ struct SectionRow: View {
             TextField("Name", text: $newName)
                 .font(.title2)
                 .onSubmit {
-                    newSection.wrappedValue.name = newName
+                    var newSection = section
+                    newSection.name = newName
+                    updateSection(newSection)
                 }
 
             Spacer()
 
             Toggle(
-                isOn: newSection.metronome,
+                isOn: .init(get: {
+                    section.metronome
+                }, set: { value in
+                    var newSection = section
+                    newSection.metronome = value
+                    updateSection(newSection)
+                }),
                 label: {
                     Image(systemName: "metronome")
                 }
             )
             .toggleStyle(.button)
 
-            Toggle(isOn: newSection.loop) {
+            Toggle(isOn: .init(get: {
+                section.loop
+            }, set: { value in
+                var newSection = section
+                newSection.loop = value
+                updateSection(newSection)
+            })) {
                 Image(systemName: "repeat")
             }
             .toggleStyle(.button)
@@ -100,7 +105,9 @@ struct SectionRow: View {
                     .keyboardType(.decimalPad)
                 #endif
                 .onSubmit {
-                    newSection.wrappedValue.start = newStart
+                    var newSection = section
+                    newSection.name = newName
+                    updateSection(newSection)
                 }
         }
 
