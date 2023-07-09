@@ -20,11 +20,11 @@ struct SongsView: View {
                 .onDelete { offsets in
                     var project = project
                     project.songs.remove(atOffsets: offsets)
-                    
+
                     let action = updateProjectAction(project)
                     dispatch(action)
                 }
-                
+
             }
             .toolbar {
                 Button {
@@ -41,7 +41,7 @@ struct SongsView: View {
 
 struct SongRow: View {
     var song: Song
-    
+
     var body: some View {
         Text(song.name)
     }
