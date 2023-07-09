@@ -56,6 +56,11 @@ extension ApiMiddleware: CoreDelegate {
             let action = Action.addWaveform((waveform.sampleId, waveform.waveformData))
             self.dispatch?(action)
         }
+
+        if let uploadAck = response.upload {
+            let action = Action.uploadAck(uploadAck.uploadId)
+            self.dispatch?(action)
+        }
     }
 
 }

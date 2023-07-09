@@ -7,6 +7,7 @@ struct NameEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Layout.units(2)) {
             Text("Name")
+
             TextField("New Name", text: $value)
                 .textFieldStyle(.roundedBorder)
                 .textInputAutocapitalization(.words)

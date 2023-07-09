@@ -10,6 +10,7 @@ struct SongView: View {
 
     @State private var editingName = false
     @State private var editingSections = false
+    @State private var editingSample = false
 
     @State private var newName: String = ""
 
@@ -139,6 +140,16 @@ struct SongView: View {
         .sheet(isPresented: $editingSections) {
             SectionsView(song: song, dispatch: dispatch)
         }
+        .fileImporter(isPresented: $editingSample, allowedContentTypes: [.wav]) { result in
+            switch result {
+            case .success(let url):
+                let action = Action.uploadSample((song.id, url))
+                dispatch(action)
+
+            case .failure(let error):
+                print("\(error)")
+            }
+        }
     }
 
     @ViewBuilder
@@ -162,6 +173,15 @@ struct SongView: View {
                         editingSections = true
                     } label: {
                         Label("Sections", systemImage: "rectangle.grid.1x2")
+                    }
+
+                    Button {
+                        editingSample = true
+                    } label: {
+                        Label(
+                            song.sample == nil ? "Add Sample" : "Replace Sample",
+                            systemImage: "waveform"
+                        )
                     }
 
                     Button(role: .destructive) {

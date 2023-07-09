@@ -14,4 +14,7 @@ enum Action {
     case connect(String)
     case setConnected(Bool)
 
+    case uploadSample((Id, URL))
+    case uploadAck(Id)
+
 }

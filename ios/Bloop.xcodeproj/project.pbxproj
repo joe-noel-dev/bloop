@@ -12,6 +12,7 @@
 		C20240E02A4F255B00F8138D /* SongView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DF2A4F255B00F8138D /* SongView.swift */; };
 		C222A9542A588ACB00418CBB /* WaveformMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */; };
 		C222A9562A58AEB200418CBB /* SectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C222A9552A58AEB100418CBB /* SectionsView.swift */; };
+		C222A95B2A59D21400418CBB /* UploadMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = C222A95A2A59D21400418CBB /* UploadMiddleware.swift */; };
 		C229B9752A4D9DA30044F2C6 /* ProjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B9742A4D9DA30044F2C6 /* ProjectView.swift */; };
 		C229B97A2A4D9EBF0044F2C6 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B9792A4D9EBF0044F2C6 /* Store.swift */; };
 		C229B97D2A4D9F6D0044F2C6 /* Reducer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B97C2A4D9F6D0044F2C6 /* Reducer.swift */; };
@@ -82,6 +83,7 @@
 		C20240DF2A4F255B00F8138D /* SongView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongView.swift; sourceTree = "<group>"; };
 		C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformMiddleware.swift; sourceTree = "<group>"; };
 		C222A9552A58AEB100418CBB /* SectionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionsView.swift; sourceTree = "<group>"; };
+		C222A95A2A59D21400418CBB /* UploadMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadMiddleware.swift; sourceTree = "<group>"; };
 		C229B9742A4D9DA30044F2C6 /* ProjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectView.swift; sourceTree = "<group>"; };
 		C229B9792A4D9EBF0044F2C6 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
 		C229B97C2A4D9F6D0044F2C6 /* Reducer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reducer.swift; sourceTree = "<group>"; };
@@ -173,13 +175,13 @@
 			isa = PBXGroup;
 			children = (
 				C28705072A581BAA00178FC9 /* components */,
-				C2D82D452A5311D800DAEA7E /* transport */,
-				C2D82D402A52D7E900DAEA7E /* waveform */,
+				C27E2A6A2A51E1EF00D48D91 /* disconnected */,
+				C27E2A692A51E1E000D48D91 /* project */,
 				C27E2A6D2A51E21300D48D91 /* root */,
 				C27E2A6C2A51E20300D48D91 /* section */,
 				C27E2A6B2A51E1FF00D48D91 /* song */,
-				C27E2A6A2A51E1EF00D48D91 /* disconnected */,
-				C27E2A692A51E1E000D48D91 /* project */,
+				C2D82D452A5311D800DAEA7E /* transport */,
+				C2D82D402A52D7E900DAEA7E /* waveform */,
 			);
 			path = views;
 			sourceTree = "<group>";
@@ -218,6 +220,7 @@
 				C229B9842A4DA0000044F2C6 /* Middleware.swift */,
 				C257C1762A4E003F0080ECC2 /* ApiMiddleware.swift */,
 				C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */,
+				C222A95A2A59D21400418CBB /* UploadMiddleware.swift */,
 			);
 			path = middleware;
 			sourceTree = "<group>";
@@ -564,6 +567,7 @@
 				C229B9872A4DA0B40044F2C6 /* RootReducer.swift in Sources */,
 				C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */,
 				C229B9752A4D9DA30044F2C6 /* ProjectView.swift in Sources */,
+				C222A95B2A59D21400418CBB /* UploadMiddleware.swift in Sources */,
 				C229B97F2A4D9F990044F2C6 /* AppState.swift in Sources */,
 				C20240DE2A4F14D100F8138D /* DemoProject.swift in Sources */,
 				C25FA0CD2A54888E0066C539 /* ProjectsView.swift in Sources */,
