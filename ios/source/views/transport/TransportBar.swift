@@ -57,11 +57,6 @@ struct TransportBar: View {
 
     }
 
-    @ViewBuilder
-    private var emptyButton: some View {
-        TransportButton(name: "", systemImageName: "", action: {})
-    }
-
     private enum QueueState {
         case notReady
         case readyToQueue
