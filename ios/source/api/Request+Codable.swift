@@ -202,6 +202,7 @@ extension UpdateRequest {
         case song
         case section
         case sample
+        case project
     }
 
     enum UpdateRequestError: Error {
@@ -211,20 +212,24 @@ extension UpdateRequest {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
-        if case .song(let song) = self {
+        switch self {
+        case .song(let song):
             try container.encode(Entity.song.rawValue, forKey: .entity)
             try container.encode(song, forKey: .value)
-        }
 
-        if case .section(let section) = self {
+        case .section(let section):
             try container.encode(Entity.section.rawValue, forKey: .entity)
             try container.encode(section, forKey: .value)
-        }
 
-        if case .sample(let sample) = self {
+        case .sample(let sample):
             try container.encode(Entity.sample.rawValue, forKey: .entity)
             try container.encode(sample, forKey: .value)
+
+        case .project(let project):
+            try container.encode(Entity.project.rawValue, forKey: .entity)
+            try container.encode(project, forKey: .value)
         }
+
     }
 
     init(from decoder: Decoder) throws {
@@ -247,6 +252,12 @@ extension UpdateRequest {
         if entity == Entity.sample.rawValue {
             let value = try values.decode(Sample.self, forKey: .value)
             self = .sample(value)
+            return
+        }
+        
+        if entity == Entity.project.rawValue {
+            let value = try values.decode(Project.self, forKey: .value)
+            self = .project(value)
             return
         }
 

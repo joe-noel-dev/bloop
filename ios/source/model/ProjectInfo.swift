@@ -1,6 +1,6 @@
 import Foundation
 
-struct ProjectInfo: Codable, Identifiable {
+struct ProjectInfo: Codable, Equatable, Identifiable {
     var id: Id
     var name: String
     var version: String

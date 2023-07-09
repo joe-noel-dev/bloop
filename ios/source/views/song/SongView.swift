@@ -96,7 +96,7 @@ struct SongView: View {
 
                 ZStack {
                     WaveformView(waveform: waveformData)
-                    
+
                     if song.sample == nil {
                         Button {
                             editingSample = true
@@ -151,7 +151,7 @@ struct SongView: View {
             }
         }
     }
-    
+
     @ViewBuilder
     var sidebar: some View {
         if isPlaying {
@@ -195,7 +195,7 @@ struct SongView: View {
                             systemImage: "waveform"
                         )
                     }
-                    
+
                     Button {
                         editingTempo = true
                     } label: {
@@ -251,7 +251,7 @@ struct SongView: View {
                 var song = song
                 song.sample?.tempo.bpm = newTempo
                 song.tempo.bpm = newTempo
-                
+
                 let action = updateSongAction(song)
                 dispatch(action)
             }

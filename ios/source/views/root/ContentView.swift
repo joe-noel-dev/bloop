@@ -17,7 +17,7 @@ struct ContentView: View {
                 store.dispatch(action)
             }
         }
-            
+
     }
 }
 

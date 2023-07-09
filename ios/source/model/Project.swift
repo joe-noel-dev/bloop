@@ -1,6 +1,6 @@
 import Foundation
 
-struct Project: Codable {
+struct Project: Codable, Equatable {
     var info: ProjectInfo
     var songs: [Song]
     var selections: Selections

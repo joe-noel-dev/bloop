@@ -262,6 +262,13 @@ impl MainController {
             UpdateRequest::Song(song) => project.replace_song(song),
             UpdateRequest::Section(section) => project.replace_section(section),
             UpdateRequest::Sample(sample) => project.replace_sample(sample),
+            UpdateRequest::Project(new_project) => {
+                if !new_project.is_valid() {
+                    return Err(anyhow!("Invalid project"));
+                }
+
+                Ok(new_project.clone())
+            }
         }
     }
 

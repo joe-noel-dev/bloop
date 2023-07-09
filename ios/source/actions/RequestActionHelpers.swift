@@ -12,6 +12,12 @@ func updateSongAction(_ song: Song) -> Action {
     return .sendRequest(request)
 }
 
+func updateProjectAction(_ project: Project) -> Action {
+    let updateRequest = UpdateRequest.project(project)
+    let request = Request.update(updateRequest)
+    return .sendRequest(request)
+}
+
 func renameProjectAction(_ name: String) -> Action {
     let renameRequest = RenameRequest(entity: .project, name: name)
     let request = Request.rename(renameRequest)
