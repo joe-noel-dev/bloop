@@ -140,6 +140,7 @@ struct SongView: View {
         .sheet(isPresented: $editingSections) {
             SectionsView(song: song, dispatch: dispatch)
         }
+        .tint(waveformColour)
         .fileImporter(isPresented: $editingSample, allowedContentTypes: [.wav]) { result in
             switch result {
             case .success(let url):
