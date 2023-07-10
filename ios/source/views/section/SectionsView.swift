@@ -114,7 +114,7 @@ struct SectionRow: View {
                 #endif
                 .onSubmit {
                     var newSection = section
-                    newSection.name = newName
+                    newSection.start = newStart
                     updateSection(newSection)
                 }
         }
