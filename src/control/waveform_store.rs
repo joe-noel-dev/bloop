@@ -61,15 +61,12 @@ impl WaveformStore {
 
         spawn(move || {
             let mut lengths = HashSet::new();
-            lengths.insert(128);
             lengths.insert(512);
-            lengths.insert(2048);
             lengths.insert(8192);
 
             let mut algorithms = HashSet::new();
             algorithms.insert(Algorithm::Min);
             algorithms.insert(Algorithm::Max);
-            algorithms.insert(Algorithm::Rms);
 
             let options = Options {
                 lengths,
