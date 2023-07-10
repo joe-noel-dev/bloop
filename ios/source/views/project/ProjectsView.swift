@@ -47,11 +47,12 @@ struct ProjectsView: View {
             List(selection: $selected) {
                 ForEach(sortedProjects) { project in
                     ProjectPreview(project: project, selected: selected == project.id)
-
                 }
                 .onDelete { offsets in
-                    offsets.forEach { offset in
-                        let action = removeProjectAction(projects[offset].id)
+                    offsets.map { offset in
+                        sortedProjects[offset].id
+                    }.forEach { projectId in
+                        let action = removeProjectAction(projectId)
                         dispatch(action)
                     }
 
