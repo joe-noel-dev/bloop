@@ -5,4 +5,5 @@ use serde::{Deserialize, Serialize};
 pub struct Progress {
     pub song_progress: f64,
     pub section_progress: f64,
+    pub section_beat: f64,
 }

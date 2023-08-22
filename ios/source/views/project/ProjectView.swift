@@ -20,23 +20,29 @@ struct ProjectView: View {
                     .padding()
             }
             .toolbar {
-                Menu {
-                    projectsButton
-                    renameProjectButton
-                    songsButton
-                } label: {
-                    Image(systemName: "ellipsis")
+                ToolbarItem(placement: .navigationBarLeading) {
+                    MetronomeView(isPlaying: state.playbackState.playing == .playing, sectionBeat: Int(floor(state.progress.sectionBeat)))
                 }
-                .popover(isPresented: $editingProjectName) {
-                    NameEditor(prompt: "Project Name", value: $newProjectName)
-                        .onSubmit {
-                            let action = renameProjectAction(newProjectName)
-                            dispatch(action)
-                            editingProjectName = false
-                        }
-                        .onAppear {
-                            newProjectName = state.project.info.name
-                        }
+                
+                ToolbarItem {
+                    Menu {
+                        projectsButton
+                        renameProjectButton
+                        songsButton
+                    } label: {
+                        Image(systemName: "ellipsis")
+                    }
+                    .popover(isPresented: $editingProjectName) {
+                        NameEditor(prompt: "Project Name", value: $newProjectName)
+                            .onSubmit {
+                                let action = renameProjectAction(newProjectName)
+                                dispatch(action)
+                                editingProjectName = false
+                            }
+                            .onAppear {
+                                newProjectName = state.project.info.name
+                            }
+                    }
                 }
 
             }

@@ -27,6 +27,7 @@ struct SongsView: View {
 
             }
             .toolbar {
+
                 Button {
                     let action = addSongAction()
                     dispatch(action)
