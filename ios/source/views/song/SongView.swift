@@ -94,20 +94,6 @@ struct SongView: View {
             VStack(alignment: .leading) {
                 header
 
-                ZStack {
-                    WaveformView(waveform: waveformData)
-
-                    if song.sample == nil {
-                        Button {
-                            editingSample = true
-                        } label: {
-                            Label("Add Sample", systemImage: "waveform")
-                        }
-                    }
-                }
-                .frame(height: 120)
-                .foregroundColor(waveformColour)
-
                 LazyVGrid(columns: sectionColumns) {
                     ForEach(song.sections) { section in
                         SectionView(

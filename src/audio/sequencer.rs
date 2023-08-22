@@ -160,13 +160,15 @@ impl Sequencer {
                     } else {
                         0.0
                     },
+
+                    section_beat: beats_into_section,
                 }
             }
             _ => Progress::default(),
         }
     }
 
-    pub fn set_sequence(&mut self, sequence: Sequence<SequenceData>, samplers: &mut HashMap<ID, Sampler>) {
+    fn set_sequence(&mut self, sequence: Sequence<SequenceData>, samplers: &mut HashMap<ID, Sampler>) {
         for (_, sampler) in samplers.iter_mut() {
             sampler.cancel_all();
         }
