@@ -1,12 +1,10 @@
-use std::{fs::File, io::BufReader, path::Path};
-
+use super::matcher::Matcher;
+use crate::midi::matcher::ExactMatcher;
+use crate::model::Action;
 use midir::{MidiInput, MidiInputConnection};
 use serde::{Deserialize, Serialize};
+use std::{fs::File, io::BufReader, path::Path};
 use tokio::sync::mpsc;
-
-use crate::midi::matcher::ExactMatcher;
-
-use super::{action::Action, matcher::Matcher};
 
 #[derive(Default)]
 #[allow(dead_code)]

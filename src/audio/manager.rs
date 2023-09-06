@@ -133,6 +133,10 @@ impl AudioManager {
         &self.playback_state
     }
 
+    pub fn progress(&self) -> &Progress {
+        &self.progress
+    }
+
     fn on_sample_converted(&mut self, result: SampleConversionResult) {
         self.samples_being_converted.remove(&result.sample_id);
 

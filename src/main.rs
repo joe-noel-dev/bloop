@@ -7,6 +7,7 @@ mod generators;
 mod midi;
 mod model;
 mod network;
+mod pedal;
 mod samples;
 mod types;
 mod waveform;
