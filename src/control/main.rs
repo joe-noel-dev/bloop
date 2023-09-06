@@ -1,15 +1,14 @@
-use std::time::Duration;
-
 use super::{directories::Directories, project_store::ProjectStore, waveform_store::WaveformStore};
 use crate::{
     api::*,
     audio::{manager::Audio, manager::AudioManager},
-    midi::MidiManager,
-    model::{Action, Project, Sample, Tempo},
+    midi::MidiController,
+    model::{Action, Notification, Project, Sample, Tempo},
     pedal::PedalController,
     samples::SamplesCache,
 };
 use anyhow::anyhow;
+use std::time::Duration;
 use tokio::{
     sync::{broadcast, mpsc},
     time,
@@ -24,8 +23,9 @@ pub struct MainController {
     project: Project,
     audio_manager: AudioManager,
     waveform_store: WaveformStore,
-    midi_manager: MidiManager,
-    midi_action_rx: mpsc::Receiver<Action>,
+    midi_manager: MidiController,
+    action_rx: mpsc::Receiver<Action>,
+    notification_tx: mpsc::Sender<Notification>,
     should_save: bool,
     pedal_controller: PedalController,
 }
@@ -40,7 +40,8 @@ impl MainController {
     pub fn new(request_rx: mpsc::Receiver<Request>, response_tx: broadcast::Sender<Response>) -> Self {
         let directories = Directories::new();
 
-        let (midi_action_tx, midi_action_rx) = mpsc::channel(128);
+        let (action_tx, action_rx) = mpsc::channel(128);
+        let (notification_tx, notification_rx) = mpsc::channel(128);
 
         Self {
             samples_cache: SamplesCache::new(&directories.samples),
@@ -50,10 +51,11 @@ impl MainController {
             project: Project::new(),
             audio_manager: AudioManager::new(response_tx.clone(), &directories.preferences),
             waveform_store: WaveformStore::new(response_tx),
-            midi_manager: MidiManager::new(midi_action_tx, &directories.preferences),
-            midi_action_rx,
+            midi_manager: MidiController::new(action_tx.clone(), &directories.preferences),
+            action_rx,
+            notification_tx,
             should_save: false,
-            pedal_controller: PedalController::new(),
+            pedal_controller: PedalController::new(action_tx, notification_rx),
         }
     }
 
@@ -154,21 +156,25 @@ impl MainController {
             tokio::select! {
                 Some(request) = self.request_rx.recv() => self.handle_request(request).await,
                 _ = self.audio_manager.run() => (),
-                Some(midi_action) = self.midi_action_rx.recv() => self.handle_midi_action(midi_action),
+                Some(action) = self.action_rx.recv() => self.handle_action(action),
                 _ = save_interval.tick() => self.auto_save_project().await,
-                _ = pedal_interval.tick() => self.update_pedal(),
+                _ = pedal_interval.tick() => self.update_pedal().await,
+               _ = self.pedal_controller.run() => (),
                 else => break,
             }
         }
     }
 
-    fn update_pedal(&mut self) {
-        let playback_state = self.audio_manager.playback_state();
-        let progress = self.audio_manager.progress();
-        self.pedal_controller.set_state(playback_state, progress);
+    async fn update_pedal(&mut self) {
+        let notification = Notification {
+            playback_state: self.audio_manager.playback_state().clone(),
+            progress: *self.audio_manager.progress(),
+        };
+
+        let _ = self.notification_tx.send(notification).await;
     }
 
-    fn handle_midi_action(&mut self, action: Action) {
+    fn handle_action(&mut self, action: Action) {
         match action {
             Action::PreviousSong => self.previous_song(),
             Action::NextSong => self.next_song(),

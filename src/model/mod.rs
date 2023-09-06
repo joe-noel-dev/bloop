@@ -1,5 +1,6 @@
 mod action;
 mod id;
+mod notification;
 mod playback_state;
 mod progress;
 mod project;
@@ -11,6 +12,7 @@ mod tempo;
 
 pub(crate) use action::Action;
 pub use id::ID;
+pub use notification::Notification;
 pub use playback_state::{PlaybackState, PlayingState};
 pub use progress::Progress;
 pub use project::{Project, ProjectInfo};
