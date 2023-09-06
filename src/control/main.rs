@@ -6,6 +6,7 @@ use crate::{
     audio::{manager::Audio, manager::AudioManager},
     midi::MidiManager,
     model::{Action, Project, Sample, Tempo},
+    pedal::PedalController,
     samples::SamplesCache,
 };
 use anyhow::anyhow;
@@ -26,6 +27,7 @@ pub struct MainController {
     midi_manager: MidiManager,
     midi_action_rx: mpsc::Receiver<Action>,
     should_save: bool,
+    pedal_controller: PedalController,
 }
 
 impl ResponseBroadcaster for MainController {
@@ -51,6 +53,7 @@ impl MainController {
             midi_manager: MidiManager::new(midi_action_tx, &directories.preferences),
             midi_action_rx,
             should_save: false,
+            pedal_controller: PedalController::new(),
         }
     }
 
@@ -145,6 +148,7 @@ impl MainController {
 
     pub async fn run(&mut self) {
         let mut save_interval = time::interval(Duration::from_secs(2));
+        let mut pedal_interval = time::interval(Duration::from_secs_f64(1.0 / 30.0));
 
         loop {
             tokio::select! {
@@ -152,9 +156,16 @@ impl MainController {
                 _ = self.audio_manager.run() => (),
                 Some(midi_action) = self.midi_action_rx.recv() => self.handle_midi_action(midi_action),
                 _ = save_interval.tick() => self.auto_save_project().await,
+                _ = pedal_interval.tick() => self.update_pedal(),
                 else => break,
             }
         }
+    }
+
+    fn update_pedal(&mut self) {
+        let playback_state = self.audio_manager.playback_state();
+        let progress = self.audio_manager.progress();
+        self.pedal_controller.set_state(playback_state, progress);
     }
 
     fn handle_midi_action(&mut self, action: Action) {
