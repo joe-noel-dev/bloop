@@ -8,7 +8,7 @@ use tokio::sync::mpsc;
 
 #[derive(Default)]
 #[allow(dead_code)]
-pub struct MidiManager {
+pub struct MidiController {
     input_connection: Option<MidiInputConnection<Context>>,
 }
 
@@ -69,7 +69,7 @@ fn on_midi_input(_: u64, message: &[u8], mappings: &[Mapping], context: &mut Con
         });
 }
 
-impl MidiManager {
+impl MidiController {
     fn print_midi_inputs(midi_input: &MidiInput) {
         println!("MIDI Input ports:");
 

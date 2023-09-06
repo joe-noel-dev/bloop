@@ -46,6 +46,7 @@ pub struct AudioManager {
     project: Project,
     mixer: Mixer,
     sequencer: Sequencer,
+    tick_interval: tokio::time::Interval,
 }
 
 impl AudioManager {
@@ -87,21 +88,18 @@ impl AudioManager {
             project: Project::empty(),
             mixer,
             sequencer: Sequencer::default(),
+            tick_interval: tokio::time::interval(Duration::from_secs_f64(1.0 / 60.0)),
         }
     }
 
     pub async fn run(&mut self) {
-        let mut interval = tokio::time::interval(Duration::from_secs_f64(1.0 / 60.0));
-
-        loop {
-            tokio::select! {
-                Some(conversion_result) = self.conversion_rx.next() => {
-                    self.on_sample_converted(conversion_result)
-                },
-                _ = interval.tick() =>
-                    self.interval_tick()
-                ,
-            }
+        tokio::select! {
+            Some(conversion_result) = self.conversion_rx.next() => {
+                self.on_sample_converted(conversion_result)
+            },
+            _ = self.tick_interval.tick() =>
+                self.interval_tick()
+            ,
         }
     }
 

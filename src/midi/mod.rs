@@ -1,4 +1,4 @@
-mod manager;
+mod controller;
 mod matcher;
 
-pub use manager::MidiManager;
+pub use controller::MidiController;
