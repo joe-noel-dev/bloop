@@ -1,3 +1,4 @@
+mod action;
 mod id;
 mod playback_state;
 mod progress;
@@ -8,6 +9,7 @@ mod selections;
 mod song;
 mod tempo;
 
+pub(crate) use action::Action;
 pub use id::ID;
 pub use playback_state::{PlaybackState, PlayingState};
 pub use progress::Progress;

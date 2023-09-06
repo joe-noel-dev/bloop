@@ -4,8 +4,8 @@ use super::{directories::Directories, project_store::ProjectStore, waveform_stor
 use crate::{
     api::*,
     audio::{manager::Audio, manager::AudioManager},
-    midi::{Action, MidiManager},
-    model::{Project, Sample, Tempo},
+    midi::MidiManager,
+    model::{Action, Project, Sample, Tempo},
     samples::SamplesCache,
 };
 use anyhow::anyhow;
