@@ -55,7 +55,7 @@ impl MainController {
             action_rx,
             notification_tx,
             should_save: false,
-            pedal_controller: PedalController::new(action_tx, notification_rx),
+            pedal_controller: PedalController::new(action_tx, notification_rx, &directories.preferences),
         }
     }
 

@@ -1,6 +1,7 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fs::File, io::BufReader, path::Path};
 
 use crate::model::{Action, Notification, PlayingState};
+use serde_derive::{Deserialize, Serialize};
 use tokio::{io::AsyncReadExt, io::AsyncWriteExt, sync::mpsc};
 use tokio_serial::{SerialPortBuilderExt, SerialStream};
 
@@ -13,34 +14,25 @@ pub struct PedalController {
     actions: HashMap<i32, Action>,
 }
 
+#[derive(Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Preferences {
+    serial_path: Option<String>,
+}
+
 impl PedalController {
-    fn open_serial() -> Option<SerialStream> {
-        let serial_address = "/dev/cu.usbmodem21401";
-        let builder = tokio_serial::new(serial_address, 9600);
+    pub fn new(
+        action_tx: mpsc::Sender<Action>,
+        notification_rx: mpsc::Receiver<Notification>,
+        preferences_dir: &Path,
+    ) -> Self {
+        let preferences = read_preferences(preferences_dir).unwrap_or_default();
 
-        let mut port = match builder.open_native_async() {
-            Ok(port) => port,
-            Err(error) => {
-                eprintln!("Error opening serial port: {error}");
-                return None;
-            }
-        };
-
-        if let Err(error) = port.set_exclusive(false) {
-            eprintln!("Error setting port non-exclusive: {error}");
-        }
-
-        println!("Connected to serial at address: {serial_address}");
-
-        Some(port)
-    }
-
-    pub fn new(action_tx: mpsc::Sender<Action>, notification_rx: mpsc::Receiver<Notification>) -> Self {
         Self {
             last_beat: None,
             notification_rx,
             action_tx,
-            port: Self::open_serial(),
+            port: open_serial(&preferences.serial_path.unwrap_or("/dev/cu.usbmodem21401".to_string())),
             incoming_message: String::default(),
             actions: HashMap::from([(0, Action::NextSong), (1, Action::ToggleLoop), (2, Action::TogglePlay)]),
         }
@@ -111,4 +103,35 @@ impl PedalController {
             let _ = self.action_tx.send(*action).await;
         }
     }
+}
+
+fn open_serial(serial_path: &str) -> Option<SerialStream> {
+    let builder = tokio_serial::new(serial_path, 9600);
+
+    let mut port = match builder.open_native_async() {
+        Ok(port) => port,
+        Err(error) => {
+            eprintln!("Error opening serial port ({serial_path}): {error}");
+            return None;
+        }
+    };
+
+    if let Err(error) = port.set_exclusive(false) {
+        eprintln!("Error setting port non-exclusive: {error}");
+    }
+
+    println!("Connected to serial at: {serial_path}");
+
+    Some(port)
+}
+
+fn read_preferences(preferences_dir: &Path) -> anyhow::Result<Preferences> {
+    let mut preferences_path = preferences_dir.to_path_buf();
+    preferences_path.push("pedal.json");
+
+    let file = File::open(preferences_path)?;
+    let reader = BufReader::new(file);
+    let preferences = serde_json::from_reader(reader)?;
+
+    Ok(preferences)
 }
