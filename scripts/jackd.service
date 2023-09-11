@@ -3,11 +3,14 @@ Description=Jack Audio Server
 After=sound.target local-fs.target
 
 [Service]
-ExecStart=/usr/bin/jackd -dalsa -dhw:USB -r44100 -p64
+ExecStart=/usr/bin/jackd -R -P95 -dalsa -dhw:USB -r44100 -p64
 User=joe
 LimitRTPRIO=95
 LimitRTTIME=infinity
 LimitMEMLOCK=infinity
+Environment=JACK_NO_AUDIO_RESERVATION=1
+Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=default.target
