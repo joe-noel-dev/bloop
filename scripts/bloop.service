@@ -8,6 +8,8 @@ User=joe
 LimitRTPRIO=95
 LimitRTTIME=infinity
 LimitMEMLOCK=infinity
+Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=default.target
