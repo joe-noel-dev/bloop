@@ -23,8 +23,9 @@ async fn main() {
     let (response_tx, _) = broadcast::channel(128);
 
     let mut main_controller = MainController::new(request_rx, response_tx.clone());
+    main_controller.load_last_project().await;
 
-    let control_fut = main_controller.run();
-    let network_fut = run_server(request_tx, response_tx);
-    join!(control_fut, network_fut);
+    let control_future = main_controller.run();
+    let network_future = run_server(request_tx, response_tx);
+    join!(control_future, network_future);
 }

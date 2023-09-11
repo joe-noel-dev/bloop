@@ -59,6 +59,13 @@ impl MainController {
         }
     }
 
+    pub async fn load_last_project(&mut self) {
+        match self.project_store.load_last_project(&mut self.samples_cache).await {
+            Ok(project) => self.set_project(project),
+            Err(error) => eprintln!("Unable to open last project: {error}"),
+        };
+    }
+
     async fn handle_request(&mut self, request: Request) {
         let project = self.project.clone();
         let result = match request {
