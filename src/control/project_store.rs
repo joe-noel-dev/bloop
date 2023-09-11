@@ -4,8 +4,8 @@ use crate::{
     types::AudioFileFormat,
 };
 use anyhow::{anyhow, Context};
-use std::convert::TryInto;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::{convert::TryInto, str::FromStr};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -43,10 +43,32 @@ impl ProjectStore {
         Ok(())
     }
 
+    async fn save_last_project(&self, project_id: &ID) -> anyhow::Result<()> {
+        let last_project_file = self.last_project_file();
+
+        tokio::fs::write(last_project_file, project_id.to_string().as_bytes())
+            .await
+            .context("Error writing last project ID")
+    }
+
     pub async fn load(&mut self, project_id: &ID, samples_cache: &mut SamplesCache) -> anyhow::Result<Project> {
         let project = self.read_project_json(project_id).await?;
         self.load_samples_into_cache(project_id, samples_cache).await?;
+        self.save_last_project(project_id).await?;
         Ok(project)
+    }
+
+    pub async fn load_last_project(&mut self, samples_cache: &mut SamplesCache) -> anyhow::Result<Project> {
+        let last_project_file = self.last_project_file();
+        let last_project_id = tokio::fs::read_to_string(last_project_file).await?;
+        let last_project_id = ID::from_str(&last_project_id)?;
+        self.load(&last_project_id, samples_cache).await
+    }
+
+    fn last_project_file(&self) -> PathBuf {
+        let mut last_project_file = self.root_directory.clone();
+        last_project_file.push("last_project");
+        last_project_file
     }
 
     pub async fn projects(&self) -> anyhow::Result<Vec<ProjectInfo>> {
