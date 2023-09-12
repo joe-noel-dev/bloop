@@ -13,13 +13,26 @@ class Core: CoreConnectionDelegate {
 
     private let group = DispatchGroup()
     private let queue = DispatchQueue(label: "CoreEncodeDecode", attributes: .concurrent)
+    private let discovery = CoreDiscovery()
 
     init() {
         connection.delegate = self
+
+        discovery.onCoreDiscovered = { hostname, port in
+            self.connect(hostname: hostname, port: port)
+        }
+
+        discovery.browse()
     }
 
-    func connect(_ ipAddress: String) {
-        self.connection.connect(ipAddress)
+    func browse() {
+        discovery.browse()
+    }
+
+    private func connect(hostname: String, port: Int) {
+        if self.connection.state == .disconnected {
+            self.connection.connect(hostname: hostname, port: port)
+        }
     }
 
     func sendRequest(_ request: Request) {
@@ -63,6 +76,7 @@ extension Core {
         print("Core disconnected")
 
         self.delegate?.coreDisconnected()
+        self.discovery.browse()
     }
 
     func coreConnectionDidReceiveData(data: Data) {
