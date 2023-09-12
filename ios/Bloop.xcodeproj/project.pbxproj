@@ -10,6 +10,7 @@
 		C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DB2A4F123400F8138D /* DisconnectedView.swift */; };
 		C20240DE2A4F14D100F8138D /* DemoProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DD2A4F14D100F8138D /* DemoProject.swift */; };
 		C20240E02A4F255B00F8138D /* SongView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DF2A4F255B00F8138D /* SongView.swift */; };
+		C20F17CF2AB07C2B00ECF2EB /* CoreDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F17CE2AB07C2B00ECF2EB /* CoreDiscovery.swift */; };
 		C222A9542A588ACB00418CBB /* WaveformMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */; };
 		C222A9562A58AEB200418CBB /* SectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C222A9552A58AEB100418CBB /* SectionsView.swift */; };
 		C222A95B2A59D21400418CBB /* UploadMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = C222A95A2A59D21400418CBB /* UploadMiddleware.swift */; };
@@ -83,6 +84,7 @@
 		C20240DB2A4F123400F8138D /* DisconnectedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectedView.swift; sourceTree = "<group>"; };
 		C20240DD2A4F14D100F8138D /* DemoProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoProject.swift; sourceTree = "<group>"; };
 		C20240DF2A4F255B00F8138D /* SongView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongView.swift; sourceTree = "<group>"; };
+		C20F17CE2AB07C2B00ECF2EB /* CoreDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDiscovery.swift; sourceTree = "<group>"; };
 		C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformMiddleware.swift; sourceTree = "<group>"; };
 		C222A9552A58AEB100418CBB /* SectionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionsView.swift; sourceTree = "<group>"; };
 		C222A95A2A59D21400418CBB /* UploadMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadMiddleware.swift; sourceTree = "<group>"; };
@@ -132,6 +134,7 @@
 		C27E2A672A51DE7700D48D91 /* Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Layout.swift; sourceTree = "<group>"; };
 		C27E2A6E2A51E5FD00D48D91 /* SectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionView.swift; sourceTree = "<group>"; };
 		C28705082A58217400178FC9 /* NameEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameEditor.swift; sourceTree = "<group>"; };
+		C2C4F7A12AB0808D009F13FB /* Bloop-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Bloop-Info.plist"; sourceTree = "<group>"; };
 		C2D82D412A52D7F600DAEA7E /* WaveformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformView.swift; sourceTree = "<group>"; };
 		C2D82D462A5311EB00DAEA7E /* TransportBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransportBar.swift; sourceTree = "<group>"; };
 		C2EAC1932A4ED2A100FD19B6 /* RequestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestTests.swift; sourceTree = "<group>"; };
@@ -168,6 +171,7 @@
 			isa = PBXGroup;
 			children = (
 				C247A6E72A4D949D00001DB2 /* Assets.xcassets */,
+				C2C4F7A12AB0808D009F13FB /* Bloop-Info.plist */,
 				C247A6E92A4D949D00001DB2 /* Bloop.entitlements */,
 				C247A6E32A4D949A00001DB2 /* BloopApp.swift */,
 				C247A6EA2A4D949D00001DB2 /* Preview Content */,
@@ -253,6 +257,7 @@
 			children = (
 				C229B99A2A4DD55D0044F2C6 /* Core.swift */,
 				C229B99C2A4DDE7C0044F2C6 /* CoreConnection.swift */,
+				C20F17CE2AB07C2B00ECF2EB /* CoreDiscovery.swift */,
 			);
 			path = core;
 			sourceTree = "<group>";
@@ -570,6 +575,7 @@
 				C257C1712A4DF81E0080ECC2 /* Progress.swift in Sources */,
 				C229B99D2A4DDE7C0044F2C6 /* CoreConnection.swift in Sources */,
 				C229B99B2A4DD55D0044F2C6 /* Core.swift in Sources */,
+				C20F17CF2AB07C2B00ECF2EB /* CoreDiscovery.swift in Sources */,
 				C257C16F2A4DF6D40080ECC2 /* Waveform.swift in Sources */,
 				C229B9872A4DA0B40044F2C6 /* RootReducer.swift in Sources */,
 				C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */,
@@ -761,6 +767,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "source/app/Bloop-Info.plist";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Discover Bloop devices";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -800,6 +808,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "source/app/Bloop-Info.plist";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Discover Bloop devices";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;

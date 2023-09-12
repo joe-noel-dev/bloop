@@ -21,9 +21,12 @@ struct ProjectView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    MetronomeView(isPlaying: state.playbackState.playing == .playing, sectionBeat: Int(floor(state.progress.sectionBeat)))
+                    MetronomeView(
+                        isPlaying: state.playbackState.playing == .playing,
+                        sectionBeat: Int(floor(state.progress.sectionBeat))
+                    )
                 }
-                
+
                 ToolbarItem {
                     Menu {
                         projectsButton
