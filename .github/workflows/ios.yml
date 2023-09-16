@@ -48,7 +48,7 @@ jobs:
       - name: build archive
         working-directory: ios
         run: |
-          xcodebuild \
+          xcodebuild -scheme Bloop \
           -archivePath $RUNNER_TEMP/bloop.xcarchive \
           -sdk iphoneos \
           -configuration Release \
