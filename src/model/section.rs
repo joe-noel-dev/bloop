@@ -15,20 +15,6 @@ pub struct Section {
     pub metronome: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct LoopProperties {
-    pub mode: LoopMode,
-    pub count: i32,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub enum LoopMode {
-    Fixed,
-    Indefinite,
-}
-
 impl Section {
     pub fn new() -> Self {
         Section {
