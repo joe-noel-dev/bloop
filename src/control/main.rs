@@ -1,7 +1,7 @@
 use super::{directories::Directories, project_store::ProjectStore, waveform_store::WaveformStore};
 use crate::{
     api::*,
-    audio::{manager::Audio, manager::AudioManager},
+    audio::AudioController,
     midi::MidiController,
     model::{Action, Notification, Project, Sample, Tempo},
     pedal::PedalController,
@@ -21,9 +21,9 @@ pub struct MainController {
     request_rx: mpsc::Receiver<Request>,
     response_tx: broadcast::Sender<Response>,
     project: Project,
-    audio_manager: AudioManager,
+    audio_controller: AudioController,
     waveform_store: WaveformStore,
-    midi_manager: MidiController,
+    midi_controller: MidiController,
     action_rx: mpsc::Receiver<Action>,
     notification_tx: mpsc::Sender<Notification>,
     should_save: bool,
@@ -49,9 +49,9 @@ impl MainController {
             request_rx,
             response_tx: response_tx.clone(),
             project: Project::new(),
-            audio_manager: AudioManager::new(response_tx.clone(), &directories.preferences),
+            audio_controller: AudioController::new(response_tx.clone(), &directories.preferences),
             waveform_store: WaveformStore::new(response_tx),
-            midi_manager: MidiController::new(action_tx.clone(), &directories.preferences),
+            midi_controller: MidiController::new(action_tx.clone(), &directories.preferences),
             action_rx,
             notification_tx,
             should_save: false,
@@ -111,7 +111,7 @@ impl MainController {
             self.should_save = project.info.id == self.project.info.id;
             self.project = project;
             self.send_project_response(&self.project);
-            self.audio_manager
+            self.audio_controller
                 .on_project_updated(&self.project, &self.samples_cache);
         }
     }
@@ -121,7 +121,7 @@ impl MainController {
             Entity::All => self.send_response(
                 Response::default()
                     .with_project(&self.project)
-                    .with_playback_state(self.audio_manager.playback_state()),
+                    .with_playback_state(&self.audio_controller.get_playback_state()),
             ),
             Entity::Projects => {
                 let projects = self.project_store.projects().await?;
@@ -162,7 +162,7 @@ impl MainController {
         loop {
             tokio::select! {
                 Some(request) = self.request_rx.recv() => self.handle_request(request).await,
-                _ = self.audio_manager.run() => (),
+                _ = self.audio_controller.run() => (),
                 Some(action) = self.action_rx.recv() => self.handle_action(action),
                 _ = save_interval.tick() => self.auto_save_project().await,
                 _ = pedal_interval.tick() => self.update_pedal().await,
@@ -174,8 +174,8 @@ impl MainController {
 
     async fn update_pedal(&mut self) {
         let notification = Notification {
-            playback_state: self.audio_manager.playback_state().clone(),
-            progress: *self.audio_manager.progress(),
+            playback_state: self.audio_controller.get_playback_state(),
+            progress: self.audio_controller.get_progress(),
         };
 
         let _ = self.notification_tx.send(notification).await;
@@ -188,8 +188,8 @@ impl MainController {
             Action::PreviousSection => self.previous_section(),
             Action::NextSection => self.next_section(),
             Action::QueueSelected => self.queue_selected(),
-            Action::ToggleLoop => self.audio_manager.toggle_loop(),
-            Action::TogglePlay => self.audio_manager.toggle_play(),
+            Action::ToggleLoop => self.audio_controller.toggle_loop(),
+            Action::TogglePlay => self.audio_controller.toggle_play(),
         }
     }
 
@@ -222,7 +222,7 @@ impl MainController {
     fn queue_selected(&mut self) {
         if let Some(song_id) = self.project.selections.song {
             if let Some(section_id) = self.project.selections.section {
-                self.audio_manager.queue(&song_id, &section_id);
+                self.audio_controller.queue(&song_id, &section_id);
             }
         }
     }
@@ -353,12 +353,12 @@ impl MainController {
 
     fn handle_transport_request(&mut self, transport_method: &TransportMethod) {
         match transport_method {
-            TransportMethod::Play => self.audio_manager.play(),
-            TransportMethod::Stop => self.audio_manager.stop(),
-            TransportMethod::Loop => self.audio_manager.enter_loop(),
-            TransportMethod::ExitLoop => self.audio_manager.exit_loop(),
+            TransportMethod::Play => self.audio_controller.play(),
+            TransportMethod::Stop => self.audio_controller.stop(),
+            TransportMethod::Loop => self.audio_controller.enter_loop(),
+            TransportMethod::ExitLoop => self.audio_controller.exit_loop(),
             TransportMethod::Queue(queue_request) => self
-                .audio_manager
+                .audio_controller
                 .queue(&queue_request.song_id, &queue_request.section_id),
         }
     }

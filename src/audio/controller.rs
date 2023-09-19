@@ -19,19 +19,8 @@ use std::{
 };
 use tokio::sync::broadcast;
 
-pub trait Audio {
-    fn play(&mut self);
-    fn stop(&mut self);
-    fn enter_loop(&mut self);
-    fn exit_loop(&mut self);
-    fn queue(&mut self, song_id: &ID, section_id: &ID);
-
-    fn toggle_loop(&mut self);
-    fn toggle_play(&mut self);
-}
-
 #[allow(dead_code)]
-pub struct AudioManager {
+pub struct AudioController {
     context: Box<dyn Context>,
     realtime_process: Process,
 
@@ -49,7 +38,7 @@ pub struct AudioManager {
     tick_interval: tokio::time::Interval,
 }
 
-impl AudioManager {
+impl AudioController {
     pub fn new(response_tx: broadcast::Sender<Response>, preferences_dir: &Path) -> Self {
         let sample_rate = 44_100;
         let maximum_channel_count = 3;
@@ -103,6 +92,47 @@ impl AudioManager {
         }
     }
 
+    pub fn play(&mut self) {
+        self.sequencer
+            .play(self.lookahead_time(), self.project.clone(), &mut self.samplers);
+    }
+
+    pub fn stop(&mut self) {
+        self.sequencer.stop(&mut self.samplers);
+    }
+
+    pub fn enter_loop(&mut self) {
+        self.sequencer.enter_loop(self.lookahead_time(), &mut self.samplers);
+    }
+
+    pub fn exit_loop(&mut self) {
+        self.sequencer.exit_loop(self.lookahead_time(), &mut self.samplers);
+    }
+
+    pub fn queue(&mut self, song_id: &ID, section_id: &ID) {
+        self.sequencer
+            .queue(self.lookahead_time(), song_id, section_id, &mut self.samplers);
+    }
+
+    pub fn toggle_loop(&mut self) {
+        if self.playback_state.looping {
+            self.exit_loop();
+        } else {
+            self.enter_loop();
+        }
+    }
+
+    pub fn toggle_play(&mut self) {
+        match self.playback_state.playing {
+            PlayingState::Stopped => self.play(),
+            PlayingState::Playing => self.stop(),
+        }
+    }
+
+    pub fn get_playback_state(&self) -> PlaybackState {
+        self.playback_state
+    }
+
     fn interval_tick(&mut self) {
         let current_time = self.context.current_time();
         self.context.process_notifications();
@@ -127,12 +157,8 @@ impl AudioManager {
         }
     }
 
-    pub fn playback_state(&self) -> &PlaybackState {
-        &self.playback_state
-    }
-
-    pub fn progress(&self) -> &Progress {
-        &self.progress
+    pub fn get_progress(&self) -> Progress {
+        self.progress
     }
 
     fn on_sample_converted(&mut self, result: SampleConversionResult) {
@@ -221,44 +247,5 @@ impl AudioManager {
 
     fn lookahead_time(&self) -> Timestamp {
         self.context.current_time().incremented_by_seconds(0.001)
-    }
-}
-
-impl Audio for AudioManager {
-    fn play(&mut self) {
-        self.sequencer
-            .play(self.lookahead_time(), self.project.clone(), &mut self.samplers);
-    }
-
-    fn stop(&mut self) {
-        self.sequencer.stop(&mut self.samplers);
-    }
-
-    fn enter_loop(&mut self) {
-        self.sequencer.enter_loop(self.lookahead_time(), &mut self.samplers);
-    }
-
-    fn exit_loop(&mut self) {
-        self.sequencer.exit_loop(self.lookahead_time(), &mut self.samplers);
-    }
-
-    fn queue(&mut self, song_id: &ID, section_id: &ID) {
-        self.sequencer
-            .queue(self.lookahead_time(), song_id, section_id, &mut self.samplers);
-    }
-
-    fn toggle_loop(&mut self) {
-        if self.playback_state.looping {
-            self.exit_loop();
-        } else {
-            self.enter_loop();
-        }
-    }
-
-    fn toggle_play(&mut self) {
-        match self.playback_state.playing {
-            PlayingState::Stopped => self.play(),
-            PlayingState::Playing => self.stop(),
-        }
     }
 }
