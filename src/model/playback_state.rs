@@ -1,7 +1,8 @@
 use super::id::ID;
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum PlayingState {
     Stopped,
@@ -14,7 +15,7 @@ impl Default for PlayingState {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct PlaybackState {
     pub playing: PlayingState,

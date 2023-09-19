@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq, Copy)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Progress {
     pub song_progress: f64,
