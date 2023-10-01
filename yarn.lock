@@ -502,10 +502,10 @@
   resolved "https://registry.yarnpkg.com/@types/uuid/-/uuid-9.0.3.tgz#6cdd939b4316b4f81625de9f06028d848c4a1533"
   integrity sha512-taHQQH/3ZyI3zP8M/puluDEIEvtQHVYcC6y3N8ijFtAd28+Ey/G4sg1u2gB01S8MwybLOKAp9/yCMu/uR5l3Ug==
 
-"@types/wav@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@types/wav/-/wav-1.0.1.tgz#264dbce89c458d29b722996be8bab4c09c73515f"
-  integrity sha512-AKJeM5mqO1pdR2/HaTUQzSCm12No36KUM1larivXUmsLx+4JmMuC2Tv0kCdZzTx66h7IH2Xr92DGc9NQsXxa9Q==
+"@types/wav@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@types/wav/-/wav-1.0.2.tgz#e06fbe99469df24f48a5e85eac5baa588e313469"
+  integrity sha512-B6DQ8Gh/JMJco3TWyutX+s/2dnT7N2YPF4JKkebNuMSNsF2vzKWJaalHmPijl4H5FLMvLoiKyayNoWgIeXZAeQ==
   dependencies:
     "@types/node" "*"
 
