@@ -1,6 +1,7 @@
 [Unit]
 Description=Bloop Core
-Requires=jackd.service
+Requires=jackd.service network-online.target
+After=jackd.service network-online.target
 
 [Service]
 ExecStart=/usr/local/bin/bloop-core
