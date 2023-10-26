@@ -11,7 +11,9 @@ struct NameEditor: View {
 
             TextField(prompt, text: $value)
                 .textFieldStyle(.roundedBorder)
-                .textInputAutocapitalization(.words)
+                #if os(iOS)
+                    .textInputAutocapitalization(.words)
+                #endif
                 .disableAutocorrection(true)
                 .focused($textFieldIsFocused)
         }
