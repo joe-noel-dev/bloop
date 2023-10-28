@@ -14,48 +14,17 @@ struct ProjectView: View {
 
     var body: some View {
         NavigationStack {
+            VStack(spacing: 0) {
+                scrollView
+                    .toolbar {
+                        toolbarContent
+                    }
+                    .background(
+                        colorScheme == .light ? Colours.backgroundLight : Colours.backgroundDark
+                    )
 
-            ScrollView(.vertical) {
-                songViews
-                    .padding()
+                transportBar
             }
-            .toolbar {
-                #if os(iOS)
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        MetronomeView(
-                            isPlaying: state.playbackState.playing == .playing,
-                            sectionBeat: Int(floor(state.progress.sectionBeat))
-                        )
-                    }
-                #endif
-
-                ToolbarItem {
-                    Menu {
-                        projectsButton
-                        renameProjectButton
-                        songsButton
-                    } label: {
-                        Image(systemName: "ellipsis")
-                    }
-                    .popover(isPresented: $editingProjectName) {
-                        NameEditor(prompt: "Project Name", value: $newProjectName)
-                            .onSubmit {
-                                let action = renameProjectAction(newProjectName)
-                                dispatch(action)
-                                editingProjectName = false
-                            }
-                            .onAppear {
-                                newProjectName = state.project.info.name
-                            }
-                    }
-                }
-
-            }
-            .background(colorScheme == .light ? Colours.backgroundLight : Colours.backgroundDark)
-            .navigationTitle(state.project.info.name)
-        }
-        .safeAreaInset(edge: .bottom) {
-            transportBar
         }
         .sheet(isPresented: $projectsViewOpen) {
             ProjectsView(projects: state.projects, dispatch: dispatch) {
@@ -65,11 +34,53 @@ struct ProjectView: View {
         .sheet(isPresented: $editingSongs) {
             SongsView(project: state.project, dispatch: dispatch)
         }
+        .background(.regularMaterial)
+    }
+
+    @ToolbarContentBuilder private var toolbarContent: some ToolbarContent {
+        #if os(iOS)
+            ToolbarItem(placement: .navigationBarLeading) {
+                MetronomeView(
+                    isPlaying: state.playbackState.playing == .playing,
+                    sectionBeat: Int(floor(state.progress.sectionBeat))
+                )
+            }
+        #endif
+
+        ToolbarItem {
+            Menu {
+                projectsButton
+                renameProjectButton
+                songsButton
+            } label: {
+                Image(systemName: "ellipsis")
+            }
+            .popover(isPresented: $editingProjectName) {
+                NameEditor(prompt: "Project Name", value: $newProjectName)
+                    .onSubmit {
+                        let action = renameProjectAction(newProjectName)
+                        dispatch(action)
+                        editingProjectName = false
+                    }
+                    .onAppear {
+                        newProjectName = state.project.info.name
+                    }
+            }
+        }
+    }
+
+    @ViewBuilder private var scrollView: some View {
+        ScrollView(.horizontal) {
+            LazyHStack {
+                songViews
+            }
+        }
     }
 
     @ViewBuilder
     private var songViews: some View {
-        VStack(spacing: Layout.units(4)) {
+
+        TabView {
             ForEach(state.project.songs) { song in
                 SongView(
                     song: song,
@@ -80,8 +91,10 @@ struct ProjectView: View {
                     dispatch: dispatch
                 )
             }
-            Spacer()
         }
+        .frame(width: UIScreen.main.bounds.width)
+        .tabViewStyle(.page)
+
     }
 
     @ViewBuilder
