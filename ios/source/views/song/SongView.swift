@@ -89,27 +89,30 @@ struct SongView: View {
         return Colours.neutral4
     }
 
+    @ViewBuilder
+    var sections: some View {
+        LazyVGrid(columns: sectionColumns) {
+            ForEach(song.sections) { section in
+                SectionView(
+                    section: section,
+                    selections: selections,
+                    playbackState: playbackState,
+                    progress: progress,
+                    dispatch: dispatch
+                )
+            }
+        }
+    }
+
     var body: some View {
-        HStack {
+        ScrollView {
             VStack(alignment: .leading) {
                 header
-
-                LazyVGrid(columns: sectionColumns) {
-                    ForEach(song.sections) { section in
-                        SectionView(
-                            section: section,
-                            selections: selections,
-                            playbackState: playbackState,
-                            progress: progress,
-                            dispatch: dispatch
-                        )
-                    }
-                }
-
+                sections
+                Spacer()
             }
-
-            Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
         .padding()
         .overlay(alignment: .leading) { sidebar }
@@ -120,9 +123,6 @@ struct SongView: View {
             }
 
         }
-        .background(.thickMaterial)
-        .cornerRadius(Layout.cornerRadiusLarge)
-        .shadow(radius: 4.0)
         .sheet(isPresented: $editingSections) {
             SectionsView(song: song, dispatch: dispatch)
         }
@@ -140,7 +140,7 @@ struct SongView: View {
     }
 
     @ViewBuilder
-    var sidebar: some View {
+    private var sidebar: some View {
         if isPlaying {
             Colours.playing
                 .frame(width: Layout.units(1))
@@ -152,7 +152,70 @@ struct SongView: View {
     }
 
     @ViewBuilder
-    var header: some View {
+    private var renameButton: some View {
+        Button {
+            editingName = true
+        } label: {
+            Label("Rename", systemImage: "pencil")
+        }
+    }
+
+    @ViewBuilder
+    private var sectionsButton: some View {
+        Button {
+            editingSections = true
+        } label: {
+            Label("Sections", systemImage: "rectangle.grid.1x2")
+        }
+    }
+
+    @ViewBuilder
+    private var addSampleButton: some View {
+        Button {
+            editingSample = true
+        } label: {
+            Label(
+                song.sample == nil ? "Add Sample" : "Replace Sample",
+                systemImage: "waveform"
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var tempoButton: some View {
+        Button {
+            editingTempo = true
+        } label: {
+            Label("Tempo", systemImage: "metronome")
+        }
+    }
+
+    @ViewBuilder
+    private var removeButton: some View {
+        Button(role: .destructive) {
+            let action = removeSongAction(song.id)
+            dispatch(action)
+        } label: {
+            Label("Remove", systemImage: "trash")
+        }
+    }
+    
+    @ViewBuilder
+    private var headerMenu: some View {
+        Menu {
+            renameButton
+            sectionsButton
+            addSampleButton
+            tempoButton
+            removeButton
+        } label: {
+            Image(systemName: "ellipsis")
+        }
+        .font(.title)
+    }
+
+    @ViewBuilder
+    private var header: some View {
         HStack {
             Text(song.name)
                 .font(.largeTitle)
@@ -160,48 +223,8 @@ struct SongView: View {
             Spacer()
 
             if isSelected {
-                Menu {
-
-                    Button {
-                        editingName = true
-                    } label: {
-                        Label("Rename", systemImage: "pencil")
-                    }
-
-                    Button {
-                        editingSections = true
-                    } label: {
-                        Label("Sections", systemImage: "rectangle.grid.1x2")
-                    }
-
-                    Button {
-                        editingSample = true
-                    } label: {
-                        Label(
-                            song.sample == nil ? "Add Sample" : "Replace Sample",
-                            systemImage: "waveform"
-                        )
-                    }
-
-                    Button {
-                        editingTempo = true
-                    } label: {
-                        Label("Tempo", systemImage: "metronome")
-                    }
-
-                    Button(role: .destructive) {
-                        let action = removeSongAction(song.id)
-                        dispatch(action)
-                    } label: {
-                        Label("Remove", systemImage: "trash")
-                    }
-
-                } label: {
-                    Image(systemName: "ellipsis")
-                }
-                .font(.title)
+                headerMenu
             }
-
         }
         .popover(isPresented: $editingName) {
             NameEditor(prompt: "Song Name", value: $newName)
@@ -228,7 +251,6 @@ struct SongView: View {
             .font(.title2)
             .padding(Layout.units(2))
             .frame(minWidth: 400)
-            .background(.regularMaterial)
             .onAppear {
                 if let tempo = song.sample?.tempo.bpm {
                     self.newTempo = tempo
