@@ -8,7 +8,6 @@ on:
 
 jobs:
   build_with_signing:
-    if: ${{ github.actor != 'dependabot[bot]' }}
     runs-on: macos-latest
     steps:
       - name: check Xcode version
