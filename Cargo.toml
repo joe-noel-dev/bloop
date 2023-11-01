@@ -20,7 +20,7 @@ home = "0.5.4"
 hound = "3.5.1"
 libmdns = "0.7.5"
 midir = "0.9.1"
-num-traits = "0.2.16"
+num-traits = "0.2.17"
 rand = "0.8.5"
 rawdio = { git = "https://github.com/joefocusrite/rawdio", branch = "main" }
 regex = "1.10"
