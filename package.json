@@ -15,7 +15,7 @@
     "moment": "^2.29.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-edit-text": "^5.1.0",
+    "react-edit-text": "^5.1.1",
     "react-hotkeys-hook": "^4.4.1",
     "react-icons": "^4.9.0",
     "react-is": "^18.2.0",
@@ -34,7 +34,7 @@
     "extends": "react-app"
   },
   "devDependencies": {
-    "@types/react-edit-text": "^5.0.1",
+    "@types/react-edit-text": "^5.0.3",
     "@types/wav": "^1.0.3",
     "@vitejs/plugin-react": "^4.0.4",
     "vite": "^4.5.0",

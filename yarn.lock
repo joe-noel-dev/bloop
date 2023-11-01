@@ -464,10 +464,10 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react-edit-text@^5.0.1":
-  version "5.0.1"
-  resolved "https://registry.yarnpkg.com/@types/react-edit-text/-/react-edit-text-5.0.1.tgz#2907c740c013c17707eb76d1b84688417dff4c27"
-  integrity sha512-Eb2tX+PtSsbSTZPO1mTbTufVVAGddeplMCHsL+RCXQytm3X8bkiKWXMbQ/kaoOuxDHTkarItHRX0dEeo5A2B+w==
+"@types/react-edit-text@^5.0.3":
+  version "5.0.3"
+  resolved "https://registry.yarnpkg.com/@types/react-edit-text/-/react-edit-text-5.0.3.tgz#ce86bbcf411838cc9a16acbc7c1c9eee5d4cf475"
+  integrity sha512-5oOkoDVTxpt7GXW4UXxBitDeKh3u16PGSfqR5GtsxFIHkA1TShh29ZpyR4cy6xddng8QM2VKxdgFLKOgSgWgXg==
   dependencies:
     "@types/react" "*"
 
@@ -809,10 +809,10 @@ react-dom@^18.2.0:
     loose-envify "^1.1.0"
     scheduler "^0.23.0"
 
-react-edit-text@^5.1.0:
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/react-edit-text/-/react-edit-text-5.1.0.tgz#7dae13778bab8b7014315085bb790ff787e44ac8"
-  integrity sha512-CfHgzFUlWkAaC51YC4mzmr3sa34NNvDkf6/SGm91YAZYWNT4/dfhqg9EqzIdUOMQ2tR4cAnEaoi1qZ47taR46A==
+react-edit-text@^5.1.1:
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/react-edit-text/-/react-edit-text-5.1.1.tgz#e7e2a5b3c04c6c5e746c2ecfd6b96d741c8484e8"
+  integrity sha512-ZG2UeJy2194MqlIsuK6Ob/dogYO8B6ekcwliD8/ia8FZJRqHq3OnCqRJrRol+uSsFidvJk6htqzAtvDdssYzoA==
   dependencies:
     classnames "^2.2.6"
     prop-types "^15.8.1"
