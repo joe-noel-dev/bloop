@@ -867,10 +867,10 @@ react-refresh@^0.14.0:
   resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.14.0.tgz#4e02825378a5f227079554d4284889354e5f553e"
   integrity sha512-wViHqhAd8OHeLS/IRMJjTSDHF3U9eWi62F/MledQGPdJGDhodXJ9PBLNGr6WWL7qlH12Mt3TyTpbS+hGXMjCzQ==
 
-react-tiny-popover@^7.0.1:
-  version "7.2.4"
-  resolved "https://registry.yarnpkg.com/react-tiny-popover/-/react-tiny-popover-7.2.4.tgz#b11fe9b43d1fc8ac46e760419346afd41d6111ee"
-  integrity sha512-T7ZSwXcUtPXCog3Bux9+TjoTvUeMi/+zI0Yv/TkIznZCWUg0XTt2797G0IiT5mTVeJeLivUzdOmKA1hOQdMfOQ==
+react-tiny-popover@^8.0.4:
+  version "8.0.4"
+  resolved "https://registry.yarnpkg.com/react-tiny-popover/-/react-tiny-popover-8.0.4.tgz#bf76f1db8a9b62f4eb10fe0dc770a65c52d59560"
+  integrity sha512-pn0Y/G0gyMdYTBEWSKCCnaZsXAa54PkfnRE4fnMM5633SSClYrXxwXKc6vPYgJ9shLatGginxMjnhXq6guZmng==
 
 react@^18.2.0:
   version "18.2.0"
