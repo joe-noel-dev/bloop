@@ -1,7 +1,7 @@
-name: Frontend
+name: Editor
 on: [push]
 jobs:
-  build-frontend:
+  build-editor:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -10,4 +10,3 @@ jobs:
         run: yarn install
       - name: Build all
         run: yarn build
- 

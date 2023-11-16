@@ -1,9 +1,12 @@
-import {Project, emptyProject} from '../frontend/src/model/project';
 import {randomUUID} from 'crypto';
 import {Reader as WavReader} from 'wav';
-import {Sample} from '../frontend/src/model/sample';
-import {Section} from '../frontend/src/model/section';
-import {Song} from '../frontend/src/model/song';
+import {
+  Project,
+  emptyProject,
+  Sample,
+  Section,
+  Song,
+} from '../editor/src/model';
 
 import fs from 'fs';
 import os from 'os';

@@ -19,5 +19,5 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["frontend/src"]
+  "include": ["editor/src"]
 }
