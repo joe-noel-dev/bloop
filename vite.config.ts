@@ -4,7 +4,7 @@ import viteTsconfigPaths from 'vite-tsconfig-paths';
 import topLevelAwait from 'vite-plugin-top-level-await';
 
 export default defineConfig({
-  root: 'frontend',
+  root: 'editor',
   plugins: [
     react(),
     viteTsconfigPaths(),
