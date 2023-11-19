@@ -5,14 +5,24 @@ import {
 } from '../../model-hooks/section-hooks';
 import {useCore} from '../../core/use-core';
 import {
+  playRequest,
   removeSectionRequest,
   selectSectionRequest,
+  stopRequest,
   updateSectionRequest,
 } from '../../api/request';
 import _ from 'lodash';
-import {Cancel, Check, Delete, Edit} from '@mui/icons-material';
+import {
+  Cancel,
+  Check,
+  Delete,
+  Edit,
+  PlayArrow,
+  Stop,
+} from '@mui/icons-material';
 import {useEditingSection} from '../project/EditingSectionContext';
 import {CSSProperties, useState} from 'react';
+import {usePlaybackState} from '../../model-hooks/transport-hooks';
 
 interface Props {
   sectionId: string;
@@ -23,12 +33,15 @@ export const Section = ({sectionId}: Props) => {
   const core = useCore();
   const selectedSectionId = useSelectedSectionId();
   const [editingSectionId, setEditingSectionId] = useEditingSection();
+  const playbackState = usePlaybackState();
 
   const [editingName, setEditingName] = useState(section?.name);
   const [editingStart, setEditingStart] = useState(section?.start);
 
   const isEditing = sectionId === editingSectionId;
   const isSelected = sectionId === selectedSectionId;
+  const isPlaying =
+    playbackState?.playing && playbackState.sectionId === sectionId;
 
   if (!section) {
     return <></>;
@@ -86,6 +99,19 @@ export const Section = ({sectionId}: Props) => {
     setEditingSectionId('');
   };
 
+  const stop = () => {
+    const stop = stopRequest();
+    core.sendRequest(stop);
+  };
+
+  const play = () => {
+    stop();
+    select();
+
+    const play = playRequest();
+    core.sendRequest(play);
+  };
+
   return (
     <tr
       onClick={select}
@@ -98,6 +124,19 @@ export const Section = ({sectionId}: Props) => {
           : {}
       }
     >
+      <td>
+        {!isPlaying && (
+          <IconButton onClick={play}>
+            <PlayArrow />
+          </IconButton>
+        )}
+
+        {isPlaying && (
+          <IconButton onClick={stop}>
+            <Stop />
+          </IconButton>
+        )}
+      </td>
       <td>
         {isEditing ? (
           <Input
