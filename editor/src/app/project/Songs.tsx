@@ -6,7 +6,7 @@ export const Songs = () => {
   const songs = useSongs();
 
   return (
-    <Stack>
+    <Stack spacing={2}>
       <Typography level="title-lg">Songs</Typography>
       <Stack spacing={2}>
         {songs &&

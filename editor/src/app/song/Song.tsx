@@ -15,9 +15,10 @@ export const Song = ({songId}: SongProps) => {
   const song = useSong(songId);
   const core = useCore();
 
-  const [editingSongName, setEditingSongName] = useState<string | undefined>(
-    undefined
-  );
+  const [editing, setEditing] = useState(false);
+  const [editingSongName, setEditingSongName] = useState<string>('');
+
+  const [editingTempo, setEditingTempo] = useState<string>('');
 
   if (!song) {
     return <></>;
@@ -35,46 +36,80 @@ export const Song = ({songId}: SongProps) => {
       newSong.name = editingSongName;
     }
 
+    const tempo = parseFloat(editingTempo || '');
+    if (!isNaN(tempo)) {
+      newSong.tempo.bpm = tempo;
+    }
+
     const request = updateSongRequest(newSong);
     core.sendRequest(request);
 
-    setEditingSongName(undefined);
+    setEditing(false);
   };
 
-  const cancel = () => setEditingSongName(undefined);
+  const cancel = () => {
+    setEditing(false);
+  };
+
+  const edit = () => {
+    setEditing(true);
+    setEditingSongName(song.name);
+    setEditingTempo(`${song.tempo.bpm}`);
+  };
 
   return (
     <Stack spacing={2}>
-      {editingSongName === undefined ? (
-        <Typography
-          level="title-md"
-          endDecorator={
-            <IconButton
-              color="primary"
-              size="sm"
-              variant="soft"
-              aria-label="Edit song name"
-              onClick={() => setEditingSongName(song.name)}
-            >
-              <Edit />
-            </IconButton>
-          }
-        >
-          {song.name}
-        </Typography>
-      ) : (
-        <Stack direction="row" spacing={2}>
-          <Input
-            value={editingSongName}
-            onChange={(event) => setEditingSongName(event.target.value)}
-          />
-          <IconButton color="success" variant="soft" onClick={submit}>
-            <Check />
-          </IconButton>
-          <IconButton color="warning" variant="soft" onClick={cancel}>
-            <Cancel />
+      {!editing ? (
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Typography level="title-lg">{song.name}</Typography>
+
+          <Typography level="body-md">{song.tempo.bpm} bpm</Typography>
+
+          <IconButton
+            color="primary"
+            size="sm"
+            variant="soft"
+            aria-label="Edit song name"
+            onClick={edit}
+          >
+            <Edit />
           </IconButton>
         </Stack>
+      ) : (
+        <form
+          onSubmit={(event) => {
+            submit();
+            event.preventDefault();
+          }}
+        >
+          <Stack direction="row" spacing={2}>
+            <Input
+              sx={{width: 320}}
+              value={editingSongName}
+              onChange={(event) => setEditingSongName(event.target.value)}
+            />
+
+            <Input
+              sx={{width: 120}}
+              endDecorator={<Typography>bpm</Typography>}
+              value={editingTempo}
+              onChange={(event) => setEditingTempo(event.target.value)}
+            />
+
+            <IconButton color="success" variant="soft" type="submit">
+              <Check />
+            </IconButton>
+
+            <IconButton
+              color="warning"
+              variant="soft"
+              type="button"
+              onClick={cancel}
+            >
+              <Cancel />
+            </IconButton>
+          </Stack>
+        </form>
       )}
 
       <Sample sampleId={song.sample?.id || ''} songId={songId} />
