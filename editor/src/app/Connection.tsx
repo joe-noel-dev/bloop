@@ -22,22 +22,27 @@ export const Connection = (props: ConnectionProps) => {
   };
 
   return (
-    <Stack direction="row" sx={{padding: 2}} spacing={2}>
-      <Input
-        placeholder="WebSocket Address"
-        value={wsAddress}
-        onChange={(event) => setWsAddress(event.target.value)}
-      />
+    <form
+      onSubmit={(event) => {
+        submit();
+        event.preventDefault();
+      }}
+    >
+      <Stack direction="row" sx={{padding: 2}} spacing={2}>
+        <Input
+          placeholder="WebSocket Address"
+          value={wsAddress}
+          onChange={(event) => setWsAddress(event.target.value)}
+        />
 
-      <Button onClick={submit}>
-        {props.isConnected ? 'Disconnect' : 'Connect'}
-      </Button>
+        <Button>{props.isConnected ? 'Disconnect' : 'Connect'}</Button>
 
-      {props.isConnected && (
-        <Chip color="success" startDecorator={<Check />} sx={{paddingX: 2}}>
-          Connected
-        </Chip>
-      )}
-    </Stack>
+        {props.isConnected && (
+          <Chip color="success" startDecorator={<Check />} sx={{paddingX: 2}}>
+            Connected
+          </Chip>
+        )}
+      </Stack>
+    </form>
   );
 };
