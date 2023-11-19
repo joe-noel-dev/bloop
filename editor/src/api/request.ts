@@ -3,32 +3,30 @@ import {Section} from '../model/section';
 import {Song} from '../model/song';
 import {Sample} from '../model/sample';
 
-export enum Method {
-  get = 'get',
-  add = 'add',
-  select = 'select',
-  remove = 'remove',
-  update = 'update',
-  transport = 'transport',
-  save = 'save',
-  load = 'load',
-  rename = 'rename',
-  beginUpload = 'beginUpload',
-  upload = 'upload',
-  completeUpload = 'completeUpload',
-  addSample = 'addSample',
-  removeSample = 'removeSample',
-}
+export type Method =
+  | 'get'
+  | 'add'
+  | 'select'
+  | 'remove'
+  | 'update'
+  | 'transport'
+  | 'save'
+  | 'load'
+  | 'rename'
+  | 'beginUpload'
+  | 'upload'
+  | 'completeUpload'
+  | 'addSample'
+  | 'removeSample';
 
-export enum Entity {
-  all = 'all',
-  section = 'section',
-  song = 'song',
-  project = 'project',
-  projects = 'projects',
-  waveform = 'waveform',
-  sample = 'sample',
-}
+export type Entity =
+  | 'all'
+  | 'section'
+  | 'song'
+  | 'project'
+  | 'projects'
+  | 'waveform'
+  | 'sample';
 
 export interface Request {
   method: Method;
@@ -94,247 +92,224 @@ export interface TransportRequest {
   options?: QueueOptions;
 }
 
-export enum TransportMethod {
-  play = 'play',
-  stop = 'stop',
-  loop = 'loop',
-  exitLoop = 'exitLoop',
-  queue = 'queue',
-}
+export type TransportMethod = 'play' | 'stop' | 'loop' | 'exitLoop' | 'queue';
 
-export function getAllRequest(): Request {
+export const getAllRequest = (): Request => {
   return {
-    method: Method.get,
+    method: 'get',
     payload: {
-      entity: Entity.all,
+      entity: 'all',
     },
   };
-}
+};
 
-export function addSectionRequest(songId: string): Request {
+export const addSectionRequest = (songId: string): Request => {
   return {
-    method: Method.add,
+    method: 'add',
     payload: {
-      entity: Entity.section,
+      entity: 'section',
       id: songId,
     },
   };
-}
+};
 
-export function addSongRequest(): Request {
+export const addSongRequest = () => {
   return {
-    method: Method.add,
+    method: 'add',
     payload: {
-      entity: Entity.song,
+      entity: 'song',
     },
   };
-}
+};
 
-export function addProjectRequest(): Request {
+export const addProjectRequest = () => {
   return {
-    method: Method.add,
+    method: 'add',
     payload: {
-      entity: Entity.project,
+      entity: 'project',
     },
   };
-}
+};
 
-export function selectSongRequest(songId: string): Request {
+export const selectSongRequest = (songId: string) => {
   return {
-    method: Method.select,
+    method: 'select',
     payload: {
-      entity: Entity.song,
+      entity: 'song',
       id: songId,
     },
   };
-}
+};
 
-export function selectSectionRequest(sectionId: string): Request {
+export const selectSectionRequest = (sectionId: string): Request => {
   return {
-    method: Method.select,
+    method: 'select',
     payload: {
-      entity: Entity.section,
+      entity: 'section',
       id: sectionId,
     },
   };
-}
+};
 
-export function removeRequest(entity: Entity, id: string): Request {
+export const removeRequest = (entity: Entity, id: string): Request => {
   return {
-    method: Method.remove,
+    method: 'remove',
     payload: {
       entity,
       id,
     },
   };
-}
+};
 
-export function removeSongRequest(songId: string): Request {
-  return removeRequest(Entity.song, songId);
-}
+export const removeSongRequest = (songId: string) =>
+  removeRequest('song', songId);
 
-export function removeSectionRequest(sectionId: string): Request {
-  return removeRequest(Entity.section, sectionId);
-}
+export const removeSectionRequest = (sectionId: string) =>
+  removeRequest('section', sectionId);
 
-export function removeProjectRequest(projectId: string): Request {
-  return removeRequest(Entity.project, projectId);
-}
+export const removeProjectRequest = (projectId: string) =>
+  removeRequest('project', projectId);
 
-export function removeSampleRequest(songId: string): Request {
+export const removeSampleRequest = (songId: string): Request => {
   return {
-    method: Method.removeSample,
+    method: 'removeSample',
     payload: {
       songId,
     },
   };
-}
+};
 
-export function updateRequest(
+export const updateRequest = (
   entity: Entity,
   value: Song | Section | ProjectInfo | Sample
-): Request {
+): Request => {
   return {
-    method: Method.update,
+    method: 'update',
     payload: {
       entity,
       value,
     },
   };
-}
+};
 
-export function updateSongRequest(song: Song): Request {
-  return updateRequest(Entity.song, song);
-}
+export const updateSongRequest = (song: Song): Request =>
+  updateRequest('song', song);
 
-export function updateSectionRequest(section: Section): Request {
-  return updateRequest(Entity.section, section);
-}
+export const updateSectionRequest = (section: Section): Request =>
+  updateRequest('section', section);
 
-export function updateSampleRequest(sample: Sample): Request {
-  return updateRequest(Entity.sample, sample);
-}
+export const updateSampleRequest = (sample: Sample): Request =>
+  updateRequest('sample', sample);
 
-function transportRequest(method: TransportMethod): Request {
+const transportRequest = (method: TransportMethod): Request => {
   return {
-    method: Method.transport,
+    method: 'transport',
     payload: {
       method,
     },
   };
-}
+};
 
-export function playRequest(): Request {
-  return transportRequest(TransportMethod.play);
-}
+export const playRequest = (): Request => transportRequest('play');
+export const stopRequest = (): Request => transportRequest('stop');
+export const loopRequest = (): Request => transportRequest('loop');
+export const exitLoopRequest = (): Request => transportRequest('exitLoop');
 
-export function stopRequest(): Request {
-  return transportRequest(TransportMethod.stop);
-}
-
-export function loopRequest(): Request {
-  return transportRequest(TransportMethod.loop);
-}
-
-export function exitLoopRequest(): Request {
-  return transportRequest(TransportMethod.exitLoop);
-}
-
-export function queueRequest(songId: string, sectionId: string) {
+export const queueRequest = (songId: string, sectionId: string): Request => {
   return {
-    method: Method.transport,
+    method: 'transport',
     payload: {
-      method: TransportMethod.queue,
+      method: 'queue',
       options: {songId, sectionId},
     },
   };
-}
+};
 
-export function saveRequest(): Request {
+export const saveRequest = (): Request => {
   return {
-    method: Method.save,
+    method: 'save',
   };
-}
+};
 
-export function loadProjectsRequest(): Request {
+export const loadProjectsRequest = (): Request => {
   return {
-    method: Method.get,
+    method: 'get',
     payload: {
-      entity: Entity.projects,
+      entity: 'projects',
     },
   };
-}
+};
 
-export function loadProjectRequest(projectId: string): Request {
+export const loadProjectRequest = (projectId: string): Request => {
   return {
-    method: Method.load,
+    method: 'load',
     payload: {
-      entity: Entity.project,
+      entity: 'project',
       id: projectId,
     },
   };
-}
+};
 
-export function renameProjectRequest(name: string): Request {
+export const renameProjectRequest = (name: string): Request => {
   return {
-    method: Method.rename,
+    method: 'rename',
     payload: {
-      entity: Entity.project,
+      entity: 'project',
       name,
     },
   };
-}
+};
 
-export function beginUploadRequest(
+export const beginUploadRequest = (
   uploadId: string,
   filename: string,
   format: string
-): Request {
+): Request => {
   return {
-    method: Method.beginUpload,
+    method: 'beginUpload',
     payload: {
       uploadId,
       filename,
       format,
     },
   };
-}
+};
 
-export function uploadRequest(uploadId: string, data: ArrayBuffer): Request {
+export const uploadRequest = (uploadId: string, data: ArrayBuffer): Request => {
   return {
-    method: Method.upload,
+    method: 'upload',
     payload: {
       uploadId,
       data: new Uint8Array(data),
     },
   };
-}
+};
 
-export function completeUploadRequest(uploadId: string): Request {
+export const completeUploadRequest = (uploadId: string): Request => {
   return {
-    method: Method.completeUpload,
+    method: 'completeUpload',
     payload: {
       uploadId,
     },
   };
-}
+};
 
-export function addSampleRequest(songId: string, uploadId: string): Request {
+export const addSampleRequest = (songId: string, uploadId: string): Request => {
   return {
-    method: Method.addSample,
+    method: 'addSample',
     payload: {
       songId,
       uploadId,
     },
   };
-}
+};
 
-export function requestWaveformRequest(sampleId: string): Request {
+export const requestWaveformRequest = (sampleId: string): Request => {
   return {
-    method: Method.get,
+    method: 'get',
     payload: {
-      entity: Entity.waveform,
+      entity: 'waveform',
       id: sampleId,
     },
   };
-}
+};
