@@ -47,34 +47,38 @@ export const Sample = ({sampleId, songId}: Props) => {
     }
   };
 
+  const RemoveButton = () => (
+    <Button color="danger" startDecorator={<Delete />} onClick={remove}>
+      Remove Sample
+    </Button>
+  );
+
+  const InvisibleFileInput = () => (
+    <input
+      type="file"
+      accept="audio/wav"
+      onChange={onFileSelected}
+      ref={fileInputRef}
+      style={{display: 'none'}}
+    />
+  );
+
+  const UploadButton = () => (
+    <Button
+      loading={uploading}
+      color="primary"
+      startDecorator={<FileUpload />}
+      onClick={() => fileInputRef.current?.click()}
+    >
+      Upload Sample
+    </Button>
+  );
+
   return (
     <Box>
-      {sample && (
-        <Button color="danger" startDecorator={<Delete />} onClick={remove}>
-          Remove Sample
-        </Button>
-      )}
-
-      {!sample && (
-        <input
-          type="file"
-          accept="audio/wav"
-          onChange={onFileSelected}
-          ref={fileInputRef}
-          style={{display: 'none'}}
-        />
-      )}
-
-      {!sample && (
-        <Button
-          loading={uploading}
-          color="primary"
-          startDecorator={<FileUpload />}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          Upload Sample
-        </Button>
-      )}
+      {sample && <RemoveButton />}
+      {!sample && <InvisibleFileInput />}
+      {!sample && <UploadButton />}
     </Box>
   );
 };

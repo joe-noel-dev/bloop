@@ -57,94 +57,129 @@ export const Song = ({songId}: SongProps) => {
     setEditingTempo(`${song.tempo.bpm}`);
   };
 
+  const SongDetails = () => (
+    <Stack direction="row" spacing={2} alignItems="center">
+      <Typography level="title-lg">{song.name}</Typography>
+
+      <Typography level="body-md">{song.tempo.bpm} bpm</Typography>
+
+      <IconButton
+        color="primary"
+        size="sm"
+        variant="soft"
+        aria-label="Edit song name"
+        onClick={edit}
+      >
+        <Edit />
+      </IconButton>
+    </Stack>
+  );
+
+  const SongNameInput = () => (
+    <Input
+      name="Song Name"
+      sx={{width: 320}}
+      value={editingSongName}
+      onChange={(event) => setEditingSongName(event.target.value)}
+    />
+  );
+
+  const SongTempoInput = () => (
+    <Input
+      sx={{width: 120}}
+      name="Tempo"
+      endDecorator={<Typography>bpm</Typography>}
+      value={editingTempo}
+      onChange={(event) => setEditingTempo(event.target.value)}
+    />
+  );
+
+  const SubmitButton = () => (
+    <IconButton name="Submit" color="success" variant="soft" type="submit">
+      <Check />
+    </IconButton>
+  );
+
+  const CancelButton = () => (
+    <IconButton
+      name="Cancel"
+      color="warning"
+      variant="soft"
+      type="button"
+      onClick={cancel}
+    >
+      <Cancel />
+    </IconButton>
+  );
+
+  const EditSongDetails = () => (
+    <form
+      name="Song Details"
+      onSubmit={(event) => {
+        submit();
+        event.preventDefault();
+      }}
+    >
+      <Stack direction="row" spacing={2}>
+        <SongNameInput />
+        <SongTempoInput />
+        <SubmitButton />
+        <CancelButton />
+      </Stack>
+    </form>
+  );
+
+  const TableHeader = () => (
+    <thead>
+      <tr>
+        <th style={{width: '48px'}}></th>
+        <th>Name</th>
+        <th>Start (beats)</th>
+        <th>Loop</th>
+        <th>Metronome</th>
+        <th>Edit</th>
+      </tr>
+    </thead>
+  );
+
+  const TableBody = () => (
+    <tbody>
+      {song.sections.map((section) => (
+        <Section key={section.id} sectionId={section.id} />
+      ))}
+    </tbody>
+  );
+
+  const TableFooter = () => (
+    <tfoot>
+      <tr>
+        <td colSpan={6}>
+          <Button startDecorator={<Add />} onClick={addSection}>
+            Add Section
+          </Button>
+        </td>
+      </tr>
+    </tfoot>
+  );
+
+  const SectionsTable = () => (
+    <Table
+      sx={{
+        '--TableCell-selectedBackground': (theme) =>
+          theme.vars.palette.primary.softBg,
+      }}
+    >
+      <TableHeader />
+      <TableBody />
+      <TableFooter />
+    </Table>
+  );
+
   return (
     <Stack spacing={2}>
-      {!editing ? (
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Typography level="title-lg">{song.name}</Typography>
-
-          <Typography level="body-md">{song.tempo.bpm} bpm</Typography>
-
-          <IconButton
-            color="primary"
-            size="sm"
-            variant="soft"
-            aria-label="Edit song name"
-            onClick={edit}
-          >
-            <Edit />
-          </IconButton>
-        </Stack>
-      ) : (
-        <form
-          onSubmit={(event) => {
-            submit();
-            event.preventDefault();
-          }}
-        >
-          <Stack direction="row" spacing={2}>
-            <Input
-              sx={{width: 320}}
-              value={editingSongName}
-              onChange={(event) => setEditingSongName(event.target.value)}
-            />
-
-            <Input
-              sx={{width: 120}}
-              endDecorator={<Typography>bpm</Typography>}
-              value={editingTempo}
-              onChange={(event) => setEditingTempo(event.target.value)}
-            />
-
-            <IconButton color="success" variant="soft" type="submit">
-              <Check />
-            </IconButton>
-
-            <IconButton
-              color="warning"
-              variant="soft"
-              type="button"
-              onClick={cancel}
-            >
-              <Cancel />
-            </IconButton>
-          </Stack>
-        </form>
-      )}
-
+      {editing ? <EditSongDetails /> : <SongDetails />}
       <Sample sampleId={song.sample?.id || ''} songId={songId} />
-
-      <Table
-        sx={{
-          '--TableCell-selectedBackground': (theme) =>
-            theme.vars.palette.primary.softBg,
-        }}
-      >
-        <thead>
-          <tr>
-            <th style={{width: '48px'}}></th>
-            <th>Name</th>
-            <th>Start (beats)</th>
-            <th>Loop</th>
-            <th>Metronome</th>
-            <th>Edit</th>
-          </tr>
-        </thead>
-        <tbody>
-          {song.sections.map((section) => (
-            <Section key={section.id} sectionId={section.id} />
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colSpan={6}>
-              <Button startDecorator={<Add />} onClick={addSection}>
-                Add Section
-              </Button>
-            </td>
-          </tr>
-        </tfoot>
-      </Table>
+      <SectionsTable />
     </Stack>
   );
 };

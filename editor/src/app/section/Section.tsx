@@ -112,6 +112,145 @@ export const Section = ({sectionId}: Props) => {
     core.sendRequest(play);
   };
 
+  const PlayButton = () =>
+    !isPlaying && (
+      <IconButton onClick={play}>
+        <PlayArrow />
+      </IconButton>
+    );
+
+  const StopButton = () =>
+    isPlaying && (
+      <IconButton onClick={stop}>
+        <Stop />
+      </IconButton>
+    );
+
+  const TransportCell = () => (
+    <td>
+      <PlayButton />
+      <StopButton />
+    </td>
+  );
+
+  const NameCell = () => (
+    <td>
+      {isEditing ? (
+        <Input
+          value={editingName}
+          onChange={(event) => setEditingName(event.target.value)}
+        />
+      ) : (
+        <Typography>{section.name}</Typography>
+      )}
+    </td>
+  );
+
+  const StartCell = () => (
+    <td>
+      {isEditing ? (
+        <Input
+          value={editingStart}
+          onChange={(event) => {
+            const value = parseInt(event.target.value);
+            if (!isNaN(value)) {
+              setEditingStart(value);
+            } else {
+              setEditingStart(0);
+            }
+          }}
+        />
+      ) : (
+        <Typography>{section.start}</Typography>
+      )}
+    </td>
+  );
+
+  const LoopCell = () => (
+    <td>
+      <Switch
+        checked={section.loop}
+        onChange={(event) => enableLoop(event.target.checked)}
+      />
+    </td>
+  );
+
+  const MetronomeCell = () => (
+    <td>
+      <Switch
+        checked={section.metronome}
+        onChange={(event) => enableMetronome(event.target.checked)}
+      />
+    </td>
+  );
+
+  const EditButton = () => (
+    <IconButton
+      color="primary"
+      size="sm"
+      variant="soft"
+      aria-label="Edit section"
+      onClick={() => setEditingSectionId(sectionId)}
+    >
+      <Edit />
+    </IconButton>
+  );
+
+  const SubmitButton = () => (
+    <IconButton
+      variant="soft"
+      color="success"
+      size="sm"
+      aria-label="Commit changes to section"
+      onClick={submit}
+    >
+      <Check />
+    </IconButton>
+  );
+
+  const CancelButton = () => (
+    <IconButton
+      variant="soft"
+      color="warning"
+      size="sm"
+      aria-label="Cancel changed to section"
+      onClick={cancel}
+    >
+      <Cancel />
+    </IconButton>
+  );
+
+  const RemoveButton = () => (
+    <IconButton
+      variant="soft"
+      color="danger"
+      size="sm"
+      aria-label="Remove section"
+      onClick={(event) => {
+        remove();
+        event.stopPropagation();
+      }}
+    >
+      <Delete />
+    </IconButton>
+  );
+
+  const ButtonsCell = () => (
+    <td>
+      <Stack direction="row" spacing={1}>
+        {!isEditing && <EditButton />}
+
+        {isEditing && (
+          <>
+            <SubmitButton />
+            <CancelButton />
+            <RemoveButton />
+          </>
+        )}
+      </Stack>
+    </td>
+  );
+
   return (
     <tr
       onClick={select}
@@ -124,110 +263,12 @@ export const Section = ({sectionId}: Props) => {
           : {}
       }
     >
-      <td>
-        {!isPlaying && (
-          <IconButton onClick={play}>
-            <PlayArrow />
-          </IconButton>
-        )}
-
-        {isPlaying && (
-          <IconButton onClick={stop}>
-            <Stop />
-          </IconButton>
-        )}
-      </td>
-      <td>
-        {isEditing ? (
-          <Input
-            value={editingName}
-            onChange={(event) => setEditingName(event.target.value)}
-          />
-        ) : (
-          <Typography>{section.name}</Typography>
-        )}
-      </td>
-      <td>
-        {isEditing ? (
-          <Input
-            value={editingStart}
-            onChange={(event) => {
-              const value = parseInt(event.target.value);
-              if (!isNaN(value)) {
-                setEditingStart(value);
-              } else {
-                setEditingStart(0);
-              }
-            }}
-          />
-        ) : (
-          <Typography>{section.start}</Typography>
-        )}
-      </td>
-      <td>
-        <Switch
-          checked={section.loop}
-          onChange={(event) => enableLoop(event.target.checked)}
-        />
-      </td>
-      <td>
-        <Switch
-          checked={section.metronome}
-          onChange={(event) => enableMetronome(event.target.checked)}
-        />
-      </td>
-      <td>
-        <Stack direction="row" spacing={1}>
-          {!isEditing && (
-            <IconButton
-              color="primary"
-              size="sm"
-              variant="soft"
-              aria-label="Edit section"
-              onClick={() => setEditingSectionId(sectionId)}
-            >
-              <Edit />
-            </IconButton>
-          )}
-
-          {isEditing && (
-            <>
-              <IconButton
-                variant="soft"
-                color="success"
-                size="sm"
-                aria-label="Commit changes to section"
-                onClick={submit}
-              >
-                <Check />
-              </IconButton>
-
-              <IconButton
-                variant="soft"
-                color="warning"
-                size="sm"
-                aria-label="Cancel changed to section"
-                onClick={cancel}
-              >
-                <Cancel />
-              </IconButton>
-
-              <IconButton
-                variant="soft"
-                color="danger"
-                size="sm"
-                aria-label="Remove section"
-                onClick={(event) => {
-                  remove();
-                  event.stopPropagation();
-                }}
-              >
-                <Delete />
-              </IconButton>
-            </>
-          )}
-        </Stack>
-      </td>
+      <TransportCell />
+      <NameCell />
+      <StartCell />
+      <LoopCell />
+      <MetronomeCell />
+      <ButtonsCell />
     </tr>
   );
 };
