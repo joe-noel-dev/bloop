@@ -23,6 +23,7 @@ export const Connection = (props: ConnectionProps) => {
 
   return (
     <form
+      name="Core Address"
       onSubmit={(event) => {
         submit();
         event.preventDefault();
@@ -30,12 +31,15 @@ export const Connection = (props: ConnectionProps) => {
     >
       <Stack direction="row" sx={{padding: 2}} spacing={2}>
         <Input
+          name="WebSocket Address"
           placeholder="WebSocket Address"
           value={wsAddress}
           onChange={(event) => setWsAddress(event.target.value)}
         />
 
-        <Button>{props.isConnected ? 'Disconnect' : 'Connect'}</Button>
+        <Button name="Connect">
+          {props.isConnected ? 'Disconnect' : 'Connect'}
+        </Button>
 
         {props.isConnected && (
           <Chip color="success" startDecorator={<Check />} sx={{paddingX: 2}}>
