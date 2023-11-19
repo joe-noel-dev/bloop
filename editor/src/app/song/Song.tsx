@@ -77,7 +77,7 @@ export const Song = ({songId}: SongProps) => {
         </Stack>
       )}
 
-      {song.sample && <Sample sampleId={song.sample.id} />}
+      <Sample sampleId={song.sample?.id || ''} songId={songId} />
 
       <Table
         sx={{
