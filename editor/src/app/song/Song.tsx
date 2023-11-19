@@ -87,6 +87,7 @@ export const Song = ({songId}: SongProps) => {
       >
         <thead>
           <tr>
+            <th style={{width: '48px'}}></th>
             <th>Name</th>
             <th>Start (beats)</th>
             <th>Loop</th>
@@ -101,7 +102,7 @@ export const Song = ({songId}: SongProps) => {
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan={5}>
+            <td colSpan={6}>
               <Button startDecorator={<Add />} onClick={addSection}>
                 Add Section
               </Button>
