@@ -23,6 +23,7 @@ import {
 import {useEditingSection} from '../project/EditingSectionContext';
 import {useState} from 'react';
 import {usePlaybackState} from '../../model-hooks/transport-hooks';
+import {ColumnName, columnSize, columns} from './TableInfo';
 
 interface Props {
   sectionId: string;
@@ -127,14 +128,14 @@ export const Section = ({sectionId}: Props) => {
     );
 
   const TransportCell = () => (
-    <Grid xs={1}>
+    <Grid xs={columnSize('Play')}>
       <PlayButton />
       <StopButton />
     </Grid>
   );
 
   const NameCell = () => (
-    <Grid xs={4}>
+    <Grid xs={columnSize('Name')}>
       {isEditing ? (
         <Input
           value={editingName}
@@ -147,7 +148,7 @@ export const Section = ({sectionId}: Props) => {
   );
 
   const StartCell = () => (
-    <Grid xs={1}>
+    <Grid xs={columnSize('Start')}>
       {isEditing ? (
         <Input
           value={editingStart}
@@ -167,7 +168,7 @@ export const Section = ({sectionId}: Props) => {
   );
 
   const LoopCell = () => (
-    <Grid xs={1}>
+    <Grid xs={columnSize('Loop')}>
       <Switch
         checked={section.loop}
         onChange={(event) => enableLoop(event.target.checked)}
@@ -176,7 +177,7 @@ export const Section = ({sectionId}: Props) => {
   );
 
   const MetronomeCell = () => (
-    <Grid xs={1}>
+    <Grid xs={columnSize('Metronome')}>
       <Switch
         checked={section.metronome}
         onChange={(event) => enableMetronome(event.target.checked)}
@@ -236,7 +237,7 @@ export const Section = ({sectionId}: Props) => {
   );
 
   const ButtonsCell = () => (
-    <Grid xs={2}>
+    <Grid xs={columnSize('Edit')}>
       <Stack direction="row" spacing={1}>
         {!isEditing && <EditButton />}
 
@@ -251,14 +252,28 @@ export const Section = ({sectionId}: Props) => {
     </Grid>
   );
 
+  const Cell = ({name}: {name: ColumnName}) => {
+    switch (name) {
+      case 'Play':
+        return <TransportCell />;
+      case 'Name':
+        return <NameCell />;
+      case 'Start':
+        return <StartCell />;
+      case 'Loop':
+        return <LoopCell />;
+      case 'Metronome':
+        return <MetronomeCell />;
+      case 'Edit':
+        return <ButtonsCell />;
+    }
+  };
+
   return (
     <Grid container spacing={1}>
-      <TransportCell />
-      <NameCell />
-      <StartCell />
-      <LoopCell />
-      <MetronomeCell />
-      <ButtonsCell />
+      {columns.map((name) => (
+        <Cell name={name} key={name} />
+      ))}
     </Grid>
   );
 };

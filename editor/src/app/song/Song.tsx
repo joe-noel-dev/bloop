@@ -6,6 +6,7 @@ import {Section} from '../section/Section';
 import {addSectionRequest, updateSongRequest} from '../../api/request';
 import {useCore} from '../../core/use-core';
 import {useState} from 'react';
+import {columnSize, columns} from '../section/TableInfo';
 
 interface SongProps {
   songId: string;
@@ -131,24 +132,11 @@ export const Song = ({songId}: SongProps) => {
 
   const TableHeader = () => (
     <Grid container spacing={1}>
-      <Grid xs={1}>
-        <Typography level="title-md">Play </Typography>
-      </Grid>
-      <Grid xs={4}>
-        <Typography level="title-md">Name </Typography>
-      </Grid>
-      <Grid xs={1}>
-        <Typography level="title-md">Start (beats) </Typography>
-      </Grid>
-      <Grid xs={1}>
-        <Typography level="title-md">Loop </Typography>
-      </Grid>
-      <Grid xs={1}>
-        <Typography level="title-md">Metronome </Typography>
-      </Grid>
-      <Grid xs={1}>
-        <Typography level="title-md">Edit </Typography>
-      </Grid>
+      {columns.map((name) => (
+        <Grid xs={columnSize(name)} key={name}>
+          <Typography level="title-md">{name}</Typography>
+        </Grid>
+      ))}
     </Grid>
   );
 
