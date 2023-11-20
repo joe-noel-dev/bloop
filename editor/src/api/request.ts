@@ -113,7 +113,7 @@ export const addSectionRequest = (songId: string): Request => {
   };
 };
 
-export const addSongRequest = () => {
+export const addSongRequest = (): Request => {
   return {
     method: 'add',
     payload: {
@@ -122,7 +122,7 @@ export const addSongRequest = () => {
   };
 };
 
-export const addProjectRequest = () => {
+export const addProjectRequest = (): Request => {
   return {
     method: 'add',
     payload: {
@@ -131,7 +131,7 @@ export const addProjectRequest = () => {
   };
 };
 
-export const selectSongRequest = (songId: string) => {
+export const selectSongRequest = (songId: string): Request => {
   return {
     method: 'select',
     payload: {
