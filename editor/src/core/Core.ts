@@ -1,11 +1,8 @@
 import {getAllRequest, Request} from '../api/request';
 import {Response} from '../api/response';
 import {serialize, deserialize, setInternalBufferSize} from 'bson';
-import {Project} from '../model/project';
-import {PlaybackState} from '../model/playback-state';
-import {Progress} from '../model/progress';
-import {ProjectInfo} from '../model/project-info';
 import {WaveformData} from '../model/waveform';
+import {EventEmitter} from 'events';
 
 const logRequests: boolean = import.meta.env.VITE_BLOOP_LOG_REQUESTS === 'true';
 
@@ -17,17 +14,7 @@ export interface CoreInstance {
   waitForUploadAck(uploadId: string): Promise<void>;
 }
 
-interface CoreCallbacks {
-  onConnected: () => void;
-  onDisconnected: () => void;
-  onProject: (project: Project) => void;
-  onPlaybackState: (playbackState: PlaybackState) => void;
-  onProgress: (progress: Progress) => void;
-  onProjects: (projects: ProjectInfo[]) => void;
-  onWaveform: (waveforms: Map<string, WaveformData>) => void;
-}
-
-export const createCore = (callbacks: CoreCallbacks) => {
+export const createCore = () => {
   let socket: null | WebSocket = null;
 
   let uploadPromises: {[uploadId: string]: () => void} = {};
@@ -35,6 +22,8 @@ export const createCore = (callbacks: CoreCallbacks) => {
   let pendingRequests: Request[] = [];
 
   let waveforms = new Map<string, WaveformData>();
+
+  const eventEmitter = new EventEmitter();
 
   const sendRequest = (request: Request) => {
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -67,19 +56,19 @@ export const createCore = (callbacks: CoreCallbacks) => {
       const message: Response = deserialize(event.data);
 
       if (message.project) {
-        callbacks.onProject(message.project);
+        eventEmitter.emit('project', message.project);
       }
 
       if (message.playbackState) {
-        callbacks.onPlaybackState(message.playbackState);
+        eventEmitter.emit('playback-state', message.playbackState);
       }
 
       if (message.progress) {
-        callbacks.onProgress(message.progress);
+        eventEmitter.emit('progress', message.progress);
       }
 
       if (message.projects) {
-        callbacks.onProjects(message.projects);
+        eventEmitter.emit('projects', message.projects);
       }
 
       if (message.waveform) {
@@ -87,7 +76,8 @@ export const createCore = (callbacks: CoreCallbacks) => {
           `Received waveform data for sample ${message.waveform.sampleId}`
         );
         waveforms.set(message.waveform.sampleId, message.waveform.waveformData);
-        callbacks.onWaveform(waveforms);
+
+        eventEmitter.emit('waveforms', waveforms);
       }
 
       if (message.upload) {
@@ -108,7 +98,7 @@ export const createCore = (callbacks: CoreCallbacks) => {
   };
 
   const onOpen = () => {
-    callbacks.onConnected();
+    eventEmitter.emit('connect');
     sendRequest(getAllRequest());
 
     pendingRequests.forEach(sendRequest);
@@ -118,7 +108,7 @@ export const createCore = (callbacks: CoreCallbacks) => {
   };
 
   const onClose = () => {
-    callbacks.onDisconnected();
+    eventEmitter.emit('disconnect');
     socket = null;
     console.log('Disconnected from core');
   };
@@ -147,6 +137,7 @@ export const createCore = (callbacks: CoreCallbacks) => {
     waitForUploadAck,
     disconnect,
     connect,
+    events: eventEmitter,
   };
 };
 

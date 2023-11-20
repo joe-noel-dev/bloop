@@ -26,15 +26,13 @@ const App = () => {
       core.disconnect();
     }
 
-    const newCore = createCore({
-      onConnected: () => setIsConnected(true),
-      onDisconnected: () => setIsConnected(false),
-      onProject: setProject,
-      onPlaybackState: setPlaybackState,
-      onProgress: () => {},
-      onProjects: setProjects,
-      onWaveform: setWaveforms,
-    });
+    const newCore = createCore();
+    newCore.events.on('connect', () => setIsConnected(true));
+    newCore.events.on('disconnect', () => setIsConnected(false));
+    newCore.events.on('project', setProject);
+    newCore.events.on('playback-state', setPlaybackState);
+    newCore.events.on('projects', setProjects);
+    newCore.events.on('waveforms', setWaveforms);
 
     setCore(newCore);
   }, []);
