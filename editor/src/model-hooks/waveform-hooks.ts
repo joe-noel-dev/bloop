@@ -1,5 +1,4 @@
-import {useContext} from 'react';
-import {CoreDataContext} from '../core/CoreData';
+import {useCoreData} from '../core/CoreData';
 
 export const useWaveformData = (sampleId: string) =>
-  useContext(CoreDataContext)?.waveforms?.get(sampleId);
+  useCoreData()?.waveforms?.get(sampleId);

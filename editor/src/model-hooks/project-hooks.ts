@@ -1,4 +1,3 @@
-import {useContext} from 'react';
-import {CoreDataContext} from '../core/CoreData';
+import {useCoreData} from '../core/CoreData';
 
-export const useProject = () => useContext(CoreDataContext).project;
+export const useProject = () => useCoreData().project;
