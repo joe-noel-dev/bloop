@@ -1,4 +1,4 @@
-import {IconButton, Input, Stack, Switch, Typography} from '@mui/joy';
+import {Grid, IconButton, Input, Stack, Switch, Typography} from '@mui/joy';
 import {
   useSectionById,
   useSelectedSectionId,
@@ -21,7 +21,7 @@ import {
   Stop,
 } from '@mui/icons-material';
 import {useEditingSection} from '../project/EditingSectionContext';
-import {CSSProperties, useState} from 'react';
+import {useState} from 'react';
 import {usePlaybackState} from '../../model-hooks/transport-hooks';
 
 interface Props {
@@ -127,14 +127,14 @@ export const Section = ({sectionId}: Props) => {
     );
 
   const TransportCell = () => (
-    <td>
+    <Grid xs={1}>
       <PlayButton />
       <StopButton />
-    </td>
+    </Grid>
   );
 
   const NameCell = () => (
-    <td>
+    <Grid xs={4}>
       {isEditing ? (
         <Input
           value={editingName}
@@ -143,11 +143,11 @@ export const Section = ({sectionId}: Props) => {
       ) : (
         <Typography>{section.name}</Typography>
       )}
-    </td>
+    </Grid>
   );
 
   const StartCell = () => (
-    <td>
+    <Grid xs={1}>
       {isEditing ? (
         <Input
           value={editingStart}
@@ -163,25 +163,25 @@ export const Section = ({sectionId}: Props) => {
       ) : (
         <Typography>{section.start}</Typography>
       )}
-    </td>
+    </Grid>
   );
 
   const LoopCell = () => (
-    <td>
+    <Grid xs={1}>
       <Switch
         checked={section.loop}
         onChange={(event) => enableLoop(event.target.checked)}
       />
-    </td>
+    </Grid>
   );
 
   const MetronomeCell = () => (
-    <td>
+    <Grid xs={1}>
       <Switch
         checked={section.metronome}
         onChange={(event) => enableMetronome(event.target.checked)}
       />
-    </td>
+    </Grid>
   );
 
   const EditButton = () => (
@@ -236,7 +236,7 @@ export const Section = ({sectionId}: Props) => {
   );
 
   const ButtonsCell = () => (
-    <td>
+    <Grid xs={2}>
       <Stack direction="row" spacing={1}>
         {!isEditing && <EditButton />}
 
@@ -248,27 +248,17 @@ export const Section = ({sectionId}: Props) => {
           </>
         )}
       </Stack>
-    </td>
+    </Grid>
   );
 
   return (
-    <tr
-      onClick={select}
-      style={
-        isSelected
-          ? ({
-              '--TableCell-dataBackground':
-                'var(--TableCell-selectedBackground)',
-            } as CSSProperties)
-          : {}
-      }
-    >
+    <Grid container spacing={1}>
       <TransportCell />
       <NameCell />
       <StartCell />
       <LoopCell />
       <MetronomeCell />
       <ButtonsCell />
-    </tr>
+    </Grid>
   );
 };

@@ -1,4 +1,4 @@
-import {Button, IconButton, Input, Stack, Table, Typography} from '@mui/joy';
+import {Button, Grid, IconButton, Input, Stack, Typography} from '@mui/joy';
 import {useSong} from '../../model-hooks/song-hooks';
 import {Add, Cancel, Check, Edit} from '@mui/icons-material';
 import {Sample} from '../sample/Sample';
@@ -130,49 +130,50 @@ export const Song = ({songId}: SongProps) => {
   );
 
   const TableHeader = () => (
-    <thead>
-      <tr>
-        <th style={{width: '48px'}}></th>
-        <th>Name</th>
-        <th>Start (beats)</th>
-        <th>Loop</th>
-        <th>Metronome</th>
-        <th>Edit</th>
-      </tr>
-    </thead>
+    <Grid container spacing={1}>
+      <Grid xs={1}>
+        <Typography level="title-md">Play </Typography>
+      </Grid>
+      <Grid xs={4}>
+        <Typography level="title-md">Name </Typography>
+      </Grid>
+      <Grid xs={1}>
+        <Typography level="title-md">Start (beats) </Typography>
+      </Grid>
+      <Grid xs={1}>
+        <Typography level="title-md">Loop </Typography>
+      </Grid>
+      <Grid xs={1}>
+        <Typography level="title-md">Metronome </Typography>
+      </Grid>
+      <Grid xs={1}>
+        <Typography level="title-md">Edit </Typography>
+      </Grid>
+    </Grid>
   );
 
   const TableBody = () => (
-    <tbody>
+    <>
       {song.sections.map((section) => (
         <Section key={section.id} sectionId={section.id} />
       ))}
-    </tbody>
+    </>
   );
 
   const TableFooter = () => (
-    <tfoot>
-      <tr>
-        <td colSpan={6}>
-          <Button startDecorator={<Add />} onClick={addSection}>
-            Add Section
-          </Button>
-        </td>
-      </tr>
-    </tfoot>
+    <Stack direction="row">
+      <Button startDecorator={<Add />} onClick={addSection}>
+        Add Section
+      </Button>
+    </Stack>
   );
 
   const SectionsTable = () => (
-    <Table
-      sx={{
-        '--TableCell-selectedBackground': (theme) =>
-          theme.vars.palette.primary.softBg,
-      }}
-    >
+    <Stack spacing={1}>
       <TableHeader />
       <TableBody />
       <TableFooter />
-    </Table>
+    </Stack>
   );
 
   return (
