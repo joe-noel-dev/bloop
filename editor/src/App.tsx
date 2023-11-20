@@ -2,7 +2,6 @@ import {useEffect, useState} from 'react';
 import {CoreContext} from './core/use-core';
 import {Core, createCore} from './core/Core';
 import {PlaybackState} from './model/playback-state';
-import {Progress} from './model/progress';
 import {ProjectInfo} from './model/project-info';
 import {WaveformData} from './model/waveform';
 import {CoreDataContext} from './core/CoreData';
@@ -19,7 +18,6 @@ const App = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [project, setProject] = useState<ModelProject>();
   const [playbackState, setPlaybackState] = useState<PlaybackState>();
-  const [progress, setProgress] = useState<Progress>();
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
   const [waveforms, setWaveforms] = useState(new Map<string, WaveformData>());
 
@@ -33,7 +31,7 @@ const App = () => {
       onDisconnected: () => setIsConnected(false),
       onProject: setProject,
       onPlaybackState: setPlaybackState,
-      onProgress: setProgress,
+      onProgress: () => {},
       onProjects: setProjects,
       onWaveform: setWaveforms,
     });
@@ -54,13 +52,16 @@ const App = () => {
           value={{
             project,
             playbackState,
-            progress,
             projects,
             waveforms,
           }}
         >
           <Box
-            sx={{display: 'flex', flexDirection: 'column', minHeight: '100vh'}}
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: '100vh',
+            }}
           >
             <Box>
               <Connection

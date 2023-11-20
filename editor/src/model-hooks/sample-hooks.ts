@@ -1,9 +1,8 @@
-import {useContext} from 'react';
-import {CoreDataContext} from '../core/CoreData';
 import {Sample} from '../model/sample';
+import {useProject} from './project-hooks';
 
 export const useSampleWithId = (sampleId: string) => {
-  const {project} = useContext(CoreDataContext);
+  const project = useProject();
   return project?.songs.reduce<Sample | undefined>((found, song) => {
     if (found) {
       return found;

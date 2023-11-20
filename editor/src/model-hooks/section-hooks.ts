@@ -1,8 +1,7 @@
-import {useContext} from 'react';
-import {CoreDataContext} from '../core/CoreData';
+import {useProject} from './project-hooks';
 
 export const useSections = () => {
-  const {project} = useContext(CoreDataContext);
+  const project = useProject();
   return project?.songs.flatMap((song) => song.sections);
 };
 
@@ -17,7 +16,7 @@ export const useSectionById = (sectionId: string) => {
 };
 
 export const useSelectedSectionId = () => {
-  const {project} = useContext(CoreDataContext);
+  const project = useProject();
   return project?.selections.section;
 };
 

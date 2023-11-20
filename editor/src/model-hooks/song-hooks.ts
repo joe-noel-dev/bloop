@@ -1,13 +1,11 @@
-import {useContext} from 'react';
-import {CoreDataContext} from '../core/CoreData';
+import {useProject} from './project-hooks';
 
-export const useSongs = () => useContext(CoreDataContext).project?.songs;
+export const useSongs = () => useProject()?.songs;
 
 export const useSong = (id: string) =>
   useSongs()?.find((song) => song.id === id);
 
-export const useSelectedSongId = () =>
-  useContext(CoreDataContext).project?.selections.song;
+export const useSelectedSongId = () => useProject()?.selections.song;
 
 export const useSelectedSong = () => {
   const selectedSongId = useSelectedSongId();

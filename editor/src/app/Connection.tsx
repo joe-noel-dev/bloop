@@ -37,7 +37,7 @@ export const Connection = (props: ConnectionProps) => {
           onChange={(event) => setWsAddress(event.target.value)}
         />
 
-        <Button name="Connect">
+        <Button name="Connect" onClick={submit}>
           {props.isConnected ? 'Disconnect' : 'Connect'}
         </Button>
 
