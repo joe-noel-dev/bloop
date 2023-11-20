@@ -121,7 +121,7 @@ impl MainController {
             Entity::All => self.send_response(
                 Response::default()
                     .with_project(&self.project)
-                    .with_playback_state(&self.audio_controller.get_playback_state()),
+                    .with_playback_state(self.audio_controller.get_playback_state()),
             ),
             Entity::Projects => {
                 let projects = self.project_store.projects().await?;

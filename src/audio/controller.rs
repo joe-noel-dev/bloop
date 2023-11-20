@@ -147,7 +147,7 @@ impl AudioController {
             self.playback_state = playback_state;
             let _ = self
                 .response_tx
-                .send(Response::default().with_playback_state(&self.playback_state));
+                .send(Response::default().with_playback_state(self.playback_state));
         }
 
         let progress = self.sequencer.get_progress();
