@@ -1,4 +1,4 @@
-import {Grid, IconButton, Input, Stack, Switch, Typography} from '@mui/joy';
+import {Grid, IconButton, Input, Stack, Switch} from '@mui/joy';
 import {
   useSectionById,
   useSelectedSectionId,
@@ -11,19 +11,11 @@ import {
   stopRequest,
   updateSectionRequest,
 } from '../../api/request';
-import _ from 'lodash';
-import {
-  Cancel,
-  Check,
-  Delete,
-  Edit,
-  PlayArrow,
-  Stop,
-} from '@mui/icons-material';
-import {useEditingSection} from '../project/EditingSectionContext';
+import {Delete, PlayArrow, Stop} from '@mui/icons-material';
 import {useState} from 'react';
 import {usePlaybackState} from '../../model-hooks/transport-hooks';
 import {columnSize, columns} from './TableInfo';
+import isEqual from 'lodash.isequal';
 
 interface Props {
   sectionId: string;
@@ -33,7 +25,6 @@ export const Section = ({sectionId}: Props) => {
   const section = useSectionById(sectionId);
   const core = useCore();
   const selectedSectionId = useSelectedSectionId();
-  const [editingSectionId, setEditingSectionId] = useEditingSection();
   const playbackState = usePlaybackState();
 
   const [editingName, setEditingName] = useState(section?.name ?? '');
@@ -41,7 +32,6 @@ export const Section = ({sectionId}: Props) => {
     section?.start.toString() ?? ''
   );
 
-  const isEditing = sectionId === editingSectionId;
   const isSelected = sectionId === selectedSectionId;
   const isPlaying =
     (playbackState?.playing && playbackState.sectionId === sectionId) ?? false;
@@ -92,15 +82,12 @@ export const Section = ({sectionId}: Props) => {
       newSection.start = newStart;
     }
 
+    if (isEqual(section, newSection)) {
+      return;
+    }
+
     const request = updateSectionRequest(newSection);
     core.sendRequest(request);
-
-    setEditingSectionId('');
-  };
-
-  const cancel = () => {
-    setEditingName(section.name);
-    setEditingSectionId('');
   };
 
   const stop = () => {
@@ -133,20 +120,18 @@ export const Section = ({sectionId}: Props) => {
             return (
               <NameCell
                 key={name}
-                isEditing={isEditing}
-                editingName={editingName}
-                onEditingNameChange={setEditingName}
-                sectionName={section.name}
+                value={editingName}
+                onChange={setEditingName}
+                onSubmit={submit}
               />
             );
           case 'Start':
             return (
               <StartCell
                 key={name}
-                isEditing={isEditing}
-                editingStart={editingStart}
-                onEditingStartChange={setEditingStart}
-                sectionStart={section.start}
+                value={editingStart}
+                onChange={setEditingStart}
+                onSubmit={submit}
               />
             );
           case 'Loop':
@@ -165,19 +150,7 @@ export const Section = ({sectionId}: Props) => {
             return (
               <Grid xs={columnSize('Edit')} key={name}>
                 <Stack direction="row" spacing={1}>
-                  {!isEditing && (
-                    <EditButton
-                      onRequestEdit={() => setEditingSectionId(sectionId)}
-                    />
-                  )}
-
-                  {isEditing && (
-                    <>
-                      <SubmitButton onSubmit={submit} />
-                      <CancelButton onCancel={cancel} />
-                      <RemoveButton onRemove={remove} />
-                    </>
-                  )}
+                  <RemoveButton onRemove={remove} />
                 </Stack>
               </Grid>
             );
@@ -229,48 +202,38 @@ const TransportCell = ({
 );
 
 const NameCell = ({
-  isEditing,
-  editingName,
-  onEditingNameChange,
-  sectionName,
+  value,
+  onChange,
+  onSubmit,
 }: {
-  isEditing: boolean;
-  editingName: string;
-  onEditingNameChange: (name: string) => void;
-  sectionName: string;
+  value: string;
+  onChange: (name: string) => void;
+  onSubmit: () => void;
 }) => (
   <Grid xs={columnSize('Name')}>
-    {isEditing ? (
-      <Input
-        value={editingName}
-        onChange={(event) => onEditingNameChange(event.target.value)}
-      />
-    ) : (
-      <Typography>{sectionName}</Typography>
-    )}
+    <Input
+      value={value}
+      onBlur={onSubmit}
+      onChange={(event) => onChange(event.target.value)}
+    />
   </Grid>
 );
 
 const StartCell = ({
-  isEditing,
-  editingStart,
-  onEditingStartChange,
-  sectionStart,
+  value,
+  onChange,
+  onSubmit,
 }: {
-  isEditing: boolean;
-  editingStart: string;
-  onEditingStartChange: (value: string) => void;
-  sectionStart: number;
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
 }) => (
   <Grid xs={columnSize('Start')}>
-    {isEditing ? (
-      <Input
-        value={editingStart}
-        onChange={(event) => onEditingStartChange(event.target.value)}
-      />
-    ) : (
-      <Typography>{sectionStart}</Typography>
-    )}
+    <Input
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      onBlur={onSubmit}
+    />
   </Grid>
 );
 
@@ -302,42 +265,6 @@ const MetronomeCell = ({
       onChange={(event) => onChange(event.target.checked)}
     />
   </Grid>
-);
-
-const EditButton = ({onRequestEdit}: {onRequestEdit: () => void}) => (
-  <IconButton
-    color="primary"
-    size="sm"
-    variant="soft"
-    aria-label="Edit section"
-    onClick={onRequestEdit}
-  >
-    <Edit />
-  </IconButton>
-);
-
-const SubmitButton = ({onSubmit}: {onSubmit: () => void}) => (
-  <IconButton
-    variant="soft"
-    color="success"
-    size="sm"
-    aria-label="Commit changes to section"
-    onClick={onSubmit}
-  >
-    <Check />
-  </IconButton>
-);
-
-const CancelButton = ({onCancel}: {onCancel: () => void}) => (
-  <IconButton
-    variant="soft"
-    color="warning"
-    size="sm"
-    aria-label="Cancel changed to section"
-    onClick={onCancel}
-  >
-    <Cancel />
-  </IconButton>
 );
 
 const RemoveButton = ({onRemove}: {onRemove: () => void}) => (
