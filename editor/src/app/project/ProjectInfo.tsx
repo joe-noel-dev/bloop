@@ -1,5 +1,6 @@
 import {
   Button,
+  IconButton,
   List,
   ListItem,
   ListItemButton,
@@ -11,12 +12,13 @@ import {
   Typography,
 } from '@mui/joy';
 import {useProject, useProjects} from '../../model-hooks/project-hooks';
-import {Create, FolderOpen} from '@mui/icons-material';
+import {Create, Delete, FolderOpen} from '@mui/icons-material';
 import {useCore} from '../../core/use-core';
 import {
   addProjectRequest,
   loadProjectRequest,
   loadProjectsRequest,
+  removeProjectRequest,
 } from '../../api/request';
 import {useState} from 'react';
 
@@ -85,13 +87,30 @@ const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
     onRequestClose();
   };
 
+  const removeProject = (projectId: string) => {
+    const request = removeProjectRequest(projectId);
+    core.sendRequest(request);
+  };
+
   return (
     <Stack spacing={1}>
       <Typography level="title-lg">Projects</Typography>
 
       <List sx={{overflow: 'scroll'}}>
         {projects.map((projectInfo) => (
-          <ListItem key={projectInfo.id}>
+          <ListItem
+            key={projectInfo.id}
+            endAction={
+              <IconButton
+                aria-label="Delete"
+                size="sm"
+                color="danger"
+                onClick={() => removeProject(projectInfo.id)}
+              >
+                <Delete />
+              </IconButton>
+            }
+          >
             <ListItemButton
               variant="soft"
               onClick={() => loadProject(projectInfo.id)}
