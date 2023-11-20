@@ -167,7 +167,7 @@ export const Section = ({songId, sectionId}: Props) => {
           case 'Edit':
             return (
               <Grid xs={columnSize('Edit')} key={name}>
-                <Stack direction="row" spacing={1}>
+                <Stack direction="row" spacing={1} alignItems="center">
                   <RemoveButton onRemove={remove} />
                 </Stack>
               </Grid>
@@ -235,8 +235,8 @@ const TransportCell = ({
   onRequestStop: () => void;
   onRequestQueue: () => void;
 }) => (
-  <Grid xs={columnSize('Play')} alignItems="center">
-    <Stack direction="row" spacing={1}>
+  <Grid xs={columnSize('Play')}>
+    <Stack direction="row" spacing={1} alignItems="center">
       <PlayButton isPlaying={isPlaying} onRequestPlay={onRequestPlay} />
       <StopButton isPlaying={isPlaying} onRequestStop={onRequestStop} />
       <QueueButton onRequestQueue={onRequestQueue} />
@@ -254,7 +254,7 @@ const NameCell = ({
   onChange: (name: string) => void;
   onSubmit: () => void;
 }) => (
-  <Grid xs={columnSize('Name')}>
+  <Grid xs={columnSize('Name')} sx={{display: 'flex', alignItems: 'center'}}>
     <Input
       value={value}
       onBlur={onSubmit}
@@ -272,7 +272,7 @@ const StartCell = ({
   onChange: (value: string) => void;
   onSubmit: () => void;
 }) => (
-  <Grid xs={columnSize('Start')}>
+  <Grid xs={columnSize('Start')} sx={{display: 'flex', alignItems: 'center'}}>
     <Input
       value={value}
       onChange={(event) => onChange(event.target.value)}
@@ -288,7 +288,7 @@ const LoopCell = ({
   loop: boolean;
   onChange: (loop: boolean) => void;
 }) => (
-  <Grid xs={columnSize('Loop')}>
+  <Grid xs={columnSize('Loop')} sx={{display: 'flex', alignItems: 'center'}}>
     <Switch
       checked={loop}
       onChange={(event) => onChange(event.target.checked)}
@@ -303,7 +303,10 @@ const MetronomeCell = ({
   metronome: boolean;
   onChange: (metronome: boolean) => void;
 }) => (
-  <Grid xs={columnSize('Metronome')}>
+  <Grid
+    xs={columnSize('Metronome')}
+    sx={{display: 'flex', alignItems: 'center'}}
+  >
     <Switch
       checked={metronome}
       onChange={(event) => onChange(event.target.checked)}
