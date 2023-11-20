@@ -12,6 +12,7 @@ import {Project as ModelProject} from './model';
 import '@fontsource/inter';
 import {Connection} from './app/Connection';
 import {Project} from './app/project/Project';
+import {Progress} from './model/progress';
 
 const App = () => {
   const [core, setCore] = useState<Core | null>(null);
@@ -20,6 +21,11 @@ const App = () => {
   const [playbackState, setPlaybackState] = useState<PlaybackState>();
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
   const [waveforms, setWaveforms] = useState(new Map<string, WaveformData>());
+  const [progress, setProgress] = useState<Progress>({
+    songProgress: 0,
+    sectionProgress: 0,
+    sectionBeat: 0,
+  });
 
   useEffect(() => {
     if (core) {
@@ -33,6 +39,7 @@ const App = () => {
     newCore.events.on('playback-state', setPlaybackState);
     newCore.events.on('projects', setProjects);
     newCore.events.on('waveforms', setWaveforms);
+    newCore.events.on('progress', setProgress);
 
     setCore(newCore);
   }, []);
@@ -51,6 +58,7 @@ const App = () => {
             project,
             playbackState,
             projects,
+            progress,
             waveforms,
           }}
         >

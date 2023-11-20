@@ -17,6 +17,8 @@ export const columns: ColumnName[] = [
 
 export const columnSize = (name: ColumnName): number => {
   switch (name) {
+    case 'Play':
+      return 2;
     case 'Name':
       return 2;
     case 'Edit':

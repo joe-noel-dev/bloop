@@ -1,4 +1,11 @@
-import {Grid, IconButton, Input, Stack, Switch} from '@mui/joy';
+import {
+  CircularProgress,
+  Grid,
+  IconButton,
+  Input,
+  Stack,
+  Switch,
+} from '@mui/joy';
 import {
   useSectionById,
   useSelectedSectionId,
@@ -6,26 +13,29 @@ import {
 import {useCore} from '../../core/use-core';
 import {
   playRequest,
+  queueRequest,
   removeSectionRequest,
   selectSectionRequest,
   stopRequest,
   updateSectionRequest,
 } from '../../api/request';
-import {Delete, PlayArrow, Stop} from '@mui/icons-material';
+import {ArrowForward, Delete, PlayArrow, Stop} from '@mui/icons-material';
 import {useState} from 'react';
-import {usePlaybackState} from '../../model-hooks/transport-hooks';
+import {usePlaybackState, useProgress} from '../../model-hooks/transport-hooks';
 import {columnSize, columns} from './TableInfo';
 import isEqual from 'lodash.isequal';
 
 interface Props {
+  songId: string;
   sectionId: string;
 }
 
-export const Section = ({sectionId}: Props) => {
+export const Section = ({songId, sectionId}: Props) => {
   const section = useSectionById(sectionId);
   const core = useCore();
   const selectedSectionId = useSelectedSectionId();
   const playbackState = usePlaybackState();
+  const progress = useProgress();
 
   const [editingName, setEditingName] = useState(section?.name ?? '');
   const [editingStart, setEditingStart] = useState(
@@ -103,6 +113,11 @@ export const Section = ({sectionId}: Props) => {
     core.sendRequest(play);
   };
 
+  const queue = () => {
+    const request = queueRequest(songId, sectionId);
+    core.sendRequest(request);
+  };
+
   return (
     <Grid container spacing={1}>
       {columns.map((name) => {
@@ -112,8 +127,11 @@ export const Section = ({sectionId}: Props) => {
               <TransportCell
                 key={name}
                 isPlaying={isPlaying}
+                progress={progress.sectionProgress}
+                sectionBeat={progress.sectionBeat}
                 onRequestPlay={play}
                 onRequestStop={stop}
+                onRequestQueue={queue}
               />
             );
           case 'Name':
@@ -186,18 +204,44 @@ const StopButton = ({
     </IconButton>
   );
 
-const TransportCell = ({
+const QueueButton = ({onRequestQueue}: {onRequestQueue: () => void}) => (
+  <IconButton onClick={onRequestQueue}>
+    <ArrowForward />
+  </IconButton>
+);
+
+const Progress = ({
   isPlaying,
-  onRequestPlay,
-  onRequestStop,
+  progress,
 }: {
   isPlaying: boolean;
+  progress: number;
+}) =>
+  isPlaying && (
+    <CircularProgress size="sm" determinate value={progress * 100} />
+  );
+
+const TransportCell = ({
+  isPlaying,
+  progress,
+  onRequestPlay,
+  onRequestStop,
+  onRequestQueue,
+}: {
+  isPlaying: boolean;
+  progress: number;
+  sectionBeat: number;
   onRequestPlay: () => void;
   onRequestStop: () => void;
+  onRequestQueue: () => void;
 }) => (
-  <Grid xs={columnSize('Play')}>
-    <PlayButton isPlaying={isPlaying} onRequestPlay={onRequestPlay} />
-    <StopButton isPlaying={isPlaying} onRequestStop={onRequestStop} />
+  <Grid xs={columnSize('Play')} alignItems="center">
+    <Stack direction="row" spacing={1}>
+      <PlayButton isPlaying={isPlaying} onRequestPlay={onRequestPlay} />
+      <StopButton isPlaying={isPlaying} onRequestStop={onRequestStop} />
+      <QueueButton onRequestQueue={onRequestQueue} />
+      <Progress isPlaying={isPlaying} progress={progress} />
+    </Stack>
   </Grid>
 );
 

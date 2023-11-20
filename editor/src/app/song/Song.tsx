@@ -203,7 +203,7 @@ const SectionsTable = ({
     <TableHeader />
 
     {song.sections.map((section) => (
-      <Section key={section.id} sectionId={section.id} />
+      <Section key={section.id} songId={song.id} sectionId={section.id} />
     ))}
 
     <TableFooter onRequestAdd={onRequestAdd} />
