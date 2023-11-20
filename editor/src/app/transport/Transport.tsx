@@ -17,7 +17,6 @@ export const Transport = () => {
       <Typography level="title-md">
         {section?.name ?? '[No Section]'}
       </Typography>
-      <Typography>Section Beat: {Math.floor(progress.sectionBeat)}</Typography>
     </Stack>
   );
 };
