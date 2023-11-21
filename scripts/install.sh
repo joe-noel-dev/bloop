@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-set -e
-set -o errexit
-set -o nounset
-set -o pipefail
-set -o xtrace
+set -ex
 
-readonly DESTINATION=joe@bloop.local
+readonly DESTINATION="$1"
+
+if [ -z "$DESTINATION" ]; then
+    exit 1
+fi
 
 function rsync_to_remote() {
     local source="$1"
@@ -14,7 +14,6 @@ function rsync_to_remote() {
     local host="$3"
     
     if [ -z "$source" ] || [ -z "$destination" ] || [ -z "$host" ]; then
-        echo "Usage: rsync_to_remote <source> <destination> <host>"
         return 1
     fi
     
