@@ -11,7 +11,7 @@ use crate::{
 };
 use futures::StreamExt;
 use futures_channel::mpsc;
-use rawdio::{create_engine_with_options, Context, EngineOptions, Mixer, Sampler, Timestamp};
+use rawdio::{connect_nodes, create_engine_with_options, Context, EngineOptions, Mixer, Sampler, Timestamp};
 use std::{
     collections::{HashMap, HashSet},
     path::{Path, PathBuf},
@@ -61,7 +61,7 @@ impl AudioController {
 
         metronome.output_node().connect_channels_to(&mixer.node, 0, 2, 1);
 
-        mixer.node.connect_to_output();
+        connect_nodes!(mixer => "output");
 
         Self {
             context,
@@ -176,7 +176,8 @@ impl AudioController {
 
         let event_channel_capacity = 1024;
         let sampler = Sampler::new_with_event_capacity(self.context.as_ref(), audio_data, event_channel_capacity);
-        sampler.node.connect_to(&self.mixer.node);
+
+        connect_nodes!(sampler => self.mixer);
 
         self.samplers.insert(result.sample_id, sampler);
     }

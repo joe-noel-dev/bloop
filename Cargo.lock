@@ -846,9 +846,9 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
+checksum = "25db6b064527c5d482d0423354fcd07a89a2dfe07b67892e62411946db7f07b0"
 dependencies = [
  "either",
 ]
@@ -1447,8 +1447,8 @@ checksum = "f2ff9a1f06a88b01621b7ae906ef0211290d1c8a168a15542486a8f61c0833b9"
 
 [[package]]
 name = "rawdio"
-version = "0.9.0"
-source = "git+https://github.com/joefocusrite/rawdio?branch=main#608c654699e414385cd092f6695cff2a1b736872"
+version = "0.11.0"
+source = "git+https://github.com/joefocusrite/rawdio?branch=main#d9f8f1a6949dd9083b8e473725c3457e53193479"
 dependencies = [
  "atomic_float",
  "crossbeam",

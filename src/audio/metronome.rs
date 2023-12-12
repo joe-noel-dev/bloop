@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use rawdio::{Adsr, Context, GraphNode, Level, Oscillator, Timestamp};
+use rawdio::{connect_nodes, Adsr, Context, GraphNode, Level, Oscillator, Timestamp};
 
 use crate::model::Tempo;
 
@@ -34,7 +34,7 @@ impl Metronome {
             Duration::from_millis(15),
         );
 
-        oscillator.node.connect_to(&adsr.node);
+        connect_nodes!(oscillator => adsr);
 
         Self {
             oscillator,
