@@ -1447,9 +1447,10 @@ checksum = "f2ff9a1f06a88b01621b7ae906ef0211290d1c8a168a15542486a8f61c0833b9"
 
 [[package]]
 name = "rawdio"
-version = "0.11.0"
-source = "git+https://github.com/joefocusrite/rawdio?branch=main#d9f8f1a6949dd9083b8e473725c3457e53193479"
+version = "0.13.0"
+source = "git+https://github.com/joefocusrite/rawdio?branch=main#95d0b990ee92997a3dfa4ef3dd77a24026788a01"
 dependencies = [
+ "approx",
  "atomic_float",
  "crossbeam",
  "fixed",
