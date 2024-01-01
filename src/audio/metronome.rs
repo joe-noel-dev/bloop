@@ -22,7 +22,7 @@ impl Metronome {
         let mut oscillator = Oscillator::sine(context, BAR_FREQUENCY, OUTPUT_COUNT);
 
         oscillator
-            .gain
+            .gain()
             .set_value_at_time(Level::from_db(-6.0).as_linear(), Timestamp::zero());
 
         let mut adsr = Adsr::new(context, OUTPUT_COUNT, context.get_sample_rate());
@@ -82,7 +82,7 @@ impl Metronome {
                     BEAT_FREQUENCY
                 };
 
-                self.oscillator.frequency.set_value_at_time(frequency, beat_position);
+                self.oscillator.frequency().set_value_at_time(frequency, beat_position);
                 self.adsr.note_on_at_time(beat_position);
             }
 
