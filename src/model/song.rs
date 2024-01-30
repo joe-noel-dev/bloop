@@ -48,9 +48,7 @@ impl Song {
     }
 
     pub fn is_valid(&self) -> bool {
-        !self.id.is_nil()
-            && !self.sections.is_empty()
-            && self.sections.iter().is_sorted_by(|a, b| a.start.partial_cmp(&b.start))
+        !self.id.is_nil() && !self.sections.is_empty() && self.sections.iter().is_sorted_by(|a, b| a.start <= b.start)
     }
 
     pub fn find_section(&self, section_id: &ID) -> Option<&Section> {
