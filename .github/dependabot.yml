@@ -4,7 +4,9 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    update-types: ["version-update:semver-patch"]
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "monthly"
+    update-types: ["version-update:semver-patch"]
