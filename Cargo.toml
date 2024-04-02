@@ -32,5 +32,5 @@ serialport = "4.2.2"
 tempfile = "3.8.1"
 tokio = { version = "1.37.0", features = ["full"] }
 tokio-serial = "5.4.4"
-tokio-tungstenite = "0.20.1"
+tokio-tungstenite = "0.21.0"
 uuid = { version = "1.8.0", features = ["serde", "v4"] } 
