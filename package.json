@@ -18,7 +18,7 @@
     "@types/react-measure": "^2.0.10",
     "@types/react-modal": "^3.16.3",
     "@types/uuid": "^9.0.8",
-    "bson": "^6.2.0",
+    "bson": "^6.6.0",
     "dotenv": "^16.4.1",
     "events": "^3.3.0",
     "lodash.clonedeep": "^4.5.0",
