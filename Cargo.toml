@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0.82"
 approx = "0.5.1"
-bson = "2.9.0"
+bson = "2.10.0"
 conv = "0.3.3"
 cpal = "0.15.2"
 fixed = "1.27.0"
