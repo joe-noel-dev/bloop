@@ -33,7 +33,7 @@
     "react-measure": "^2.5.2",
     "react-modal": "^3.16.1",
     "react-tiny-popover": "^8.0.4",
-    "typescript": "~5.3.3",
+    "typescript": "~5.4.5",
     "uuid": "^9.0.1"
   },
   "scripts": {
