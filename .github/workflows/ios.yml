@@ -23,6 +23,26 @@ jobs:
           BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
+          if [ -z "$BUILD_CERTIFICATE_BASE64" ]; then
+            echo "BUILD_CERTIFICATE_BASE64 is not set"
+            exit 1
+          fi
+
+          if [ -z "$P12_PASSWORD" ]; then
+            echo "P12_PASSWORD is not set"
+            exit 1
+          fi
+
+          if [ -z "$BUILD_PROVISION_PROFILE_BASE64" ]; then
+            echo "BUILD_PROVISION_PROFILE_BASE64 is not set"
+            exit 1
+          fi
+
+          if [ -z "$KEYCHAIN_PASSWORD" ]; then
+            echo "KEYCHAIN_PASSWORD is not set"
+            exit 1
+          fi
+
           # create variables
           CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
           PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
