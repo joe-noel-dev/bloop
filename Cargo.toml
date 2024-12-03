@@ -19,7 +19,7 @@ futures-util = "0.3.31"
 home = "0.5.4"
 hound = "3.5.1"
 libmdns = "0.9.1"
-midir = "0.10.0"
+midir = "0.10.1"
 num-traits = "0.2.18"
 rand = "0.8.5"
 rawdio = { git = "https://github.com/joefocusrite/rawdio", branch = "main" }
