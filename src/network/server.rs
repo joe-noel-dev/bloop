@@ -2,6 +2,7 @@ use crate::api::{Request, Response};
 
 use super::client;
 use libmdns::Responder;
+use log::info;
 use tokio::net::TcpListener;
 use tokio::sync::{broadcast, mpsc};
 
@@ -20,7 +21,7 @@ pub async fn run(request_tx: mpsc::Sender<Request>, response_tx: broadcast::Send
     let responder = Responder::new().expect("Couldn't create an mDNS responder");
     let _service = responder.register("_bloop._tcp".into(), format!("bloop-{my_id}"), local_port, &[]);
 
-    println!("Server listening on port {local_port}");
+    info!("Server listening on port {local_port}");
 
     while let Ok((stream, _)) = listener.accept().await {
         let tx = request_tx.clone();

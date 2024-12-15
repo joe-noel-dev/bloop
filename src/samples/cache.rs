@@ -4,6 +4,7 @@ use crate::{
     types::{extension_for_format, AudioFileFormat},
 };
 use anyhow::{anyhow, Context};
+use log::error;
 use std::fs;
 use std::{
     collections::HashMap,
@@ -176,7 +177,7 @@ impl SamplesCache {
 impl Drop for SamplesCache {
     fn drop(&mut self) {
         if let Err(error) = fs::remove_dir_all(&self.root_directory) {
-            println!(
+            error!(
                 "Failed to remove directory ({}): {}",
                 self.root_directory.display(),
                 error

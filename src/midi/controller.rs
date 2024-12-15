@@ -1,6 +1,7 @@
 use super::matcher::Matcher;
 use crate::midi::matcher::ExactMatcher;
 use crate::model::Action;
+use log::{error, info};
 use midir::{MidiInput, MidiInputConnection};
 use serde::{Deserialize, Serialize};
 use std::{fs::File, io::BufReader, path::Path};
@@ -71,7 +72,7 @@ fn on_midi_input(_: u64, message: &[u8], mappings: &[Mapping], context: &mut Con
 
 impl MidiController {
     fn print_midi_inputs(midi_input: &MidiInput) {
-        println!("MIDI Input ports:");
+        info!("MIDI Input ports:");
 
         let ports = midi_input.ports();
 
@@ -81,10 +82,10 @@ impl MidiController {
                 Err(_) => return,
             };
 
-            println!("{index}: {name}");
+            info!("{index}: {name}");
         });
 
-        println!();
+        info!("");
     }
 
     pub fn new(action_tx: mpsc::Sender<Action>, preferences_dir: &Path) -> Self {
@@ -109,7 +110,7 @@ impl MidiController {
         let mappings = get_mappings();
 
         if let Some(port) = port {
-            println!("Connecting to {}", midi_input.port_name(port).unwrap());
+            info!("Connecting to {}", midi_input.port_name(port).unwrap());
 
             input_connection = match midi_input.connect(
                 port,
@@ -119,7 +120,7 @@ impl MidiController {
             ) {
                 Ok(connection) => Some(connection),
                 Err(error) => {
-                    eprintln!("Unable to connect to MIDI input: {error}");
+                    error!("Unable to connect to MIDI input: {error}");
                     None
                 }
             }

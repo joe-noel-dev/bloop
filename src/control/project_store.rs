@@ -4,6 +4,7 @@ use crate::{
     types::AudioFileFormat,
 };
 use anyhow::{anyhow, Context};
+use log::error;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{convert::TryInto, str::FromStr};
 use std::{
@@ -100,7 +101,7 @@ impl ProjectStore {
             let project = match self.read_project_json(&id).await {
                 Ok(project) => project,
                 Err(error) => {
-                    println!("Error reading project JSON: {error}");
+                    error!("Error reading project JSON: {error}");
                     continue;
                 }
             };
@@ -262,7 +263,7 @@ impl ProjectStore {
             let sample_id = match ID::parse_str(filename) {
                 Ok(id) => id,
                 Err(error) => {
-                    println!("Invalid file name ({}): {}", project_path.display(), error);
+                    error!("Invalid file name ({}): {}", project_path.display(), error);
                     continue;
                 }
             };

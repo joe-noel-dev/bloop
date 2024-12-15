@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
 
+use log::error;
+
 pub struct Sample {
     path: PathBuf,
     name: String,
@@ -39,7 +41,7 @@ impl Sample {
         if self.path.exists() {
             match std::fs::remove_file(&self.path) {
                 Ok(_) => (),
-                Err(error) => println!("Failed to remove sample from disk ({}): {}", self.path.display(), error),
+                Err(error) => error!("Failed to remove sample from disk ({}): {}", self.path.display(), error),
             }
         }
     }

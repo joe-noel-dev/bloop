@@ -5,6 +5,7 @@ use crate::{
     waveform::{generate_waveform_from_file, Algorithm, Options},
 };
 use anyhow::anyhow;
+use log::info;
 use std::{collections::HashSet, sync::mpsc, thread::spawn};
 use tokio::sync::broadcast;
 
@@ -53,7 +54,7 @@ impl WaveformStore {
         let sample_id = *sample_id;
         let sample_path = sample.get_path().to_path_buf();
 
-        println!("Generating waveform for sample: {sample_id}");
+        info!("Generating waveform for sample: {sample_id}");
 
         let sample_rate = self.sample_rate;
 

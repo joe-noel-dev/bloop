@@ -8,6 +8,7 @@ use crate::{
     samples::SamplesCache,
 };
 use anyhow::anyhow;
+use log::{error, info};
 use std::time::Duration;
 use tokio::{
     sync::{broadcast, mpsc},
@@ -62,7 +63,7 @@ impl MainController {
     pub async fn load_last_project(&mut self) {
         match self.project_store.load_last_project(&mut self.samples_cache).await {
             Ok(project) => self.set_project(project),
-            Err(error) => eprintln!("Unable to open last project: {error}"),
+            Err(error) => error!("Unable to open last project: {error}"),
         };
     }
 
@@ -308,7 +309,7 @@ impl MainController {
     }
 
     fn handle_begin_upload(&mut self, request: BeginUploadRequest) -> anyhow::Result<()> {
-        println!("Upload started {}", request.upload_id);
+        info!("Upload started {}", request.upload_id);
         self.samples_cache
             .begin_upload(&request.upload_id, &request.format, &request.filename);
         self.send_response(Response::default().with_upload_ack(UploadAck {
@@ -318,7 +319,7 @@ impl MainController {
     }
 
     fn handle_complete_upload(&mut self, request: CompleteUploadRequest) -> anyhow::Result<()> {
-        println!("Upload complete {}", request.upload_id);
+        info!("Upload complete {}", request.upload_id);
         self.samples_cache.complete_upload(&request.upload_id)?;
         self.send_response(Response::default().with_upload_ack(UploadAck {
             upload_id: request.upload_id,

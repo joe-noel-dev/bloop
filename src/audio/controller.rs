@@ -11,6 +11,7 @@ use crate::{
 };
 use futures::StreamExt;
 use futures_channel::mpsc;
+use log::{error, info};
 use rawdio::{connect_nodes, create_engine_with_options, Context, EngineOptions, Mixer, Sampler, Timestamp};
 use std::{
     collections::{HashMap, HashSet},
@@ -167,12 +168,12 @@ impl AudioController {
         let audio_data = match result.result {
             Ok(data) => data,
             Err(error) => {
-                eprintln!("Error converting audio file {}: {}", result.sample_id, error);
+                error!("Error converting audio file {}: {}", result.sample_id, error);
                 return;
             }
         };
 
-        println!("Adding sample to the audio engine: {}", result.sample_id);
+        info!("Sample converted: {}", result.sample_id);
 
         let event_channel_capacity = 1024;
         let sampler = Sampler::new_with_event_capacity(self.context.as_ref(), audio_data, event_channel_capacity);

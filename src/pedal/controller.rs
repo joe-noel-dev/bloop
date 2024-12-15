@@ -1,6 +1,7 @@
 use std::{collections::HashMap, fs::File, io::BufReader, path::Path};
 
 use crate::model::{Action, Notification, PlayingState};
+use log::{error, info};
 use serde_derive::{Deserialize, Serialize};
 use tokio::{io::AsyncReadExt, io::AsyncWriteExt, sync::mpsc};
 use tokio_serial::{SerialPortBuilderExt, SerialStream};
@@ -64,7 +65,7 @@ impl PedalController {
                 let message = format!("beat:{beat};");
 
                 if let Err(error) = port.write(message.as_bytes()).await {
-                    eprintln!("Error writing to serial: {error}");
+                    error!("Error writing to serial: {error}");
                 }
             }
         }
@@ -111,16 +112,16 @@ fn open_serial(serial_path: &str) -> Option<SerialStream> {
     let mut port = match builder.open_native_async() {
         Ok(port) => port,
         Err(error) => {
-            eprintln!("Error opening serial port ({serial_path}): {error}");
+            error!("Error opening serial port ({serial_path}): {error}");
             return None;
         }
     };
 
     if let Err(error) = port.set_exclusive(false) {
-        eprintln!("Error setting port non-exclusive: {error}");
+        error!("Error setting port non-exclusive: {error}");
     }
 
-    println!("Connected to serial at: {serial_path}");
+    info!("Connected to serial at: {serial_path}");
 
     Some(port)
 }

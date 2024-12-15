@@ -2,6 +2,7 @@ use cpal::{
     traits::{DeviceTrait, HostTrait, StreamTrait},
     Host, SampleRate, Stream,
 };
+use log::{error, info};
 use rawdio::{AudioBuffer, AudioProcess, BorrowedAudioBuffer, MutableBorrowedAudioBuffer, OwnedAudioBuffer};
 use serde::{Deserialize, Serialize};
 use std::{fs::File, io::BufReader, path::Path};
@@ -34,22 +35,23 @@ fn read_preferences(preferences_dir: &Path) -> anyhow::Result<Preferences> {
 }
 
 fn print_output_devices(host: &Host) {
-    println!("Output devices: ");
+    info!("Output devices: ");
     host.output_devices().unwrap().for_each(|device| {
         let device_name = match device.name() {
             Ok(name) => name,
             Err(_) => return,
         };
 
-        println!("{device_name}");
+        info!("{device_name}");
     });
-    println!();
+
+    info!("")
 }
 
 impl Process {
     pub fn new(mut audio_process: Box<dyn AudioProcess + Send>, preferences_dir: &Path) -> Self {
         let host = cpal::default_host();
-        println!("Using audio host: {}", host.id().name());
+        info!("Using audio host: {}", host.id().name());
 
         print_output_devices(&host);
 
@@ -68,8 +70,7 @@ impl Process {
         };
 
         let device = preferred_device.expect("Couldn't connect to output audio device");
-        println!("Connecting to device: {}", device.name().unwrap());
-        println!();
+        info!("Connecting to device: {}\n", device.name().unwrap());
 
         let mut output_configs = device.supported_output_configs().unwrap();
         let config = output_configs
@@ -89,8 +90,7 @@ impl Process {
             .expect("No configs supported")
             .with_sample_rate(SampleRate(preferences.sample_rate.unwrap_or(DEFAULT_SAMPLE_RATE)));
 
-        println!("Sample rate: {}", config.sample_rate().0);
-        println!();
+        info!("Sample rate: {}\n", config.sample_rate().0);
 
         let maximum_frame_count = match config.buffer_size() {
             cpal::SupportedBufferSize::Range { min: _, max } => *max as usize,
@@ -119,7 +119,7 @@ impl Process {
 
                     output_slice.copy_to_interleaved(data, channel_count, frame_count);
                 },
-                move |err| eprintln!("Stream error: {err:?}"),
+                move |err| error!("Stream error: {err:?}"),
                 timeout,
             )
             .expect("Couldn't create output stream");

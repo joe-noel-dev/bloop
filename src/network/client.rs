@@ -3,6 +3,7 @@ use crate::api::{Request, Response};
 use futures::SinkExt;
 use futures_util::stream::{SplitSink, SplitStream};
 use futures_util::StreamExt;
+use log::{error, info};
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio::select;
@@ -25,7 +26,7 @@ impl Client {
     ) -> Result<Self, String> {
         let address = socket.peer_addr().expect("Error getting peer address");
 
-        println!("New connection: {address}");
+        info!("New connection: {address}");
 
         let ws_stream = match accept_async(socket).await {
             Ok(stream) => stream,
@@ -85,7 +86,7 @@ impl Client {
                 message = self.incoming.next() => {
 
                     if let Err(err) = self.on_incoming_message(message).await {
-                        eprintln!("Error from client: {err}");
+                        error!("Error from client: {err}");
                         break;
                     }
 
@@ -95,7 +96,7 @@ impl Client {
             }
         }
 
-        println!("Client disconnected: {}", self.address);
+        info!("Client disconnected: {}", self.address);
     }
 
     async fn send_response(&mut self, response: &Response) {
@@ -108,7 +109,7 @@ impl Client {
 pub async fn run(socket: TcpStream, request_tx: mpsc::Sender<Request>, response_rx: broadcast::Receiver<Response>) {
     match Client::new(socket, request_tx, response_rx).await {
         Ok(mut client) => client.run().await,
-        Err(error) => eprintln!("Error from client: {error}"),
+        Err(error) => error!("Error from client: {error}"),
     }
 }
 
@@ -116,7 +117,7 @@ fn convert_response(response: &Response) -> Option<Message> {
     let document = match bson::to_document(response) {
         Ok(doc) => doc,
         Err(error) => {
-            println!("Error serialising response: {error}");
+            error!("Error serialising response: {error}");
             return None;
         }
     };
