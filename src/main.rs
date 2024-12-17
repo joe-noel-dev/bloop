@@ -43,6 +43,13 @@ fn setup_logger() -> Result<(), fern::InitError> {
                 message
             ))
         })
+        .filter(|metadata| {
+            if metadata.target().contains("libmdns") {
+                return metadata.level() <= log::LevelFilter::Info;
+            }
+
+            true
+        })
         .level(log::LevelFilter::Debug)
         .chain(std::io::stdout())
         .chain(fern::log_file("bloop.log")?)

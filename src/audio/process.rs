@@ -35,17 +35,18 @@ fn read_preferences(preferences_dir: &Path) -> anyhow::Result<Preferences> {
 }
 
 fn print_output_devices(host: &Host) {
-    info!("Output devices: ");
+    let mut output = String::from("Output devices: \n");
+
     host.output_devices().unwrap().for_each(|device| {
         let device_name = match device.name() {
             Ok(name) => name,
             Err(_) => return,
         };
 
-        info!("{device_name}");
+        output.push_str(format!("{device_name}\n").as_str());
     });
 
-    info!("")
+    info!("{output}");
 }
 
 impl Process {
