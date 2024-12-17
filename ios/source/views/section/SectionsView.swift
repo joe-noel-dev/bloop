@@ -18,9 +18,11 @@ struct SectionsView: View {
                         .padding([.top, .bottom], Layout.units(1))
                 }
                 .onDelete(perform: { values in
-                    values.map { index in
+                    let sectionIds = values.map { index in
                         song.sections[index].id
-                    }.forEach { sectionId in
+                    }
+
+                    for sectionId in sectionIds {
                         let action = removeSectionAction(sectionId)
                         dispatch(action)
                     }

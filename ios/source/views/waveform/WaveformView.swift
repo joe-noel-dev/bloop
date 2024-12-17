@@ -66,18 +66,19 @@ func createWaveformPath(waveform: WaveformData, size: CGSize) -> Path {
     minPath.move(to: .init(x: 0, y: 0.5))
     maxPath.move(to: .init(x: 0, y: 0.5))
 
-    zip(minWaveform.values, maxWaveform.values)
+    let minAndMaxValues = zip(minWaveform.values, maxWaveform.values)
         .enumerated()
-        .forEach { (offset, values) in
-            let (minValue, maxValue) = values
-            let x = Double(offset) / Double(minWaveform.values.count)
 
-            let minY = max(0.5, (1.0 - Double(minValue)) / 2.0)
-            let maxY = min(0.5, (1.0 - Double(maxValue)) / 2.0)
+    for (offset, values) in minAndMaxValues {
+        let (minValue, maxValue) = values
+        let x = Double(offset) / Double(minWaveform.values.count)
 
-            minPath.addLine(to: .init(x: x, y: minY))
-            maxPath.addLine(to: .init(x: x, y: maxY))
-        }
+        let minY = max(0.5, (1.0 - Double(minValue)) / 2.0)
+        let maxY = min(0.5, (1.0 - Double(maxValue)) / 2.0)
+
+        minPath.addLine(to: .init(x: x, y: minY))
+        maxPath.addLine(to: .init(x: x, y: maxY))
+    }
 
     minPath.addLine(to: .init(x: 1, y: 0.5))
     maxPath.addLine(to: .init(x: 1, y: 0.5))

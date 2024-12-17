@@ -49,9 +49,11 @@ struct ProjectsView: View {
                     ProjectPreview(project: project, selected: selected == project.id)
                 }
                 .onDelete { offsets in
-                    offsets.map { offset in
+                    let projectIds = offsets.map { offset in
                         sortedProjects[offset].id
-                    }.forEach { projectId in
+                    }
+
+                    for projectId in projectIds {
                         let action = removeProjectAction(projectId)
                         dispatch(action)
                     }

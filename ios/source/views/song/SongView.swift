@@ -199,7 +199,7 @@ struct SongView: View {
             Label("Remove", systemImage: "trash")
         }
     }
-    
+
     @ViewBuilder
     private var headerMenu: some View {
         Menu {

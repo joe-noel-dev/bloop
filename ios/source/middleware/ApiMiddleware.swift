@@ -12,7 +12,12 @@ class ApiMiddleware: Middleware {
         self.dispatch = dispatch
 
         if case .browse = action {
+            self.dispatch?(.removeAllServers)
             core.browse()
+        }
+
+        if case .connect(let server) = action {
+            core.connect(server)
         }
 
         if case .sendRequest(let request) = action {
@@ -61,6 +66,10 @@ extension ApiMiddleware: CoreDelegate {
             let action = Action.uploadAck(uploadAck.uploadId)
             self.dispatch?(action)
         }
+    }
+
+    func coreDiscovered(_ server: Server) {
+        self.dispatch?(.addServer(server))
     }
 
 }

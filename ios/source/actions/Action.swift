@@ -12,9 +12,13 @@ enum Action {
     case addError(String)
 
     case browse
+    case connect(Server)
     case setConnected(Bool)
 
     case uploadSample((Id, URL))
     case uploadAck(Id)
+
+    case addServer(Server)
+    case removeAllServers
 
 }

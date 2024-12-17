@@ -5,6 +5,8 @@ protocol CoreDelegate: AnyObject {
     func coreConnected()
     func coreDisconnected()
     func coreDidSendResponse(_ response: Response)
+
+    func coreDiscovered(_ server: Server)
 }
 
 class Core: CoreConnectionDelegate {
@@ -13,13 +15,15 @@ class Core: CoreConnectionDelegate {
 
     private let group = DispatchGroup()
     private let queue = DispatchQueue(label: "CoreEncodeDecode", attributes: .concurrent)
-    private let discovery = CoreDiscovery()
+    private let discovery = Discovery()
 
     init() {
         connection.delegate = self
 
-        discovery.onCoreDiscovered = { hostname, port in
-            self.connect(hostname: hostname, port: port)
+        discovery.onServerDiscovered = { server in
+            DispatchQueue.main.async { [weak self] in
+                self?.delegate?.coreDiscovered(server)
+            }
         }
 
         discovery.browse()
@@ -29,9 +33,9 @@ class Core: CoreConnectionDelegate {
         discovery.browse()
     }
 
-    private func connect(hostname: String, port: Int) {
+    func connect(_ server: Server) {
         if self.connection.state == .disconnected {
-            self.connection.connect(hostname: hostname, port: port)
+            self.connection.connect(hostname: server.hostname, port: server.port)
         }
     }
 

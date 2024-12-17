@@ -7,10 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		74B089872D11D2B9004DEC24 /* Server.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B089862D11D2B7004DEC24 /* Server.swift */; };
 		C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DB2A4F123400F8138D /* DisconnectedView.swift */; };
 		C20240DE2A4F14D100F8138D /* DemoProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DD2A4F14D100F8138D /* DemoProject.swift */; };
 		C20240E02A4F255B00F8138D /* SongView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DF2A4F255B00F8138D /* SongView.swift */; };
-		C20F17CF2AB07C2B00ECF2EB /* CoreDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F17CE2AB07C2B00ECF2EB /* CoreDiscovery.swift */; };
+		C20F17CF2AB07C2B00ECF2EB /* Discovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F17CE2AB07C2B00ECF2EB /* Discovery.swift */; };
 		C222A9542A588ACB00418CBB /* WaveformMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */; };
 		C222A9562A58AEB200418CBB /* SectionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C222A9552A58AEB100418CBB /* SectionsView.swift */; };
 		C222A95B2A59D21400418CBB /* UploadMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = C222A95A2A59D21400418CBB /* UploadMiddleware.swift */; };
@@ -81,10 +82,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		74B089862D11D2B7004DEC24 /* Server.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Server.swift; sourceTree = "<group>"; };
 		C20240DB2A4F123400F8138D /* DisconnectedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectedView.swift; sourceTree = "<group>"; };
 		C20240DD2A4F14D100F8138D /* DemoProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoProject.swift; sourceTree = "<group>"; };
 		C20240DF2A4F255B00F8138D /* SongView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongView.swift; sourceTree = "<group>"; };
-		C20F17CE2AB07C2B00ECF2EB /* CoreDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDiscovery.swift; sourceTree = "<group>"; };
+		C20F17CE2AB07C2B00ECF2EB /* Discovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Discovery.swift; sourceTree = "<group>"; };
 		C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformMiddleware.swift; sourceTree = "<group>"; };
 		C222A9552A58AEB100418CBB /* SectionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionsView.swift; sourceTree = "<group>"; };
 		C222A95A2A59D21400418CBB /* UploadMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadMiddleware.swift; sourceTree = "<group>"; };
@@ -236,6 +238,7 @@
 		C229B9882A4DA1EB0044F2C6 /* model */ = {
 			isa = PBXGroup;
 			children = (
+				74B089862D11D2B7004DEC24 /* Server.swift */,
 				C20240DD2A4F14D100F8138D /* DemoProject.swift */,
 				C229B9912A4DA30B0044F2C6 /* Id.swift */,
 				C257C16C2A4DF6340080ECC2 /* PlaybackState.swift */,
@@ -257,7 +260,7 @@
 			children = (
 				C229B99A2A4DD55D0044F2C6 /* Core.swift */,
 				C229B99C2A4DDE7C0044F2C6 /* CoreConnection.swift */,
-				C20F17CE2AB07C2B00ECF2EB /* CoreDiscovery.swift */,
+				C20F17CE2AB07C2B00ECF2EB /* Discovery.swift */,
 			);
 			path = core;
 			sourceTree = "<group>";
@@ -575,7 +578,7 @@
 				C257C1712A4DF81E0080ECC2 /* Progress.swift in Sources */,
 				C229B99D2A4DDE7C0044F2C6 /* CoreConnection.swift in Sources */,
 				C229B99B2A4DD55D0044F2C6 /* Core.swift in Sources */,
-				C20F17CF2AB07C2B00ECF2EB /* CoreDiscovery.swift in Sources */,
+				C20F17CF2AB07C2B00ECF2EB /* Discovery.swift in Sources */,
 				C257C16F2A4DF6D40080ECC2 /* Waveform.swift in Sources */,
 				C229B9872A4DA0B40044F2C6 /* RootReducer.swift in Sources */,
 				C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */,
@@ -594,6 +597,7 @@
 				C229B9942A4DA3310044F2C6 /* Tempo.swift in Sources */,
 				C28705092A58217400178FC9 /* NameEditor.swift in Sources */,
 				C222A9542A588ACB00418CBB /* WaveformMiddleware.swift in Sources */,
+				74B089872D11D2B9004DEC24 /* Server.swift in Sources */,
 				C257C1772A4E003F0080ECC2 /* ApiMiddleware.swift in Sources */,
 				C247A6E42A4D949A00001DB2 /* BloopApp.swift in Sources */,
 				C257C16B2A4DF5C00080ECC2 /* Response.swift in Sources */,

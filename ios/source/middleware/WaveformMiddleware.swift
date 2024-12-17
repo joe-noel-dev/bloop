@@ -18,11 +18,11 @@ class WaveformMiddleware: Middleware {
             let idsToAdd = newIds.subtracting(waveformIds)
             let idsToRemove = waveformIds.subtracting(newIds)
 
-            idsToAdd.forEach { id in
+            for id in idsToAdd {
                 dispatch(getWaveformAction(id))
             }
 
-            idsToRemove.forEach { id in
+            for id in idsToRemove {
                 dispatch(.removeWaveform(id))
             }
 

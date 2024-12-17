@@ -7,19 +7,16 @@ class Discovery: NSObject {
     private var services: [NetService] = []
     var onServerDiscovered: ((Server) -> Void)?
     private let resolveTimeout: TimeInterval = 10
-    private var discovered: [Server] = []
 
     override init() {
         serviceBrowser = NetServiceBrowser()
         super.init()
         serviceBrowser.includesPeerToPeer = true
         serviceBrowser.delegate = self
-        
+
     }
-    
+
     func browse() {
-        services.removeAll()
-        discovered.removeAll()
         serviceBrowser.searchForServices(ofType: "_bloop._tcp", inDomain: "local.")
     }
 
@@ -28,16 +25,17 @@ class Discovery: NSObject {
     }
 
     private func notifyService(_ service: NetService) {
-        guard let hostname = service.hostName, let onCoreDiscovered = self.onCoreDiscovered else {
+        guard let hostname = service.hostName, let onServerDiscovered = self.onServerDiscovered
+        else {
             return
         }
 
-        self.discovered.append((hostname, service.port))
-        onCoreDiscovered(hostname, service.port)
+        let server = Server.init(hostname: hostname, port: service.port)
+        onServerDiscovered(server)
     }
 }
 
-extension CoreDiscovery: NetServiceBrowserDelegate {
+extension Discovery: NetServiceBrowserDelegate {
     func netServiceBrowser(
         _ browser: NetServiceBrowser,
         didFind service: NetService,
@@ -54,14 +52,10 @@ extension CoreDiscovery: NetServiceBrowserDelegate {
         moreComing: Bool
     ) {
         services.removeAll(where: { service == $0 })
-        
-        self.discovered.removeAll { server in
-            server.hostname == service.hostName && server.port == service.port
-        }
     }
 }
 
-extension CoreDiscovery: NetServiceDelegate {
+extension Discovery: NetServiceDelegate {
     func netServiceDidResolveAddress(_ sender: NetService) {
         notifyService(sender)
     }

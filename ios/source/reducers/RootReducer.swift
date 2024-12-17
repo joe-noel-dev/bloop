@@ -28,9 +28,28 @@ func rootReducer(state: AppState, action: Action) -> AppState {
     case .removeWaveform(let id):
         state.waveforms.removeValue(forKey: id)
 
-    default:
-        ()
+    case .browse:
+        break
 
+    case .connect(_):
+        break
+
+    case .uploadSample(_):
+        break
+
+    case .uploadAck(_):
+        break
+
+    case .addServer(let server):
+        if !state.servers.contains(server) {
+            state.servers.append(server)
+        }
+
+    case .removeAllServers:
+        state.servers.removeAll()
+
+    case .sendRequest(_):
+        break
     }
 
     return state
