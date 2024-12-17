@@ -3,60 +3,45 @@ import Network
 
 class Discovery: NSObject {
 
-    private var serviceBrowser: NetServiceBrowser
-    private var services: [NetService] = []
-    var onServerDiscovered: ((Server) -> Void)?
+    private var serviceBrowser: NWBrowser
+    private var services: Set<NWEndpoint> = []
+    var onKnownServersChanged: (([NWEndpoint]) -> Void)?
     private let resolveTimeout: TimeInterval = 10
+    private var browsing = false
 
     override init() {
-        serviceBrowser = NetServiceBrowser()
-        super.init()
-        serviceBrowser.includesPeerToPeer = true
-        serviceBrowser.delegate = self
+        let parameters = NWParameters()
+        parameters.includePeerToPeer = true
 
+        let descriptor = NWBrowser.Descriptor.bonjour(type: "_bloop._tcp", domain: "local.")
+
+        serviceBrowser = NWBrowser(for: descriptor, using: parameters)
+
+        super.init()
+
+        serviceBrowser.browseResultsChangedHandler = { [weak self] results, changes in
+            DispatchQueue.main.async {
+                self?.services = Set(results.map { $0.endpoint })
+                self?.onKnownServersChanged?(results.map { $0.endpoint })
+            }
+        }
     }
 
     func browse() {
-        serviceBrowser.searchForServices(ofType: "_bloop._tcp", inDomain: "local.")
-    }
-
-    func cancel() {
-        serviceBrowser.stop()
-    }
-
-    private func notifyService(_ service: NetService) {
-        guard let hostname = service.hostName, let onServerDiscovered = self.onServerDiscovered
-        else {
+        if browsing {
             return
         }
 
-        let server = Server.init(hostname: hostname, port: service.port)
-        onServerDiscovered(server)
-    }
-}
-
-extension Discovery: NetServiceBrowserDelegate {
-    func netServiceBrowser(
-        _ browser: NetServiceBrowser,
-        didFind service: NetService,
-        moreComing: Bool
-    ) {
-        services.append(service)
-        service.delegate = self
-        service.resolve(withTimeout: resolveTimeout)
+        serviceBrowser.start(queue: .main)
+        browsing = true
     }
 
-    func netServiceBrowser(
-        _ browser: NetServiceBrowser,
-        didRemove service: NetService,
-        moreComing: Bool
-    ) {
-        services.removeAll(where: { service == $0 })
-    }
-}
+    func cancel() {
+        if !browsing {
+            return
+        }
 
-extension Discovery: NetServiceDelegate {
-    func netServiceDidResolveAddress(_ sender: NetService) {
-        notifyService(sender)
+        serviceBrowser.cancel()
+        browsing = false
     }
 }

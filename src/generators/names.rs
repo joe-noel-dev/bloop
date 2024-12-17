@@ -10,7 +10,7 @@ pub fn random_name() -> String {
 }
 
 pub fn random_section_name() -> &'static str {
-    return SECTION_NAMES.choose(&mut rand::thread_rng()).unwrap();
+    SECTION_NAMES.choose(&mut rand::thread_rng()).unwrap()
 }
 
 const SECTION_NAMES: &[&str] = &["Verse", "Chorus", "Intro", "Outro", "Break", "Middle", "Hook"];

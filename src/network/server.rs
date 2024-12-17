@@ -16,10 +16,15 @@ pub async fn run(request_tx: mpsc::Sender<Request>, response_tx: broadcast::Send
     let local_address = listener.local_addr().expect("Unable to get address from port");
 
     let local_port = local_address.port();
-    let my_id = uuid::Uuid::new_v4().hyphenated().to_string();
+    let hostname = hostname::get()
+        .expect("Failed to get hostname")
+        .into_string()
+        .expect("Failed to convert hostname to String")
+        .replace(".local", "")
+        .replace(".lan", "");
 
     let responder = Responder::new().expect("Couldn't create an mDNS responder");
-    let _service = responder.register("_bloop._tcp".into(), format!("bloop-{my_id}"), local_port, &[]);
+    let _service = responder.register("_bloop._tcp".into(), hostname, local_port, &[]);
 
     info!("Server listening on port {local_port}");
 

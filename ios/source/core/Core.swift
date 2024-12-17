@@ -6,7 +6,7 @@ protocol CoreDelegate: AnyObject {
     func coreDisconnected()
     func coreDidSendResponse(_ response: Response)
 
-    func coreDiscovered(_ server: Server)
+    func onKnownServersChanged(_ servers: [Server])
 }
 
 class Core: CoreConnectionDelegate {
@@ -20,9 +20,9 @@ class Core: CoreConnectionDelegate {
     init() {
         connection.delegate = self
 
-        discovery.onServerDiscovered = { server in
+        discovery.onKnownServersChanged = { servers in
             DispatchQueue.main.async { [weak self] in
-                self?.delegate?.coreDiscovered(server)
+                self?.delegate?.onKnownServersChanged(servers)
             }
         }
 
@@ -35,7 +35,7 @@ class Core: CoreConnectionDelegate {
 
     func connect(_ server: Server) {
         if self.connection.state == .disconnected {
-            self.connection.connect(hostname: server.hostname, port: server.port)
+            self.connection.connect(server)
         }
     }
 

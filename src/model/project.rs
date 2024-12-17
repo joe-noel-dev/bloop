@@ -222,7 +222,7 @@ impl Project {
             None => return false,
         };
 
-        return song.sections.iter().any(|section| section.id == section_id);
+        song.sections.iter().any(|section| section.id == section_id)
     }
 
     pub fn add_song(mut self, num_sections: usize) -> Self {

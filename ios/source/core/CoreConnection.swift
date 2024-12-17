@@ -1,4 +1,5 @@
 import Foundation
+import Network
 
 protocol CoreConnectionDelegate: AnyObject {
     func coreConnectionDidConnect()
@@ -14,22 +15,92 @@ enum ConnectionState {
 }
 
 class CoreConnection: NSObject, URLSessionWebSocketDelegate, URLSessionTaskDelegate {
-    private var task: URLSessionWebSocketTask?
     private(set) var state: ConnectionState = .disconnected
     weak var delegate: CoreConnectionDelegate?
+    private var connection: NWConnection?
+    private var queue = DispatchQueue(label: "com.core.connection")
 
-    func connect(hostname: String, port: Int) {
-        let url = URL(string: "ws://\(hostname):\(port)")!
-        let session = URLSession(
-            configuration: .default,
-            delegate: self,
-            delegateQueue: OperationQueue()
+    func connect(_ endpoint: NWEndpoint) {
+
+        let options = NWProtocolWebSocket.Options()
+        options.autoReplyPing = true
+        options.maximumMessageSize = 20 * 1024 * 1024
+        let params = NWParameters(tls: nil, tcp: .init())
+        params.defaultProtocolStack.applicationProtocols.insert(options, at: 0)
+
+        connection = NWConnection(to: endpoint, using: params)
+
+        connection?.stateUpdateHandler = { state in
+            print("Connection state: \(state)")
+            switch state {
+            case .ready:
+                print("Connected to Core")
+
+                DispatchQueue.main.async {
+                    self.delegate?.coreConnectionDidConnect()
+                }
+
+                self.state = .connected
+                self.receive()
+                break
+            case .failed(_):
+                self.disconnect()
+                break
+            case .setup:
+                break
+            case .waiting(_):
+                break
+            case .preparing:
+                break
+            case .cancelled:
+                self.disconnect()
+                break
+            @unknown default:
+                break
+            }
+        }
+
+        connection?.start(queue: queue)
+        state = .connecting
+
+    }
+
+    func send(_ data: Data) {
+        let metadata = NWProtocolWebSocket.Metadata(opcode: .binary)
+        let context = NWConnection.ContentContext(
+            identifier: "CoreConnection content context",
+            metadata: [metadata]
         )
 
-        task = session.webSocketTask(with: url)
-        task?.maximumMessageSize = 20 * 1024 * 1024
-        task?.resume()
-        self.state = .connecting
+        connection?.send(
+            content: data,
+            contentContext: context,
+            completion: .contentProcessed { error in
+                if let error = error {
+                    print("Send failed: \(error.localizedDescription)")
+                    self.disconnect()
+                }
+            }
+        )
+    }
+
+    func receive() {
+        connection?.receiveMessage(completion: { data, context, isComplete, error in
+
+            if let error = error {
+                print("Receive error: \(error.localizedDescription)")
+                self.disconnect()
+                return
+            }
+            
+            if let data = data {
+                DispatchQueue.main.async {
+                    self.delegate?.coreConnectionDidReceiveData(data: data)
+                }
+            }
+
+            self.receive()
+        })
     }
 
     private func disconnect() {
@@ -37,7 +108,7 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate, URLSessionTaskDeleg
             return
         }
 
-        self.task?.cancel()
+        self.connection?.cancel()
 
         print("Disconnected from core")
 
@@ -46,87 +117,5 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate, URLSessionTaskDeleg
         DispatchQueue.main.async {
             self.delegate?.coreConnectionDidDisconnect()
         }
-    }
-
-    func send(_ data: Data) {
-
-        guard self.state == .connected else {
-            return
-        }
-
-        task?.send(
-            .data(data),
-            completionHandler: { error in
-                if let error = error {
-                    print("Error sending to core: \(error)")
-                    self.disconnect()
-                }
-            }
-        )
-    }
-
-    private func receive() {
-        guard let task = self.task else {
-            return
-        }
-
-        task.receive { [weak self] result in
-            switch result {
-            case .success(let message):
-                DispatchQueue.main.async {
-                    switch message {
-                    case .data(let data):
-                        self?.delegate?.coreConnectionDidReceiveData(data: data)
-                    case .string(let string):
-                        self?.delegate?.coreConnectionDidReceiveString(string: string)
-                    @unknown default:
-                        print("Received unknown message")
-                    }
-                }
-
-            case .failure(let error):
-                print("Error receiving data: \(error.localizedDescription)")
-                self?.disconnect()
-                return
-            }
-
-            guard let self = self else {
-                return
-            }
-
-            if self.state == .connected {
-                self.receive()
-            }
-        }
-    }
-
-    func urlSession(
-        _ session: URLSession,
-        webSocketTask: URLSessionWebSocketTask,
-        didOpenWithProtocol protocol: String?
-    ) {
-        print("Connected to core")
-
-        self.state = .connected
-
-        DispatchQueue.main.async {
-            self.delegate?.coreConnectionDidConnect()
-        }
-
-        receive()
-    }
-
-    func urlSession(
-        _ session: URLSession,
-        webSocketTask: URLSessionWebSocketTask,
-        didCloseWith closeCode: URLSessionWebSocketTask.CloseCode,
-        reason: Data?
-    ) {
-        self.disconnect()
-    }
-
-    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?)
-    {
-        self.disconnect()
     }
 }

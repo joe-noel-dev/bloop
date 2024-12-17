@@ -68,8 +68,8 @@ extension ApiMiddleware: CoreDelegate {
         }
     }
 
-    func coreDiscovered(_ server: Server) {
-        self.dispatch?(.addServer(server))
+    func onKnownServersChanged(_ servers: [Server]) {
+        self.dispatch?(.setDiscoveredServers(servers))
     }
 
 }

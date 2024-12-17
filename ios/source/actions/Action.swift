@@ -18,7 +18,7 @@ enum Action {
     case uploadSample((Id, URL))
     case uploadAck(Id)
 
-    case addServer(Server)
+    case setDiscoveredServers([Server])
     case removeAllServers
 
 }

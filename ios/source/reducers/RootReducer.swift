@@ -40,10 +40,8 @@ func rootReducer(state: AppState, action: Action) -> AppState {
     case .uploadAck(_):
         break
 
-    case .addServer(let server):
-        if !state.servers.contains(server) {
-            state.servers.append(server)
-        }
+    case .setDiscoveredServers(let servers):
+        state.servers = servers
 
     case .removeAllServers:
         state.servers.removeAll()

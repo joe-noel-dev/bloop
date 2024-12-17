@@ -55,7 +55,9 @@ struct SectionView: View {
         }
         .frame(minHeight: 48)
         .contentShape(Rectangle())
-        .overlay(border, alignment: .leading)
+        .overlay(alignment: .leading) {
+            border
+        }
         .overlay(alignment: .bottom) {
             if isPlaying {
                 ProgressBar(progress: progress.sectionProgress)

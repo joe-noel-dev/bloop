@@ -238,7 +238,6 @@
 		C229B9882A4DA1EB0044F2C6 /* model */ = {
 			isa = PBXGroup;
 			children = (
-				74B089862D11D2B7004DEC24 /* Server.swift */,
 				C20240DD2A4F14D100F8138D /* DemoProject.swift */,
 				C229B9912A4DA30B0044F2C6 /* Id.swift */,
 				C257C16C2A4DF6340080ECC2 /* PlaybackState.swift */,
@@ -248,6 +247,7 @@
 				C229B9972A4DA3820044F2C6 /* Sample.swift */,
 				C229B9952A4DA3510044F2C6 /* Section.swift */,
 				C229B98F2A4DA2E50044F2C6 /* Selections.swift */,
+				74B089862D11D2B7004DEC24 /* Server.swift */,
 				C229B98D2A4DA2850044F2C6 /* Song.swift */,
 				C229B9932A4DA3310044F2C6 /* Tempo.swift */,
 				C257C16E2A4DF6D40080ECC2 /* Waveform.swift */,
