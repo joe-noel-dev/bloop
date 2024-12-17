@@ -28,3 +28,7 @@ Run:
 ```sh
 cargo run
 ```
+
+### Run on Raspberry Pi
+
+See instructions in [raspberry-pi](./docs/raspberry-pi.md)
