@@ -37,4 +37,4 @@ tempfile = "3.14.0"
 tokio = { version = "1.41.0", features = ["full"] }
 tokio-serial = "5.4.4"
 tokio-tungstenite = "0.24.0"
-uuid = { version = "1.8.0", features = ["serde", "v4"] } 
+uuid = { version = "1.11.0", features = ["serde", "v4"] } 
