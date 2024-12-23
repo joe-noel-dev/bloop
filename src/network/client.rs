@@ -3,7 +3,7 @@ use crate::api::{Request, Response};
 use futures::SinkExt;
 use futures_util::stream::{SplitSink, SplitStream};
 use futures_util::StreamExt;
-use log::{error, info};
+use log::{error, info, warn};
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio::select;
@@ -65,6 +65,7 @@ impl Client {
         let api_request = match convert_bytes_to_request(&mut message) {
             Ok(request) => request,
             Err(error) => {
+                warn!("Error parsing request: {error}");
                 let response = Response::default().with_error(&error.to_string());
                 self.send_response(&response).await;
                 return Ok(());

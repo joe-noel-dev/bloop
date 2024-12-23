@@ -1,7 +1,7 @@
-import {ProjectInfo} from '../model/project-info';
 import {Section} from '../model/section';
 import {Song} from '../model/song';
 import {Sample} from '../model/sample';
+import {Project} from '../model';
 
 export type Method =
   | 'get'
@@ -49,7 +49,7 @@ export interface EntityId {
 
 export interface UpdateRequest {
   entity: Entity;
-  value: Song | Section | ProjectInfo | Sample;
+  value: Song | Section | Project | Sample;
 }
 
 export interface RenameRequest {
@@ -181,7 +181,7 @@ export const removeSampleRequest = (songId: string): Request => {
 
 export const updateRequest = (
   entity: Entity,
-  value: Song | Section | ProjectInfo | Sample
+  value: Song | Section | Project | Sample
 ): Request => {
   return {
     method: 'update',
@@ -200,6 +200,9 @@ export const updateSectionRequest = (section: Section): Request =>
 
 export const updateSampleRequest = (sample: Sample): Request =>
   updateRequest('sample', sample);
+
+export const updateProjectRequest = (project: Project): Request =>
+  updateRequest('project', project);
 
 const transportRequest = (method: TransportMethod): Request => {
   return {
