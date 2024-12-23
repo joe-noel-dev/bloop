@@ -1,6 +1,14 @@
 import {Button, Grid, IconButton, Input, Stack, Typography} from '@mui/joy';
 import {useSong} from '../../model-hooks/song-hooks';
-import {Add, Cancel, Check, Delete, Edit} from '@mui/icons-material';
+import {
+  Add,
+  ArrowDownward,
+  ArrowUpward,
+  Cancel,
+  Check,
+  Delete,
+  Edit,
+} from '@mui/icons-material';
 import {Sample} from '../sample/Sample';
 import {Section} from '../section/Section';
 import {
@@ -15,9 +23,10 @@ import {Song as ModelSong} from '../../model';
 
 interface SongProps {
   songId: string;
+  moveSong: (indexDelta: number) => void;
 }
 
-export const Song = ({songId}: SongProps) => {
+export const Song = ({songId, moveSong}: SongProps) => {
   const song = useSong(songId);
   const core = useCore();
 
@@ -68,6 +77,14 @@ export const Song = ({songId}: SongProps) => {
     setEditingTempo(`${song.tempo.bpm}`);
   };
 
+  const moveUp = () => {
+    moveSong(-1);
+  };
+
+  const moveDown = () => {
+    moveSong(1);
+  };
+
   return (
     <Stack spacing={2}>
       {editing ? (
@@ -90,7 +107,12 @@ export const Song = ({songId}: SongProps) => {
           </Stack>
         </form>
       ) : (
-        <SongDetails song={song} onRequestEdit={edit} />
+        <SongDetails
+          song={song}
+          onRequestEdit={edit}
+          onMoveUp={moveUp}
+          onMoveDown={moveDown}
+        />
       )}
       <Sample sampleId={song.sample?.id || ''} songId={songId} />
       <SectionsTable song={song} onRequestAdd={addSection} />
@@ -101,13 +123,40 @@ export const Song = ({songId}: SongProps) => {
 interface SongDetailsProps {
   song: ModelSong;
   onRequestEdit: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
 }
 
-const SongDetails = ({song, onRequestEdit}: SongDetailsProps) => (
+const SongDetails = ({
+  song,
+  onRequestEdit,
+  onMoveUp,
+  onMoveDown,
+}: SongDetailsProps) => (
   <Stack direction="row" spacing={2} alignItems="center">
     <Typography level="title-lg">{song.name}</Typography>
 
     <Typography level="body-md">{song.tempo.bpm} bpm</Typography>
+
+    <IconButton
+      color="primary"
+      size="sm"
+      variant="soft"
+      aria-label="Move song up"
+      onClick={onMoveUp}
+    >
+      <ArrowUpward />
+    </IconButton>
+
+    <IconButton
+      color="primary"
+      size="sm"
+      variant="soft"
+      aria-label="Move song down"
+      onClick={onMoveDown}
+    >
+      <ArrowDownward />
+    </IconButton>
 
     <IconButton
       color="primary"

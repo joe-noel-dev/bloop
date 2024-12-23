@@ -1,8 +1,9 @@
 import {getAllRequest, Request} from '../api/request';
 import {Response} from '../api/response';
-import {serialize, deserialize, setInternalBufferSize} from 'bson';
+import {serialize, deserialize, setInternalBufferSize, Long} from 'bson';
 import {WaveformData} from '../model/waveform';
 import {EventEmitter} from 'events';
+import {ProjectInfo} from '../model/project-info';
 
 const logRequests: boolean = import.meta.env.VITE_BLOOP_LOG_REQUESTS === 'true';
 
@@ -56,6 +57,7 @@ export const createCore = () => {
       const message: Response = deserialize(event.data);
 
       if (message.project) {
+        fixLastSaved(message.project.info);
         eventEmitter.emit('project', message.project);
       }
 
@@ -68,6 +70,7 @@ export const createCore = () => {
       }
 
       if (message.projects) {
+        message.projects.forEach(fixLastSaved);
         eventEmitter.emit('projects', message.projects);
       }
 
@@ -142,3 +145,11 @@ export const createCore = () => {
 };
 
 export type Core = ReturnType<typeof createCore>;
+
+const fixLastSaved = (projectInfo: ProjectInfo) => {
+  // Hack to workaround we receive lastSaved as number instead of Long, but
+  // the core expects an i64
+  if (typeof projectInfo.lastSaved === 'number') {
+    projectInfo.lastSaved = Long.fromNumber(projectInfo.lastSaved as number);
+  }
+};

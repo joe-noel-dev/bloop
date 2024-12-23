@@ -1,6 +1,7 @@
 import {ProjectInfo} from './project-info';
 import {Song} from './song';
 import {Selections} from './selections';
+import {Long} from 'bson';
 
 export interface Project {
   info: ProjectInfo;
@@ -18,7 +19,7 @@ export function emptyProject(): Project {
       id: '',
       name: '',
       version: '',
-      lastSaved: 0,
+      lastSaved: Long.fromNumber(0),
     },
     songs: [],
     selections: {},
