@@ -20,6 +20,7 @@ import {useCore} from '../../core/use-core';
 import {useState} from 'react';
 import {columnSize, columns} from '../section/TableInfo';
 import {Song as ModelSong} from '../../model';
+import {updateSectionBeatLength} from '../../model/song';
 
 interface SongProps {
   songId: string;
@@ -85,6 +86,13 @@ export const Song = ({songId, moveSong}: SongProps) => {
     moveSong(1);
   };
 
+  const updateSectionDuration = (sectionId: string, duration: number) => {
+    const newSong = {...song};
+    updateSectionBeatLength(newSong, sectionId, duration);
+    const request = updateSongRequest(newSong);
+    core.sendRequest(request);
+  };
+
   return (
     <Stack spacing={2}>
       {editing ? (
@@ -115,7 +123,11 @@ export const Song = ({songId, moveSong}: SongProps) => {
         />
       )}
       <Sample sampleId={song.sample?.id || ''} songId={songId} />
-      <SectionsTable song={song} onRequestAdd={addSection} />
+      <SectionsTable
+        song={song}
+        requestAdd={addSection}
+        requestUpdateSectionDuration={updateSectionDuration}
+      />
     </Stack>
   );
 };
@@ -243,18 +255,25 @@ const TableFooter = ({onRequestAdd}: {onRequestAdd: () => void}) => (
 
 const SectionsTable = ({
   song,
-  onRequestAdd,
+  requestAdd,
+  requestUpdateSectionDuration,
 }: {
   song: ModelSong;
-  onRequestAdd: () => void;
+  requestAdd: () => void;
+  requestUpdateSectionDuration: (sectionId: string, duration: number) => void;
 }) => (
   <Stack spacing={1}>
     <TableHeader />
 
     {song.sections.map((section) => (
-      <Section key={section.id} songId={song.id} sectionId={section.id} />
+      <Section
+        key={section.id}
+        songId={song.id}
+        sectionId={section.id}
+        requestUpdateDuration={requestUpdateSectionDuration}
+      />
     ))}
 
-    <TableFooter onRequestAdd={onRequestAdd} />
+    <TableFooter onRequestAdd={requestAdd} />
   </Stack>
 );

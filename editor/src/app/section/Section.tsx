@@ -24,23 +24,27 @@ import {useState} from 'react';
 import {usePlaybackState, useProgress} from '../../model-hooks/transport-hooks';
 import {columnSize, columns} from './TableInfo';
 import isEqual from 'lodash.isequal';
+import {getSectionBeatLength} from '../../model/song';
+import {useSong} from '../../model-hooks/song-hooks';
 
 interface Props {
   songId: string;
   sectionId: string;
+  requestUpdateDuration(sectionId: string, duration: number): void;
 }
 
-export const Section = ({songId, sectionId}: Props) => {
+export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
   const section = useSectionById(sectionId);
   const core = useCore();
+  const song = useSong(songId);
   const selectedSectionId = useSelectedSectionId();
   const playbackState = usePlaybackState();
   const progress = useProgress();
 
   const [editingName, setEditingName] = useState(section?.name ?? '');
-  const [editingStart, setEditingStart] = useState(
-    section?.start.toString() ?? ''
-  );
+  const duration = song ? getSectionBeatLength(song, sectionId) : 0;
+  const isLast = song?.sections.at(-1)?.id === sectionId;
+  const [editingDuration, setEditingDuration] = useState(duration.toString());
 
   const isSelected = sectionId === selectedSectionId;
   const isPlaying =
@@ -87,17 +91,21 @@ export const Section = ({songId, sectionId}: Props) => {
       newSection.name = editingName;
     }
 
-    const newStart = parseFloat(editingStart);
-    if (!isNaN(newStart)) {
-      newSection.start = newStart;
-    }
-
     if (isEqual(section, newSection)) {
       return;
     }
 
     const request = updateSectionRequest(newSection);
     core.sendRequest(request);
+  };
+
+  const submitDuration = () => {
+    const newDuration = parseFloat(editingDuration);
+    if (isNaN(newDuration) || newDuration === duration) {
+      return;
+    }
+
+    requestUpdateDuration(sectionId, newDuration);
   };
 
   const stop = () => {
@@ -143,13 +151,14 @@ export const Section = ({songId, sectionId}: Props) => {
                 onSubmit={submit}
               />
             );
-          case 'Start':
+          case 'Duration':
             return (
-              <StartCell
+              <DurationCell
                 key={name}
-                value={editingStart}
-                onChange={setEditingStart}
-                onSubmit={submit}
+                display={!isLast}
+                value={editingDuration}
+                onChange={setEditingDuration}
+                onSubmit={submitDuration}
               />
             );
           case 'Loop':
@@ -263,21 +272,28 @@ const NameCell = ({
   </Grid>
 );
 
-const StartCell = ({
+const DurationCell = ({
   value,
+  display,
   onChange,
   onSubmit,
 }: {
   value: string;
+  display: boolean;
   onChange: (value: string) => void;
   onSubmit: () => void;
 }) => (
-  <Grid xs={columnSize('Start')} sx={{display: 'flex', alignItems: 'center'}}>
-    <Input
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      onBlur={onSubmit}
-    />
+  <Grid
+    xs={columnSize('Duration')}
+    sx={{display: 'flex', alignItems: 'center'}}
+  >
+    {display && (
+      <Input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        onBlur={onSubmit}
+      />
+    )}
   </Grid>
 );
 

@@ -1,7 +1,7 @@
 export type ColumnName =
   | 'Play'
   | 'Name'
-  | 'Start'
+  | 'Duration'
   | 'Loop'
   | 'Metronome'
   | 'Edit';
@@ -9,7 +9,7 @@ export type ColumnName =
 export const columns: ColumnName[] = [
   'Play',
   'Name',
-  'Start',
+  'Duration',
   'Loop',
   'Metronome',
   'Edit',
@@ -22,7 +22,7 @@ export const columnSize = (name: ColumnName): number => {
     case 'Metronome':
     case 'Edit':
       return 2;
-    case 'Start':
+    case 'Duration':
     case 'Loop':
       return 1;
   }

@@ -33,3 +33,28 @@ export const getSectionBeatLength = (song: Song, sectionId: string) => {
 
   return 0;
 };
+
+export const updateSectionBeatLength = (
+  song: Song,
+  sectionId: string,
+  duration: number
+) => {
+  if (duration < 0) {
+    return;
+  }
+
+  const existingDuration = getSectionBeatLength(song, sectionId);
+  const durationDelta = duration - existingDuration;
+
+  const sectionIndex = song.sections.findIndex(
+    (section) => section.id === sectionId
+  );
+  if (sectionIndex < 0) {
+    return;
+  }
+
+  for (let i = sectionIndex + 1; i < song.sections.length; i++) {
+    const section = song.sections[i];
+    section.start += durationDelta;
+  }
+};
