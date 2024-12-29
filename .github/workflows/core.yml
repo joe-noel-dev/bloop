@@ -30,7 +30,16 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libssl-dev libasound2-dev libudev-dev
+    - name: Install cargo-deb
+      run: cargo install cargo-deb
     - name: Build
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
+    - name: Create Debian package
+      run: cargo deb
+    - name: Upload Debian package
+      uses: actions/upload-artifact@v2
+      with:
+        name: debian-package
+        path: target/debian/*.deb
