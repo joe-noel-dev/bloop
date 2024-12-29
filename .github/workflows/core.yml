@@ -26,10 +26,17 @@ jobs:
           toolchain: nightly
           override: true
           components: rustfmt, clippy
-    - name: Install ALSA
+    - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libssl-dev libasound2-dev libudev-dev
+        sudo apt-get install -y \
+          libssl-dev \
+          libasound2-dev \
+          libudev-dev \
+          jackd2 \
+          libjack-jackd2-dev
+      env:
+        DEBIAN_FRONTEND: noninteractive
     - name: Install cargo-deb
       run: cargo install cargo-deb
     - name: Build

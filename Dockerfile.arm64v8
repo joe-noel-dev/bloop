@@ -1,6 +1,13 @@
 FROM arm64v8/rust:1.69
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update && \
-    apt-get install libasound2-dev:arm64 libudev-dev:arm64 -y
+    apt-get install -y \
+        libasound2-dev:arm64 \
+        libudev-dev:arm64 \
+        jackd2:arm64 \
+        libjack-jackd2-dev:arm64 \
+        && rm -rf /var/lib/apt/lists/*
 
 RUN rustup default nightly
