@@ -2,15 +2,19 @@
 
 set -ex
 
-readonly CONTAINER_TAG=cross/bloop_arm64v8:v1
-readonly CONTAINER_SRC_DIR=/usr/src/bloop
+ARCH=${1:-amd64} # Options include: amd64, arm64v8
+CONTAINER_TAG="cross/bloop_${ARCH}:v1"
+CONTAINER_SRC_DIR=/usr/src/bloop
+DOCKERFILE="Dockerfile.${ARCH}"
+PLATFORM="linux/${ARCH}"
 
-docker build --tag ${CONTAINER_TAG} .
+docker build --file ${DOCKERFILE} --tag ${CONTAINER_TAG} --platform ${PLATFORM} . 
 
 docker run \
 --rm \
+--platform ${PLATFORM} \
 --volume .:${CONTAINER_SRC_DIR} \
 --workdir ${CONTAINER_SRC_DIR} \
---name bloop_cross \
+--name bloop_cross_${ARCH} \
 ${CONTAINER_TAG} \
 cargo build --release
