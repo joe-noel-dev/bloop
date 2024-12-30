@@ -107,7 +107,6 @@ struct SongView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading) {
-                header
                 sections
                 Spacer()
             }
@@ -137,6 +136,49 @@ struct SongView: View {
                 print("\(error)")
             }
         }
+        .toolbar {
+            headerMenu
+        }
+        .popover(isPresented: $editingName) {
+            NameEditor(prompt: "Song Name", value: $newName)
+                .onSubmit {
+                    var song = song
+                    song.name = newName
+
+                    let action = updateSongAction(song)
+                    dispatch(action)
+
+                    editingName = false
+                }
+                .onAppear {
+                    newName = song.name
+                }
+        }
+        .popover(isPresented: $editingTempo) {
+            VStack(alignment: .leading, spacing: Layout.units(2)) {
+                Text("Tempo")
+
+                TextField("Tempo", value: $newTempo, formatter: NumberFormatter())
+                    .textFieldStyle(.roundedBorder)
+            }
+            .font(.title2)
+            .padding(Layout.units(2))
+            .frame(minWidth: 400)
+            .onAppear {
+                if let tempo = song.sample?.tempo.bpm {
+                    self.newTempo = tempo
+                }
+            }
+            .onSubmit {
+                var song = song
+                song.sample?.tempo.bpm = newTempo
+                song.tempo.bpm = newTempo
+
+                let action = updateSongAction(song)
+                dispatch(action)
+            }
+        }
+
     }
 
     @ViewBuilder
@@ -212,60 +254,6 @@ struct SongView: View {
             Image(systemName: "ellipsis")
         }
         .font(.title)
-    }
-
-    @ViewBuilder
-    private var header: some View {
-        HStack {
-            Text(song.name)
-                .font(.largeTitle)
-
-            Spacer()
-
-            if isSelected {
-                headerMenu
-            }
-        }
-        .popover(isPresented: $editingName) {
-            NameEditor(prompt: "Song Name", value: $newName)
-                .onSubmit {
-                    var song = song
-                    song.name = newName
-
-                    let action = updateSongAction(song)
-                    dispatch(action)
-
-                    editingName = false
-                }
-                .onAppear {
-                    newName = song.name
-                }
-        }
-        .popover(isPresented: $editingTempo) {
-            VStack(alignment: .leading, spacing: Layout.units(2)) {
-                Text("Tempo")
-
-                TextField("Tempo", value: $newTempo, formatter: NumberFormatter())
-                    .textFieldStyle(.roundedBorder)
-            }
-            .font(.title2)
-            .padding(Layout.units(2))
-            .frame(minWidth: 400)
-            .onAppear {
-                if let tempo = song.sample?.tempo.bpm {
-                    self.newTempo = tempo
-                }
-            }
-            .onSubmit {
-                var song = song
-                song.sample?.tempo.bpm = newTempo
-                song.tempo.bpm = newTempo
-
-                let action = updateSongAction(song)
-                dispatch(action)
-            }
-        }
-
     }
 }
 

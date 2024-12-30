@@ -22,7 +22,7 @@ class UploadMiddleware: Middleware {
             onUploadAck(uploadId: uploadId)
         }
     }
-    
+
     func setDispatch(_ dispatch: @escaping Dispatch) {
         self.dispatch = dispatch
     }

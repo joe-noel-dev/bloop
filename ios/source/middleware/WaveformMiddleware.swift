@@ -30,7 +30,7 @@ class WaveformMiddleware: Middleware {
             waveformIds = newIds
         }
     }
-    
+
     func setDispatch(_ dispatch: @escaping Dispatch) {
         self.dispatch = dispatch
     }

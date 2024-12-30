@@ -26,7 +26,7 @@ class Discovery: NSObject {
                 self?.onKnownServersChanged?(results.map { $0.endpoint })
             }
         }
-        
+
         serviceBrowser.start(queue: queue)
     }
 }

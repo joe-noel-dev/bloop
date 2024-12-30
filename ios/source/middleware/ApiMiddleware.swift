@@ -13,11 +13,14 @@ class ApiMiddleware: Middleware {
             core.connect(server)
         }
 
+        if case .disconnect = action {
+            core.disconnect()
+        }
+
         if case .sendRequest(let request) = action {
             core.sendRequest(request)
         }
     }
-    
 
 }
 

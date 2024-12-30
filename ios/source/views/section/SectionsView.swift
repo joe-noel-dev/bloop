@@ -63,7 +63,7 @@ struct SectionRow: View {
 
     var body: some View {
 
-        HStack {
+        VStack(alignment: .leading) {
 
             TextField("Name", text: $newName)
                 .font(.title2)
@@ -73,52 +73,54 @@ struct SectionRow: View {
                     updateSection(newSection)
                 }
 
-            Spacer()
+            HStack {
 
-            Toggle(
-                isOn: .init(
-                    get: {
-                        section.metronome
-                    },
-                    set: { value in
-                        var newSection = section
-                        newSection.metronome = value
-                        updateSection(newSection)
-                    }
-                ),
-                label: {
-                    Image(systemName: "metronome")
-                }
-            )
-            .toggleStyle(.button)
-
-            Toggle(
-                isOn: .init(
-                    get: {
-                        section.loop
-                    },
-                    set: { value in
-                        var newSection = section
-                        newSection.loop = value
-                        updateSection(newSection)
+                Toggle(
+                    isOn: .init(
+                        get: {
+                            section.metronome
+                        },
+                        set: { value in
+                            var newSection = section
+                            newSection.metronome = value
+                            updateSection(newSection)
+                        }
+                    ),
+                    label: {
+                        Image(systemName: "metronome")
                     }
                 )
-            ) {
-                Image(systemName: "repeat")
-            }
-            .toggleStyle(.button)
+                .toggleStyle(.button)
 
-            TextField("Start", value: $newStart, formatter: NumberFormatter())
-                .textFieldStyle(.roundedBorder)
-                .frame(maxWidth: 64)
-                #if os(iOS)
-                    .keyboardType(.decimalPad)
-                #endif
-                .onSubmit {
-                    var newSection = section
-                    newSection.start = newStart
-                    updateSection(newSection)
+                Toggle(
+                    isOn: .init(
+                        get: {
+                            section.loop
+                        },
+                        set: { value in
+                            var newSection = section
+                            newSection.loop = value
+                            updateSection(newSection)
+                        }
+                    )
+                ) {
+                    Image(systemName: "repeat")
                 }
+                .toggleStyle(.button)
+
+                TextField("Start", value: $newStart, formatter: NumberFormatter())
+                    .textFieldStyle(.roundedBorder)
+                    .frame(maxWidth: 64)
+                    #if os(iOS)
+                        .keyboardType(.decimalPad)
+                    #endif
+                    .onSubmit {
+                        var newSection = section
+                        newSection.start = newStart
+                        updateSection(newSection)
+                    }
+
+            }
         }
 
     }

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		74B089872D11D2B9004DEC24 /* Server.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B089862D11D2B7004DEC24 /* Server.swift */; };
+		74CBF57A2D22DC28005C5ABF /* NavigationItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74CBF5782D22DC28005C5ABF /* NavigationItem.swift */; };
 		C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DB2A4F123400F8138D /* DisconnectedView.swift */; };
 		C20240DE2A4F14D100F8138D /* DemoProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DD2A4F14D100F8138D /* DemoProject.swift */; };
 		C20240E02A4F255B00F8138D /* SongView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DF2A4F255B00F8138D /* SongView.swift */; };
@@ -83,6 +84,7 @@
 
 /* Begin PBXFileReference section */
 		74B089862D11D2B7004DEC24 /* Server.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Server.swift; sourceTree = "<group>"; };
+		74CBF5782D22DC28005C5ABF /* NavigationItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationItem.swift; sourceTree = "<group>"; };
 		C20240DB2A4F123400F8138D /* DisconnectedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectedView.swift; sourceTree = "<group>"; };
 		C20240DD2A4F14D100F8138D /* DemoProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoProject.swift; sourceTree = "<group>"; };
 		C20240DF2A4F255B00F8138D /* SongView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongView.swift; sourceTree = "<group>"; };
@@ -169,6 +171,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		74CBF5792D22DC28005C5ABF /* navigation */ = {
+			isa = PBXGroup;
+			children = (
+				74CBF5782D22DC28005C5ABF /* NavigationItem.swift */,
+			);
+			path = navigation;
+			sourceTree = "<group>";
+		};
 		C229B9722A4D966C0044F2C6 /* app */ = {
 			isa = PBXGroup;
 			children = (
@@ -186,6 +196,7 @@
 			children = (
 				C28705072A581BAA00178FC9 /* components */,
 				C27E2A6A2A51E1EF00D48D91 /* disconnected */,
+				74CBF5792D22DC28005C5ABF /* navigation */,
 				C27E2A692A51E1E000D48D91 /* project */,
 				C27E2A6D2A51E21300D48D91 /* root */,
 				C27E2A6C2A51E20300D48D91 /* section */,
@@ -577,6 +588,7 @@
 				C229B9A02A4DE4DF0044F2C6 /* Request.swift in Sources */,
 				C257C1712A4DF81E0080ECC2 /* Progress.swift in Sources */,
 				C229B99D2A4DDE7C0044F2C6 /* CoreConnection.swift in Sources */,
+				74CBF57A2D22DC28005C5ABF /* NavigationItem.swift in Sources */,
 				C229B99B2A4DD55D0044F2C6 /* Core.swift in Sources */,
 				C20F17CF2AB07C2B00ECF2EB /* Discovery.swift in Sources */,
 				C257C16F2A4DF6D40080ECC2 /* Waveform.swift in Sources */,

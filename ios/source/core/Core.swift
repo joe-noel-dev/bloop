@@ -33,6 +33,10 @@ class Core: CoreConnectionDelegate {
         }
     }
 
+    func disconnect() {
+        self.connection.disconnect()
+    }
+
     func sendRequest(_ request: Request) {
         queue.async {
             do {

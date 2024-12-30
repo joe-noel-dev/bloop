@@ -9,7 +9,7 @@ class Store: ObservableObject {
         self.reducer = reducer
         self.middlewares = middlewares
         self.state = state
-        
+
         for var middleware in self.middlewares {
             middleware.dispatch = dispatch
         }

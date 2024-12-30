@@ -11,7 +11,7 @@ struct Colours {
     static let backgroundLight = Color("background-light")
     static let backgroundDark = Color("background-dark")
 
-    static let selected = theme5
+    static let selected = neutral2
     static let playing = theme1
 
     static let neutral0 = Color("neutral-0")

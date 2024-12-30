@@ -10,31 +10,58 @@ struct ProjectView: View {
 
     @State private var newProjectName = ""
 
+    private var navigationPath: Binding<[NavigationItem]> {
+        Binding(
+            get: {
+                state.navigationPath
+            },
+            set: { value in
+                dispatch(.setNavigationPath(value))
+            }
+        )
+    }
+
     @Environment(\.colorScheme) var colorScheme
-
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                scrollView
-                    .toolbar {
-                        toolbarContent
-                    }
-                    .background(
-                        colorScheme == .light ? Colours.backgroundLight : Colours.backgroundDark
-                    )
 
-                transportBar
+        VStack(spacing: 0) {
+            NavigationStack(path: navigationPath) {
+
+                SongsView(
+                    project: state.project,
+                    dispatch: dispatch,
+                    navigationPath: navigationPath
+                )
+                .toolbar {
+                    toolbarContent
+                }
+
+                .navigationDestination(for: NavigationItem.self) { item in
+                    if case .song(let songId) = item {
+                        let song = state.project.songs.first { $0.id == songId }
+
+                        if song != nil {
+                            SongView(
+                                song: song!,
+                                selections: state.project.selections,
+                                playbackState: state.playbackState,
+                                progress: state.progress,
+                                waveforms: state.waveforms,
+                                dispatch: dispatch
+                            )
+                            .navigationTitle(song!.name)
+                        }
+
+                    }
+                }
+            }
+            .sheet(isPresented: $projectsViewOpen) {
+                ProjectsView(projects: state.projects, dispatch: dispatch) {
+                    projectsViewOpen = false
+                }
             }
         }
-        .sheet(isPresented: $projectsViewOpen) {
-            ProjectsView(projects: state.projects, dispatch: dispatch) {
-                projectsViewOpen = false
-            }
-        }
-        .sheet(isPresented: $editingSongs) {
-            SongsView(project: state.project, dispatch: dispatch)
-        }
-        .background(.regularMaterial)
+        transportBar
     }
 
     @ToolbarContentBuilder private var toolbarContent: some ToolbarContent {
@@ -51,7 +78,7 @@ struct ProjectView: View {
             Menu {
                 projectsButton
                 renameProjectButton
-                songsButton
+                disconnectButton
             } label: {
                 Image(systemName: "ellipsis")
             }
@@ -110,7 +137,7 @@ struct ProjectView: View {
     private var transportBar: some View {
         TransportBar(
             playbackState: state.playbackState,
-            selections: state.project.selections,
+            project: state.project,
             dispatch: dispatch
         )
     }
@@ -130,6 +157,15 @@ struct ProjectView: View {
             editingProjectName = true
         } label: {
             Label("Rename Project", systemImage: "pencil")
+        }
+    }
+
+    @ViewBuilder
+    private var disconnectButton: some View {
+        Button {
+            dispatch(.disconnect)
+        } label: {
+            Label("Disconnect", systemImage: "phone.down.fill")
         }
     }
 }
