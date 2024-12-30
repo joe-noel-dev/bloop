@@ -11,7 +11,6 @@ enum Action {
     case removeWaveform(Id)
     case addError(String)
 
-    case browse
     case connect(Server)
     case setConnected(Bool)
 

@@ -2,8 +2,9 @@ import Foundation
 
 class WaveformMiddleware: Middleware {
     private var waveformIds: Set<Id> = []
+    private var dispatch: Dispatch?
 
-    func execute(state: AppState, action: Action, dispatch: @escaping Dispatch) {
+    func execute(state: AppState, action: Action) {
         if case .setProject(let project) = action {
             let newIds = project.songs.reduce(Set<Id>()) { (ids, song) in
                 var ids = ids
@@ -19,15 +20,19 @@ class WaveformMiddleware: Middleware {
             let idsToRemove = waveformIds.subtracting(newIds)
 
             for id in idsToAdd {
-                dispatch(getWaveformAction(id))
+                self.dispatch?(getWaveformAction(id))
             }
 
             for id in idsToRemove {
-                dispatch(.removeWaveform(id))
+                self.dispatch?(.removeWaveform(id))
             }
 
             waveformIds = newIds
         }
+    }
+    
+    func setDispatch(_ dispatch: @escaping Dispatch) {
+        self.dispatch = dispatch
     }
 
 }

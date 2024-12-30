@@ -28,9 +28,6 @@ func rootReducer(state: AppState, action: Action) -> AppState {
     case .removeWaveform(let id):
         state.waveforms.removeValue(forKey: id)
 
-    case .browse:
-        break
-
     case .connect(_):
         break
 

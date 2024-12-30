@@ -28,10 +28,6 @@ struct DisconnectedView: View {
             }
         }
         .padding(Layout.units(2))
-        .onAppear {
-            dispatch(.browse)
-        }
-
     }
 }
 

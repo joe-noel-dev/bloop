@@ -8,6 +8,7 @@ class Discovery: NSObject {
     var onKnownServersChanged: (([NWEndpoint]) -> Void)?
     private let resolveTimeout: TimeInterval = 10
     private var browsing = false
+    private var queue = DispatchQueue(label: "bloop.discovery")
 
     override init() {
         let parameters = NWParameters()
@@ -25,23 +26,7 @@ class Discovery: NSObject {
                 self?.onKnownServersChanged?(results.map { $0.endpoint })
             }
         }
-    }
-
-    func browse() {
-        if browsing {
-            return
-        }
-
-        serviceBrowser.start(queue: .main)
-        browsing = true
-    }
-
-    func cancel() {
-        if !browsing {
-            return
-        }
-
-        serviceBrowser.cancel()
-        browsing = false
+        
+        serviceBrowser.start(queue: queue)
     }
 }
