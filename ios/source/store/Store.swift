@@ -11,7 +11,7 @@ class Store: ObservableObject {
         self.state = state
         
         for var middleware in self.middlewares {
-            middleware.setDispatch(dispatch)
+            middleware.dispatch = dispatch
         }
     }
 
@@ -20,7 +20,7 @@ class Store: ObservableObject {
             self.state = self.reducer(self.state, action)
         }
 
-        for var middleware in middlewares {
+        for middleware in middlewares {
             middleware.execute(state: self.state, action: action)
         }
     }

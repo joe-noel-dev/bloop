@@ -1,8 +1,8 @@
 import Foundation
 
 class ApiMiddleware: Middleware {
-    private let core = Core()
     var dispatch: Dispatch?
+    private let core = Core()
 
     init() {
         core.delegate = self
@@ -18,9 +18,6 @@ class ApiMiddleware: Middleware {
         }
     }
     
-    func setDispatch(_ dispatch: @escaping Dispatch) {
-        self.dispatch = dispatch
-    }
 
 }
 

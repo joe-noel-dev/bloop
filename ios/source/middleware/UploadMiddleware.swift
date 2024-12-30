@@ -11,7 +11,7 @@ class UploadMiddleware: Middleware {
     static private let chunkSize = 10 * 1024
 
     private var uploads: [Id: Upload] = [:]
-    private var dispatch: Dispatch?
+    var dispatch: Dispatch?
 
     func execute(state: AppState, action: Action) {
         if case .uploadSample((let songId, let fileToUpload)) = action {

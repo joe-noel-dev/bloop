@@ -2,7 +2,7 @@ import Foundation
 
 class WaveformMiddleware: Middleware {
     private var waveformIds: Set<Id> = []
-    private var dispatch: Dispatch?
+    var dispatch: Dispatch?
 
     func execute(state: AppState, action: Action) {
         if case .setProject(let project) = action {
