@@ -6,12 +6,13 @@ use super::{
 };
 use crate::{
     api::Response,
+    audio::preferences::{read_preferences, Preferences},
     model::{PlaybackState, PlayingState, Progress, Project, ID},
     samples::SamplesCache,
 };
 use futures::StreamExt;
 use futures_channel::mpsc;
-use log::{error, info};
+use log::{error, info, warn};
 use rawdio::{connect_nodes, create_engine_with_options, Context, EngineOptions, Mixer, Sampler, Timestamp};
 use std::{
     collections::{HashMap, HashSet},
@@ -41,33 +42,40 @@ pub struct AudioController {
 
 impl AudioController {
     pub fn new(response_tx: broadcast::Sender<Response>, preferences_dir: &Path) -> Self {
-        let sample_rate = 44_100;
-        let maximum_channel_count = 3;
+        let preferences = match read_preferences(preferences_dir) {
+            Ok(preferences) => preferences,
+            Err(error) => {
+                warn!("Failed to read preferences: {}", error);
+                Preferences::default()
+            }
+        };
 
         let (mut context, process) = create_engine_with_options(
             EngineOptions::default()
-                .with_sample_rate(sample_rate)
-                .with_maximum_channel_count(maximum_channel_count),
+                .with_sample_rate(preferences.sample_rate as usize)
+                .with_maximum_channel_count(preferences.output_channel_count as usize),
         );
 
+        let mixer = Mixer::unity(context.as_ref(), preferences.output_channel_count as usize);
+        connect_nodes!(mixer => "output");
+
         let metronome = Metronome::new(context.as_ref());
+
+        if preferences.output_channel_count >= 4 {
+            metronome.output_node().connect_channels_to(&mixer.node, 0, 2, 1);
+            metronome.output_node().connect_channels_to(&mixer.node, 0, 3, 1);
+        }
 
         context.start();
 
         let (conversion_tx, conversion_rx) = mpsc::channel(64);
 
-        let realtime_process = Process::new(process, preferences_dir);
-
-        let mixer = Mixer::unity(context.as_ref(), maximum_channel_count);
-
-        metronome.output_node().connect_channels_to(&mixer.node, 0, 2, 1);
-
-        connect_nodes!(mixer => "output");
+        let realtime_process = Process::new(process, &preferences);
 
         Self {
             context,
             realtime_process,
-            sample_converter: SampleConverter::new(conversion_tx, sample_rate),
+            sample_converter: SampleConverter::new(conversion_tx, preferences.sample_rate as usize),
             conversion_rx,
             response_tx,
             samples_being_converted: HashSet::new(),

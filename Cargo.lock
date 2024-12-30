@@ -1381,9 +1381,8 @@ dependencies = [
 
 [[package]]
 name = "rawdio"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22ee3bebda68c7999eda2bc5d1d0400caa9308135846f01e40f7b4d3c56e5f79"
+version = "0.15.0"
+source = "git+https://github.com/joe-noel-dev/rawdio.git#f54a2ac9cb0f63e2a1acf147b5b8d232c30a01c5"
 dependencies = [
  "approx",
  "atomic_float",
