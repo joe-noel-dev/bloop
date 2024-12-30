@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use rawdio::{connect_nodes, Adsr, Context, GraphNode, Level, Oscillator, Timestamp};
+use rawdio::{connect_nodes, Adsr, Context, GraphNode, Level, Mixer, Oscillator, Timestamp};
 
 use crate::model::Tempo;
 
@@ -9,6 +9,7 @@ use super::sequencer::Sequencer;
 pub struct Metronome {
     oscillator: Oscillator,
     adsr: Adsr,
+    splitter: Mixer,
     last_scheduled_time: Timestamp,
 }
 
@@ -34,17 +35,20 @@ impl Metronome {
             Duration::from_millis(15),
         );
 
-        connect_nodes!(oscillator => adsr);
+        let splitter = Mixer::mono_to_stereo_splitter(context);
+
+        connect_nodes!(oscillator => adsr => splitter);
 
         Self {
             oscillator,
             adsr,
+            splitter,
             last_scheduled_time: Timestamp::zero(),
         }
     }
 
     pub fn output_node(&self) -> &GraphNode {
-        &self.adsr.node
+        &self.splitter.node
     }
 
     pub fn schedule(&mut self, current_time: &Timestamp, sequencer: &Sequencer) {
