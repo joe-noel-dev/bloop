@@ -61,9 +61,9 @@ impl AudioController {
 
         let metronome = Metronome::new(context.as_ref());
 
+        // If available, metronome is on output 3-4
         if preferences.output_channel_count >= 4 {
-            metronome.output_node().connect_channels_to(&mixer.node, 0, 2, 1);
-            metronome.output_node().connect_channels_to(&mixer.node, 0, 3, 1);
+            metronome.output_node().connect_channels_to(&mixer.node, 0, 2, 2);
         }
 
         context.start();
