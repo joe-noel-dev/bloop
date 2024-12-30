@@ -92,7 +92,7 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate, URLSessionTaskDeleg
                 self.disconnect()
                 return
             }
-            
+
             if let data = data {
                 DispatchQueue.main.async {
                     self.delegate?.coreConnectionDidReceiveData(data: data)
@@ -103,7 +103,7 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate, URLSessionTaskDeleg
         })
     }
 
-    private func disconnect() {
+    func disconnect() {
         guard self.state != .disconnected else {
             return
         }

@@ -1,5 +1,7 @@
 import Foundation
 
 protocol Middleware {
-    mutating func execute(state: AppState, action: Action, dispatch: @escaping Dispatch)
+    var dispatch: Dispatch? { get set }
+
+    func execute(state: AppState, action: Action)
 }

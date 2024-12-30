@@ -25,18 +25,16 @@ class Core: CoreConnectionDelegate {
                 self?.delegate?.onKnownServersChanged(servers)
             }
         }
-
-        discovery.browse()
-    }
-
-    func browse() {
-        discovery.browse()
     }
 
     func connect(_ server: Server) {
         if self.connection.state == .disconnected {
             self.connection.connect(server)
         }
+    }
+
+    func disconnect() {
+        self.connection.disconnect()
     }
 
     func sendRequest(_ request: Request) {
@@ -78,9 +76,7 @@ extension Core {
 
     func coreConnectionDidDisconnect() {
         print("Core disconnected")
-
         self.delegate?.coreDisconnected()
-        self.discovery.browse()
     }
 
     func coreConnectionDidReceiveData(data: Data) {

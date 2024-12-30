@@ -13,9 +13,6 @@ struct BloopApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(store)
-                .onAppear {
-                    store.dispatch(.browse)
-                }
 
         }
     }

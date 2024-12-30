@@ -11,8 +11,10 @@ enum Action {
     case removeWaveform(Id)
     case addError(String)
 
-    case browse
+    case setNavigationPath([NavigationItem])
+
     case connect(Server)
+    case disconnect
     case setConnected(Bool)
 
     case uploadSample((Id, URL))

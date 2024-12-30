@@ -1,23 +1,20 @@
 import Foundation
 
 class ApiMiddleware: Middleware {
-    private let core = Core()
     var dispatch: Dispatch?
+    private let core = Core()
 
     init() {
         core.delegate = self
     }
 
-    func execute(state: AppState, action: Action, dispatch: @escaping Dispatch) {
-        self.dispatch = dispatch
-
-        if case .browse = action {
-            self.dispatch?(.removeAllServers)
-            core.browse()
-        }
-
+    func execute(state: AppState, action: Action) {
         if case .connect(let server) = action {
             core.connect(server)
+        }
+
+        if case .disconnect = action {
+            core.disconnect()
         }
 
         if case .sendRequest(let request) = action {

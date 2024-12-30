@@ -2,13 +2,17 @@ import Foundation
 
 class Store: ObservableObject {
     let reducer: Reducer
-    let middlewares: [Middleware]
+    var middlewares: [Middleware]
     @Published private(set) var state: AppState
 
     init(reducer: @escaping Reducer, state: AppState, middlewares: [Middleware]) {
         self.reducer = reducer
         self.middlewares = middlewares
         self.state = state
+
+        for var middleware in self.middlewares {
+            middleware.dispatch = dispatch
+        }
     }
 
     func dispatch(_ action: Action) {
@@ -16,10 +20,8 @@ class Store: ObservableObject {
             self.state = self.reducer(self.state, action)
         }
 
-        for var middleware in middlewares {
-            middleware.execute(state: self.state, action: action) { action in
-                self.dispatch(action)
-            }
+        for middleware in middlewares {
+            middleware.execute(state: self.state, action: action)
         }
     }
 }

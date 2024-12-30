@@ -8,6 +8,7 @@ struct AppState {
     var playbackState = PlaybackState()
     var progress = Progress()
     var waveforms = Waveforms()
+    var navigationPath: [NavigationItem] = []
 }
 
 func emptyProject() -> Project {

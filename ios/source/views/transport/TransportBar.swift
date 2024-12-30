@@ -2,7 +2,7 @@ import SwiftUI
 
 struct TransportBar: View {
     var playbackState: PlaybackState
-    var selections: Selections
+    var project: Project
     var dispatch: Dispatch
 
     var body: some View {
@@ -19,10 +19,14 @@ struct TransportBar: View {
             playButton
                 .frame(maxWidth: .infinity)
 
+            nextButton
+                .frame(maxWidth: .infinity)
+
             queueButton
                 .frame(maxWidth: .infinity)
 
         }
+        .padding([.top, .bottom])
         .frame(maxWidth: .infinity)
     }
 
@@ -40,7 +44,21 @@ struct TransportBar: View {
                 dispatch(action)
             }
         }
+    }
 
+    @ViewBuilder
+    private var nextButton: some View {
+        TransportButton(name: "Next", systemImageName: "chevron.forward.2") {
+            let currentId = project.selections.song
+            let currentIndex = project.songs.firstIndex(where: { $0.id == currentId }) ?? 0
+            let nextIndex = currentIndex + 1
+            guard nextIndex < project.songs.count else { return }
+            let nextId = project.songs[nextIndex].id
+            let action = selectSongAction(nextId)
+
+            dispatch(action)
+            dispatch(.setNavigationPath([.song(nextId)]))
+        }
     }
 
     @ViewBuilder
@@ -68,11 +86,11 @@ struct TransportBar: View {
             return .notReady
         }
 
-        if playbackState.queuedSectionId == selections.section {
+        if playbackState.queuedSectionId == project.selections.section {
             return .queued
         }
 
-        if selections.section != playbackState.sectionId {
+        if project.selections.section != playbackState.sectionId {
             return .readyToQueue
         }
 
@@ -84,7 +102,9 @@ struct TransportBar: View {
         switch queueState {
         case .readyToQueue, .notReady:
             TransportButton(name: "Jump", systemImageName: "arrow.forward.circle") {
-                guard let songId = selections.song, let sectionId = selections.section else {
+                guard let songId = project.selections.song,
+                    let sectionId = project.selections.section
+                else {
                     return
                 }
 
@@ -111,9 +131,8 @@ struct TransportButton: View {
         } label: {
             Label(name, systemImage: systemImageName)
                 .labelStyle(.iconOnly)
-                .font(.title)
+                .font(.system(size: 36))
         }
-        .frame(width: Layout.touchTarget, height: Layout.touchTarget)
     }
 }
 
@@ -122,14 +141,14 @@ struct TransportBar_Previews: PreviewProvider {
         return PlaybackState.init(playing: .playing)
     }()
 
-    static let selections = Selections()
+    static let project = demoProject()
 
     static var previews: some View {
         VStack {
             Spacer()
             TransportBar(
                 playbackState: playbackState,
-                selections: selections,
+                project: project,
                 dispatch: loggingDispatch
             )
         }

@@ -4,11 +4,18 @@ struct SongsView: View {
     var project: Project
     var dispatch: Dispatch
 
+    @Binding var navigationPath: [NavigationItem]
+
     var body: some View {
         NavigationView {
             List {
                 ForEach(project.songs) { song in
-                    SongRow(song: song)
+                    SongRow(song: song) {
+                        let action = selectSongAction(song.id)
+                        dispatch(action)
+
+                        navigationPath.append(.song(song.id))
+                    }
                 }
                 .onMove { fromOffsets, toOffset in
                     var project = project
@@ -42,16 +49,24 @@ struct SongsView: View {
 
 struct SongRow: View {
     var song: Song
+    var action: () -> Void
 
     var body: some View {
-        Text(song.name)
+        Button(action: action) {
+            Text(song.name)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+        }
+
     }
 }
 
 struct SongsView_Previews: PreviewProvider {
     static let project = demoProject()
 
+    @State static var navigationPath: [NavigationItem] = []
+
     static var previews: some View {
-        SongsView(project: project, dispatch: loggingDispatch)
+        SongsView(project: project, dispatch: loggingDispatch, navigationPath: $navigationPath)
     }
 }
