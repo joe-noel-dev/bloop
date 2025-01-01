@@ -13,4 +13,13 @@ export default defineConfig({
       promiseImportName: (i) => `__tla_${i}`,
     }),
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 });
