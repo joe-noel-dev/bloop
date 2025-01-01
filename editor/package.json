@@ -52,7 +52,7 @@
   "devDependencies": {
     "@types/react-edit-text": "^5.0.3",
     "@types/wav": "^1.0.3",
-    "@vitejs/plugin-react": "^4.2.1",
+    "@vitejs/plugin-react": "^4.3.4",
     "vite": "^5.4.10",
     "vite-plugin-top-level-await": "^1.4.4",
     "vite-tsconfig-paths": "^4.3.2",
