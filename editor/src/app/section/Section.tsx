@@ -1,11 +1,4 @@
-import {
-  CircularProgress,
-  Grid,
-  IconButton,
-  Input,
-  Stack,
-  Switch,
-} from '@mui/joy';
+import {CircularProgress, Grid, IconButton, Stack, Switch} from '@mui/joy';
 import {
   useSectionById,
   useSelectedSectionId,
@@ -20,12 +13,12 @@ import {
   updateSectionRequest,
 } from '../../api/request';
 import {ArrowForward, Delete, PlayArrow, Stop} from '@mui/icons-material';
-import {useState} from 'react';
 import {usePlaybackState, useProgress} from '../../model-hooks/transport-hooks';
 import {columnSize, columns} from './TableInfo';
 import isEqual from 'lodash.isequal';
 import {getSectionBeatLength} from '../../model/song';
 import {useSong} from '../../model-hooks/song-hooks';
+import {ClickToEdit} from '../../components/ClickToEdit';
 
 interface Props {
   songId: string;
@@ -41,10 +34,8 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
   const playbackState = usePlaybackState();
   const progress = useProgress();
 
-  const [editingName, setEditingName] = useState(section?.name ?? '');
   const duration = song ? getSectionBeatLength(song, sectionId) : 0;
   const isLast = song?.sections.at(-1)?.id === sectionId;
-  const [editingDuration, setEditingDuration] = useState(duration.toString());
 
   const isSelected = sectionId === selectedSectionId;
   const isPlaying =
@@ -84,12 +75,8 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
     core.sendRequest(request);
   };
 
-  const submit = () => {
-    const newSection = {...section};
-
-    if (editingName !== undefined) {
-      newSection.name = editingName;
-    }
+  const submitName = (name: string) => {
+    const newSection = {...section, name};
 
     if (isEqual(section, newSection)) {
       return;
@@ -99,9 +86,10 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
     core.sendRequest(request);
   };
 
-  const submitDuration = () => {
-    const newDuration = parseFloat(editingDuration);
+  const submitDuration = (value: string) => {
+    const newDuration = parseFloat(value);
     if (isNaN(newDuration) || newDuration === duration) {
+      console.warn('Invalid duration: ', value);
       return;
     }
 
@@ -144,21 +132,15 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
             );
           case 'Name':
             return (
-              <NameCell
-                key={name}
-                value={editingName}
-                onChange={setEditingName}
-                onSubmit={submit}
-              />
+              <NameCell key={name} value={section.name} onSubmit={submitName} />
             );
           case 'Duration':
             return (
               <DurationCell
                 key={name}
                 display={!isLast}
-                value={editingDuration}
-                onChange={setEditingDuration}
-                onSubmit={submitDuration}
+                value={`${duration}`}
+                onChange={submitDuration}
               />
             );
           case 'Loop':
@@ -256,19 +238,13 @@ const TransportCell = ({
 
 const NameCell = ({
   value,
-  onChange,
   onSubmit,
 }: {
   value: string;
-  onChange: (name: string) => void;
-  onSubmit: () => void;
+  onSubmit: (name: string) => void;
 }) => (
   <Grid xs={columnSize('Name')} sx={{display: 'flex', alignItems: 'center'}}>
-    <Input
-      value={value}
-      onBlur={onSubmit}
-      onChange={(event) => onChange(event.target.value)}
-    />
+    <ClickToEdit initialValue={value} onSave={onSubmit} />
   </Grid>
 );
 
@@ -276,24 +252,16 @@ const DurationCell = ({
   value,
   display,
   onChange,
-  onSubmit,
 }: {
   value: string;
   display: boolean;
   onChange: (value: string) => void;
-  onSubmit: () => void;
 }) => (
   <Grid
     xs={columnSize('Duration')}
     sx={{display: 'flex', alignItems: 'center'}}
   >
-    {display && (
-      <Input
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        onBlur={onSubmit}
-      />
-    )}
+    {display && <ClickToEdit initialValue={value} onSave={onChange} />}
   </Grid>
 );
 
