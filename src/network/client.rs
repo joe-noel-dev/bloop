@@ -57,12 +57,12 @@ impl Client {
             Err(_) => anyhow::bail!("Error receiving from client: {}", self.address),
         };
 
-        let mut message = match message {
+        let message = match message {
             Message::Binary(message) => message,
             _ => return Ok(()),
         };
 
-        let api_request = match convert_bytes_to_request(&mut message) {
+        let api_request = match convert_bytes_to_request(&message) {
             Ok(request) => request,
             Err(error) => {
                 warn!("Error parsing request: {error}");
@@ -128,7 +128,7 @@ fn convert_response(response: &Response) -> Option<Message> {
     Some(Message::binary(data))
 }
 
-fn convert_bytes_to_request(message: &mut [u8]) -> Result<Request, error::NetworkError> {
+fn convert_bytes_to_request(message: &[u8]) -> Result<Request, error::NetworkError> {
     let document = match bson::Document::from_reader(&mut &message[..]) {
         Ok(doc) => doc,
         Err(error) => {
