@@ -40,6 +40,7 @@ export const createCore = () => {
 
   const connect = (address: string) => {
     if (!socket) {
+      console.log('Connecting to ', address);
       socket = new WebSocket(address);
 
       socket.binaryType = 'arraybuffer';

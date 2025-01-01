@@ -1,6 +1,6 @@
 import {Check} from '@mui/icons-material';
 import {Button, Chip, Option, Select, Stack} from '@mui/joy';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 
 interface ConnectionProps {
   isConnected: boolean;
@@ -20,15 +20,8 @@ export const Connection = (props: ConnectionProps) => {
   const [wsAddress, setWsAddress] = useState('');
   const [services, setServices] = useState<Service[]>([]);
 
-  const submit = () => {
-    console.log('Connecting to ', wsAddress);
-    if (props.isConnected) {
-      props.disconnect();
-    } else {
-      props.connect(
-        wsAddress.startsWith('ws://') ? wsAddress : `ws://${wsAddress}`
-      );
-    }
+  const connect = (address: string) => {
+    props.connect(address.startsWith('ws://') ? address : `ws://${address}`);
   };
 
   const scan = async () => {
@@ -50,10 +43,21 @@ export const Connection = (props: ConnectionProps) => {
 
       setServices(foundServices);
       console.log('Found services: ', foundServices);
+
+      if (foundServices.length === 1 && !props.isConnected) {
+        const service = foundServices[0];
+        const address = `${service.host}:${service.port}`;
+        setWsAddress(address);
+        connect(address);
+      }
     } catch (error) {
       console.error('Failed to scan for services', error);
     }
   };
+
+  useEffect(() => {
+    scan();
+  }, []);
 
   const onServiceSelect = (
     _: React.SyntheticEvent | null,
@@ -65,24 +69,42 @@ export const Connection = (props: ConnectionProps) => {
 
   return (
     <Stack direction="row" sx={{padding: 2}} spacing={2}>
-      <Button name="Scan" onClick={scan}>
-        Scan
-      </Button>
+      {!props.isConnected && (
+        <Button name="Scan" onClick={scan}>
+          Scan
+        </Button>
+      )}
 
-      <Select placeholder="Core" onChange={onServiceSelect}>
-        {services.map((service) => (
-          <Option
-            key={`${service.networkInterface}/${service.addresses[0]}/${service.port}}`}
-            value={`${service.host}:${service.port}`}
-          >
-            {service.name} ({service.networkInterface})
-          </Option>
-        ))}
-      </Select>
+      {!props.isConnected && services.length > 1 && (
+        <Select placeholder="Core" onChange={onServiceSelect}>
+          {services.map((service) => (
+            <Option
+              key={`${service.networkInterface}/${service.addresses[0]}/${service.port}}`}
+              value={`${service.host}:${service.port}`}
+            >
+              {service.name} ({service.networkInterface})
+            </Option>
+          ))}
+        </Select>
+      )}
 
-      <Button name="Connect" onClick={submit}>
-        {props.isConnected ? 'Disconnect' : 'Connect'}
-      </Button>
+      {props.isConnected && (
+        <Button
+          name="Disconnect"
+          onClick={() => {
+            props.disconnect();
+            setWsAddress('');
+          }}
+        >
+          Disconnect
+        </Button>
+      )}
+
+      {!props.isConnected && wsAddress && (
+        <Button name="Connect" onClick={() => connect(wsAddress)}>
+          Connect
+        </Button>
+      )}
 
       {props.isConnected && (
         <Chip color="success" startDecorator={<Check />} sx={{paddingX: 2}}>
