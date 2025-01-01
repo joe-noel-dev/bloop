@@ -21,7 +21,7 @@
     "lodash.isequal": "^4.5.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-is": "^18.3.1",
+    "react-is": "^19.0.0",
     "react-modal": "^3.16.1",
     "typescript": "~5.7.2",
     "uuid": "^11.0.3"
