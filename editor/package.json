@@ -9,31 +9,20 @@
     "@mui/icons-material": "^5.16.8",
     "@mui/joy": "^5.0.0-beta.32",
     "@mui/material": "^5.16.7",
-    "@types/events": "^3.0.3",
-    "@types/lodash.clonedeep": "^4.5.8",
     "@types/lodash.isequal": "^4.5.8",
     "@types/node": "^22.5.4",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.0",
-    "@types/react-measure": "^2.0.12",
     "@types/react-modal": "^3.16.3",
     "@types/uuid": "^10.0.0",
     "bson": "^6.8.0",
-    "dotenv": "^16.4.7",
     "events": "^3.3.0",
     "express": "^4.21.2",
-    "lodash.clonedeep": "^4.5.0",
     "lodash.isequal": "^4.5.0",
-    "moment": "^2.30.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-edit-text": "^5.1.1",
-    "react-hotkeys-hook": "^4.6.1",
-    "react-icons": "^5.3.0",
     "react-is": "^18.3.1",
-    "react-measure": "^2.5.2",
     "react-modal": "^3.16.1",
-    "react-tiny-popover": "^8.0.4",
     "typescript": "~5.5.4",
     "uuid": "^11.0.3"
   },
@@ -50,12 +39,10 @@
     "extends": "react-app"
   },
   "devDependencies": {
-    "@types/react-edit-text": "^5.0.3",
-    "@types/wav": "^1.0.3",
+    "@types/events": "^3.0.3",
     "@vitejs/plugin-react": "^4.2.1",
     "vite": "^5.4.10",
     "vite-plugin-top-level-await": "^1.4.4",
-    "vite-tsconfig-paths": "^4.3.2",
-    "wav": "^1.0.2"
+    "vite-tsconfig-paths": "^4.3.2"
   }
 }
