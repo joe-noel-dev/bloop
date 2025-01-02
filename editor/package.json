@@ -30,9 +30,9 @@
     "mdns": "^2.7.2"
   },
   "scripts": {
-    "start": "vite",
+    "start": "yarn run discovery & vite",
     "build": "tsc && vite build",
-    "serve": "vite preview",
+    "serve": "yarn run discovery & vite preview", 
     "discovery": "node ./src/server.js"
   },
   "eslintConfig": {

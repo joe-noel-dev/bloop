@@ -2,9 +2,12 @@
 
 ## Start dev server
 
-In separate terminals:
+```sh
+yarn start 
+```
+
+## Start production server
 
 ```sh
-yarn run discovery
-yarn start 
+yarn build && yarn serve
 ```
