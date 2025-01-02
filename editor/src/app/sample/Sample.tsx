@@ -1,4 +1,4 @@
-import {Box, Button} from '@mui/joy';
+import {Button} from '@mui/joy';
 import {useSampleWithId} from '../../model-hooks/sample-hooks';
 import {Delete, FileUpload} from '@mui/icons-material';
 import {
@@ -48,7 +48,12 @@ export const Sample = ({sampleId, songId}: Props) => {
   };
 
   const RemoveButton = () => (
-    <Button color="danger" startDecorator={<Delete />} onClick={remove}>
+    <Button
+      color="danger"
+      startDecorator={<Delete />}
+      onClick={remove}
+      variant="soft"
+    >
       Remove Sample
     </Button>
   );
@@ -75,11 +80,11 @@ export const Sample = ({sampleId, songId}: Props) => {
   );
 
   return (
-    <Box>
+    <>
       {sample && <RemoveButton />}
       {!sample && <InvisibleFileInput />}
       {!sample && <UploadButton />}
-    </Box>
+    </>
   );
 };
 
