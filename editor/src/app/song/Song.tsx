@@ -239,7 +239,9 @@ const TableHeader = () => (
   <Grid container spacing={1}>
     {columns.map((name) => (
       <Grid xs={columnSize(name)} key={name}>
-        <Typography level="title-md">{name}</Typography>
+        <Typography level="title-md" fontWeight={'bold'}>
+          {name}
+        </Typography>
       </Grid>
     ))}
   </Grid>

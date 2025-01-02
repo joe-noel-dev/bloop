@@ -86,6 +86,18 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
     core.sendRequest(request);
   };
 
+  const submitStart = (value: string) => {
+    const newStart = parseFloat(value);
+    if (isNaN(newStart) || newStart === section.start) {
+      console.warn('Invalid start: ', value);
+      return;
+    }
+
+    const newSection = {...section, start: newStart};
+    const request = updateSectionRequest(newSection);
+    core.sendRequest(request);
+  };
+
   const submitDuration = (value: string) => {
     const newDuration = parseFloat(value);
     if (isNaN(newDuration) || newDuration === duration) {
@@ -133,6 +145,14 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
           case 'Name':
             return (
               <NameCell key={name} value={section.name} onSubmit={submitName} />
+            );
+          case 'Start':
+            return (
+              <StartCell
+                key={name}
+                value={`${section.start}`}
+                onChange={submitStart}
+              />
             );
           case 'Duration':
             return (
@@ -245,6 +265,18 @@ const NameCell = ({
 }) => (
   <Grid xs={columnSize('Name')} sx={{display: 'flex', alignItems: 'center'}}>
     <ClickToEdit initialValue={value} onSave={onSubmit} />
+  </Grid>
+);
+
+const StartCell = ({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) => (
+  <Grid xs={columnSize('Start')} sx={{display: 'flex', alignItems: 'center'}}>
+    <ClickToEdit initialValue={value} onSave={onChange} />
   </Grid>
 );
 
