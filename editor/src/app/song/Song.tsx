@@ -1,14 +1,6 @@
-import {Button, Grid, IconButton, Input, Stack, Typography} from '@mui/joy';
+import {Button, Grid, Stack, Typography} from '@mui/joy';
 import {useSong} from '../../model-hooks/song-hooks';
-import {
-  Add,
-  ArrowDownward,
-  ArrowUpward,
-  Cancel,
-  Check,
-  Delete,
-  Edit,
-} from '@mui/icons-material';
+import {Add, ArrowDownward, ArrowUpward, Delete} from '@mui/icons-material';
 import {Sample} from '../sample/Sample';
 import {Section} from '../section/Section';
 import {
@@ -17,10 +9,10 @@ import {
   updateSongRequest,
 } from '../../api/request';
 import {useCore} from '../../core/use-core';
-import {useState} from 'react';
 import {columnSize, columns} from '../section/TableInfo';
 import {Song as ModelSong} from '../../model';
 import {updateSectionBeatLength} from '../../model/song';
+import {ClickToEdit} from '../../components/ClickToEdit';
 
 interface SongProps {
   songId: string;
@@ -31,11 +23,6 @@ export const Song = ({songId, moveSong}: SongProps) => {
   const song = useSong(songId);
   const core = useCore();
 
-  const [editing, setEditing] = useState(false);
-  const [editingSongName, setEditingSongName] = useState<string>('');
-
-  const [editingTempo, setEditingTempo] = useState<string>('');
-
   if (!song) {
     return <></>;
   }
@@ -45,37 +32,9 @@ export const Song = ({songId, moveSong}: SongProps) => {
     core.sendRequest(request);
   };
 
-  const submit = () => {
-    const newSong = {...song};
-
-    if (editingSongName !== undefined) {
-      newSong.name = editingSongName;
-    }
-
-    const tempo = parseFloat(editingTempo || '');
-    if (!isNaN(tempo)) {
-      newSong.tempo.bpm = tempo;
-    }
-
-    const request = updateSongRequest(newSong);
-    core.sendRequest(request);
-
-    setEditing(false);
-  };
-
-  const cancel = () => {
-    setEditing(false);
-  };
-
   const remove = () => {
     const request = removeSongRequest(songId);
     core.sendRequest(request);
-  };
-
-  const edit = () => {
-    setEditing(true);
-    setEditingSongName(song.name);
-    setEditingTempo(`${song.tempo.bpm}`);
   };
 
   const moveUp = () => {
@@ -93,36 +52,28 @@ export const Song = ({songId, moveSong}: SongProps) => {
     core.sendRequest(request);
   };
 
+  const editSongName = (newName: string) => {
+    const newSong = {...song, name: newName};
+    const request = updateSongRequest(newSong);
+    core.sendRequest(request);
+  };
+
+  const editTempo = (newTempo: number) => {
+    const newSong = {...song, tempo: {bpm: newTempo}};
+    const request = updateSongRequest(newSong);
+    core.sendRequest(request);
+  };
+
   return (
     <Stack spacing={2}>
-      {editing ? (
-        <form
-          name="Song Details"
-          onSubmit={(event) => {
-            submit();
-            event.preventDefault();
-          }}
-        >
-          <Stack direction="row" spacing={2}>
-            <SongNameInput
-              value={editingSongName}
-              onChange={setEditingSongName}
-            />
-            <SongTempoInput value={editingTempo} onChange={setEditingTempo} />
-            <SubmitButton />
-            <CancelButton onClick={cancel} />
-            <RemoveButton onClick={remove} />
-          </Stack>
-        </form>
-      ) : (
-        <SongDetails
-          song={song}
-          onRequestEdit={edit}
-          onMoveUp={moveUp}
-          onMoveDown={moveDown}
-        />
-      )}
-      <Sample sampleId={song.sample?.id || ''} songId={songId} />
+      <SongDetails
+        song={song}
+        onEditName={editSongName}
+        onEditTempo={editTempo}
+        onMoveUp={moveUp}
+        onMoveDown={moveDown}
+        onRemove={remove}
+      />
       <SectionsTable
         song={song}
         requestAdd={addSection}
@@ -134,105 +85,77 @@ export const Song = ({songId, moveSong}: SongProps) => {
 
 interface SongDetailsProps {
   song: ModelSong;
-  onRequestEdit: () => void;
+  onEditName: (newName: string) => void;
+  onEditTempo: (newTempo: number) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
+  onRemove: () => void;
 }
 
 const SongDetails = ({
   song,
-  onRequestEdit,
+  onEditName,
+  onEditTempo,
   onMoveUp,
   onMoveDown,
+  onRemove,
 }: SongDetailsProps) => (
-  <Stack direction="row" spacing={2} alignItems="center">
-    <Typography level="title-lg">{song.name}</Typography>
+  <Stack direction="column" spacing={2}>
+    <ClickToEdit initialValue={song.name} onSave={onEditName} size="large" />
+    <Stack direction={'row'} spacing={1} alignItems={'center'}>
+      <ClickToEdit
+        initialValue={`${song.tempo.bpm}`}
+        onSave={(value) => onEditTempo(parseFloat(value))}
+        size="medium"
+        endDecorator={
+          <Typography level="body-md" color="neutral">
+            bpm
+          </Typography>
+        }
+      />
+    </Stack>
 
-    <Typography level="body-md">{song.tempo.bpm} bpm</Typography>
+    <Stack direction="row" spacing={1}>
+      <Button
+        color="primary"
+        size="sm"
+        variant="soft"
+        aria-label="Move song up"
+        onClick={onMoveUp}
+        startDecorator={<ArrowUpward />}
+      >
+        Move Up
+      </Button>
 
-    <IconButton
-      color="primary"
-      size="sm"
-      variant="soft"
-      aria-label="Move song up"
-      onClick={onMoveUp}
-    >
-      <ArrowUpward />
-    </IconButton>
+      <Button
+        color="primary"
+        size="sm"
+        variant="soft"
+        aria-label="Move song down"
+        onClick={onMoveDown}
+        startDecorator={<ArrowDownward />}
+      >
+        Move Down
+      </Button>
 
-    <IconButton
-      color="primary"
-      size="sm"
-      variant="soft"
-      aria-label="Move song down"
-      onClick={onMoveDown}
-    >
-      <ArrowDownward />
-    </IconButton>
+      <RemoveButton onClick={onRemove} />
 
-    <IconButton
-      color="primary"
-      size="sm"
-      variant="soft"
-      aria-label="Edit song name"
-      onClick={onRequestEdit}
-    >
-      <Edit />
-    </IconButton>
+      <Sample sampleId={song.sample?.id || ''} songId={song.id} />
+    </Stack>
   </Stack>
 );
 
-interface InputProps<T> {
-  value: T;
-  onChange: (value: T) => void;
-}
-const SongNameInput = ({value, onChange}: InputProps<string>) => (
-  <Input
-    name="Song Name"
-    sx={{width: 320}}
-    value={value}
-    onChange={(event) => onChange(event.target.value)}
-  />
-);
-
-const SongTempoInput = ({value, onChange}: InputProps<string>) => (
-  <Input
-    sx={{width: 120}}
-    name="Tempo"
-    endDecorator={<Typography>bpm</Typography>}
-    value={value}
-    onChange={(event) => onChange(event.target.value)}
-  />
-);
-
-const SubmitButton = () => (
-  <IconButton name="Submit" color="success" variant="soft" type="submit">
-    <Check />
-  </IconButton>
-);
-
-const CancelButton = ({onClick}: {onClick: () => void}) => (
-  <IconButton
-    name="Cancel"
-    color="warning"
-    variant="soft"
-    type="button"
-    onClick={onClick}
-  >
-    <Cancel />
-  </IconButton>
-);
-
 const RemoveButton = ({onClick}: {onClick: () => void}) => (
-  <IconButton
+  <Button
     name="Remove"
     color="danger"
     variant="soft"
     type="button"
     onClick={onClick}
+    startDecorator={<Delete />}
   >
-    <Delete />
-  </IconButton>
+    Remove Song
+  </Button>
 );
 
 const TableHeader = () => (

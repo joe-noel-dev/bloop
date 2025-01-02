@@ -1,4 +1,4 @@
-import {CircularProgress, Grid, IconButton, Stack, Switch} from '@mui/joy';
+import {Grid, IconButton, LinearProgress, Stack, Switch} from '@mui/joy';
 import {
   useSectionById,
   useSelectedSectionId,
@@ -229,7 +229,7 @@ const Progress = ({
   progress: number;
 }) =>
   isPlaying && (
-    <CircularProgress size="sm" determinate value={progress * 100} />
+    <LinearProgress determinate value={progress * 100} sx={{maxWidth: 64}} />
   );
 
 const TransportCell = ({

@@ -1,9 +1,13 @@
-import {Button, Divider, Stack} from '@mui/joy';
+import {Button, Stack, Tab, TabList, TabPanel, Tabs} from '@mui/joy';
 import {useSongs} from '../../model-hooks/song-hooks';
 import {Song} from '../song/Song';
 import {Add} from '@mui/icons-material';
 import {useCore} from '../../core/use-core';
-import {addSongRequest, updateProjectRequest} from '../../api/request';
+import {
+  addSongRequest,
+  selectSongRequest,
+  updateProjectRequest,
+} from '../../api/request';
 import {useProject} from '../../model-hooks/project-hooks';
 
 export const Songs = () => {
@@ -14,6 +18,8 @@ export const Songs = () => {
   if (!core || !project) {
     return <></>;
   }
+
+  const selectedSongId = project.selections.song || '';
 
   const addSong = () => {
     const request = addSongRequest();
@@ -36,24 +42,46 @@ export const Songs = () => {
     core.sendRequest(request);
   };
 
+  const onTabSelected = (
+    _: React.SyntheticEvent | null,
+    value: number | string | null
+  ) => {
+    if (typeof value !== 'string' || value === selectedSongId) {
+      return;
+    }
+    const request = selectSongRequest(value);
+    core.sendRequest(request);
+  };
+
   return (
     <Stack spacing={2}>
-      {songs &&
-        songs.map((song, index) => (
-          <Stack key={song.id} spacing={2}>
-            <Song
-              songId={song.id}
-              moveSong={(delta) => moveSong(index, index + delta)}
-            />
-            <Divider />
-          </Stack>
-        ))}
-
-      <Stack direction="row">
+      <Stack direction="row" spacing={2}>
         <Button startDecorator={<Add />} onClick={addSong}>
           Add Song
         </Button>
       </Stack>
+
+      <Tabs
+        orientation="vertical"
+        value={selectedSongId}
+        onChange={onTabSelected}
+      >
+        <TabList>
+          {songs.map((song) => (
+            <Tab key={song.id} value={song.id}>
+              {song.name}
+            </Tab>
+          ))}
+        </TabList>
+        {songs.map((song, index) => (
+          <TabPanel key={song.id} value={song.id}>
+            <Song
+              songId={song.id}
+              moveSong={(delta) => moveSong(index, index + delta)}
+            />
+          </TabPanel>
+        ))}
+      </Tabs>
     </Stack>
   );
 };
