@@ -9,7 +9,7 @@ use crate::{
     samples::SamplesCache,
 };
 use anyhow::anyhow;
-use log::{debug, error, info, warn};
+use log::{error, info, warn};
 use std::time::Duration;
 use tokio::{
     sync::{broadcast, mpsc},

@@ -11,16 +11,24 @@ mod samples;
 mod types;
 mod waveform;
 
+use git_version::git_version;
 use std::time::SystemTime;
 
 use crate::control::MainController;
 use crate::network::run_server;
+use log::info;
 use tokio::join;
 use tokio::sync::{broadcast, mpsc};
+
+const GIT_SHA: &str = git_version!();
 
 #[tokio::main]
 async fn main() {
     setup_logger().expect("Failed to setup logger");
+
+    let version = env!("CARGO_PKG_VERSION");
+
+    info!("Running bloop v{version} ({GIT_SHA})");
 
     let (request_tx, request_rx) = mpsc::channel(128);
     let (response_tx, _) = broadcast::channel(128);
