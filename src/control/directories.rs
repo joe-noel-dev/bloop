@@ -3,7 +3,7 @@ use std::path::PathBuf;
 pub struct Directories {
     pub projects: PathBuf,
     pub samples: PathBuf,
-    pub preferences: PathBuf,
+    pub root: PathBuf,
 }
 
 impl Directories {
@@ -17,13 +17,10 @@ impl Directories {
         let mut samples = root.clone();
         samples.push("samples");
 
-        let mut preferences = root;
-        preferences.push("preferences");
-
         Self {
             projects,
             samples,
-            preferences,
+            root,
         }
     }
 }

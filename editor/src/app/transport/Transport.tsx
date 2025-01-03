@@ -91,6 +91,7 @@ const Metronome = ({beat, blobCount}: {beat: number; blobCount: number}) => {
     <Stack direction="row" spacing={1}>
       {indexes.map((beatIndex) => (
         <Box
+          key={beatIndex}
           sx={{
             width: '8px',
             height: '8px',

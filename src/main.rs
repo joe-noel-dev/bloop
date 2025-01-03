@@ -6,6 +6,7 @@ mod midi;
 mod model;
 mod network;
 mod pedal;
+mod preferences;
 mod samples;
 mod types;
 mod waveform;

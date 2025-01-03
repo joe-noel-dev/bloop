@@ -5,10 +5,11 @@ use crate::{
     midi::MidiController,
     model::{Action, Notification, Project, Sample, Tempo},
     pedal::PedalController,
+    preferences::read_preferences,
     samples::SamplesCache,
 };
 use anyhow::anyhow;
-use log::{error, info};
+use log::{debug, error, info, warn};
 use std::time::Duration;
 use tokio::{
     sync::{broadcast, mpsc},
@@ -44,19 +45,30 @@ impl MainController {
         let (action_tx, action_rx) = mpsc::channel(128);
         let (notification_tx, notification_rx) = mpsc::channel(128);
 
+        let preferences = match read_preferences(&directories.root) {
+            Ok(preferences) => {
+                info!("Preferences loaded: {preferences:#?}");
+                preferences
+            }
+            Err(error) => {
+                warn!("Unable to read preferences, using default: {error}");
+                Default::default()
+            }
+        };
+
         Self {
             samples_cache: SamplesCache::new(&directories.samples),
             project_store: ProjectStore::new(&directories.projects),
             request_rx,
             response_tx: response_tx.clone(),
             project: Project::new(),
-            audio_controller: AudioController::new(response_tx.clone(), &directories.preferences),
+            audio_controller: AudioController::new(response_tx.clone(), &preferences.audio.unwrap_or_default()),
             waveform_store: WaveformStore::new(response_tx),
-            midi_controller: MidiController::new(action_tx.clone(), &directories.preferences),
+            midi_controller: MidiController::new(action_tx.clone(), &preferences.midi.unwrap_or_default()),
             action_rx,
             notification_tx,
             should_save: false,
-            pedal_controller: PedalController::new(action_tx, notification_rx, &directories.preferences),
+            pedal_controller: PedalController::new(action_tx, notification_rx, &preferences.pedal.unwrap_or_default()),
         }
     }
 

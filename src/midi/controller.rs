@@ -1,10 +1,8 @@
 use super::matcher::Matcher;
-use crate::midi::matcher::ExactMatcher;
 use crate::model::Action;
+use crate::{midi::matcher::ExactMatcher, preferences::MidiPreferences};
 use log::{error, info};
 use midir::{MidiInput, MidiInputConnection};
-use serde::{Deserialize, Serialize};
-use std::{fs::File, io::BufReader, path::Path};
 use tokio::sync::mpsc;
 
 #[derive(Default)]
@@ -20,12 +18,6 @@ struct Mapping {
 
 struct Context {
     action_tx: mpsc::Sender<Action>,
-}
-
-#[derive(Debug, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct Preferences {
-    input_device: Option<String>,
 }
 
 fn get_mappings() -> Vec<Mapping> {
@@ -88,12 +80,10 @@ impl MidiController {
         info!("");
     }
 
-    pub fn new(action_tx: mpsc::Sender<Action>, preferences_dir: &Path) -> Self {
+    pub fn new(action_tx: mpsc::Sender<Action>, preferences: &MidiPreferences) -> Self {
         let midi_input = MidiInput::new("Bloop").expect("Unable to connect to MIDI backend");
 
-        let preferences = read_preferences(preferences_dir).unwrap_or_default();
-
-        let desired_input_device_name = match preferences.input_device {
+        let desired_input_device_name = match &preferences.input_device {
             Some(input_device) => input_device,
             None => return Self::default(),
         };
@@ -102,7 +92,7 @@ impl MidiController {
 
         let ports = midi_input.ports();
         let port = ports.iter().find(|port| match midi_input.port_name(port) {
-            Ok(name) => name.contains(&desired_input_device_name),
+            Ok(name) => name.contains(desired_input_device_name),
             Err(_) => false,
         });
 
@@ -128,15 +118,4 @@ impl MidiController {
 
         Self { input_connection }
     }
-}
-
-fn read_preferences(preferences_dir: &Path) -> anyhow::Result<Preferences> {
-    let mut preferences_path = preferences_dir.to_path_buf();
-    preferences_path.push("midi.json");
-
-    let file = File::open(preferences_path)?;
-    let reader = BufReader::new(file);
-    let preferences = serde_json::from_reader(reader)?;
-
-    Ok(preferences)
 }
