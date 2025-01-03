@@ -1,0 +1,34 @@
+mod audio;
+mod midi;
+mod pedal;
+
+pub use audio::AudioPreferences;
+pub use midi::MidiPreferences;
+pub use pedal::PedalPreferences;
+
+use std::{fs::File, io::BufReader, path::Path};
+
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Preferences {
+    #[serde(default)]
+    pub audio: Option<AudioPreferences>,
+
+    #[serde(default)]
+    pub midi: Option<MidiPreferences>,
+
+    #[serde(default)]
+    pub pedal: Option<PedalPreferences>,
+}
+
+pub fn read_preferences(preferences_dir: &Path) -> anyhow::Result<Preferences> {
+    let mut preferences_path = preferences_dir.to_path_buf();
+    preferences_path.push("preferences.json");
+
+    let file = File::open(preferences_path)?;
+    let reader = BufReader::new(file);
+    let preferences = serde_json::from_reader(reader)?;
+    Ok(preferences)
+}

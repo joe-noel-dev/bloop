@@ -6,17 +6,17 @@ use super::{
 };
 use crate::{
     api::Response,
-    audio::preferences::{read_preferences, Preferences},
     model::{PlaybackState, PlayingState, Progress, Project, ID},
+    preferences::AudioPreferences,
     samples::SamplesCache,
 };
 use futures::StreamExt;
 use futures_channel::mpsc;
-use log::{error, info, warn};
+use log::{error, info};
 use rawdio::{connect_nodes, create_engine_with_options, Context, EngineOptions, Mixer, Sampler, Timestamp};
 use std::{
     collections::{HashMap, HashSet},
-    path::{Path, PathBuf},
+    path::PathBuf,
     time::Duration,
 };
 use tokio::sync::broadcast;
@@ -41,22 +41,14 @@ pub struct AudioController {
 }
 
 impl AudioController {
-    pub fn new(response_tx: broadcast::Sender<Response>, preferences_dir: &Path) -> Self {
-        let preferences = match read_preferences(preferences_dir) {
-            Ok(preferences) => preferences,
-            Err(error) => {
-                warn!("Failed to read preferences: {}", error);
-                Preferences::default()
-            }
-        };
-
+    pub fn new(response_tx: broadcast::Sender<Response>, preferences: &AudioPreferences) -> Self {
         let (mut context, process) = create_engine_with_options(
             EngineOptions::default()
-                .with_sample_rate(preferences.sample_rate as usize)
-                .with_maximum_channel_count(preferences.output_channel_count as usize),
+                .with_sample_rate(preferences.sample_rate)
+                .with_maximum_channel_count(preferences.output_channel_count),
         );
 
-        let mixer = Mixer::unity(context.as_ref(), preferences.output_channel_count as usize);
+        let mixer = Mixer::unity(context.as_ref(), preferences.output_channel_count);
         connect_nodes!(mixer => "output");
 
         let metronome = Metronome::new(context.as_ref());
@@ -70,12 +62,12 @@ impl AudioController {
 
         let (conversion_tx, conversion_rx) = mpsc::channel(64);
 
-        let realtime_process = Process::new(process, &preferences);
+        let realtime_process = Process::new(process, preferences);
 
         Self {
             context,
             realtime_process,
-            sample_converter: SampleConverter::new(conversion_tx, preferences.sample_rate as usize),
+            sample_converter: SampleConverter::new(conversion_tx, preferences.sample_rate),
             conversion_rx,
             response_tx,
             samples_being_converted: HashSet::new(),

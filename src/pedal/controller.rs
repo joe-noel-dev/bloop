@@ -1,8 +1,10 @@
-use std::{collections::HashMap, fs::File, io::BufReader, path::Path};
+use std::collections::HashMap;
 
-use crate::model::{Action, Notification, PlayingState};
+use crate::{
+    model::{Action, Notification, PlayingState},
+    preferences::PedalPreferences,
+};
 use log::{error, info};
-use serde_derive::{Deserialize, Serialize};
 use tokio::{io::AsyncReadExt, io::AsyncWriteExt, sync::mpsc};
 use tokio_serial::{SerialPortBuilderExt, SerialStream};
 
@@ -15,25 +17,20 @@ pub struct PedalController {
     actions: HashMap<i32, Action>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct Preferences {
-    serial_path: Option<String>,
-}
-
 impl PedalController {
     pub fn new(
         action_tx: mpsc::Sender<Action>,
         notification_rx: mpsc::Receiver<Notification>,
-        preferences_dir: &Path,
+        preferences: &PedalPreferences,
     ) -> Self {
-        let preferences = read_preferences(preferences_dir).unwrap_or_default();
+        let path = preferences.serial_path.as_deref().unwrap_or("/dev/cu.usbmodem21401");
+        let port = open_serial(path);
 
         Self {
             last_beat: None,
             notification_rx,
             action_tx,
-            port: open_serial(&preferences.serial_path.unwrap_or("/dev/cu.usbmodem21401".to_string())),
+            port,
             incoming_message: String::default(),
             actions: HashMap::from([(0, Action::NextSong), (1, Action::ToggleLoop), (2, Action::TogglePlay)]),
         }
@@ -124,15 +121,4 @@ fn open_serial(serial_path: &str) -> Option<SerialStream> {
     info!("Connected to serial at: {serial_path}");
 
     Some(port)
-}
-
-fn read_preferences(preferences_dir: &Path) -> anyhow::Result<Preferences> {
-    let mut preferences_path = preferences_dir.to_path_buf();
-    preferences_path.push("pedal.json");
-
-    let file = File::open(preferences_path)?;
-    let reader = BufReader::new(file);
-    let preferences = serde_json::from_reader(reader)?;
-
-    Ok(preferences)
 }
