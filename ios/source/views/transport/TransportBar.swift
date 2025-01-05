@@ -19,9 +19,6 @@ struct TransportBar: View {
             playButton
                 .frame(maxWidth: .infinity)
 
-            nextButton
-                .frame(maxWidth: .infinity)
-
             queueButton
                 .frame(maxWidth: .infinity)
 
@@ -43,21 +40,6 @@ struct TransportBar: View {
                 let action = stopAction()
                 dispatch(action)
             }
-        }
-    }
-
-    @ViewBuilder
-    private var nextButton: some View {
-        TransportButton(name: "Next", systemImageName: "chevron.forward.2") {
-            let currentId = project.selections.song
-            let currentIndex = project.songs.firstIndex(where: { $0.id == currentId }) ?? 0
-            let nextIndex = currentIndex + 1
-            guard nextIndex < project.songs.count else { return }
-            let nextId = project.songs[nextIndex].id
-            let action = selectSongAction(nextId)
-
-            dispatch(action)
-            dispatch(.setNavigationPath([.song(nextId)]))
         }
     }
 
