@@ -161,36 +161,67 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
             );
           case 'Name':
             return (
-              <NameCell key={name} value={section.name} onSubmit={submitName} />
+              <Grid
+                key={name}
+                xs={columnSize('Name')}
+                sx={{display: 'flex', alignItems: 'center'}}
+              >
+                <ClickToEdit initialValue={section.name} onSave={submitName} />
+              </Grid>
             );
           case 'Start':
             return (
-              <StartCell
+              <Grid
                 key={name}
-                value={`${section.start}`}
-                onChange={submitStart}
-              />
+                xs={columnSize('Start')}
+                sx={{display: 'flex', alignItems: 'center'}}
+              >
+                <ClickToEdit
+                  initialValue={`${section.start}`}
+                  onSave={submitStart}
+                />
+              </Grid>
             );
           case 'Duration':
             return (
-              <DurationCell
+              <Grid
                 key={name}
-                display={!isLast}
-                value={`${duration}`}
-                onChange={submitDuration}
-              />
+                xs={columnSize('Duration')}
+                sx={{display: 'flex', alignItems: 'center'}}
+              >
+                {!isLast && (
+                  <ClickToEdit
+                    initialValue={`${duration}`}
+                    onSave={submitDuration}
+                  />
+                )}
+              </Grid>
             );
           case 'Loop':
             return (
-              <LoopCell key={name} loop={section.loop} onChange={enableLoop} />
+              <Grid
+                key={name}
+                xs={columnSize('Loop')}
+                sx={{display: 'flex', alignItems: 'center'}}
+              >
+                <Switch
+                  checked={section.loop}
+                  onChange={(event) => enableLoop(event.target.checked)}
+                />
+              </Grid>
             );
           case 'Metronome':
             return (
-              <MetronomeCell
+              <Grid
                 key={name}
-                metronome={section.metronome}
-                onChange={enableMetronome}
-              />
+                xs={columnSize('Metronome')}
+                sx={{display: 'flex', alignItems: 'center'}}
+              >
+                <Switch
+                  checked={section.metronome}
+                  onChange={(event) => enableMetronome(event.target.checked)}
+                />
+              </Grid>
             );
           case 'Edit':
             return (
@@ -238,49 +269,6 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
   );
 };
 
-const PlayButton = ({
-  isPlaying,
-  onRequestPlay,
-}: {
-  isPlaying: boolean;
-  onRequestPlay: () => void;
-}) =>
-  !isPlaying && (
-    <IconButton onClick={onRequestPlay}>
-      <PlayArrow />
-    </IconButton>
-  );
-
-const StopButton = ({
-  isPlaying,
-  onRequestStop,
-}: {
-  isPlaying: boolean;
-  onRequestStop: () => void;
-}) =>
-  isPlaying && (
-    <IconButton onClick={onRequestStop}>
-      <Stop />
-    </IconButton>
-  );
-
-const QueueButton = ({onRequestQueue}: {onRequestQueue: () => void}) => (
-  <IconButton onClick={onRequestQueue}>
-    <ArrowForward />
-  </IconButton>
-);
-
-const Progress = ({
-  isPlaying,
-  progress,
-}: {
-  isPlaying: boolean;
-  progress: number;
-}) =>
-  isPlaying && (
-    <LinearProgress determinate value={progress * 100} sx={{maxWidth: 64}} />
-  );
-
 const TransportCell = ({
   isPlaying,
   progress,
@@ -297,85 +285,27 @@ const TransportCell = ({
 }) => (
   <Grid xs={columnSize('Play')}>
     <Stack direction="row" spacing={1} alignItems="center">
-      <PlayButton isPlaying={isPlaying} onRequestPlay={onRequestPlay} />
-      <StopButton isPlaying={isPlaying} onRequestStop={onRequestStop} />
-      <QueueButton onRequestQueue={onRequestQueue} />
-      <Progress isPlaying={isPlaying} progress={progress} />
+      {!isPlaying && (
+        <IconButton onClick={onRequestPlay}>
+          <PlayArrow />
+        </IconButton>
+      )}
+      {isPlaying && (
+        <IconButton onClick={onRequestStop}>
+          <Stop />
+        </IconButton>
+      )}
+      <IconButton onClick={onRequestQueue}>
+        <ArrowForward />
+      </IconButton>
+      {isPlaying && (
+        <LinearProgress
+          determinate
+          value={progress * 100}
+          sx={{maxWidth: 64}}
+        />
+      )}
     </Stack>
-  </Grid>
-);
-
-const NameCell = ({
-  value,
-  onSubmit,
-}: {
-  value: string;
-  onSubmit: (name: string) => void;
-}) => (
-  <Grid xs={columnSize('Name')} sx={{display: 'flex', alignItems: 'center'}}>
-    <ClickToEdit initialValue={value} onSave={onSubmit} />
-  </Grid>
-);
-
-const StartCell = ({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-}) => (
-  <Grid xs={columnSize('Start')} sx={{display: 'flex', alignItems: 'center'}}>
-    <ClickToEdit initialValue={value} onSave={onChange} />
-  </Grid>
-);
-
-const DurationCell = ({
-  value,
-  display,
-  onChange,
-}: {
-  value: string;
-  display: boolean;
-  onChange: (value: string) => void;
-}) => (
-  <Grid
-    xs={columnSize('Duration')}
-    sx={{display: 'flex', alignItems: 'center'}}
-  >
-    {display && <ClickToEdit initialValue={value} onSave={onChange} />}
-  </Grid>
-);
-
-const LoopCell = ({
-  loop,
-  onChange,
-}: {
-  loop: boolean;
-  onChange: (loop: boolean) => void;
-}) => (
-  <Grid xs={columnSize('Loop')} sx={{display: 'flex', alignItems: 'center'}}>
-    <Switch
-      checked={loop}
-      onChange={(event) => onChange(event.target.checked)}
-    />
-  </Grid>
-);
-
-const MetronomeCell = ({
-  metronome,
-  onChange,
-}: {
-  metronome: boolean;
-  onChange: (metronome: boolean) => void;
-}) => (
-  <Grid
-    xs={columnSize('Metronome')}
-    sx={{display: 'flex', alignItems: 'center'}}
-  >
-    <Switch
-      checked={metronome}
-      onChange={(event) => onChange(event.target.checked)}
-    />
   </Grid>
 );
 
