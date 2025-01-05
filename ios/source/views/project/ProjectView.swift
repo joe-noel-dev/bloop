@@ -35,7 +35,6 @@ struct ProjectView: View {
                 .toolbar {
                     toolbarContent
                 }
-
                 .navigationDestination(for: NavigationItem.self) { item in
                     if case .song(let songId) = item {
                         let song = state.project.songs.first { $0.id == songId }
@@ -43,11 +42,13 @@ struct ProjectView: View {
                         if song != nil {
                             SongView(
                                 song: song!,
+                                songs: state.project.songs,
                                 selections: state.project.selections,
                                 playbackState: state.playbackState,
                                 progress: state.progress,
                                 waveforms: state.waveforms,
-                                dispatch: dispatch
+                                dispatch: dispatch,
+                                navigationPath: navigationPath
                             )
                             .navigationTitle(song!.name)
                         }
@@ -111,11 +112,13 @@ struct ProjectView: View {
             ForEach(state.project.songs) { song in
                 SongView(
                     song: song,
+                    songs: state.project.songs,
                     selections: state.project.selections,
                     playbackState: state.playbackState,
                     progress: state.progress,
                     waveforms: state.waveforms,
-                    dispatch: dispatch
+                    dispatch: dispatch,
+                    navigationPath: navigationPath
                 )
             }
         }

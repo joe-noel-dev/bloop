@@ -2,11 +2,14 @@ import SwiftUI
 
 struct SongView: View {
     var song: Song
+    var songs: [Song]
     var selections: Selections
     var playbackState: PlaybackState
     var progress: Progress
     var waveforms: Waveforms
     var dispatch: Dispatch
+
+    @Binding var navigationPath: [NavigationItem]
 
     @State private var editingName = false
     @State private var editingSections = false
@@ -19,22 +22,6 @@ struct SongView: View {
     #if os(iOS)
         @Environment(\.horizontalSizeClass) var horizontalSizeClass
     #endif
-
-    init(
-        song: Song,
-        selections: Selections,
-        playbackState: PlaybackState,
-        progress: Progress,
-        waveforms: Waveforms,
-        dispatch: @escaping Dispatch
-    ) {
-        self.song = song
-        self.selections = selections
-        self.playbackState = playbackState
-        self.progress = progress
-        self.waveforms = waveforms
-        self.dispatch = dispatch
-    }
 
     private var selectedSection: Section? {
         song.sections.first {
@@ -122,6 +109,17 @@ struct SongView: View {
             }
 
         }
+        .gesture(
+            DragGesture(minimumDistance: 20, coordinateSpace: .global).onEnded { value in
+                if value.translation.width < 0 {
+                    selectNextSong()
+                }
+
+                if value.translation.width > 0 {
+                    selectPreviousSong()
+                }
+            }
+        )
         .sheet(isPresented: $editingSections) {
             SectionsView(song: song, dispatch: dispatch)
         }
@@ -178,7 +176,33 @@ struct SongView: View {
                 dispatch(action)
             }
         }
+        .navigationTitle(song.name)
+    }
 
+    private func selectSongWithOffset(_ offset: Int) {
+        guard let index = songs.firstIndex(where: { $0.id == song.id }) else {
+            return
+        }
+
+        let nextIndex = index + offset
+
+        guard 0 <= nextIndex && nextIndex < songs.count else {
+            return
+        }
+
+        let nextSong = songs[nextIndex].id
+        let action = selectSongAction(nextSong)
+        dispatch(action)
+
+        navigationPath = [.song(nextSong)]
+    }
+
+    private func selectNextSong() {
+        selectSongWithOffset(1)
+    }
+
+    private func selectPreviousSong() {
+        selectSongWithOffset(-1)
     }
 
     @ViewBuilder
@@ -276,14 +300,18 @@ struct SongView_Previews: PreviewProvider {
 
     static let progress = Progress()
 
+    @State static var navigationPath: [NavigationItem] = [.song(song.id)]
+
     static var previews: some View {
         SongView(
             song: song,
+            songs: [song],
             selections: selections,
             playbackState: playbackState,
             progress: progress,
             waveforms: Waveforms(),
-            dispatch: loggingDispatch
+            dispatch: loggingDispatch,
+            navigationPath: $navigationPath
         )
         .padding()
 
