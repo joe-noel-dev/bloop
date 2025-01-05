@@ -1,4 +1,11 @@
-import {Grid, IconButton, LinearProgress, Stack, Switch} from '@mui/joy';
+import {
+  ColorPaletteProp,
+  Grid,
+  IconButton,
+  LinearProgress,
+  Stack,
+  Switch,
+} from '@mui/joy';
 import {
   useSectionById,
   useSelectedSectionId,
@@ -11,14 +18,23 @@ import {
   selectSectionRequest,
   stopRequest,
   updateSectionRequest,
+  updateSongRequest,
 } from '../../api/request';
-import {ArrowForward, Delete, PlayArrow, Stop} from '@mui/icons-material';
+import {
+  ArrowDownward,
+  ArrowForward,
+  ArrowUpward,
+  Delete,
+  PlayArrow,
+  Stop,
+} from '@mui/icons-material';
 import {usePlaybackState, useProgress} from '../../model-hooks/transport-hooks';
 import {columnSize, columns} from './TableInfo';
 import isEqual from 'lodash.isequal';
-import {getSectionBeatLength} from '../../model/song';
+import {getSectionBeatLength, Song} from '../../model/song';
 import {useSong} from '../../model-hooks/song-hooks';
 import {ClickToEdit} from '../../components/ClickToEdit';
+import {Core} from '../../core/Core';
 
 interface Props {
   songId: string;
@@ -35,6 +51,7 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
   const progress = useProgress();
 
   const duration = song ? getSectionBeatLength(song, sectionId) : 0;
+  const isFirst = song?.sections.at(0)?.id === sectionId;
   const isLast = song?.sections.at(-1)?.id === sectionId;
 
   const isSelected = sectionId === selectedSectionId;
@@ -179,7 +196,39 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
             return (
               <Grid xs={columnSize('Edit')} key={name}>
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <RemoveButton onRemove={remove} />
+                  <EditButton
+                    onClick={() => {
+                      if (!song) {
+                        return;
+                      }
+
+                      const delta = -1;
+                      moveSectionIndex(sectionId, delta, song, core);
+                    }}
+                    color="primary"
+                    disabled={isFirst}
+                  >
+                    <ArrowUpward />
+                  </EditButton>
+
+                  <EditButton
+                    onClick={() => {
+                      if (!song) {
+                        return;
+                      }
+
+                      const delta = 1;
+                      moveSectionIndex(sectionId, delta, song, core);
+                    }}
+                    color="primary"
+                    disabled={isLast}
+                  >
+                    <ArrowDownward />
+                  </EditButton>
+
+                  <EditButton onClick={remove} color="danger">
+                    <Delete />
+                  </EditButton>
                 </Stack>
               </Grid>
             );
@@ -330,17 +379,60 @@ const MetronomeCell = ({
   </Grid>
 );
 
-const RemoveButton = ({onRemove}: {onRemove: () => void}) => (
+const EditButton = ({
+  onClick,
+  disabled,
+  color,
+  children,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  color?: ColorPaletteProp;
+  children: React.ReactNode;
+}) => (
   <IconButton
     variant="soft"
-    color="danger"
+    color={color}
     size="sm"
-    aria-label="Remove section"
+    disabled={disabled}
+    aria-label="Move section up"
     onClick={(event) => {
-      onRemove();
+      onClick();
       event.stopPropagation();
     }}
   >
-    <Delete />
+    {children}
   </IconButton>
 );
+
+const moveSectionIndex = (
+  sectionId: string,
+  delta: number,
+  song: Song,
+  core: Core
+) => {
+  const currentIndex = song.sections.findIndex((s) => s.id === sectionId);
+  if (currentIndex === -1) {
+    console.warn(`Section not found: ${sectionId}`);
+    return;
+  }
+
+  const newIndex = currentIndex + delta;
+  if (newIndex < 0 || newIndex >= song.sections.length) {
+    console.warn(`Section move out of range: ${sectionId} -> ${newIndex}`);
+    return;
+  }
+
+  const startPositions = song.sections.map((s) => s.start);
+  const newSong = {...song};
+  const [movedSection] = newSong.sections.splice(currentIndex, 1);
+  newSong.sections.splice(newIndex, 0, movedSection);
+
+  // Maintain beat start positions
+  newSong.sections.forEach((section, index) => {
+    section.start = startPositions[index];
+  });
+
+  const request = updateSongRequest(newSong);
+  core.sendRequest(request);
+};
