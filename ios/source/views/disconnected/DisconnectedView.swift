@@ -7,6 +7,8 @@ struct DisconnectedView: View {
     var body: some View {
         VStack(spacing: Layout.units(2)) {
 
+            Spacer()
+
             if servers.isEmpty {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle())
@@ -24,11 +26,25 @@ struct DisconnectedView: View {
                             .frame(maxWidth: .infinity)
                     }
                 ).buttonStyle(.borderedProminent)
-
             }
+
+            Spacer()
+
+            Text(version)
+                .font(.caption)
         }
         .padding(Layout.units(2))
     }
+
+    private var version: String {
+        guard let versionString = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String else {
+            print("Version string not found")
+            return "0.0.0"
+        }
+        
+        return versionString
+    }
+
 }
 
 private func displayName(_ server: Server) -> String {
