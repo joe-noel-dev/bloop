@@ -65,6 +65,10 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
 
+      - name: Generate version file
+        working-directory: ios
+        run: ./version.sh
+
       - name: build archive
         working-directory: ios
         run: |
