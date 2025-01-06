@@ -94,6 +94,28 @@ struct SongView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading) {
+                HStack {
+                    if let previousSongName = previousSongName {
+                        Button {
+                            selectPreviousSong()
+                        } label: {
+                            Image(systemName: "arrow.left")
+                            Text(previousSongName)
+                        }
+                    }
+
+                    Spacer()
+
+                    if let nextSongName = nextSongName {
+                        Button {
+                            selectNextSong()
+                        } label: {
+                            Text(nextSongName)
+                            Image(systemName: "arrow.right")
+                        }
+                    }
+
+                }
                 sections
                 Spacer()
             }
@@ -123,7 +145,6 @@ struct SongView: View {
         .sheet(isPresented: $editingSections) {
             SectionsView(song: song, dispatch: dispatch)
         }
-        .tint(waveformColour)
         .fileImporter(isPresented: $editingSample, allowedContentTypes: [.wav]) { result in
             switch result {
             case .success(let url):
@@ -199,6 +220,23 @@ struct SongView: View {
 
     private func selectNextSong() {
         selectSongWithOffset(1)
+    }
+
+    private func offsetSongName(_ offset: Int) -> String? {
+        let index = songs.firstIndex { $0.id == song.id }
+        guard let index else { return nil }
+        let nextIndex = index + offset
+        guard 0 <= nextIndex && nextIndex < songs.count else { return nil }
+        guard !songs[nextIndex].name.isEmpty else { return "Next" }
+        return songs[nextIndex].name
+    }
+
+    private var nextSongName: String? {
+        offsetSongName(1)
+    }
+
+    private var previousSongName: String? {
+        offsetSongName(-1)
     }
 
     private func selectPreviousSong() {
