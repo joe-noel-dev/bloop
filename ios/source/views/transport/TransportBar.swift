@@ -47,13 +47,14 @@ struct TransportBar: View {
     private var loopButton: some View {
         TransportButton(
             name: playbackState.looping ? "Exit Loop" : "Enter Loop",
-            systemImageName: playbackState.looping ? "repeat.circle.fill" : "repeat.circle"
+            systemImageName: "repeat"
         ) {
             let action = playbackState.looping ? exitLoopAction() : enterLoopAction()
             dispatch(action)
         }
         .disabled(playbackState.playing != .playing)
-        .opacity(playbackState.looping ? 1.0 : 0.5)
+        .foregroundColor(playbackState.looping ? .accentColor : .primary)
+        .opacity(playbackState.playing == .playing ? 1.0 : 0.5)
 
     }
 
@@ -83,7 +84,7 @@ struct TransportBar: View {
     private var queueButton: some View {
         switch queueState {
         case .readyToQueue, .notReady:
-            TransportButton(name: "Jump", systemImageName: "arrow.forward.circle") {
+            TransportButton(name: "Jump", systemImageName: "arrow.right") {
                 guard let songId = project.selections.song,
                     let sectionId = project.selections.section
                 else {
@@ -93,9 +94,12 @@ struct TransportBar: View {
                 let action = queueAction(song: songId, section: sectionId)
                 dispatch(action)
             }
+            .foregroundColor(.accentColor)
             .disabled(queueState == .notReady)
         case .queued:
-            TransportButton(name: "Queued", systemImageName: "checkmark.circle.fill") {}
+            TransportButton(name: "Queued", systemImageName: "checkmark") {}.foregroundColor(
+                .accentColor
+            )
         }
 
     }
