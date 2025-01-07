@@ -121,14 +121,9 @@ mod tests {
 
         song.sample = Some(sample);
 
-        let mut section_1 = Section::new();
-        section_1.start = 23.0;
-
-        let mut section_2 = Section::new();
-        section_2.start = 48.0;
-
-        let mut section_3 = Section::new();
-        section_3.start = 89.0;
+        let section_1 = Section::default().with_start(23.0);
+        let section_2 = Section::default().with_start(48.0);
+        let section_3 = Section::default().with_start(89.0);
         song.sections = vec![section_1.clone(), section_2.clone(), section_3.clone()];
 
         assert_relative_eq!(song.section_length(&section_1.id), 25.0);

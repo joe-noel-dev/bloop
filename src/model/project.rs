@@ -107,7 +107,7 @@ impl Project {
             start = last_section.start + default_length;
         }
 
-        let section = Section::new().with_start(start);
+        let section = Section::default().with_start(start);
 
         song.sections.push(section);
 
@@ -227,7 +227,7 @@ impl Project {
 
     pub fn add_song(mut self, num_sections: usize) -> Self {
         assert!(num_sections >= 1);
-        let sections: Vec<Section> = (0..num_sections).map(|_| Section::new()).collect();
+        let sections: Vec<Section> = (0..num_sections).map(|_| Section::default()).collect();
         let song = Song::default().with_sections(sections);
         self.songs.push(song);
         self.select_last_song()

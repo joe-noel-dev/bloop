@@ -135,6 +135,20 @@ pub struct AddSampleRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct AddSectionRequest {
+    pub song_id: ID,
+    pub name: String,
+    pub start: f64,
+
+    #[serde(default)]
+    pub looping: bool,
+
+    #[serde(default)]
+    pub metronome: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 #[serde(tag = "method", content = "payload")]
 pub enum Request {
     Get(GetRequest),
@@ -152,4 +166,5 @@ pub enum Request {
     AddSample(AddSampleRequest),
     RemoveSample(RemoveSampleRequest),
     Transport(TransportMethod),
+    AddSection(AddSectionRequest),
 }

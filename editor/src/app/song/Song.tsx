@@ -13,6 +13,7 @@ import {columnSize, columns} from '../section/TableInfo';
 import {Song as ModelSong} from '../../model';
 import {updateSectionBeatLength} from '../../model/song';
 import {ClickToEdit} from '../../components/ClickToEdit';
+import {AbletonUpload} from './AbletonUpload';
 
 interface SongProps {
   songId: string;
@@ -137,6 +138,8 @@ const SongDetails = ({
       >
         Move Down
       </Button>
+
+      <AbletonUpload songId={song.id} />
 
       <RemoveButton onClick={onRemove} />
 

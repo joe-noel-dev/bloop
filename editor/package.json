@@ -11,6 +11,7 @@
     "@mui/material": "^5.16.7",
     "@types/lodash.isequal": "^4.5.8",
     "@types/node": "^22.5.4",
+    "@types/pako": "^2.0.3",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.0",
     "@types/react-modal": "^3.16.3",
@@ -19,6 +20,7 @@
     "events": "^3.3.0",
     "express": "^4.21.2",
     "lodash.isequal": "^4.5.0",
+    "pako": "^2.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-is": "^19.0.0",
@@ -32,7 +34,7 @@
   "scripts": {
     "start": "yarn run discovery & vite",
     "build": "tsc && vite build",
-    "serve": "yarn run discovery & vite preview", 
+    "serve": "yarn run discovery & vite preview",
     "discovery": "node ./src/server.js"
   },
   "eslintConfig": {
