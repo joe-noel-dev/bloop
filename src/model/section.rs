@@ -15,8 +15,8 @@ pub struct Section {
     pub metronome: bool,
 }
 
-impl Section {
-    pub fn new() -> Self {
+impl Default for Section {
+    fn default() -> Self {
         Section {
             id: ID::new_v4(),
             name: "Section".to_string(),
@@ -25,9 +25,26 @@ impl Section {
             metronome: false,
         }
     }
+}
+
+impl Section {
+    pub fn with_name(mut self, name: String) -> Self {
+        self.name = name;
+        self
+    }
 
     pub fn with_start(mut self, start: f64) -> Self {
         self.start = start;
+        self
+    }
+
+    pub fn with_looping(mut self, looping: bool) -> Self {
+        self.looping = looping;
+        self
+    }
+
+    pub fn with_metronome(mut self, metronome: bool) -> Self {
+        self.metronome = metronome;
         self
     }
 

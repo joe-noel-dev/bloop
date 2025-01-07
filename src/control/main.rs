@@ -3,7 +3,7 @@ use crate::{
     api::*,
     audio::AudioController,
     midi::MidiController,
-    model::{Action, Notification, Project, Sample, Tempo},
+    model::{Action, Notification, Project, Sample, Section, Tempo},
     pedal::PedalController,
     preferences::read_preferences,
     samples::SamplesCache,
@@ -104,6 +104,9 @@ impl MainController {
                 self.handle_complete_upload(complete_upload_request).map(|_| project)
             }
             Request::AddSample(add_sample_request) => self.handle_add_sample(add_sample_request, project),
+            Request::AddSection(add_section_request) => {
+                self.handle_add_section_with_params(add_section_request, project)
+            }
         };
 
         match result {
@@ -361,6 +364,28 @@ impl MainController {
         }
 
         project = project.add_sample_to_song(sample, &request.song_id)?;
+        Ok(project)
+    }
+
+    fn handle_add_section_with_params(
+        &mut self,
+        request: AddSectionRequest,
+        mut project: Project,
+    ) -> anyhow::Result<Project> {
+        let section = Section::default()
+            .with_name(request.name)
+            .with_start(request.start)
+            .with_looping(request.looping)
+            .with_metronome(request.metronome);
+
+        let song = project
+            .song_with_id_mut(&request.song_id)
+            .ok_or_else(|| anyhow!("Song not found"))?;
+
+        song.sections.push(section);
+
+        song.sections.sort_by(|a, b| a.start.partial_cmp(&b.start).unwrap());
+
         Ok(project)
     }
 

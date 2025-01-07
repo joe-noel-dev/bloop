@@ -17,7 +17,8 @@ export type Method =
   | 'upload'
   | 'completeUpload'
   | 'addSample'
-  | 'removeSample';
+  | 'removeSample'
+  | 'addSection';
 
 export type Entity =
   | 'all'
@@ -39,7 +40,8 @@ export interface Request {
     | UploadDataRequest
     | CompleteUploadRequest
     | AddSampleRequest
-    | RemoveSampleRequest;
+    | RemoveSampleRequest
+    | AddSectionRequest;
 }
 
 export interface EntityId {
@@ -82,6 +84,14 @@ export interface RemoveSampleRequest {
   songId: string;
 }
 
+export interface AddSectionRequest {
+  songId: string;
+  name: string;
+  start: number;
+  loop: boolean;
+  metronome: boolean;
+}
+
 export interface QueueOptions {
   songId: string;
   sectionId: string;
@@ -109,6 +119,23 @@ export const addSectionRequest = (songId: string): Request => {
     payload: {
       entity: 'section',
       id: songId,
+    },
+  };
+};
+
+export const addSectionWithParamsRequest = (
+  songId: string,
+  name: string,
+  start: number
+): Request => {
+  return {
+    method: 'addSection',
+    payload: {
+      songId,
+      name,
+      start,
+      loop: false,
+      metronome: false,
     },
   };
 };
