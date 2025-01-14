@@ -16,8 +16,13 @@ use tokio::{
     time,
 };
 
-#[allow(dead_code)]
-pub struct MainController {
+pub async fn run_main_controller(request_rx: mpsc::Receiver<Request>, response_tx: broadcast::Sender<Response>) {
+    let mut main_controller = MainController::new(request_rx, response_tx.clone());
+    main_controller.load_last_project().await;
+    main_controller.run().await;
+}
+
+struct MainController {
     samples_cache: SamplesCache,
     project_store: ProjectStore,
     request_rx: mpsc::Receiver<Request>,
@@ -25,11 +30,10 @@ pub struct MainController {
     project: Project,
     audio_controller: AudioController,
     waveform_store: WaveformStore,
-    midi_controller: MidiController,
+    _midi_controller: MidiController,
     action_rx: mpsc::Receiver<Action>,
     notification_tx: mpsc::Sender<Notification>,
     should_save: bool,
-    pedal_controller: PedalController,
 }
 
 impl ResponseBroadcaster for MainController {
@@ -56,6 +60,16 @@ impl MainController {
             }
         };
 
+        let mut pedal_controller = PedalController::new(
+            action_tx.clone(),
+            notification_rx,
+            &preferences.pedal.unwrap_or_default(),
+        );
+
+        tokio::spawn(async move {
+            pedal_controller.run().await;
+        });
+
         Self {
             samples_cache: SamplesCache::new(&directories.samples),
             project_store: ProjectStore::new(&directories.projects),
@@ -64,11 +78,10 @@ impl MainController {
             project: Project::new(),
             audio_controller: AudioController::new(response_tx.clone(), &preferences.audio.unwrap_or_default()),
             waveform_store: WaveformStore::new(response_tx),
-            midi_controller: MidiController::new(action_tx.clone(), &preferences.midi.unwrap_or_default()),
+            _midi_controller: MidiController::new(action_tx.clone(), &preferences.midi.unwrap_or_default()),
             action_rx,
             notification_tx,
             should_save: false,
-            pedal_controller: PedalController::new(action_tx, notification_rx, &preferences.pedal.unwrap_or_default()),
         }
     }
 
@@ -182,7 +195,6 @@ impl MainController {
                 Some(action) = self.action_rx.recv() => self.handle_action(action),
                 _ = save_interval.tick() => self.auto_save_project().await,
                 _ = pedal_interval.tick() => self.update_pedal().await,
-               _ = self.pedal_controller.run() => (),
                 else => break,
             }
         }

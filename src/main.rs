@@ -9,12 +9,14 @@ mod pedal;
 mod preferences;
 mod samples;
 mod types;
+mod ui;
 mod waveform;
 
+use control::run_main_controller;
 use git_version::git_version;
 use std::time::SystemTime;
+use ui::run_ui;
 
-use crate::control::MainController;
 use crate::network::run_server;
 use log::info;
 use tokio::join;
@@ -33,12 +35,10 @@ async fn main() {
     let (request_tx, request_rx) = mpsc::channel(128);
     let (response_tx, _) = broadcast::channel(128);
 
-    let mut main_controller = MainController::new(request_rx, response_tx.clone());
-    main_controller.load_last_project().await;
-
-    let control_future = main_controller.run();
-    let network_future = run_server(request_tx, response_tx);
-    join!(control_future, network_future);
+    let control = run_main_controller(request_rx, response_tx.clone());
+    let network = run_server(request_tx, response_tx);
+    let ui = run_ui();
+    join!(control, network, ui);
 }
 
 fn setup_logger() -> Result<(), fern::InitError> {

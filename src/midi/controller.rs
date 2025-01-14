@@ -62,24 +62,24 @@ fn on_midi_input(_: u64, message: &[u8], mappings: &[Mapping], context: &mut Con
         });
 }
 
+fn print_midi_inputs(midi_input: &MidiInput) {
+    info!("MIDI Input ports:");
+
+    let ports = midi_input.ports();
+
+    ports.iter().enumerate().for_each(|(index, port)| {
+        let name = match midi_input.port_name(port) {
+            Ok(name) => name,
+            Err(_) => return,
+        };
+
+        info!("{index}: {name}");
+    });
+
+    info!("");
+}
+
 impl MidiController {
-    fn print_midi_inputs(midi_input: &MidiInput) {
-        info!("MIDI Input ports:");
-
-        let ports = midi_input.ports();
-
-        ports.iter().enumerate().for_each(|(index, port)| {
-            let name = match midi_input.port_name(port) {
-                Ok(name) => name,
-                Err(_) => return,
-            };
-
-            info!("{index}: {name}");
-        });
-
-        info!("");
-    }
-
     pub fn new(action_tx: mpsc::Sender<Action>, preferences: &MidiPreferences) -> Self {
         let midi_input = MidiInput::new("Bloop").expect("Unable to connect to MIDI backend");
 
@@ -88,7 +88,7 @@ impl MidiController {
             None => return Self::default(),
         };
 
-        Self::print_midi_inputs(&midi_input);
+        print_midi_inputs(&midi_input);
 
         let ports = midi_input.ports();
         let port = ports.iter().find(|port| match midi_input.port_name(port) {
