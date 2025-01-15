@@ -1,39 +1,19 @@
-use std::time::Duration;
+mod control;
+mod message;
+mod state;
+mod view;
 
-use iced::widget::{button, text};
-use iced::{time, Element, Subscription, Theme};
+use iced::Task;
+use state::State;
+use tokio::sync::{broadcast, mpsc};
 
-pub fn run_ui() -> iced::Result {
-    iced::application("Bloop", update, view)
-        .theme(theme)
-        .subscription(subscription)
-        .run()
-}
+use crate::api::{Request, Response};
 
-#[derive(Debug, Clone)]
-enum Message {
-    Increment,
-}
+pub fn run_ui(response_tx: broadcast::Sender<Response>, request_tx: mpsc::Sender<Request>) -> iced::Result {
+    let state = State::new(response_tx, request_tx);
 
-#[derive(Default)]
-struct State {
-    counter: u64,
-}
-
-fn update(state: &mut State, message: Message) {
-    match message {
-        Message::Increment => state.counter += 1,
-    }
-}
-
-fn view(state: &State) -> Element<Message> {
-    button(text(state.counter)).on_press(Message::Increment).into()
-}
-
-fn theme(_state: &State) -> Theme {
-    Theme::Dark
-}
-
-fn subscription(_state: &State) -> Subscription<Message> {
-    time::every(Duration::from_millis(1_000)).map(|_| Message::Increment)
+    iced::application("Bloop", control::update, view::render)
+        .theme(view::theme)
+        .subscription(control::subscription)
+        .run_with(move || (state, Task::none()))
 }
