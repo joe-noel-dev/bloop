@@ -2,7 +2,7 @@ use futures::stream::unfold;
 use iced::Subscription;
 use tokio::sync::mpsc;
 
-use crate::api::{Request, Response, TransportMethod};
+use crate::api::{Entity, Request, Response, SelectRequest, TransportMethod};
 
 use super::{message::Message, state::State};
 
@@ -17,7 +17,33 @@ pub fn update(state: &mut State, message: Message) {
             let request = Request::Transport(TransportMethod::Stop);
             send_request(state.request_tx.clone(), request);
         }
+        Message::SelectPreviousSong => select_song_with_offset(state, -1),
+        Message::SelectNextSong => select_song_with_offset(state, 1),
     }
+}
+
+fn select_song_with_offset(state: &State, offset: i64) {
+    let current_song_index = match state.project.selected_song_index() {
+        Some(index) => index,
+        None => return,
+    };
+
+    let next_song_index = current_song_index as i64 + offset;
+    if next_song_index < 0 || next_song_index >= state.project.songs.len() as i64 {
+        return;
+    }
+
+    let song = match state.project.song_with_index(next_song_index as usize) {
+        Some(song) => song,
+        None => return,
+    };
+
+    let request = Request::Select(SelectRequest {
+        entity: Entity::Song,
+        id: song.id,
+    });
+
+    send_request(state.request_tx.clone(), request);
 }
 
 pub fn subscription(state: &State) -> Subscription<Message> {

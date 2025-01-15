@@ -1,3 +1,4 @@
+mod constants;
 mod control;
 mod message;
 mod state;
@@ -14,6 +15,8 @@ pub fn run_ui(response_tx: broadcast::Sender<Response>, request_tx: mpsc::Sender
 
     iced::application("Bloop", control::update, view::render)
         .theme(view::theme)
+        .window_size((1024.0, 600.0))
+        .resizable(false)
         .subscription(control::subscription)
         .run_with(move || (state, Task::none()))
 }

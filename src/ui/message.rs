@@ -5,4 +5,6 @@ pub enum Message {
     ApiResponse(Box<Response>),
     StartPlayback,
     StopPlayback,
+    SelectPreviousSong,
+    SelectNextSong,
 }
