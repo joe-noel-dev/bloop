@@ -6,6 +6,9 @@ pub enum Icon {
     ArrowRight,
     Play,
     Stop,
+    Loop,
+    #[allow(unused)]
+    Metronome,
 }
 
 impl Icon {
@@ -15,6 +18,8 @@ impl Icon {
             Icon::ArrowRight => include_bytes!("./resources/arrow-right.svg").as_slice(),
             Icon::Play => include_bytes!("./resources/play.svg").as_slice(),
             Icon::Stop => include_bytes!("./resources/stop.svg").as_slice(),
+            Icon::Loop => include_bytes!("./resources/loop.svg").as_slice(),
+            Icon::Metronome => include_bytes!("./resources/metronome.svg").as_slice(),
         };
 
         svg(svg::Handle::from_memory(bytes))
@@ -25,7 +30,7 @@ impl Icon {
             .width(dimension)
             .height(dimension)
             .style(|theme, _status| svg::Style {
-                color: Some(theme.palette().text),
+                color: Some(theme.extended_palette().primary.base.text),
             })
     }
 }

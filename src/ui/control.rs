@@ -19,6 +19,22 @@ pub fn update(state: &mut State, message: Message) {
         }
         Message::SelectPreviousSong => select_song_with_offset(state, -1),
         Message::SelectNextSong => select_song_with_offset(state, 1),
+        Message::SelectSection(uuid) => {
+            let request = Request::Select(SelectRequest {
+                entity: Entity::Section,
+                id: uuid,
+            });
+
+            send_request(state.request_tx.clone(), request);
+        }
+        Message::EnterLoop => {
+            let request = Request::Transport(TransportMethod::Loop);
+            send_request(state.request_tx.clone(), request);
+        }
+        Message::ExitLoop => {
+            let request = Request::Transport(TransportMethod::ExitLoop);
+            send_request(state.request_tx.clone(), request);
+        }
     }
 }
 
@@ -66,6 +82,10 @@ fn handle_api_response(state: &mut State, response: Response) {
 
     if let Some(playback) = response.playback_state {
         state.playback_state = playback;
+    }
+
+    if let Some(progress) = response.progress {
+        state.progress = progress;
     }
 }
 

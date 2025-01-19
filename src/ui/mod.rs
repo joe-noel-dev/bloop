@@ -2,7 +2,10 @@ mod constants;
 mod control;
 mod icons;
 mod message;
+mod project;
+mod sections;
 mod state;
+mod transport;
 mod view;
 
 use iced::Task;
@@ -16,8 +19,12 @@ pub fn run_ui(response_tx: broadcast::Sender<Response>, request_tx: mpsc::Sender
 
     iced::application("Bloop", control::update, view::render)
         .theme(view::theme)
-        .window_size((1024.0, 600.0))
-        .resizable(false)
+        .window_size(if cfg!(target_os = "linux") {
+            (600.0, 1024.0)
+        } else {
+            (800.0, 600.0)
+        })
+        .resizable(cfg!(target_os = "linux") == false)
         .subscription(control::subscription)
         .run_with(move || (state, Task::none()))
 }

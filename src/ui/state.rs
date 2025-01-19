@@ -2,7 +2,7 @@ use tokio::sync::{broadcast, mpsc};
 
 use crate::{
     api::{Request, Response},
-    model::{PlaybackState, Project},
+    model::{PlaybackState, Progress, Project},
 };
 
 pub struct State {
@@ -10,6 +10,7 @@ pub struct State {
     pub request_tx: mpsc::Sender<Request>,
     pub project: Project,
     pub playback_state: PlaybackState,
+    pub progress: Progress,
 }
 
 impl State {
@@ -19,6 +20,7 @@ impl State {
             request_tx,
             project: Default::default(),
             playback_state: Default::default(),
+            progress: Default::default(),
         }
     }
 }
