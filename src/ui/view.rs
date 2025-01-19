@@ -6,6 +6,7 @@ use iced::{Element, Theme};
 use crate::model::{PlaybackState, PlayingState, Project, Song};
 
 use super::constants::display_units;
+use super::icons::Icon;
 use super::message::Message;
 use super::state::State;
 
@@ -23,11 +24,17 @@ fn project_view(project: &Project) -> Element<Message> {
         None => return empty_project.into(),
     };
 
+    let icon_dimension = 20.0;
+    let left_icon = Icon::ArrowLeft.to_svg_with_size(icon_dimension);
+    let right_icon = Icon::ArrowRight.to_svg_with_size(icon_dimension);
+
     column![
         row![
-            button(text("Back")).on_press(Message::SelectPreviousSong),
+            button(row![left_icon, "Back"].align_y(Center).spacing(display_units(1.0)))
+                .on_press(Message::SelectPreviousSong),
             text(&song.name).center().width(Fill),
-            button(text("Forward")).on_press(Message::SelectNextSong),
+            button(row!["Forward", right_icon].align_y(Center).spacing(display_units(1.0)))
+                .on_press(Message::SelectNextSong),
         ],
         sections_view(song)
     ]
@@ -47,10 +54,13 @@ fn sections_view(song: &Song) -> Element<Message> {
 }
 
 fn transport_view(playback_state: &PlaybackState) -> Element<'static, Message> {
-    let play_button = match playback_state.playing {
-        PlayingState::Playing => button(text("Stop")).on_press(Message::StopPlayback),
-        PlayingState::Stopped => button(text("Play")).on_press(Message::StartPlayback),
+    let (icon, message) = match playback_state.playing {
+        PlayingState::Playing => (Icon::Stop, Message::StopPlayback),
+        PlayingState::Stopped => (Icon::Play, Message::StartPlayback),
     };
+
+    let icon_dimension = 64.0;
+    let play_button = button(icon.to_svg_with_size(icon_dimension)).on_press(message);
 
     column![row![play_button]]
         .width(Fill)

@@ -1,5 +1,6 @@
 mod constants;
 mod control;
+mod icons;
 mod message;
 mod state;
 mod view;

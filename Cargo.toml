@@ -22,7 +22,7 @@ home = "0.5.11"
 hostname = "0.4.0"
 hound = "3.5.1"
 humantime = "2.1.0"
-iced = { version = "0.13.1", features = ["default", "tokio", "debug"] }
+iced = { version = "0.13.1", features = ["default", "tokio", "debug", "svg"] }
 iced_native = "0.10.3"
 libmdns = "0.9.1"
 log = "0.4.22"
