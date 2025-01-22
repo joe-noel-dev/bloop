@@ -24,7 +24,7 @@ pub fn project_view(state: &State) -> Element<Message> {
 }
 
 fn header(song: &Song) -> Element<Message> {
-    let icon_dimension = display_units(6.0);
+    let icon_dimension = display_units(8.0);
     let left_icon = Icon::ArrowLeft.to_svg_with_size(icon_dimension);
     let right_icon = Icon::ArrowRight.to_svg_with_size(icon_dimension);
 
@@ -33,7 +33,7 @@ fn header(song: &Song) -> Element<Message> {
             .height(icon_dimension)
             .width(icon_dimension)
             .on_press(Message::SelectPreviousSong),
-        text(&song.name).width(Fill).size(24.0),
+        text(&song.name).width(Fill).size(64.0),
         button(right_icon)
             .height(icon_dimension)
             .width(icon_dimension)

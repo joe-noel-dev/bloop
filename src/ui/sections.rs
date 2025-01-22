@@ -1,6 +1,6 @@
 use iced::{
     border,
-    widget::{column, container, row, scrollable, text},
+    widget::{center, column, container, row, text},
     Color, Element,
     Length::{Fill, FillPortion},
     Theme,
@@ -17,9 +17,56 @@ pub fn sections_view(song_id: Uuid, state: &State) -> Element<Message> {
         None => return column![].into(),
     };
 
-    scrollable(column(song.sections.iter().map(|section| section_view(section, state))).spacing(display_units(1.0)))
-        .spacing(display_units(1.0))
-        .into()
+    let section_id =
+        if state.playback_state.playing == PlayingState::Playing && state.playback_state.song_id == Some(song_id) {
+            state.playback_state.section_id
+        } else {
+            state.project.selections.section
+        };
+
+    let section_id = match section_id {
+        Some(section_id) => section_id,
+        None => return column![].into(),
+    };
+
+    let index = match song.sections.iter().position(|s| s.id == section_id) {
+        Some(index) => index,
+        None => return column![].into(),
+    };
+
+    let previous_index = if index == 0 { None } else { Some(index - 1) };
+    let next_index = if index == song.sections.len() - 1 {
+        None
+    } else {
+        Some(index + 1)
+    };
+
+    let previous_section = previous_index.and_then(|i| song.sections.get(i));
+
+    let section = match song.find_section(&section_id) {
+        Some(section) => section,
+        None => return column![].into(),
+    };
+
+    let next_section = next_index.and_then(|i| song.sections.get(i));
+
+    let mut elements = Vec::new();
+
+    if let Some(section) = previous_section {
+        elements.push(section_view(section, state));
+    } else {
+        elements.push(container(column![]).height(Fill).into());
+    }
+
+    elements.push(section_view(section, state));
+
+    if let Some(section) = next_section {
+        elements.push(section_view(section, state));
+    } else {
+        elements.push(container(column![]).height(Fill).into());
+    }
+
+    column(elements).spacing(display_units(2.0)).into()
 }
 
 fn section_view<'a>(section: &'a Section, state: &'a State) -> Element<'a, Message> {
@@ -36,12 +83,14 @@ fn section_view<'a>(section: &'a Section, state: &'a State) -> Element<'a, Messa
     container(row![
         status_bar(is_selected, is_playing),
         column![
-            row![text(&section.name).size(18.0).width(Fill).height(Fill)].padding(display_units(0.5)),
+            row![center(text(&section.name).size(64.0))]
+                .padding(display_units(0.5))
+                .height(Fill),
             progress_bar(progress, is_playing)
         ],
     ])
     .clip(true)
-    .height(display_units(6.0))
+    .height(Fill)
     .style(section_background_style)
     .into()
 }
