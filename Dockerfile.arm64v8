@@ -8,6 +8,12 @@ RUN apt-get update && \
         libudev-dev:arm64 \
         jackd2:arm64 \
         libjack-jackd2-dev:arm64 \
+        libgl1-mesa-dev:arm64 \
+        libegl1-mesa-dev:arm64 \
+        libgles2-mesa-dev:arm64 \
+        libx11-dev:arm64 \
         && rm -rf /var/lib/apt/lists/*
+
+ENV WGPU_BACKEND=gl
 
 RUN rustup default nightly
