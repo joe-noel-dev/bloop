@@ -4,7 +4,7 @@ use crate::{
     model::{Action, Notification, PlayingState},
     preferences::PedalPreferences,
 };
-use log::{error, info};
+use log::{debug, error, info};
 use tokio::{io::AsyncReadExt, io::AsyncWriteExt, sync::mpsc};
 use tokio_serial::{SerialPortBuilderExt, SerialStream};
 
@@ -78,6 +78,8 @@ impl PedalController {
     }
 
     async fn on_message_received(&self, message: &str) {
+        debug!("Received from pedal: {message}");
+
         let mut split = message.split(':');
 
         let value = match split.next() {

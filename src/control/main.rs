@@ -29,6 +29,7 @@ struct MainController {
     response_tx: broadcast::Sender<Response>,
     project: Project,
     audio_controller: AudioController,
+    pedal_controller: PedalController,
     waveform_store: WaveformStore,
     _midi_controller: MidiController,
     action_rx: mpsc::Receiver<Action>,
@@ -60,16 +61,6 @@ impl MainController {
             }
         };
 
-        let mut pedal_controller = PedalController::new(
-            action_tx.clone(),
-            notification_rx,
-            &preferences.pedal.unwrap_or_default(),
-        );
-
-        tokio::spawn(async move {
-            pedal_controller.run().await;
-        });
-
         Self {
             samples_cache: SamplesCache::new(&directories.samples),
             project_store: ProjectStore::new(&directories.projects),
@@ -77,6 +68,11 @@ impl MainController {
             response_tx: response_tx.clone(),
             project: Project::new(),
             audio_controller: AudioController::new(response_tx.clone(), &preferences.audio.unwrap_or_default()),
+            pedal_controller: PedalController::new(
+                action_tx.clone(),
+                notification_rx,
+                &preferences.pedal.unwrap_or_default(),
+            ),
             waveform_store: WaveformStore::new(response_tx),
             _midi_controller: MidiController::new(action_tx.clone(), &preferences.midi.unwrap_or_default()),
             action_rx,
@@ -192,6 +188,7 @@ impl MainController {
             tokio::select! {
                 Some(request) = self.request_rx.recv() => self.handle_request(request).await,
                 _ = self.audio_controller.run() => (),
+                _ = self.pedal_controller.run() => (),
                 Some(action) = self.action_rx.recv() => self.handle_action(action),
                 _ = save_interval.tick() => self.auto_save_project().await,
                 _ = pedal_interval.tick() => self.update_pedal().await,

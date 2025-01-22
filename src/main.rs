@@ -24,7 +24,7 @@ use ui::run_ui;
 const GIT_SHA: &str = git_version!();
 
 fn main() {
-    set_up_logger().expect("Failed to set up logger");
+    set_up_logger();
 
     let version = env!("CARGO_PKG_VERSION");
 
