@@ -8,6 +8,10 @@ RUN apt-get update && \
     libudev-dev \
     jackd2 \
     libjack-jackd2-dev \
+    libgl1-mesa-dev \
+    libegl1-mesa-dev \
+    libgles2-mesa-dev \
+    libx11-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN rustup default nightly

@@ -1,12 +1,31 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    time::{self, Duration, Instant},
+};
 
 use crate::{
     model::{Action, Notification, PlayingState},
     preferences::PedalPreferences,
 };
-use log::{error, info};
+
+use log::{debug, error, info};
 use tokio::{io::AsyncReadExt, io::AsyncWriteExt, sync::mpsc};
 use tokio_serial::{SerialPortBuilderExt, SerialStream};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Gesture {
+    Press,
+    Release,
+    Hold,
+}
+
+struct Mapping {
+    index: i32,
+    gesture: Gesture,
+    action: Action,
+}
+
+const HOLD_DURATION: Duration = Duration::from_millis(300);
 
 pub struct PedalController {
     last_beat: Option<i64>,
@@ -14,7 +33,8 @@ pub struct PedalController {
     action_tx: mpsc::Sender<Action>,
     incoming_message: String,
     port: Option<SerialStream>,
-    actions: HashMap<i32, Action>,
+    mappings: Vec<Mapping>,
+    press_times: HashMap<i32, time::Instant>,
 }
 
 impl PedalController {
@@ -32,7 +52,29 @@ impl PedalController {
             action_tx,
             port,
             incoming_message: String::default(),
-            actions: HashMap::from([(0, Action::NextSong), (1, Action::ToggleLoop), (2, Action::TogglePlay)]),
+            mappings: vec![
+                Mapping {
+                    index: 0,
+                    gesture: Gesture::Press,
+                    action: Action::ToggleLoop,
+                },
+                Mapping {
+                    index: 1,
+                    gesture: Gesture::Release,
+                    action: Action::NextSong,
+                },
+                Mapping {
+                    index: 1,
+                    gesture: Gesture::Hold,
+                    action: Action::PreviousSong,
+                },
+                Mapping {
+                    index: 2,
+                    gesture: Gesture::Press,
+                    action: Action::TogglePlay,
+                },
+            ],
+            press_times: HashMap::new(),
         }
     }
 
@@ -45,8 +87,12 @@ impl PedalController {
             }
         };
 
+        let mut tick_interval = tokio::time::interval(Duration::from_millis(50));
+
         tokio::select! {
             Ok(byte) = port.read_u8() => self.on_byte_received(byte).await,
+
+            _ = tick_interval.tick() => self.on_tick().await,
 
             Some(notification) = self.notification_rx.recv() => {
                 if notification.playback_state.playing == PlayingState::Stopped {
@@ -70,35 +116,91 @@ impl PedalController {
 
     async fn on_byte_received(&mut self, byte: u8) {
         if byte == b';' {
-            self.on_message_received(self.incoming_message.as_str()).await;
+            let message = self.incoming_message.clone();
+            self.on_message_received(&message).await;
             self.incoming_message.clear();
         } else {
             self.incoming_message.push(byte as char);
         }
     }
 
-    async fn on_message_received(&self, message: &str) {
-        let mut split = message.split(':');
-
-        let value = match split.next() {
-            Some("press") => split.next(),
-            _ => return,
-        };
-
-        let value = match value {
-            Some(value) => value,
-            None => return,
-        };
-
+    async fn on_press(&mut self, value: &str) {
         let index = match value.parse::<i32>() {
             Ok(index) => index,
             _ => return,
         };
 
-        let action = self.actions.get(&index);
+        self.press_times.insert(index, Instant::now());
 
-        if let Some(action) = action {
-            let _ = self.action_tx.send(*action).await;
+        let mapping = match self
+            .mappings
+            .iter()
+            .find(|mapping| mapping.index == index && mapping.gesture == Gesture::Press)
+        {
+            Some(mapping) => mapping,
+            None => return,
+        };
+
+        let _ = self.action_tx.send(mapping.action).await;
+    }
+
+    async fn on_release(&mut self, value: &str) {
+        let index = match value.parse::<i32>() {
+            Ok(index) => index,
+            _ => return,
+        };
+
+        let duration = match self.press_times.remove(&index) {
+            Some(instant) => instant.elapsed(),
+            _ => return,
+        };
+
+        if duration <= HOLD_DURATION {
+            let mapping = match self
+                .mappings
+                .iter()
+                .find(|mapping| mapping.index == index && mapping.gesture == Gesture::Release)
+            {
+                Some(mapping) => mapping,
+                None => return,
+            };
+
+            let _ = self.action_tx.send(mapping.action).await;
+        }
+    }
+
+    async fn on_tick(&mut self) {
+        for (index, duration) in self.press_times.iter() {
+            if duration.elapsed() > HOLD_DURATION {
+                let mapping = match self
+                    .mappings
+                    .iter()
+                    .find(|&mapping| mapping.index == *index && mapping.gesture == Gesture::Hold)
+                {
+                    Some(mapping) => mapping,
+                    None => continue,
+                };
+
+                let _ = self.action_tx.send(mapping.action).await;
+            }
+        }
+
+        self.press_times
+            .retain(|_, duration| duration.elapsed() <= HOLD_DURATION);
+    }
+
+    async fn on_message_received(&mut self, message: &str) {
+        debug!("Received from pedal: {message}");
+
+        let mut split = message.split(':');
+
+        let key = split.next();
+        let value = split.next();
+
+        match (key, value) {
+            (Some("press"), Some(value)) => self.on_press(value).await,
+            (Some("release"), Some(value)) => self.on_release(value).await,
+            _ => (),
         }
     }
 }

@@ -3,4 +3,4 @@ mod main;
 mod project_store;
 mod waveform_store;
 
-pub use main::MainController;
+pub use main::run_main_controller;
