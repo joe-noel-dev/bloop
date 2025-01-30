@@ -2,6 +2,7 @@ import Foundation
 
 struct AppState {
     var connected = false
+    var scanning = false
     var servers: [Server] = []
     var projects: [ProjectInfo] = []
     var project = emptyProject()

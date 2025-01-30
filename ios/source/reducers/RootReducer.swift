@@ -37,6 +37,9 @@ func rootReducer(state: AppState, action: Action) -> AppState {
     case .disconnect:
         break
 
+    case .restartScan:
+        break
+
     case .uploadSample(_):
         break
 
@@ -45,6 +48,9 @@ func rootReducer(state: AppState, action: Action) -> AppState {
 
     case .setDiscoveredServers(let servers):
         state.servers = servers
+
+    case .setScanning(let scanning):
+        state.scanning = scanning
 
     case .removeAllServers:
         state.servers.removeAll()

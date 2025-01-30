@@ -7,6 +7,7 @@ protocol CoreDelegate: AnyObject {
     func coreDidSendResponse(_ response: Response)
 
     func onKnownServersChanged(_ servers: [Server])
+    func onScanning(_ scanning: Bool)
 }
 
 class Core: CoreConnectionDelegate {
@@ -15,16 +16,12 @@ class Core: CoreConnectionDelegate {
 
     private let group = DispatchGroup()
     private let queue = DispatchQueue(label: "CoreEncodeDecode", attributes: .concurrent)
-    private let discovery = Discovery()
+    private var discovery: Discovery? = nil
 
     init() {
         connection.delegate = self
 
-        discovery.onKnownServersChanged = { servers in
-            DispatchQueue.main.async { [weak self] in
-                self?.delegate?.onKnownServersChanged(servers)
-            }
-        }
+        restartScan()
     }
 
     func connect(_ server: Server) {
@@ -48,7 +45,23 @@ class Core: CoreConnectionDelegate {
                 print("Error sending request: \(error)")
             }
         }
+    }
 
+    func restartScan() {
+        discovery = Discovery()
+
+        discovery?.onKnownServersChanged = { servers in
+            DispatchQueue.main.async { [weak self] in
+                self?.delegate?.onKnownServersChanged(servers)
+            }
+        }
+
+        discovery?.onScanning = { scanning in
+            DispatchQueue.main.async {
+                [weak self] in
+                self?.delegate?.onScanning(scanning)
+            }
+        }
     }
 
     private func send(_ data: Data) {

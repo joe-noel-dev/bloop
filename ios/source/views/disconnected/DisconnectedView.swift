@@ -2,14 +2,25 @@ import SwiftUI
 
 struct DisconnectedView: View {
     var servers: [Server]
+    var scanning: Bool
     var dispatch: Dispatch
 
     var body: some View {
         VStack(spacing: Layout.units(2)) {
 
+            Button(
+                action: {
+                    dispatch(.restartScan)
+                },
+                label: {
+                    Text("Restart scan")
+                        .fontWeight(.bold)
+                }
+            ).buttonStyle(.bordered)
+
             Spacer()
 
-            if servers.isEmpty {
+            if servers.isEmpty && scanning {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle())
                     .scaleEffect(2.0)
@@ -37,11 +48,15 @@ struct DisconnectedView: View {
     }
 
     private var version: String {
-        guard let versionString = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String else {
+        guard
+            let versionString = Bundle.main.object(
+                forInfoDictionaryKey: "CFBundleShortVersionString"
+            ) as? String
+        else {
             print("Version string not found")
             return "0.0.0"
         }
-        
+
         return versionString
     }
 
@@ -69,6 +84,7 @@ struct DisconnectedView_Previews: PreviewProvider {
     static var previews: some View {
         DisconnectedView(
             servers: [],
+            scanning: false,
             dispatch: loggingDispatch
         )
     }

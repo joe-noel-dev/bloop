@@ -20,6 +20,10 @@ class ApiMiddleware: Middleware {
         if case .sendRequest(let request) = action {
             core.sendRequest(request)
         }
+
+        if case .restartScan = action {
+            core.restartScan()
+        }
     }
 
 }
@@ -67,6 +71,10 @@ extension ApiMiddleware: CoreDelegate {
 
     func onKnownServersChanged(_ servers: [Server]) {
         self.dispatch?(.setDiscoveredServers(servers))
+    }
+
+    func onScanning(_ scanning: Bool) {
+        self.dispatch?(.setScanning(scanning))
     }
 
 }

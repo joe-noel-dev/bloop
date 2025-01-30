@@ -21,6 +21,9 @@ enum Action {
     case uploadAck(Id)
 
     case setDiscoveredServers([Server])
+    case setScanning(Bool)
     case removeAllServers
+
+    case restartScan
 
 }

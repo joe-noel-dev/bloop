@@ -296,11 +296,11 @@
 		C247A6D72A4D949A00001DB2 = {
 			isa = PBXGroup;
 			children = (
+				C23F511C2A4ED6C300F4C383 /* Frameworks */,
+				C247A6E12A4D949A00001DB2 /* Products */,
 				C247A6E22A4D949A00001DB2 /* source */,
 				C247A6F42A4D949D00001DB2 /* tests */,
 				C247A6FE2A4D949D00001DB2 /* ui-tests */,
-				C247A6E12A4D949A00001DB2 /* Products */,
-				C23F511C2A4ED6C300F4C383 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
