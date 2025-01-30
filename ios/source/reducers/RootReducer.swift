@@ -37,6 +37,9 @@ func rootReducer(state: AppState, action: Action) -> AppState {
     case .disconnect:
         break
 
+    case .restartScan:
+        break
+
     case .uploadSample(_):
         break
 

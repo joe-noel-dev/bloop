@@ -20,6 +20,10 @@ class ApiMiddleware: Middleware {
         if case .sendRequest(let request) = action {
             core.sendRequest(request)
         }
+
+        if case .restartScan = action {
+            core.restartScan()
+        }
     }
 
 }

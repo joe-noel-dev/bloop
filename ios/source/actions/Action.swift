@@ -23,4 +23,6 @@ enum Action {
     case setDiscoveredServers([Server])
     case removeAllServers
 
+    case restartScan
+
 }

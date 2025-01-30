@@ -27,6 +27,14 @@ class Discovery: NSObject {
             }
         }
 
+        serviceBrowser.stateUpdateHandler = { [weak self] state in
+            print("mDNS state changed: \(state)")
+        }
+
+        startScan()
+    }
+
+    func startScan() {
         serviceBrowser.start(queue: queue)
     }
 }

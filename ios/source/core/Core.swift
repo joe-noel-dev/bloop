@@ -48,7 +48,10 @@ class Core: CoreConnectionDelegate {
                 print("Error sending request: \(error)")
             }
         }
+    }
 
+    func restartScan() {
+        discovery.startScan()
     }
 
     private func send(_ data: Data) {

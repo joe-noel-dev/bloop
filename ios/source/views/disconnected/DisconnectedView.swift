@@ -7,6 +7,17 @@ struct DisconnectedView: View {
     var body: some View {
         VStack(spacing: Layout.units(2)) {
 
+            Button(
+                action: {
+                    dispatch(.restartScan)
+                },
+                label: {
+                    Text("Restart scan")
+                        .fontWeight(.bold)
+                        .frame(maxWidth: .infinity)
+                }
+            ).buttonStyle(.bordered)
+
             Spacer()
 
             if servers.isEmpty {
@@ -37,11 +48,15 @@ struct DisconnectedView: View {
     }
 
     private var version: String {
-        guard let versionString = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String else {
+        guard
+            let versionString = Bundle.main.object(
+                forInfoDictionaryKey: "CFBundleShortVersionString"
+            ) as? String
+        else {
             print("Version string not found")
             return "0.0.0"
         }
-        
+
         return versionString
     }
 
