@@ -17,9 +17,20 @@ use crate::api::{Request, Response};
 pub fn run_ui(response_tx: broadcast::Sender<Response>, request_tx: mpsc::Sender<Request>) -> iced::Result {
     let state = State::new(response_tx, request_tx);
 
+    let window_settings = iced::window::Settings {
+        size: iced::Size {
+            width: 1024.0,
+            height: 600.0,
+        },
+        fullscreen: cfg!(target_os = "linux"),
+        resizable: !cfg!(target_os = "linux"),
+        decorations: !cfg!(target_os = "linux"),
+        ..iced::window::Settings::default()
+    };
+
     iced::application("Bloop", control::update, view::render)
         .theme(view::theme)
-        .window_size((1024.0, 600.0))
+        .window(window_settings)
         .resizable(cfg!(target_os = "linux") == false)
         .subscription(control::subscription)
         .run_with(move || (state, Task::none()))
