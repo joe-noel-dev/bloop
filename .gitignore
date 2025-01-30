@@ -8,3 +8,4 @@
 /node_modules
 
 bloop.log
+bloop.deps.log

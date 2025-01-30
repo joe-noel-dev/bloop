@@ -2,12 +2,20 @@ FROM arm64v8/rust:1.69
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+RUN dpkg --add-architecture arm64
+
 RUN apt-get update && \
     apt-get install -y \
-        libasound2-dev:arm64 \
-        libudev-dev:arm64 \
-        jackd2:arm64 \
-        libjack-jackd2-dev:arm64 \
+        libasound2-dev \
+        libudev-dev \
+        jackd2 \
+        libjack-jackd2-dev \
+        libgl1-mesa-dev \
+        libegl1-mesa-dev \
+        libgles2-mesa-dev \
+        libx11-dev \
         && rm -rf /var/lib/apt/lists/*
+
+ENV WGPU_BACKEND=gl
 
 RUN rustup default nightly
