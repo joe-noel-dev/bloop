@@ -6,9 +6,10 @@ class Discovery: NSObject {
     private var serviceBrowser: NWBrowser
     private var services: Set<NWEndpoint> = []
     var onKnownServersChanged: (([NWEndpoint]) -> Void)?
+    var onScanning: ((Bool) -> Void)?
     private let resolveTimeout: TimeInterval = 10
-    private var browsing = false
     private var queue = DispatchQueue(label: "bloop.discovery")
+    private var state: NWBrowser.State? = nil
 
     override init() {
         let parameters = NWParameters()
@@ -28,13 +29,19 @@ class Discovery: NSObject {
         }
 
         serviceBrowser.stateUpdateHandler = { [weak self] state in
-            print("mDNS state changed: \(state)")
+            DispatchQueue.main.async {
+                let wasScanning = self?.state == .ready
+                self?.state = state
+                let isScanning = state == .ready
+                print("mDNS state: \(state)")
+
+                if wasScanning != isScanning {
+                    self?.onScanning?(isScanning)
+                }
+
+            }
         }
 
-        startScan()
-    }
-
-    func startScan() {
-        serviceBrowser.start(queue: queue)
+        self.serviceBrowser.start(queue: queue)
     }
 }

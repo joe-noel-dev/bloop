@@ -13,7 +13,8 @@ struct ContentView: View {
             }
         }
         else {
-            DisconnectedView(servers: store.state.servers) { action in
+            DisconnectedView(servers: store.state.servers, scanning: store.state.scanning) {
+                action in
                 store.dispatch(action)
             }
         }

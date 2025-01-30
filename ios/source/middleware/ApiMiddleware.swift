@@ -73,4 +73,8 @@ extension ApiMiddleware: CoreDelegate {
         self.dispatch?(.setDiscoveredServers(servers))
     }
 
+    func onScanning(_ scanning: Bool) {
+        self.dispatch?(.setScanning(scanning))
+    }
+
 }

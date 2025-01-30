@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DisconnectedView: View {
     var servers: [Server]
+    var scanning: Bool
     var dispatch: Dispatch
 
     var body: some View {
@@ -14,13 +15,12 @@ struct DisconnectedView: View {
                 label: {
                     Text("Restart scan")
                         .fontWeight(.bold)
-                        .frame(maxWidth: .infinity)
                 }
             ).buttonStyle(.bordered)
 
             Spacer()
 
-            if servers.isEmpty {
+            if servers.isEmpty && scanning {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle())
                     .scaleEffect(2.0)
@@ -84,6 +84,7 @@ struct DisconnectedView_Previews: PreviewProvider {
     static var previews: some View {
         DisconnectedView(
             servers: [],
+            scanning: false,
             dispatch: loggingDispatch
         )
     }
