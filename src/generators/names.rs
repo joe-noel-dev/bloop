@@ -1,7 +1,7 @@
-use rand::seq::SliceRandom;
+use rand::seq::IndexedRandom;
 
 pub fn random_name() -> String {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     format!(
         "{} {}",
         ADJECTIVES.choose(&mut rng).unwrap(),
@@ -10,7 +10,7 @@ pub fn random_name() -> String {
 }
 
 pub fn random_section_name() -> &'static str {
-    SECTION_NAMES.choose(&mut rand::thread_rng()).unwrap()
+    SECTION_NAMES.choose(&mut rand::rng()).unwrap()
 }
 
 const SECTION_NAMES: &[&str] = &["Verse", "Chorus", "Intro", "Outro", "Break", "Middle", "Hook"];
