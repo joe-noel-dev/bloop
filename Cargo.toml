@@ -42,6 +42,9 @@ tokio-serial = "5.4.4"
 tokio-tungstenite = "0.26.1"
 uuid = { version = "1.11.0", features = ["serde", "v4"] } 
 
+[target.'cfg(target_os = "linux")'.dependencies]
+rppal = "0.22.1"
+
 [package.metadata.deb]
 maintainer = "Joe Noël <joe@joenoel.co.uk>"
 depends = ["libc6 (>= 2.7)", "jackd"]

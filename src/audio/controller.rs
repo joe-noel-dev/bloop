@@ -41,7 +41,7 @@ pub struct AudioController {
 }
 
 impl AudioController {
-    pub fn new(response_tx: broadcast::Sender<Response>, preferences: &AudioPreferences) -> Self {
+    pub fn new(response_tx: broadcast::Sender<Response>, preferences: AudioPreferences) -> Self {
         let (mut context, process) = create_engine_with_options(
             EngineOptions::default()
                 .with_sample_rate(preferences.sample_rate)
@@ -62,7 +62,7 @@ impl AudioController {
 
         let (conversion_tx, conversion_rx) = mpsc::channel(64);
 
-        let realtime_process = Process::new(process, preferences);
+        let realtime_process = Process::new(process, preferences.clone());
 
         Self {
             context,

@@ -41,7 +41,7 @@ impl PedalController {
     pub fn new(
         action_tx: mpsc::Sender<Action>,
         notification_rx: mpsc::Receiver<Notification>,
-        preferences: &PedalPreferences,
+        preferences: PedalPreferences,
     ) -> Self {
         let path = preferences.serial_path.as_deref().unwrap_or("/dev/cu.usbmodem21401");
         let port = open_serial(path);

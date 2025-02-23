@@ -1,11 +1,13 @@
 mod audio;
 mod midi;
 mod pedal;
+mod switch;
 
 pub use audio::AudioPreferences;
 use log::info;
 pub use midi::MidiPreferences;
 pub use pedal::PedalPreferences;
+pub use switch::{Gesture, SwitchMapping, SwitchPreferences};
 
 use std::{fs::File, io::BufReader, path::Path};
 
@@ -22,6 +24,9 @@ pub struct Preferences {
 
     #[serde(default)]
     pub pedal: Option<PedalPreferences>,
+
+    #[serde(default)]
+    pub switch: Option<SwitchPreferences>,
 }
 
 pub fn read_preferences(preferences_dir: &Path) -> anyhow::Result<Preferences> {

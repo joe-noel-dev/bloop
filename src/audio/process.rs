@@ -29,7 +29,7 @@ fn print_output_devices(host: &Host) {
 }
 
 impl Process {
-    pub fn new(mut audio_process: Box<dyn AudioProcess + Send>, preferences: &AudioPreferences) -> Self {
+    pub fn new(mut audio_process: Box<dyn AudioProcess + Send>, preferences: AudioPreferences) -> Self {
         #[cfg(target_os = "linux")]
         let host = cpal::host_from_id(cpal::HostId::Jack).unwrap_or_else(|_| cpal::default_host());
 
