@@ -3,6 +3,7 @@ mod midi;
 mod pedal;
 
 pub use audio::AudioPreferences;
+use log::info;
 pub use midi::MidiPreferences;
 pub use pedal::PedalPreferences;
 
@@ -26,6 +27,8 @@ pub struct Preferences {
 pub fn read_preferences(preferences_dir: &Path) -> anyhow::Result<Preferences> {
     let mut preferences_path = preferences_dir.to_path_buf();
     preferences_path.push("preferences.json");
+
+    info!("Reading preferences from {:?}", preferences_path);
 
     let file = File::open(preferences_path)?;
     let reader = BufReader::new(file);
