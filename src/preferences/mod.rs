@@ -7,6 +7,7 @@ pub use audio::AudioPreferences;
 use log::info;
 pub use midi::MidiPreferences;
 pub use pedal::PedalPreferences;
+#[allow(unused_imports)]
 pub use switch::{Gesture, SwitchMapping, SwitchPreferences};
 
 use std::{fs::File, io::BufReader, path::Path};
