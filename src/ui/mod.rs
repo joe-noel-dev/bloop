@@ -2,6 +2,7 @@ mod constants;
 mod control;
 mod icons;
 mod message;
+mod metronome;
 mod project;
 mod sections;
 mod state;

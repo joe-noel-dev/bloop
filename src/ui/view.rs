@@ -9,10 +9,13 @@ use super::state::State;
 use super::transport::transport_view;
 
 pub fn render(state: &State) -> Element<Message> {
-    column![project_view(state), transport_view(&state.playback_state)]
-        .spacing(display_units(2.0))
-        .width(Fill)
-        .into()
+    column![
+        project_view(state),
+        transport_view(&state.playback_state, &state.progress)
+    ]
+    .spacing(display_units(2.0))
+    .width(Fill)
+    .into()
 }
 
 pub fn theme(_state: &State) -> Theme {
