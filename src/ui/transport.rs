@@ -5,11 +5,11 @@ use iced::{
     Length::Fill,
 };
 
-use crate::model::{PlaybackState, PlayingState};
+use crate::model::{PlaybackState, PlayingState, Progress};
 
-use super::{constants::display_units, icons::Icon, message::Message};
+use super::{constants::display_units, icons::Icon, message::Message, metronome::metronome};
 
-pub fn transport_view(playback_state: &PlaybackState) -> Element<'static, Message> {
+pub fn transport_view(playback_state: &PlaybackState, progress: &Progress) -> Element<'static, Message> {
     let is_playing = playback_state.playing == PlayingState::Playing;
 
     let (play_icon, play_message) = if is_playing {
@@ -45,9 +45,16 @@ pub fn transport_view(playback_state: &PlaybackState) -> Element<'static, Messag
             button::primary(theme, status)
         });
 
-    column![row![loop_button, play_button].spacing(display_units(2.0))]
-        .width(Fill)
-        .align_x(Center)
-        .padding(display_units(2.0))
-        .into()
+    column![row![
+        metronome(playback_state, progress),
+        column![].width(Fill),
+        loop_button,
+        play_button
+    ]
+    .align_y(Center)
+    .spacing(display_units(2.0))]
+    .width(Fill)
+    .align_x(Center)
+    .padding(display_units(2.0))
+    .into()
 }
