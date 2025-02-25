@@ -10,6 +10,8 @@ mod network;
 mod pedal;
 mod preferences;
 mod samples;
+#[cfg(target_os = "linux")]
+mod switch;
 mod types;
 mod ui;
 mod waveform;

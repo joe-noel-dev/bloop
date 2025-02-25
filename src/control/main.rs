@@ -5,8 +5,9 @@ use crate::{
     midi::MidiController,
     model::{Action, Notification, Project, Sample, Section, Tempo},
     pedal::PedalController,
-    preferences::read_preferences,
+    preferences::{read_preferences, Preferences},
     samples::SamplesCache,
+    switch,
 };
 use anyhow::anyhow;
 use log::{error, info, warn};
@@ -33,8 +34,10 @@ struct MainController {
     waveform_store: WaveformStore,
     _midi_controller: MidiController,
     action_rx: mpsc::Receiver<Action>,
+    action_tx: mpsc::Sender<Action>,
     notification_tx: mpsc::Sender<Notification>,
     should_save: bool,
+    preferences: Preferences,
 }
 
 impl ResponseBroadcaster for MainController {
@@ -61,23 +64,25 @@ impl MainController {
             }
         };
 
+        let audio_preferences = preferences.clone().audio.unwrap_or_default();
+        let pedal_preferences = preferences.clone().pedal.unwrap_or_default();
+        let midi_preferences = preferences.clone().midi.unwrap_or_default();
+
         Self {
             samples_cache: SamplesCache::new(&directories.samples),
             project_store: ProjectStore::new(&directories.projects),
             request_rx,
             response_tx: response_tx.clone(),
             project: Project::new(),
-            audio_controller: AudioController::new(response_tx.clone(), &preferences.audio.unwrap_or_default()),
-            pedal_controller: PedalController::new(
-                action_tx.clone(),
-                notification_rx,
-                &preferences.pedal.unwrap_or_default(),
-            ),
+            audio_controller: AudioController::new(response_tx.clone(), audio_preferences),
+            pedal_controller: PedalController::new(action_tx.clone(), notification_rx, pedal_preferences),
             waveform_store: WaveformStore::new(response_tx),
-            _midi_controller: MidiController::new(action_tx.clone(), &preferences.midi.unwrap_or_default()),
+            _midi_controller: MidiController::new(action_tx.clone(), midi_preferences),
             action_rx,
+            action_tx,
             notification_tx,
             should_save: false,
+            preferences,
         }
     }
 
@@ -181,6 +186,9 @@ impl MainController {
     }
 
     pub async fn run(&mut self) {
+        let switch_preferences = self.preferences.clone().switch.unwrap_or_default();
+        let switch_task = switch::run(self.action_tx.clone(), switch_preferences);
+
         let mut save_interval = time::interval(Duration::from_secs(2));
         let mut pedal_interval = time::interval(Duration::from_secs_f64(1.0 / 30.0));
 
@@ -195,6 +203,8 @@ impl MainController {
                 else => break,
             }
         }
+
+        drop(switch_task);
     }
 
     async fn update_pedal(&mut self) {
