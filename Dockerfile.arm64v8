@@ -1,4 +1,4 @@
-FROM arm64v8/rust:1.69
+FROM arm64v8/rust:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
 

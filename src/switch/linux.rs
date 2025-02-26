@@ -1,7 +1,7 @@
 use log::{debug, info, warn};
 use rppal::gpio::{Gpio, InputPin};
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     thread::JoinHandle,
     time::{Duration, Instant},
 };
@@ -23,22 +23,7 @@ fn run_thread(preferences: SwitchPreferences, action_tx: mpsc::Sender<Action>) {
     info!("Starting switch thread");
 
     let gpio = Gpio::new().expect("Error initializing GPIO");
-
-    let pins: Vec<InputPin> = preferences
-        .mappings
-        .iter()
-        .map(|mapping| {
-            let pin = gpio
-                .get(mapping.pin)
-                .unwrap_or_else(|_| panic!("Error getting pin: {}", mapping.pin));
-            debug!("Configuring input pin: {}", mapping.pin);
-            let mut pin = pin.into_input_pulldown();
-            pin.set_interrupt(rppal::gpio::Trigger::Both, Some(Duration::from_millis(10)))
-                .unwrap_or_else(|_| panic!("Error setting interrupt on pin: {}", mapping.pin));
-            pin
-        })
-        .collect();
-
+    let pins = init_gpio_pins(&preferences, &gpio);
     let mut press_times = HashMap::new();
 
     info!("Input pins configured");
@@ -73,6 +58,28 @@ fn run_thread(preferences: SwitchPreferences, action_tx: mpsc::Sender<Action>) {
             _ => continue,
         }
     }
+}
+
+fn init_gpio_pins(preferences: &SwitchPreferences, gpio: &Gpio) -> Vec<InputPin> {
+    let pins = preferences
+        .mappings
+        .iter()
+        .map(|mapping| mapping.pin)
+        .collect::<HashSet<u8>>();
+
+    pins.iter()
+        .map(|&pin| {
+            let mut gpio_pin = gpio
+                .get(pin)
+                .unwrap_or_else(|_| panic!("Error getting pin: {}", pin))
+                .into_input_pulldown();
+            debug!("Configuring input pin: {}", pin);
+            gpio_pin
+                .set_interrupt(rppal::gpio::Trigger::Both, Some(Duration::from_millis(10)))
+                .unwrap_or_else(|_| panic!("Error setting interrupt on pin: {}", pin));
+            gpio_pin
+        })
+        .collect()
 }
 
 fn on_press(
