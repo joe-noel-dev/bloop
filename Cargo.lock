@@ -3522,14 +3522,14 @@ checksum = "20675572f6f24e9e76ef639bc5552774ed45f1c30e2951e1e99c59888861c539"
 [[package]]
 name = "rawdio"
 version = "0.15.0"
-source = "git+https://github.com/joe-noel-dev/rawdio.git#094d08318194b5fb9f149915a0c7801152a896c9"
+source = "git+https://github.com/joe-noel-dev/rawdio.git#88179bf3840278472fd1371f40f3e1a390f0b16a"
 dependencies = [
  "approx",
  "atomic_float",
  "crossbeam",
  "fixed",
  "itertools 0.14.0",
- "rand 0.8.5",
+ "rand 0.9.0",
  "rustfft",
 ]
 
