@@ -72,7 +72,7 @@ fn init_gpio_pins(preferences: &SwitchPreferences, gpio: &Gpio) -> Vec<InputPin>
             let mut gpio_pin = gpio
                 .get(pin)
                 .unwrap_or_else(|_| panic!("Error getting pin: {}", pin))
-                .into_input_pulldown();
+                .into_input_pullup();
             debug!("Configuring input pin: {}", pin);
             gpio_pin
                 .set_interrupt(rppal::gpio::Trigger::Both, Some(Duration::from_millis(10)))

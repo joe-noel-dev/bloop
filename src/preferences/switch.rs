@@ -28,22 +28,22 @@ impl Default for SwitchPreferences {
         Self {
             mappings: vec![
                 SwitchMapping {
-                    pin: 17,
+                    pin: 4,
                     gesture: Gesture::Press,
                     action: Action::ToggleLoop,
                 },
                 SwitchMapping {
-                    pin: 27,
+                    pin: 17,
                     gesture: Gesture::Release,
                     action: Action::NextSong,
                 },
                 SwitchMapping {
-                    pin: 27,
+                    pin: 17,
                     gesture: Gesture::Hold,
                     action: Action::PreviousSong,
                 },
                 SwitchMapping {
-                    pin: 22,
+                    pin: 27,
                     gesture: Gesture::Press,
                     action: Action::TogglePlay,
                 },
