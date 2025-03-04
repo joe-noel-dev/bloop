@@ -1,4 +1,5 @@
 use super::{directories::Directories, project_store::ProjectStore, waveform_store::WaveformStore};
+
 use crate::{
     api::*,
     audio::AudioController,
@@ -9,6 +10,7 @@ use crate::{
     samples::SamplesCache,
     switch,
 };
+
 use anyhow::anyhow;
 use log::{error, info, warn};
 use std::time::Duration;
