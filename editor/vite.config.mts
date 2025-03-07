@@ -13,6 +13,9 @@ export default defineConfig({
       promiseImportName: (i) => `__tla_${i}`,
     }),
   ],
+  build: {
+    target: 'es2022',
+  },
   server: {
     proxy: {
       '/api': {
