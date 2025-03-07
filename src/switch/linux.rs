@@ -143,4 +143,6 @@ fn on_tick(press_times: &mut HashMap<u8, Instant>, mappings: &[SwitchMapping], a
             let _ = action_tx.blocking_send(mapping.action);
         }
     }
+
+    press_times.retain(|_, duration| duration.elapsed() <= HOLD_DURATION);
 }

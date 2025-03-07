@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::model::Action;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub enum Gesture {
     Press,
     Release,
@@ -16,38 +17,9 @@ pub struct SwitchMapping {
     pub action: Action,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct SwitchPreferences {
     #[serde(default)]
     pub mappings: Vec<SwitchMapping>,
-}
-
-impl Default for SwitchPreferences {
-    fn default() -> Self {
-        Self {
-            mappings: vec![
-                SwitchMapping {
-                    pin: 4,
-                    gesture: Gesture::Press,
-                    action: Action::ToggleLoop,
-                },
-                SwitchMapping {
-                    pin: 17,
-                    gesture: Gesture::Release,
-                    action: Action::NextSong,
-                },
-                SwitchMapping {
-                    pin: 17,
-                    gesture: Gesture::Hold,
-                    action: Action::PreviousSong,
-                },
-                SwitchMapping {
-                    pin: 27,
-                    gesture: Gesture::Press,
-                    action: Action::TogglePlay,
-                },
-            ],
-        }
-    }
 }
