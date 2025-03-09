@@ -51,3 +51,47 @@ Install to Raspberry Pi:
 ```sh
 ./scripts/install.sh [destination]
 ```
+
+## Notes 2025-03-09
+
+### `/home/joe/.config/openbox/autostart`
+
+```sh
+#!/bin/bash
+
+xset -dpms
+xset s off
+xset s noblank
+
+
+cd /home/joe/bloop
+/usr/bin/bloop-core &
+```
+
+### `/etc/systemd/system/jackd.service`
+
+```toml
+[Unit]
+Description=JACK Audio Server
+After=sound.target local-fs.target
+
+[Service]
+Type=simple
+User=joe
+ExecStart=/usr/bin/jackd -R -P95 -dalsa -dhw:Pro -r44100 -p512
+Restart=on-failure
+LimitRTPRIO=95
+LimitMEMLOCK=infinity
+Environment=JACK_NO_AUDIO_RESERVATION=1
+
+[Install]
+WantedBy=default.target
+```
+
+### `/etc/lightdm/lightdm.conf`
+
+```toml
+[Seat:*]
+autologin-user=joe
+autologin-session=openbox
+```

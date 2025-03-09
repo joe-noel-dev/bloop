@@ -19,11 +19,8 @@ pub fn run_ui(response_tx: broadcast::Sender<Response>, request_tx: mpsc::Sender
     let state = State::new(response_tx, request_tx);
 
     let window_settings = iced::window::Settings {
-        size: iced::Size {
-            width: 1024.0,
-            height: 600.0,
-        },
         fullscreen: cfg!(target_os = "linux"),
+        maximized: cfg!(target_os = "linux"),
         resizable: !cfg!(target_os = "linux"),
         decorations: !cfg!(target_os = "linux"),
         ..iced::window::Settings::default()
