@@ -2,7 +2,7 @@
 
 set -ex
 
-ARCH=${1:-amd64} # Options include: amd64, arm64v8
+ARCH=${1:-arm64v8} # Options include: amd64, arm64v8
 CONTAINER_TAG="cross/bloop_${ARCH}:v1"
 CONTAINER_SRC_DIR=/usr/src/bloop
 DOCKERFILE="Dockerfile.${ARCH}"

@@ -158,10 +158,6 @@ impl AudioController {
         }
     }
 
-    pub fn get_progress(&self) -> Progress {
-        self.progress
-    }
-
     fn on_sample_converted(&mut self, result: SampleConversionResult) {
         self.samples_being_converted.remove(&result.sample_id);
 

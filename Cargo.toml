@@ -22,11 +22,11 @@ home = "0.5.11"
 hostname = "0.4.0"
 hound = "3.5.1"
 humantime = "2.1.0"
-iced = { git = "https://github.com/iced-rs/iced.git", rev = "f8337b8da7ff6bcf876b54d1c7dac460d2e03747", features = ["advanced", "default", "tokio", "debug", "svg"] }
-iced_native = "0.10.3"
+iced = { git = "https://github.com/iced-rs/iced.git", rev = "f8337b8da7ff6bcf876b54d1c7dac460d2e03747", features = ["advanced", "default", "tokio", "debug", "svg"], optional = true }
+iced_native = { version = "0.10.3", optional = true }
 libmdns = "0.9.1"
 log = "0.4.22"
-midir = "0.10.1"
+midir = { version = "0.10.1", optional = true }
 num-traits = "0.2.18"
 rand = "0.9.0"
 rawdio = { git = "https://github.com/joe-noel-dev/rawdio.git" }
@@ -35,12 +35,16 @@ serde = { version= "1.0.217", features = ["derive"] }
 serde_bytes = "0.11.14"
 serde_derive = "1.0.126"
 serde_json = "1.0.134"
-serialport = "4.5.1" 
 tempfile = "3.17.1"
 tokio = { version = "1.42.0", features = ["full"] }
 tokio-serial = "5.4.4"
 tokio-tungstenite = "0.26.1"
 uuid = { version = "1.15.1", features = ["serde", "v4"] } 
+
+[features]
+default = ["ui", "midi"]
+ui = [ "dep:iced", "dep:iced_native" ]
+midi = [ "dep:midir" ]
 
 [target.'cfg(target_os = "linux")'.dependencies]
 rppal = "0.22.1"
