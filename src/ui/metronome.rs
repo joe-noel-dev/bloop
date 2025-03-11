@@ -10,20 +10,24 @@ pub fn metronome(playback_state: &PlaybackState, progress: &Progress) -> Element
 
     row((0..4).map(|beat_index| {
         let is_active = is_playing && beat_index == beat;
-        let size = display_units(4.0);
+        let size = display_units(8.0);
         let color = match (is_playing, is_active) {
             (true, true) => Color::from_rgb8(0x32, 0xD9, 0x87),
             (true, false) => Color::from_rgb8(0xDC, 0x30, 0x1A),
             (false, _) => Color::from_rgb(0.1, 0.1, 0.1),
         };
+        let border_radius = display_units(1.0);
 
-        circle::circle(size).with_color(color).into()
+        square::square(size)
+            .with_color(color)
+            .with_border_radius(border_radius)
+            .into()
     }))
     .spacing(display_units(2.0))
     .into()
 }
 
-mod circle {
+mod square {
     use iced::advanced::layout::{self, Layout};
     use iced::advanced::renderer;
     use iced::advanced::widget::{self, Widget};
@@ -31,15 +35,17 @@ mod circle {
     use iced::mouse;
     use iced::{Color, Element, Length, Rectangle, Size};
 
-    pub struct Circle {
-        radius: f32,
+    pub struct Square {
+        side_length: f32,
+        border_radius: f32,
         color: iced::Color,
     }
 
-    impl Circle {
-        pub fn new(radius: f32) -> Self {
+    impl Square {
+        pub fn new(side_length: f32) -> Self {
             Self {
-                radius,
+                side_length,
+                border_radius: 0.0,
                 color: Color::WHITE,
             }
         }
@@ -48,13 +54,18 @@ mod circle {
             self.color = color;
             self
         }
+
+        pub fn with_border_radius(mut self, radius: f32) -> Self {
+            self.border_radius = radius;
+            self
+        }
     }
 
-    pub fn circle(radius: f32) -> Circle {
-        Circle::new(radius)
+    pub fn square(side_length: f32) -> Square {
+        Square::new(side_length)
     }
 
-    impl<Message, Theme, Renderer> Widget<Message, Theme, Renderer> for Circle
+    impl<Message, Theme, Renderer> Widget<Message, Theme, Renderer> for Square
     where
         Renderer: renderer::Renderer,
     {
@@ -66,7 +77,7 @@ mod circle {
         }
 
         fn layout(&self, _tree: &mut widget::Tree, _renderer: &Renderer, _limits: &layout::Limits) -> layout::Node {
-            layout::Node::new(Size::new(self.radius * 2.0, self.radius * 2.0))
+            layout::Node::new(Size::new(self.side_length, self.side_length))
         }
 
         fn draw(
@@ -82,7 +93,7 @@ mod circle {
             renderer.fill_quad(
                 renderer::Quad {
                     bounds: layout.bounds(),
-                    border: border::rounded(self.radius),
+                    border: border::rounded(self.border_radius),
                     ..renderer::Quad::default()
                 },
                 self.color,
@@ -90,12 +101,12 @@ mod circle {
         }
     }
 
-    impl<Message, Theme, Renderer> From<Circle> for Element<'_, Message, Theme, Renderer>
+    impl<Message, Theme, Renderer> From<Square> for Element<'_, Message, Theme, Renderer>
     where
         Renderer: renderer::Renderer,
     {
-        fn from(circle: Circle) -> Self {
-            Self::new(circle)
+        fn from(square: Square) -> Self {
+            Self::new(square)
         }
     }
 }
