@@ -6,7 +6,10 @@ struct BloopApp: App {
     @State var store = Store(
         reducer: rootReducer,
         state: AppState(),
-        middlewares: [ApiMiddleware(), WaveformMiddleware(), UploadMiddleware(), FFIMiddleware(), ApiCodecMiddleware(), ResponseMiddleware()]
+        middlewares: [
+            ApiMiddleware(), WaveformMiddleware(), UploadMiddleware(), FFIMiddleware(),
+            ApiCodecMiddleware(), ResponseMiddleware(),
+        ]
     )
 
     var body: some Scene {

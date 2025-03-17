@@ -50,7 +50,7 @@ class CoreFFI {
         self.callbackStorage = CallbackStorage(handler: responseHandler)
 
         let contextPtr = Unmanaged.passUnretained(callbackStorage).toOpaque()
-        
+
         print("Initializing Bloop via FFI")
 
         guard
@@ -74,18 +74,18 @@ class CoreFFI {
         }
 
         self.context = ctx
-        
+
         print("Bloop initialized via FFI")
     }
 
-    func addRequest(_ request: Data) throws  {
+    func addRequest(_ request: Data) throws {
         let response = request.withUnsafeBytes { bytes in
             guard let baseAddress = bytes.baseAddress?.assumingMemoryBound(to: UInt8.self) else {
                 return BloopErrorCode.invalidRequest
             }
             return bloopAddRequest(context, baseAddress, UInt(request.count))
         }
-        
+
         if response != .success {
             // FIXME: Handle error
             print("Error adding request to Core: \(response)")

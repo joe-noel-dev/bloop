@@ -31,7 +31,7 @@ class ApiMiddleware: Middleware {
 extension ApiMiddleware: CoreDelegate {
     func coreConnected() {
         self.dispatch?(.setConnected(true))
-        
+
         let getAllRequest = Request.get(EntityId(entity: .all))
         self.dispatch?(.sendRequest(getAllRequest))
     }

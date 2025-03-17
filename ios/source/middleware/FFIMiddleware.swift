@@ -2,17 +2,17 @@ import Foundation
 
 class FFIMiddleware: Middleware {
     var dispatch: Dispatch?
-    
+
     private lazy var coreFFI: CoreFFI = {
-            // FIXME: Hack to mark as connected
-            self.dispatch?(.setConnected(true))
-        
-            return CoreFFI(responseHandler: { [weak self] response in
-                DispatchQueue.main.async {
-                    self?.dispatch?(.receivedRawResponse(response))
-                }
-            })!
-        }()
+        // FIXME: Hack to mark as connected
+        self.dispatch?(.setConnected(true))
+
+        return CoreFFI(responseHandler: { [weak self] response in
+            DispatchQueue.main.async {
+                self?.dispatch?(.receivedRawResponse(response))
+            }
+        })!
+    }()
 
     func execute(state: AppState, action: Action) {
         if case .restartScan = action {
@@ -23,7 +23,7 @@ class FFIMiddleware: Middleware {
             sendRequest(request)
         }
     }
-    
+
     private func sendRequest(_ request: Data) {
         do {
             try coreFFI.addRequest(request)
@@ -31,7 +31,7 @@ class FFIMiddleware: Middleware {
         catch {
             print("Error adding request via FFI: \(error)")
         }
-        
+
     }
 
 }

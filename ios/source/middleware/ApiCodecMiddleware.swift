@@ -1,19 +1,19 @@
-import SwiftBSON
 import Foundation
+import SwiftBSON
 
 class ApiCodecMiddleware: Middleware {
     var dispatch: Dispatch?
-    
+
     func execute(state: AppState, action: Action) {
         if case .receivedRawResponse(let data) = action {
             onReceivedRawResponse(data)
         }
-        
+
         if case .sendRequest(let request) = action {
             onSendRequest(request)
         }
     }
-    
+
     private func onReceivedRawResponse(_ data: Data) {
         do {
             let bsonDocument = try BSONDocument(fromBSON: data)
@@ -24,7 +24,7 @@ class ApiCodecMiddleware: Middleware {
             print("Error decoding response from core: \(error)")
         }
     }
-    
+
     private func onSendRequest(_ request: Request) {
         do {
             let encodedRequest = try BSONEncoder().encode(request)
@@ -35,5 +35,5 @@ class ApiCodecMiddleware: Middleware {
             print("Error encoding request: \(error)")
         }
     }
-    
+
 }

@@ -8,7 +8,7 @@ class ResponseMiddleware: Middleware {
             onResponse(response)
         }
     }
-    
+
     private func onResponse(_ response: Response) {
         if let project = response.project {
             self.dispatch?(.setProject(project))
