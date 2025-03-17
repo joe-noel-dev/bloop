@@ -17,8 +17,8 @@ class ApiMiddleware: Middleware {
             core.disconnect()
         }
 
-        if case .sendRequest(let request) = action {
-            core.sendRequest(request)
+        if case .sendRawRequest(let data) = action {
+            core.sendRequest(data)
         }
 
         if case .restartScan = action {
@@ -31,42 +31,17 @@ class ApiMiddleware: Middleware {
 extension ApiMiddleware: CoreDelegate {
     func coreConnected() {
         self.dispatch?(.setConnected(true))
+        
+        let getAllRequest = Request.get(EntityId(entity: .all))
+        self.dispatch?(.sendRequest(getAllRequest))
     }
 
     func coreDisconnected() {
         self.dispatch?(.setConnected(false))
     }
 
-    func coreDidSendResponse(_ response: Response) {
-        if let project = response.project {
-            self.dispatch?(.setProject(project))
-        }
-
-        if let playback = response.playbackState {
-            self.dispatch?(.setPlaybackState(playback))
-        }
-
-        if let progress = response.progress {
-            self.dispatch?(.setProgress(progress))
-        }
-
-        if let projects = response.projects {
-            self.dispatch?(.setProjects(projects))
-        }
-
-        if let error = response.error {
-            self.dispatch?(.addError(error))
-        }
-
-        if let waveform = response.waveform {
-            let action = Action.addWaveform((waveform.sampleId, waveform.waveformData))
-            self.dispatch?(action)
-        }
-
-        if let uploadAck = response.upload {
-            let action = Action.uploadAck(uploadAck.uploadId)
-            self.dispatch?(action)
-        }
+    func coreDidSendResponse(_ response: Data) {
+        self.dispatch?(.receivedRawResponse(response))
     }
 
     func onKnownServersChanged(_ servers: [Server]) {
@@ -76,5 +51,4 @@ extension ApiMiddleware: CoreDelegate {
     func onScanning(_ scanning: Bool) {
         self.dispatch?(.setScanning(scanning))
     }
-
 }

@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		740E750E2D878A7D006F62C8 /* bloop.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 740E750D2D878A7D006F62C8 /* bloop.xcframework */; };
+		740E75152D878D48006F62C8 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 740E75142D878D48006F62C8 /* AudioToolbox.framework */; };
+		740E75172D880F6A006F62C8 /* CoreFFI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75162D880F66006F62C8 /* CoreFFI.swift */; };
+		740E75192D882DA9006F62C8 /* FFIMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75182D882DA5006F62C8 /* FFIMiddleware.swift */; };
+		740E751B2D882E0D006F62C8 /* ResponseMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E751A2D882E06006F62C8 /* ResponseMiddleware.swift */; };
+		740E751D2D88307D006F62C8 /* ApiCodecMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E751C2D883072006F62C8 /* ApiCodecMiddleware.swift */; };
 		74B089872D11D2B9004DEC24 /* Server.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B089862D11D2B7004DEC24 /* Server.swift */; };
 		74CBF57A2D22DC28005C5ABF /* NavigationItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74CBF5782D22DC28005C5ABF /* NavigationItem.swift */; };
 		C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DB2A4F123400F8138D /* DisconnectedView.swift */; };
@@ -83,6 +89,14 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		740E750D2D878A7D006F62C8 /* bloop.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = bloop.xcframework; path = "../target/universal-ios/bloop.xcframework"; sourceTree = SOURCE_ROOT; };
+		740E75112D878B7A006F62C8 /* Bloop-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Bloop-Bridging-Header.h"; sourceTree = "<group>"; };
+		740E75122D878D04006F62C8 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.2.sdk/System/Library/Frameworks/AudioUnit.framework; sourceTree = DEVELOPER_DIR; };
+		740E75142D878D48006F62C8 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.2.sdk/System/Library/Frameworks/AudioToolbox.framework; sourceTree = DEVELOPER_DIR; };
+		740E75162D880F66006F62C8 /* CoreFFI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreFFI.swift; sourceTree = "<group>"; };
+		740E75182D882DA5006F62C8 /* FFIMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFIMiddleware.swift; sourceTree = "<group>"; };
+		740E751A2D882E06006F62C8 /* ResponseMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseMiddleware.swift; sourceTree = "<group>"; };
+		740E751C2D883072006F62C8 /* ApiCodecMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiCodecMiddleware.swift; sourceTree = "<group>"; };
 		74B089862D11D2B7004DEC24 /* Server.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Server.swift; sourceTree = "<group>"; };
 		74CBF5782D22DC28005C5ABF /* NavigationItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationItem.swift; sourceTree = "<group>"; };
 		C20240DB2A4F123400F8138D /* DisconnectedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectedView.swift; sourceTree = "<group>"; };
@@ -149,6 +163,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				740E75152D878D48006F62C8 /* AudioToolbox.framework in Frameworks */,
+				740E750E2D878A7D006F62C8 /* bloop.xcframework in Frameworks */,
 				C257C1692A4DEBD60080ECC2 /* SwiftBSON in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -238,6 +254,9 @@
 		C229B9832A4D9FF20044F2C6 /* middleware */ = {
 			isa = PBXGroup;
 			children = (
+				740E751C2D883072006F62C8 /* ApiCodecMiddleware.swift */,
+				740E751A2D882E06006F62C8 /* ResponseMiddleware.swift */,
+				740E75182D882DA5006F62C8 /* FFIMiddleware.swift */,
 				C229B9842A4DA0000044F2C6 /* Middleware.swift */,
 				C257C1762A4E003F0080ECC2 /* ApiMiddleware.swift */,
 				C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */,
@@ -269,6 +288,7 @@
 		C229B9992A4DD54F0044F2C6 /* core */ = {
 			isa = PBXGroup;
 			children = (
+				740E75162D880F66006F62C8 /* CoreFFI.swift */,
 				C229B99A2A4DD55D0044F2C6 /* Core.swift */,
 				C229B99C2A4DDE7C0044F2C6 /* CoreConnection.swift */,
 				C20F17CE2AB07C2B00ECF2EB /* Discovery.swift */,
@@ -289,6 +309,9 @@
 		C23F511C2A4ED6C300F4C383 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				740E75142D878D48006F62C8 /* AudioToolbox.framework */,
+				740E75122D878D04006F62C8 /* AudioUnit.framework */,
+				740E750D2D878A7D006F62C8 /* bloop.xcframework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -301,6 +324,7 @@
 				C247A6E22A4D949A00001DB2 /* source */,
 				C247A6F42A4D949D00001DB2 /* tests */,
 				C247A6FE2A4D949D00001DB2 /* ui-tests */,
+				740E75112D878B7A006F62C8 /* Bloop-Bridging-Header.h */,
 			);
 			sourceTree = "<group>";
 		};
@@ -578,6 +602,7 @@
 			files = (
 				C222A9562A58AEB200418CBB /* SectionsView.swift in Sources */,
 				C229B9962A4DA3510044F2C6 /* Section.swift in Sources */,
+				740E751B2D882E0D006F62C8 /* ResponseMiddleware.swift in Sources */,
 				C27E2A662A51D5F200D48D91 /* Colours.swift in Sources */,
 				C257F0272A8F806E00E2E77C /* MetronomeView.swift in Sources */,
 				C2D82D422A52D7F600DAEA7E /* WaveformView.swift in Sources */,
@@ -600,6 +625,7 @@
 				C20240DE2A4F14D100F8138D /* DemoProject.swift in Sources */,
 				C25FA0CD2A54888E0066C539 /* ProjectsView.swift in Sources */,
 				C229B97D2A4D9F6D0044F2C6 /* Reducer.swift in Sources */,
+				740E75192D882DA9006F62C8 /* FFIMiddleware.swift in Sources */,
 				C247A6E62A4D949A00001DB2 /* ContentView.swift in Sources */,
 				C25FA0CB2A54610C0066C539 /* ProgressBar.swift in Sources */,
 				C229B9822A4D9FD30044F2C6 /* Action.swift in Sources */,
@@ -614,11 +640,13 @@
 				C247A6E42A4D949A00001DB2 /* BloopApp.swift in Sources */,
 				C257C16B2A4DF5C00080ECC2 /* Response.swift in Sources */,
 				C25FA0C92A53FBA80066C539 /* RequestActionHelpers.swift in Sources */,
+				740E75172D880F6A006F62C8 /* CoreFFI.swift in Sources */,
 				C229B98A2A4DA1F60044F2C6 /* ProjectInfo.swift in Sources */,
 				C25FA0C72A53FAEA0066C539 /* Dispatch.swift in Sources */,
 				C27E2A6F2A51E5FD00D48D91 /* SectionView.swift in Sources */,
 				C229B98E2A4DA2850044F2C6 /* Song.swift in Sources */,
 				C27E2A682A51DE7700D48D91 /* Layout.swift in Sources */,
+				740E751D2D88307D006F62C8 /* ApiCodecMiddleware.swift in Sources */,
 				C20240E02A4F255B00F8138D /* SongView.swift in Sources */,
 				C222A95D2A5B4F7800418CBB /* SongsView.swift in Sources */,
 				C23F51222A4EE10100F4C383 /* Request+Codable.swift in Sources */,
@@ -716,6 +744,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Bloop-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -769,6 +798,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Bloop-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 			};
 			name = Release;

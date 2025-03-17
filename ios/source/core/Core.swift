@@ -1,10 +1,9 @@
 import Foundation
-import SwiftBSON
 
 protocol CoreDelegate: AnyObject {
     func coreConnected()
     func coreDisconnected()
-    func coreDidSendResponse(_ response: Response)
+    func coreDidSendResponse(_ data: Data)
 
     func onKnownServersChanged(_ servers: [Server])
     func onScanning(_ scanning: Bool)
@@ -34,16 +33,9 @@ class Core: CoreConnectionDelegate {
         self.connection.disconnect()
     }
 
-    func sendRequest(_ request: Request) {
+    func sendRequest(_ request: Data) {
         queue.async {
-            do {
-                let encodedRequest = try BSONEncoder().encode(request)
-                let data = encodedRequest.toData()
-                self.send(data)
-            }
-            catch {
-                print("Error sending request: \(error)")
-            }
+            self.send(request)
         }
     }
 
@@ -70,9 +62,9 @@ class Core: CoreConnectionDelegate {
         }
     }
 
-    private func onResponse(_ response: Response) {
+    private func onResponse(_ data: Data) {
         DispatchQueue.main.async { [weak self] in
-            self?.delegate?.coreDidSendResponse(response)
+            self?.delegate?.coreDidSendResponse(data)
         }
     }
 }
@@ -80,10 +72,6 @@ class Core: CoreConnectionDelegate {
 extension Core {
     func coreConnectionDidConnect() {
         print("Core connected")
-
-        let getAllRequest = Request.get(EntityId(entity: .all))
-        sendRequest(getAllRequest)
-
         self.delegate?.coreConnected()
     }
 
@@ -94,14 +82,7 @@ extension Core {
 
     func coreConnectionDidReceiveData(data: Data) {
         queue.async { [weak self] in
-            do {
-                let bsonDocument = try BSONDocument(fromBSON: data)
-                let response = try BSONDecoder().decode(Response.self, from: bsonDocument)
-                self?.onResponse(response)
-            }
-            catch {
-                print("Error decoding response from core: \(error)")
-            }
+            self?.onResponse(data)
         }
 
     }

@@ -2,6 +2,10 @@ import Foundation
 
 enum Action {
     case sendRequest(Request)
+    case receivedResponse(Response)
+    
+    case sendRawRequest(Data)
+    case receivedRawResponse(Data)
 
     case setProject(Project)
     case setPlaybackState(PlaybackState)

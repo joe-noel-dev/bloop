@@ -57,6 +57,15 @@ func rootReducer(state: AppState, action: Action) -> AppState {
 
     case .sendRequest(_):
         break
+        
+    case .receivedResponse(_):
+        break
+        
+    case .sendRawRequest(_):
+        break
+        
+    case .receivedRawResponse(_):
+        break
     }
 
     return state

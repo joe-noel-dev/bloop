@@ -41,6 +41,13 @@ tokio-serial = "5.4.4"
 tokio-tungstenite = "0.26.1"
 uuid = { version = "1.15.1", features = ["serde", "v4"] } 
 
+[build-dependencies]
+cbindgen = "0.27.0"
+
+[lib]
+name = "bloop"
+crate-type = ["staticlib"]
+
 [features]
 default = ["ui", "midi"]
 ui = [ "dep:iced", "dep:iced_native" ]
