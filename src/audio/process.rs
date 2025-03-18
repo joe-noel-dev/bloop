@@ -82,7 +82,7 @@ impl Process {
         let config = StreamConfig {
             channels: preferences.output_channel_count as u16,
             sample_rate: cpal::SampleRate(preferences.sample_rate as u32),
-            buffer_size: cpal::BufferSize::Fixed(preferences.buffer_size as u32),
+            buffer_size: cpal::BufferSize::Default, // FIXME: Hack
         };
 
         // Allocate larger buffer size in case the system ignores our requested buffer size

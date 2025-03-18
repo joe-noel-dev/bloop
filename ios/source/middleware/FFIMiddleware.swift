@@ -15,6 +15,7 @@ class FFIMiddleware: Middleware {
     }()
 
     func execute(state: AppState, action: Action) {
+        // FIXME: Hack to initialize
         if case .restartScan = action {
             self.dispatch?(.sendRequest(.get(EntityId(entity: .all))))
         }

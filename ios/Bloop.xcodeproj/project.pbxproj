@@ -7,12 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		740E750E2D878A7D006F62C8 /* bloop.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 740E750D2D878A7D006F62C8 /* bloop.xcframework */; };
 		740E75152D878D48006F62C8 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 740E75142D878D48006F62C8 /* AudioToolbox.framework */; };
 		740E75172D880F6A006F62C8 /* CoreFFI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75162D880F66006F62C8 /* CoreFFI.swift */; };
 		740E75192D882DA9006F62C8 /* FFIMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75182D882DA5006F62C8 /* FFIMiddleware.swift */; };
 		740E751B2D882E0D006F62C8 /* ResponseMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E751A2D882E06006F62C8 /* ResponseMiddleware.swift */; };
 		740E751D2D88307D006F62C8 /* ApiCodecMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E751C2D883072006F62C8 /* ApiCodecMiddleware.swift */; };
+		740E751F2D885039006F62C8 /* bloop.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 740E751E2D885039006F62C8 /* bloop.xcframework */; };
 		74B089872D11D2B9004DEC24 /* Server.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B089862D11D2B7004DEC24 /* Server.swift */; };
 		74CBF57A2D22DC28005C5ABF /* NavigationItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74CBF5782D22DC28005C5ABF /* NavigationItem.swift */; };
 		C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DB2A4F123400F8138D /* DisconnectedView.swift */; };
@@ -89,7 +89,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		740E750D2D878A7D006F62C8 /* bloop.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = bloop.xcframework; path = "../target/universal-ios/bloop.xcframework"; sourceTree = SOURCE_ROOT; };
 		740E75112D878B7A006F62C8 /* Bloop-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Bloop-Bridging-Header.h"; sourceTree = "<group>"; };
 		740E75122D878D04006F62C8 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.2.sdk/System/Library/Frameworks/AudioUnit.framework; sourceTree = DEVELOPER_DIR; };
 		740E75142D878D48006F62C8 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.2.sdk/System/Library/Frameworks/AudioToolbox.framework; sourceTree = DEVELOPER_DIR; };
@@ -97,6 +96,7 @@
 		740E75182D882DA5006F62C8 /* FFIMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFIMiddleware.swift; sourceTree = "<group>"; };
 		740E751A2D882E06006F62C8 /* ResponseMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseMiddleware.swift; sourceTree = "<group>"; };
 		740E751C2D883072006F62C8 /* ApiCodecMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiCodecMiddleware.swift; sourceTree = "<group>"; };
+		740E751E2D885039006F62C8 /* bloop.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = bloop.xcframework; path = "../target/universal-ios/bloop.xcframework"; sourceTree = SOURCE_ROOT; };
 		74B089862D11D2B7004DEC24 /* Server.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Server.swift; sourceTree = "<group>"; };
 		74CBF5782D22DC28005C5ABF /* NavigationItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationItem.swift; sourceTree = "<group>"; };
 		C20240DB2A4F123400F8138D /* DisconnectedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectedView.swift; sourceTree = "<group>"; };
@@ -164,7 +164,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				740E75152D878D48006F62C8 /* AudioToolbox.framework in Frameworks */,
-				740E750E2D878A7D006F62C8 /* bloop.xcframework in Frameworks */,
+				740E751F2D885039006F62C8 /* bloop.xcframework in Frameworks */,
 				C257C1692A4DEBD60080ECC2 /* SwiftBSON in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -311,7 +311,7 @@
 			children = (
 				740E75142D878D48006F62C8 /* AudioToolbox.framework */,
 				740E75122D878D04006F62C8 /* AudioUnit.framework */,
-				740E750D2D878A7D006F62C8 /* bloop.xcframework */,
+				740E751E2D885039006F62C8 /* bloop.xcframework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";

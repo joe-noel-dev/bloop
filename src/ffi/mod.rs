@@ -6,6 +6,7 @@ use tokio::sync::{broadcast, mpsc};
 use crate::{
     api::{Request, Response},
     core::run_core,
+    logger::{set_up_logger, LogOptions},
 };
 
 use anyhow::{Context, Result};
@@ -31,6 +32,9 @@ extern "C" fn bloop_init(
     response_callback: BloopResponseCallback,
     response_callback_context: *mut c_void,
 ) -> *mut BloopContext {
+    let log_options = LogOptions::default().log_to_console(true);
+    set_up_logger(log_options);
+
     let (request_tx, request_rx) = mpsc::channel(128);
     let (response_tx, response_rx) = broadcast::channel(128);
 

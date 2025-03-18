@@ -4,6 +4,7 @@ mod control;
 mod core;
 mod ffi;
 mod generators;
+mod logger;
 mod midi;
 mod model;
 mod network;
