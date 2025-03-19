@@ -18,6 +18,16 @@ struct DisconnectedView: View {
                 }
             ).buttonStyle(.bordered)
 
+            Button(
+                action: {
+                    dispatch(.connectLocal)
+                },
+                label: {
+                    Text("Local Audio")
+                        .fontWeight(.bold)
+                }
+            ).buttonStyle(.bordered)
+
             Spacer()
 
             if servers.isEmpty && scanning {

@@ -1,5 +1,10 @@
 import Foundation
 
+enum ConnectionType {
+    case local
+    case remote
+}
+
 enum Action {
     case sendRequest(Request)
     case receivedResponse(Response)
@@ -18,8 +23,9 @@ enum Action {
     case setNavigationPath([NavigationItem])
 
     case connect(Server)
+    case connectLocal
     case disconnect
-    case setConnected(Bool)
+    case setConnected(ConnectionType?)
 
     case uploadSample((Id, URL))
     case uploadAck(Id)

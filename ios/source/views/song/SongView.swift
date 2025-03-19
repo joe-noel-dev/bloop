@@ -148,13 +148,39 @@ struct SongView: View {
         .fileImporter(isPresented: $editingSample, allowedContentTypes: [.wav]) { result in
             switch result {
             case .success(let url):
-                let action = Action.uploadSample((song.id, url))
-                dispatch(action)
+                guard url.startAccessingSecurityScopedResource() else {
+                    print("Failed to start security-scoped access.")
+                    return
+                }
+                defer { url.stopAccessingSecurityScopedResource() }
+
+                // Typically, copy the file to a local URL first:
+                do {
+                    let fileManager = FileManager.default
+                    let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask)
+                        .first!
+                    let localURL = documents.appendingPathComponent(url.lastPathComponent)
+
+                    if fileManager.fileExists(atPath: localURL.path()) {
+                        try fileManager.removeItem(at: localURL)
+                    }
+
+                    try fileManager.copyItem(at: url, to: localURL)
+
+                    // Dispatch your action with the new local URL
+                    let action = Action.uploadSample((song.id, localURL))
+                    dispatch(action)
+
+                }
+                catch {
+                    print("Error loading audio file: \(error)")
+                }
 
             case .failure(let error):
-                print("\(error)")
+                print("Import failed: \(error)")
             }
         }
+
         .toolbar {
             headerMenu
         }

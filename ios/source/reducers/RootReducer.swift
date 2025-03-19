@@ -34,6 +34,9 @@ func rootReducer(state: AppState, action: Action) -> AppState {
     case .connect(_):
         break
 
+    case .connectLocal:
+        break
+
     case .disconnect:
         break
 

@@ -1,7 +1,7 @@
 import Foundation
 
 struct AppState {
-    var connected = false
+    var connected: ConnectionType? = .none
     var scanning = false
     var servers: [Server] = []
     var projects: [ProjectInfo] = []
