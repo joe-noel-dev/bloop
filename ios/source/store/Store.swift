@@ -18,7 +18,7 @@ class Store: ObservableObject {
     func dispatch(_ action: Action) {
         DispatchQueue.main.async {
             self.state = self.reducer(self.state, action)
-            
+
             for middleware in self.middlewares {
                 middleware.execute(state: self.state, action: action)
             }

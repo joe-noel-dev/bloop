@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ProjectPreview: View {
     var project: ProjectInfo
@@ -33,6 +34,8 @@ struct ProjectsView: View {
     var dismiss: () -> Void
 
     @State private var selected: ProjectInfo.ID?
+    @State private var showImportFileDialog: Bool = false
+    @State private var selectedFileURL: URL?
 
     private var sortedProjects: [ProjectInfo] {
         projects.sorted { a, b in
@@ -85,6 +88,12 @@ struct ProjectsView: View {
                 }
 
                 Button {
+                    showImportFileDialog = true
+                } label: {
+                    Label("Import", systemImage: "square.and.arrow.down")
+                }
+
+                Button {
                     let action = newProjectAction()
                     dispatch(action)
                     dismiss()
@@ -97,6 +106,17 @@ struct ProjectsView: View {
             .onAppear {
                 let action = getProjectsAction()
                 dispatch(action)
+            }
+            .fileImporter(isPresented: $showImportFileDialog, allowedContentTypes: [UTType.data]) {
+                result in
+                switch result {
+                case .success(let url):
+                    print("Selected file for import: \(url)")
+                    dispatch(.importProject(url))
+
+                case .failure(let error):
+                    print("Error selecting file: \(error.localizedDescription)")
+                }
             }
         }
 

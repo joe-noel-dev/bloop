@@ -157,6 +157,7 @@ pub struct ProjectExportRequest {
 #[serde(rename_all = "camelCase")]
 pub struct ProjectImportRequest {
     pub project_id: ID,
+    #[serde(with = "serde_bytes")]
     pub data: Vec<u8>,
     pub more_coming: bool,
 }

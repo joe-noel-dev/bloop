@@ -16,6 +16,8 @@ enum Request: Codable, Equatable {
     case completeUpload(CompleteUploadRequest)
     case addSample(AddSampleRequest)
     case removeSample(RemoveSampleRequest)
+    case projectImport(ProjectImportRequest)
+    case projectExport(ProjectExportRequest)
 }
 
 struct EntityId: Codable, Equatable {
@@ -85,4 +87,14 @@ struct RemoveSampleRequest: Codable, Equatable {
 struct QueueRequest: Codable, Equatable {
     var songId: Id
     var sectionId: Id
+}
+
+struct ProjectImportRequest: Codable, Equatable {
+    var projectId: Id
+    var data: Data
+    var moreComing: Bool
+}
+
+struct ProjectExportRequest: Codable, Equatable {
+    var projectId: Id
 }

@@ -39,5 +39,15 @@ class ResponseMiddleware: Middleware {
             let action = Action.uploadAck(uploadAck.uploadId)
             self.dispatch?(action)
         }
+        
+        if let importResponse = response.importResponse {
+            let action = Action.importResponse(importResponse)
+            self.dispatch?(action)
+        }
+        
+        if let exportResponse = response.exportResponse {
+            let action = Action.exportResponse(exportResponse)
+            self.dispatch?(action)
+        }
     }
 }

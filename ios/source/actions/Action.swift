@@ -30,6 +30,11 @@ enum Action {
     case uploadSample((Id, URL))
     case uploadAck(Id)
 
+    case importProject(URL)
+    case exportProject(URL)
+    case importResponse(ImportResponse)
+    case exportResponse(ExportResponse)
+    
     case setDiscoveredServers([Server])
     case setScanning(Bool)
     case removeAllServers

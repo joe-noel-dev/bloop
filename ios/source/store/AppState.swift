@@ -10,6 +10,7 @@ struct AppState {
     var progress = Progress()
     var waveforms = Waveforms()
     var navigationPath: [NavigationItem] = []
+    var errors: [String] = []
 }
 
 func emptyProject() -> Project {

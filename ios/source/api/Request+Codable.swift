@@ -26,6 +26,8 @@ extension Request {
         case completeUpload
         case addSample
         case removeSample
+        case projectImport
+        case projectExport
     }
 
     func encode(to encoder: Encoder) throws {
@@ -90,6 +92,15 @@ extension Request {
         case .removeSample(let removeSampleRequest):
             try container.encode(RequestMethod.removeSample.rawValue, forKey: .method)
             try container.encode(removeSampleRequest, forKey: .payload)
+
+        case .projectImport(let importRequest):
+            try container.encode(RequestMethod.projectImport.rawValue, forKey: .method)
+            try container.encode(importRequest, forKey: .payload)
+
+        case .projectExport(let exportRequest):
+            try container.encode(RequestMethod.projectExport.rawValue, forKey: .method)
+            try container.encode(exportRequest, forKey: .payload)
+
         }
 
     }

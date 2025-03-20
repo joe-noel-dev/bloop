@@ -14,6 +14,7 @@
 		740E751D2D88307D006F62C8 /* ApiCodecMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E751C2D883072006F62C8 /* ApiCodecMiddleware.swift */; };
 		740E75262D8A1D6C006F62C8 /* bloop.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 740E751E2D885039006F62C8 /* bloop.xcframework */; };
 		740E75282D8A2720006F62C8 /* AudioSessionMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75272D8A271C006F62C8 /* AudioSessionMiddleware.swift */; };
+		740E752A2D8CC054006F62C8 /* ImportMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75292D8CC050006F62C8 /* ImportMiddleware.swift */; };
 		74B089872D11D2B9004DEC24 /* Server.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B089862D11D2B7004DEC24 /* Server.swift */; };
 		74CBF57A2D22DC28005C5ABF /* NavigationItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74CBF5782D22DC28005C5ABF /* NavigationItem.swift */; };
 		C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DB2A4F123400F8138D /* DisconnectedView.swift */; };
@@ -100,6 +101,7 @@
 		740E751E2D885039006F62C8 /* bloop.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = bloop.xcframework; path = "../target/universal-ios/bloop.xcframework"; sourceTree = SOURCE_ROOT; };
 		740E75202D8A1B95006F62C8 /* bloop_Debug.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = bloop_Debug.xcframework; path = "../target/universal-ios/bloop_Debug.xcframework"; sourceTree = SOURCE_ROOT; };
 		740E75272D8A271C006F62C8 /* AudioSessionMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSessionMiddleware.swift; sourceTree = "<group>"; };
+		740E75292D8CC050006F62C8 /* ImportMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportMiddleware.swift; sourceTree = "<group>"; };
 		74B089862D11D2B7004DEC24 /* Server.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Server.swift; sourceTree = "<group>"; };
 		74CBF5782D22DC28005C5ABF /* NavigationItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationItem.swift; sourceTree = "<group>"; };
 		C20240DB2A4F123400F8138D /* DisconnectedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectedView.swift; sourceTree = "<group>"; };
@@ -257,14 +259,15 @@
 		C229B9832A4D9FF20044F2C6 /* middleware */ = {
 			isa = PBXGroup;
 			children = (
-				740E75272D8A271C006F62C8 /* AudioSessionMiddleware.swift */,
 				740E751C2D883072006F62C8 /* ApiCodecMiddleware.swift */,
-				740E751A2D882E06006F62C8 /* ResponseMiddleware.swift */,
-				740E75182D882DA5006F62C8 /* FFIMiddleware.swift */,
-				C229B9842A4DA0000044F2C6 /* Middleware.swift */,
 				C257C1762A4E003F0080ECC2 /* ApiMiddleware.swift */,
-				C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */,
+				740E75272D8A271C006F62C8 /* AudioSessionMiddleware.swift */,
+				740E75182D882DA5006F62C8 /* FFIMiddleware.swift */,
+				740E75292D8CC050006F62C8 /* ImportMiddleware.swift */,
+				C229B9842A4DA0000044F2C6 /* Middleware.swift */,
+				740E751A2D882E06006F62C8 /* ResponseMiddleware.swift */,
 				C222A95A2A59D21400418CBB /* UploadMiddleware.swift */,
+				C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */,
 			);
 			path = middleware;
 			sourceTree = "<group>";
@@ -632,6 +635,7 @@
 				C229B97D2A4D9F6D0044F2C6 /* Reducer.swift in Sources */,
 				740E75192D882DA9006F62C8 /* FFIMiddleware.swift in Sources */,
 				C247A6E62A4D949A00001DB2 /* ContentView.swift in Sources */,
+				740E752A2D8CC054006F62C8 /* ImportMiddleware.swift in Sources */,
 				740E75282D8A2720006F62C8 /* AudioSessionMiddleware.swift in Sources */,
 				C25FA0CB2A54610C0066C539 /* ProgressBar.swift in Sources */,
 				C229B9822A4D9FD30044F2C6 /* Action.swift in Sources */,
