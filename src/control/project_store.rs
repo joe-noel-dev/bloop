@@ -1,20 +1,28 @@
 use crate::{
+    control::zip::zip_directory,
     model::{Project, ProjectInfo, ID},
     samples::SamplesCache,
     types::AudioFileFormat,
 };
 use anyhow::{anyhow, Context};
-use log::error;
-use std::time::{SystemTime, UNIX_EPOCH};
+use log::{debug, error, info};
+use std::{
+    collections::HashMap,
+    time::{SystemTime, UNIX_EPOCH},
+};
 use std::{convert::TryInto, str::FromStr};
 use std::{
     fs,
     path::{Path, PathBuf},
 };
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+use super::zip::unzip_file;
 
 pub struct ProjectStore {
     root_directory: PathBuf,
+    temporary_directory: tempfile::TempDir,
+    export_paths: HashMap<ID, tokio::fs::File>,
 }
 
 fn current_time() -> i64 {
@@ -32,6 +40,8 @@ impl ProjectStore {
 
         Self {
             root_directory: PathBuf::from(root_directory),
+            temporary_directory: tempfile::TempDir::new().expect("Unable to create temporary directory"),
+            export_paths: HashMap::new(),
         }
     }
 
@@ -241,7 +251,9 @@ impl ProjectStore {
         let samples_directory = self.directory_for_samples(project_id);
 
         if !samples_directory.is_dir() {
-            return Err(anyhow!("Samples directory doesn't exist for project: {}", project_id));
+            tokio::fs::create_dir_all(&samples_directory)
+                .await
+                .with_context(|| format!("Error creating samples directory: {project_id}"))?;
         }
 
         let mut read_dir = tokio::fs::read_dir(samples_directory)
@@ -275,6 +287,85 @@ impl ProjectStore {
 
         Ok(())
     }
+
+    pub async fn import(&mut self, project_id: &ID, data: &[u8], more_coming: bool) -> anyhow::Result<()> {
+        info!("Importing project_id={}", project_id);
+
+        let import_file_path = self.temporary_directory.path().join(project_id.to_string() + ".bloop");
+        if !self.export_paths.contains_key(project_id) {
+            let file = tokio::fs::File::create(&import_file_path)
+                .await
+                .with_context(|| format!("Error creating import file: {}", import_file_path.display()))?;
+
+            self.export_paths.insert(*project_id, file);
+        }
+
+        let file = self.export_paths.get_mut(project_id).unwrap();
+
+        file.write_all(data).await?;
+
+        if !more_coming {
+            let out_dir = self.directory_for_project(project_id);
+
+            info!(
+                "Finished importing project_id={} path={} project_dir={}",
+                project_id,
+                import_file_path.display(),
+                out_dir.display()
+            );
+
+            tokio::fs::create_dir(&out_dir).await?;
+            unzip_file(&import_file_path, &out_dir).await?;
+            self.export_paths.remove(project_id);
+        }
+
+        Ok(())
+    }
+
+    pub async fn export(&mut self, project_id: &ID) -> anyhow::Result<(Vec<u8>, bool)> {
+        let export_file = self.temporary_directory.path().join(project_id.to_string() + ".bloop");
+
+        if !self.export_paths.contains_key(project_id) {
+            info!("Starting export project_id={}", project_id);
+
+            let project_dir = self.directory_for_project(project_id);
+            if !project_dir.is_dir() {
+                return Err(anyhow!("Project directory doesn't exist: {}", project_id));
+            }
+
+            zip_directory(&project_dir, &export_file).await?;
+
+            let file = tokio::fs::File::open(&export_file)
+                .await
+                .with_context(|| format!("Error opening export file: {}", export_file.display()))?;
+
+            self.export_paths.insert(*project_id, file);
+        }
+
+        let file = self
+            .export_paths
+            .get_mut(project_id)
+            .unwrap_or_else(|| panic!("Missing export path project_id={}", project_id));
+
+        debug!("Exporting project_id={}", project_id);
+
+        let chunk_size = 10 * 1024;
+
+        let mut buffer = vec![0; chunk_size];
+        let count = file.read(&mut buffer).await?;
+        let more_coming = count == chunk_size;
+
+        if !more_coming {
+            info!(
+                "Finished export project_id={} export_path={}",
+                project_id,
+                export_file.display()
+            );
+            self.export_paths.remove(project_id);
+        }
+
+        Ok((buffer, more_coming))
+    }
 }
 
 #[cfg(test)]
@@ -284,52 +375,136 @@ mod tests {
 
     use super::*;
 
+    struct Fixture {
+        temp_dir: tempfile::TempDir,
+        project_store: ProjectStore,
+        samples_cache: SamplesCache,
+    }
+
+    impl Fixture {
+        pub fn new() -> Self {
+            let temp_dir = tempfile::TempDir::new().expect("Unable to create temporary directory");
+            let root_dir = temp_dir.path();
+            let project_directory = root_dir.join("projects");
+            let samples_directory = root_dir.join("samples");
+
+            Self {
+                temp_dir,
+                project_store: ProjectStore::new(&project_directory),
+                samples_cache: SamplesCache::new(&samples_directory),
+            }
+        }
+
+        pub fn root_dir(&self) -> PathBuf {
+            self.temp_dir.path().to_path_buf()
+        }
+
+        pub async fn save(&self, project: Project) {
+            self.project_store
+                .save(project, &self.samples_cache)
+                .await
+                .expect("Unable to save project");
+        }
+
+        pub async fn load(&mut self, project_id: &ID) -> Project {
+            self.project_store
+                .load(project_id, &mut self.samples_cache)
+                .await
+                .expect("Unable to load project")
+        }
+
+        pub async fn list(&self) -> Vec<ProjectInfo> {
+            self.project_store.projects().await.expect("Unable to list projects")
+        }
+
+        pub async fn remove(&self, project_id: &ID) {
+            self.project_store
+                .remove_project(project_id)
+                .await
+                .expect("Unable to remove project")
+        }
+
+        pub async fn export(&mut self, project_id: &ID) -> Vec<u8> {
+            let mut data = Vec::new();
+
+            loop {
+                let (chunk, more_coming) = self
+                    .project_store
+                    .export(project_id)
+                    .await
+                    .expect("Unable to export project");
+
+                data.extend(chunk);
+
+                if !more_coming {
+                    break;
+                }
+            }
+
+            data
+        }
+
+        pub async fn import(&mut self, project_id: &ID, data: &[u8]) {
+            let mut offset = 0;
+            let mut more_coming = true;
+
+            while more_coming {
+                let chunk_size = 1024.min(data.len() - offset);
+                let chunk = &data[offset..offset + chunk_size];
+                more_coming = offset + chunk_size < data.len();
+
+                self.project_store
+                    .import(project_id, chunk, more_coming)
+                    .await
+                    .expect("Unable to import project");
+
+                offset += chunk_size;
+            }
+        }
+    }
+
     #[test]
     fn creates_directory() {
-        let temp_dir = tempfile::TempDir::new().unwrap();
-        let root_dir = temp_dir.into_path();
-        let project_directory: PathBuf = [root_dir.to_str().unwrap(), "projects"].iter().collect();
-
-        assert!(!project_directory.exists());
-        ProjectStore::new(&project_directory);
-        assert!(project_directory.exists());
-
-        fs::remove_dir_all(root_dir).expect("Failed to remove directory");
+        let fixture = Fixture::new();
+        let project_dir = fixture.root_dir().join("projects");
+        assert!(project_dir.exists());
     }
 
     #[tokio::test]
     async fn save_and_load_project() {
-        let temp_dir = tempfile::TempDir::new().unwrap();
-        let root_dir = temp_dir.into_path();
-        let project_directory: PathBuf = [root_dir.to_str().unwrap(), "projects"].iter().collect();
-        let samples_directory: PathBuf = [root_dir.to_str().unwrap(), "samples"].iter().collect();
-        let mut samples_cache = SamplesCache::new(&samples_directory);
-
-        let mut project_store = ProjectStore::new(&project_directory);
+        let mut fixture = Fixture::new();
 
         let song_count = 4;
         let section_count = 5;
 
         let project = generate_project(song_count, section_count);
         let project_id = project.info.id;
-        project_store.save(project, &samples_cache).await.unwrap();
+        fixture.save(project).await;
 
-        let project2 = project_store.load(&project_id, &mut samples_cache).await.unwrap();
+        let project2 = fixture.load(&project_id).await;
         assert_eq!(project2.songs.len(), song_count);
         assert!(project2.songs.iter().all(|song| song.sections.len() == section_count));
+    }
 
-        fs::remove_dir_all(root_dir).unwrap();
+    #[tokio::test]
+    async fn export_and_import_project() {
+        let mut fixture = Fixture::new();
+        let project = generate_project(4, 5);
+        let project_id = project.info.id;
+        fixture.save(project).await;
+        let exported = fixture.export(&project_id).await;
+        fixture.remove(&project_id).await;
+
+        let new_project_id = ID::new_v4();
+        fixture.import(&new_project_id, &exported).await;
+        let project2 = fixture.load(&new_project_id).await;
+        assert_eq!(project2.songs.len(), 4);
+        assert!(project2.songs.iter().all(|song| song.sections.len() == 5));
     }
 
     #[tokio::test]
     async fn list_projects() {
-        let temp_dir = tempfile::TempDir::new().unwrap();
-        let root_dir = temp_dir.into_path();
-        let project_directory: PathBuf = [root_dir.to_str().unwrap(), "projects"].iter().collect();
-        let samples_directory: PathBuf = [root_dir.to_str().unwrap(), "samples"].iter().collect();
-        let samples_cache = SamplesCache::new(&samples_directory);
-
-        let project_store = ProjectStore::new(&project_directory);
+        let fixture = Fixture::new();
 
         let project1 = generate_project(4, 5);
         let project2 = generate_project(4, 5);
@@ -339,11 +514,11 @@ mod tests {
         let project2_id = project1.info.id;
         let project3_id = project1.info.id;
 
-        project_store.save(project1, &samples_cache).await.unwrap();
-        project_store.save(project2, &samples_cache).await.unwrap();
-        project_store.save(project3, &samples_cache).await.unwrap();
+        fixture.save(project1).await;
+        fixture.save(project2).await;
+        fixture.save(project3).await;
 
-        let projects = project_store.projects().await.unwrap();
+        let projects = fixture.list().await;
 
         assert_eq!(projects.len(), 3, "Should be 3 projects on disk");
         assert!(
@@ -358,7 +533,5 @@ mod tests {
             projects.iter().any(|info| info.id == project3_id),
             "Project 3 not found"
         );
-
-        fs::remove_dir_all(root_dir).unwrap();
     }
 }

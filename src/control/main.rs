@@ -116,6 +116,12 @@ impl MainController {
             Request::AddSection(add_section_request) => {
                 self.handle_add_section_with_params(add_section_request, project)
             }
+            Request::ProjectExport(project_export_request) => {
+                self.handle_project_export(project, project_export_request).await
+            }
+            Request::ProjectImport(project_import_request) => {
+                self.handle_project_import(project, project_import_request).await
+            }
         };
 
         match result {
@@ -129,6 +135,40 @@ impl MainController {
             .save(project.clone(), &self.samples_cache)
             .await
             .map(|_| project)
+    }
+
+    async fn handle_project_export(
+        &mut self,
+        project: Project,
+        request: ProjectExportRequest,
+    ) -> anyhow::Result<Project> {
+        let project_id = request.project_id;
+
+        let (data, more_coming) = self.project_store.export(&project_id).await?;
+
+        self.send_response(Response::default().with_export_response(ExportResponse {
+            project_id,
+            data,
+            more_coming,
+        }));
+
+        Ok(project)
+    }
+
+    async fn handle_project_import(
+        &mut self,
+        project: Project,
+        request: ProjectImportRequest,
+    ) -> anyhow::Result<Project> {
+        let project_id = request.project_id;
+        let data = request.data;
+        let more_coming = request.more_coming;
+
+        self.project_store.import(&project_id, &data, more_coming).await?;
+
+        self.send_response(Response::default().with_import_response(ImportResponse { project_id }));
+
+        Ok(project)
     }
 
     fn set_project(&mut self, project: Project) {

@@ -19,6 +19,20 @@ pub struct UploadAck {
     pub upload_id: ID,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportResponse {
+    pub project_id: ID,
+    pub data: Vec<u8>,
+    pub more_coming: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportResponse {
+    pub project_id: ID,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Response {
@@ -39,6 +53,12 @@ pub struct Response {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub upload: Option<UploadAck>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub export_response: Option<ExportResponse>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub import_response: Option<ImportResponse>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
@@ -90,6 +110,16 @@ impl Response {
 
     pub fn with_upload_ack(mut self, upload_ack: UploadAck) -> Self {
         self.upload = Some(upload_ack);
+        self
+    }
+
+    pub fn with_export_response(mut self, export_response: ExportResponse) -> Self {
+        self.export_response = Some(export_response);
+        self
+    }
+
+    pub fn with_import_response(mut self, import_response: ImportResponse) -> Self {
+        self.import_response = Some(import_response);
         self
     }
 }

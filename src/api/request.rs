@@ -149,6 +149,20 @@ pub struct AddSectionRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct ProjectExportRequest {
+    pub project_id: ID,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectImportRequest {
+    pub project_id: ID,
+    pub data: Vec<u8>,
+    pub more_coming: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 #[serde(tag = "method", content = "payload")]
 pub enum Request {
     Get(GetRequest),
@@ -167,4 +181,6 @@ pub enum Request {
     RemoveSample(RemoveSampleRequest),
     Transport(TransportMethod),
     AddSection(AddSectionRequest),
+    ProjectExport(ProjectExportRequest),
+    ProjectImport(ProjectImportRequest),
 }

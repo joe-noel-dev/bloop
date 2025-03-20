@@ -9,13 +9,14 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0.96"
 approx = "0.5.1"
+async_zip = { version = "0.0.17", features = ["full"] }
 bson = "2.13.0"
-conv = "0.3.3"
 cpal = { version = "0.15.2", features = ["jack"] }
 fern = "0.7.1"
 fixed = "1.29.0"
 futures = "0.3.31"
 futures-channel = "0.3.31"
+futures-lite = "2.6.0"
 futures-util = "0.3.31" 
 git-version = "0.3.9"
 home = "0.5.11"
@@ -37,8 +38,8 @@ serde_derive = "1.0.126"
 serde_json = "1.0.134"
 tempfile = "3.17.1"
 tokio = { version = "1.42.0", features = ["full"] }
-tokio-serial = "5.4.4"
 tokio-tungstenite = "0.26.1"
+tokio-util = "0.7.14"
 uuid = { version = "1.15.1", features = ["serde", "v4"] } 
 
 [build-dependencies]
