@@ -1,6 +1,4 @@
-use uuid::Uuid;
-
-use crate::api::Response;
+use crate::{bloop::Response, model::ID};
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -12,5 +10,5 @@ pub enum Message {
     SelectPreviousSong,
     SelectNextSong,
     #[allow(unused)]
-    SelectSection(Uuid),
+    SelectSection(ID),
 }

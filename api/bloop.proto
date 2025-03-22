@@ -1,0 +1,264 @@
+syntax = "proto3";
+
+package bloop;
+ 
+message Project {
+    ProjectInfo info = 1;
+    repeated Song songs = 2;
+    Selections selections = 3;
+}
+
+message ProjectInfo {
+    uint64 id = 1; 
+    string name = 2;
+    string version = 3;
+    int64 last_saved = 4;
+}
+
+message Selections {
+    uint64 song = 1;
+    uint64 section = 2;
+}
+
+message Song {
+    uint64 id = 1;
+    string name = 2;
+    Tempo tempo = 3;
+    repeated Section sections = 4;
+    Sample sample = 5;
+}
+
+message Tempo {
+    double bpm = 1;
+}
+
+message Section {
+    uint64 id = 1;
+    string name = 2;
+    double start = 3;
+    bool loop = 4;
+    bool metronome = 5;
+}
+
+message Sample {
+    uint64 id = 1;
+    string name = 2;
+    Tempo tempo = 3;
+    int32 sample_rate = 4;
+    int64 sample_count = 5;
+    int32 channel_count = 6;
+}
+
+message PlaybackState {
+    PlayingState playing = 1;
+    uint64 song_id = 2;
+    uint64 section_id = 3;
+    uint64 queued_song_id = 4;
+    uint64 queued_section_id = 5;
+    bool looping = 6;
+}
+
+enum PlayingState {
+    STOPPED = 0;
+    PLAYING = 1;
+}
+
+message Request {
+    GetRequest get = 1;
+    AddRequest add = 2;
+    SelectRequest select = 3; 
+    RemoveRequest remove = 4;
+    UpdateRequest update = 5;
+    DuplicateRequest duplicate = 6;
+    SaveRequest save = 7; 
+    LoadRequest load = 8;
+    RenameRequest rename = 9;
+    BeginUploadRequest begin_upload = 10;
+    UploadRequest upload = 11; 
+    CompleteUploadRequest complete_upload = 12;
+    AddSampleRequest add_sample = 13;
+    RemoveSampleRequest remove_sample = 14;
+    TransportRequest transport = 15;
+    AddSectionRequest add_section = 16;
+    ProjectExportRequest project_export = 17;
+    ProjectImportRequest project_import = 18; 
+}
+
+message GetRequest {
+    Entity entity = 1;
+    uint64 id = 2;
+}
+
+enum Entity {
+    ALL = 0;
+    PROJECT = 1;
+    PROJECTS = 2;
+    SAMPLE = 3;
+    SECTION = 4;
+    SONG = 5;
+    WAVEFORM = 6;
+}
+
+message AddRequest {
+    Entity entity = 1;
+    uint64 id = 2;
+}
+
+message SelectRequest {
+    Entity entity = 1;
+    uint64 id = 2;
+}
+
+message RemoveRequest {
+    Entity entity = 1;
+    uint64 id = 2;
+}
+
+message UpdateRequest { 
+    Song song = 1;
+    Section section = 2;
+    Sample sample = 3;
+    Project project = 4;
+}
+
+message DuplicateRequest {
+    Entity entity = 1;
+    uint64 id = 2;
+}
+
+message SaveRequest {
+    
+}
+
+message LoadRequest {
+    uint64 id = 1;
+}
+
+message RenameRequest {
+    Entity entity = 1;
+    uint64 id = 2;
+    string name = 3;
+}
+
+message BeginUploadRequest {
+    uint64 upload_id = 1;
+    string filename = 2;
+    AudioFileFormat format = 3;
+}
+
+enum AudioFileFormat {
+    WAV = 0;
+}
+
+message UploadRequest {
+    uint64 upload_id = 1;
+    bytes data = 2;
+}
+
+message CompleteUploadRequest {
+    uint64 upload_id = 1;
+}
+
+message AddSampleRequest {
+    uint64 song_id = 1;
+    uint64 upload_id = 2;
+}
+
+message AddSectionRequest {
+    uint64 song_id = 1;
+    string name = 2;
+    double start = 3;
+    bool loop = 4;
+    bool metronome = 5;
+}
+
+message ProjectImportRequest {
+    uint64 project_id = 1;
+    bytes data = 2;
+    bool more_coming = 3;
+}
+
+message ProjectExportRequest {
+    uint64 project_id = 1;
+}
+
+message RemoveSampleRequest {
+    uint64 song_id = 1;
+}
+
+enum TransportMethod {
+    PLAY = 0;
+    STOP = 1;
+    LOOP = 2;
+    EXIT_LOOP = 3;
+    QUEUE = 4;
+}
+
+message TransportRequest {
+    TransportMethod method = 1;
+    QueueRequest queue = 2;
+}
+
+message QueueRequest {
+    uint64 song_id = 1;
+    uint64 section_id = 2;
+}
+
+message Response {
+    Project project = 1;
+    repeated ProjectInfo projects = 2;
+    PlaybackState playback_state = 3;
+    WaveformResponse waveform = 4;
+    Progress progress = 5;
+    UploadAck upload = 6;
+    ExportResponse export_response = 7;
+    ImportResponse import_response = 8;
+    string error = 9;
+} 
+
+message WaveformResponse {
+    uint64 sample_id = 1;
+    WaveformData waveform_data = 2;
+}
+
+message WaveformData {
+    int32 sample_rate = 1;
+    repeated WaveformGroup peaks = 2;
+}
+
+message WaveformGroup {
+    WaveformProperties properties = 1;
+    repeated float values = 2;
+}
+
+message WaveformProperties {
+    int32 length = 1;
+    WaveformAlgorithm algorithm = 2;
+    int32 channel = 3;
+}
+
+enum WaveformAlgorithm {
+    MIN = 0;
+    MAX = 1;
+    RMS = 2;
+}
+
+message Progress {
+    double song_progress = 1;
+    double section_progress = 2;
+    double section_beat = 3;
+}
+
+message UploadAck {
+    uint64 upload_id = 1;
+}
+
+message ExportResponse {
+    uint64 project_id = 1;
+    bytes data = 2;
+    bool more_coming = 3;
+}
+
+message ImportResponse {
+    uint64 project_id = 1;
+}

@@ -1,15 +1,16 @@
 use std::ffi::c_void;
 
 use log::error;
+use protobuf::Message;
 use tokio::sync::{broadcast, mpsc};
 
 use crate::{
-    api::{Request, Response},
+    bloop::{Request, Response},
     core::run_core,
     logger::{set_up_logger, LogOptions},
 };
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 struct BloopContext {
     _core_thread: std::thread::JoinHandle<()>,
@@ -104,15 +105,11 @@ extern "C" fn bloop_shutdown(ctx: *mut BloopContext) {
 }
 
 fn convert_response_to_bytes(response: &Response) -> Result<Vec<u8>> {
-    let document = bson::to_document(response).context("Serializing response")?;
-    let mut data: Vec<u8> = vec![];
-    document.to_writer(&mut data)?;
-    Ok(data)
+    Ok(response.write_to_bytes()?)
 }
 
 fn convert_bytes_to_request(message: &[u8]) -> Result<Request> {
-    let document = bson::Document::from_reader(message).context("Deserializing request")?;
-    let request = bson::from_document(document).context("Deserializing request")?;
+    let request = Request::parse_from_bytes(message)?;
     Ok(request)
 }
 

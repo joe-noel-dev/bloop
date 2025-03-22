@@ -29,6 +29,7 @@ libmdns = "0.9.1"
 log = "0.4.22"
 midir = { version = "0.10.1", optional = true }
 num-traits = "0.2.18"
+protobuf = "3.7.2"
 rand = "0.9.0"
 rawdio = { git = "https://github.com/joe-noel-dev/rawdio.git" }
 regex = "1.11"
@@ -44,6 +45,8 @@ uuid = { version = "1.15.1", features = ["serde", "v4"] }
 
 [build-dependencies]
 cbindgen = "0.27.0"
+protobuf-codegen = "3.7.1"
+protoc-rust = "2.28.0"
 
 [lib]
 name = "bloop"

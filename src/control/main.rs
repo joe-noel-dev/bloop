@@ -1,10 +1,10 @@
 use super::{directories::Directories, project_store::ProjectStore, waveform_store::WaveformStore};
 
 use crate::{
-    api::*,
     audio::AudioController,
+    bloop::*,
     midi::MidiController,
-    model::{Action, Project, Sample, Section, Tempo},
+    model::{Action, Project, Sample, Section, Tempo, INVALID_ID},
     preferences::{read_preferences, Preferences},
     samples::SamplesCache,
     switch,
@@ -37,12 +37,6 @@ struct MainController {
     action_tx: mpsc::Sender<Action>,
     should_save: bool,
     preferences: Preferences,
-}
-
-impl ResponseBroadcaster for MainController {
-    fn broadcast(&self, response: Response) {
-        self.send_response(response);
-    }
 }
 
 impl MainController {
@@ -88,46 +82,83 @@ impl MainController {
         };
     }
 
-    async fn handle_request(&mut self, request: Request) {
-        let project = self.project.clone();
-        let result = match request {
-            Request::Add(add_request) => self.handle_add(project, &add_request),
-            Request::Get(get_request) => self.handle_get(&get_request).await.map(|_| project),
-            Request::Load(load_request) => self.handle_load(&load_request).await,
-            Request::Remove(remove_request) => self.handle_remove(project, &remove_request).await,
-            Request::Duplicate(duplicate_request) => self.handle_duplicate(project, &duplicate_request).await,
-            Request::RemoveSample(remove_request) => project.remove_sample_from_song(&remove_request.song_id),
-            Request::Rename(rename_request) => self.handle_rename(project, &rename_request),
-            Request::Save => self.save_project(project).await,
-            Request::Select(select_request) => self.handle_select(project, &select_request),
-            Request::Transport(transport_method) => {
-                self.handle_transport_request(&transport_method);
-                Ok(project)
-            }
-            Request::Update(update_request) => self.handle_update(project, &update_request),
-            Request::BeginUpload(begin_upload_request) => {
-                self.handle_begin_upload(begin_upload_request).map(|_| project)
-            }
-            Request::Upload(upload_request) => self.handle_upload(upload_request).await.map(|_| project),
-            Request::CompleteUpload(complete_upload_request) => {
-                self.handle_complete_upload(complete_upload_request).map(|_| project)
-            }
-            Request::AddSample(add_sample_request) => self.handle_add_sample(add_sample_request, project),
-            Request::AddSection(add_section_request) => {
-                self.handle_add_section_with_params(add_section_request, project)
-            }
-            Request::ProjectExport(project_export_request) => {
-                self.handle_project_export(project, project_export_request).await
-            }
-            Request::ProjectImport(project_import_request) => {
-                self.handle_project_import(project, project_import_request).await
-            }
-        };
+    async fn handle_request(&mut self, request: Request) -> anyhow::Result<()> {
+        let mut project = self.project.clone();
 
-        match result {
-            Ok(project) => self.set_project(project),
-            Err(error) => self.send_error_response(&error.to_string()),
+        if let Some(add_request) = request.add.as_ref() {
+            project = self.handle_add(project, add_request)?;
         }
+
+        if let Some(get_request) = request.get.as_ref() {
+            self.handle_get(get_request).await?;
+        }
+
+        if let Some(load_request) = request.load.as_ref() {
+            self.handle_load(load_request).await?;
+        }
+
+        if let Some(remove_request) = request.remove.as_ref() {
+            project = self.handle_remove(project, remove_request).await?;
+        }
+
+        if let Some(duplicate_request) = request.duplicate.as_ref() {
+            project = self.handle_duplicate(project, duplicate_request).await?;
+        }
+
+        if let Some(remove_sample_request) = request.remove_sample.as_ref() {
+            project = project.remove_sample_from_song(remove_sample_request.song_id)?;
+        }
+
+        if let Some(rename_request) = request.rename.as_ref() {
+            project = self.handle_rename(project, rename_request)?;
+        }
+
+        if request.save.as_ref().is_some() {
+            project = self.save_project(project).await?;
+        }
+
+        if let Some(select_request) = request.select.as_ref() {
+            project = self.handle_select(project, select_request)?;
+        }
+
+        if let Some(transport_request) = request.transport.as_ref() {
+            self.handle_transport_request(transport_request)?;
+        }
+
+        if let Some(update_request) = request.update.as_ref() {
+            project = self.handle_update(project, update_request)?;
+        }
+
+        if let Some(begin_upload_request) = request.begin_upload.as_ref() {
+            self.handle_begin_upload(begin_upload_request)?;
+        }
+
+        if let Some(upload_request) = request.upload.as_ref() {
+            self.handle_upload(upload_request).await?;
+        }
+
+        if let Some(complete_upload_request) = request.complete_upload.as_ref() {
+            self.handle_complete_upload(complete_upload_request)?;
+        }
+
+        if let Some(add_sample_request) = request.add_sample.as_ref() {
+            project = self.handle_add_sample(add_sample_request, project)?;
+        }
+
+        if let Some(add_section_request) = request.add_section.as_ref() {
+            project = self.handle_add_section_with_params(add_section_request, project)?;
+        }
+
+        if let Some(project_export_request) = request.project_export.as_ref() {
+            project = self.handle_project_export(project, project_export_request).await?;
+        }
+
+        if let Some(project_import_request) = request.project_import.as_ref() {
+            project = self.handle_project_import(project, project_import_request).await?;
+        }
+
+        self.set_project(project);
+        Ok(())
     }
 
     async fn save_project(&mut self, project: Project) -> anyhow::Result<Project> {
@@ -140,16 +171,17 @@ impl MainController {
     async fn handle_project_export(
         &mut self,
         project: Project,
-        request: ProjectExportRequest,
+        request: &ProjectExportRequest,
     ) -> anyhow::Result<Project> {
         let project_id = request.project_id;
 
-        let (data, more_coming) = self.project_store.export(&project_id).await?;
+        let (data, more_coming) = self.project_store.export(project_id).await?;
 
-        self.send_response(Response::default().with_export_response(ExportResponse {
+        self.send_response(Response::default().with_export_response(&ExportResponse {
             project_id,
             data,
             more_coming,
+            ..Default::default()
         }));
 
         Ok(project)
@@ -158,15 +190,16 @@ impl MainController {
     async fn handle_project_import(
         &mut self,
         project: Project,
-        request: ProjectImportRequest,
+        request: &ProjectImportRequest,
     ) -> anyhow::Result<Project> {
-        let project_id = request.project_id;
-        let data = request.data;
-        let more_coming = request.more_coming;
+        self.project_store
+            .import(request.project_id, &request.data, request.more_coming)
+            .await?;
 
-        self.project_store.import(&project_id, &data, more_coming).await?;
-
-        self.send_response(Response::default().with_import_response(ImportResponse { project_id }));
+        self.send_response(Response::default().with_import_response(&ImportResponse {
+            project_id: request.project_id,
+            ..Default::default()
+        }));
 
         Ok(project)
     }
@@ -182,19 +215,26 @@ impl MainController {
     }
 
     async fn handle_get(&mut self, get_request: &GetRequest) -> anyhow::Result<()> {
-        match get_request.entity {
-            Entity::All => self.send_response(
+        let entity = match get_request.entity.enum_value() {
+            Ok(entity) => entity,
+            Err(error) => {
+                self.send_error_response(&format!("Invalid entity type: {error}"));
+                return Ok(());
+            }
+        };
+
+        match entity {
+            Entity::ALL => self.send_response(
                 Response::default()
                     .with_project(&self.project)
                     .with_playback_state(self.audio_controller.get_playback_state()),
             ),
-            Entity::Projects => {
+            Entity::PROJECTS => {
                 let projects = self.project_store.projects().await?;
                 self.send_response(Response::default().with_projects(&projects));
             }
-            Entity::Waveform => {
-                let sample_id = get_request.id.expect("Missing sample ID in waveform request");
-                self.waveform_store.get_waveform(&sample_id, &self.samples_cache)?;
+            Entity::WAVEFORM => {
+                self.waveform_store.get_waveform(get_request.id, &self.samples_cache)?;
             }
             _ => (),
         };
@@ -228,7 +268,11 @@ impl MainController {
 
         loop {
             tokio::select! {
-                Some(request) = self.request_rx.recv() => self.handle_request(request).await,
+                Some(request) = self.request_rx.recv() => {
+                    if let Err(error) = self.handle_request(request).await {
+                        self.send_error_response(&error.to_string());
+                    }
+                }
                 _ = self.audio_controller.run() => (),
                 Some(action) = self.action_rx.recv() => self.handle_action(action),
                 _ = save_interval.tick() => self.auto_save_project().await,
@@ -278,41 +322,44 @@ impl MainController {
     }
 
     fn queue_selected(&mut self) {
-        if let Some(song_id) = self.project.selections.song {
-            if let Some(section_id) = self.project.selections.section {
-                self.audio_controller.queue(&song_id, &section_id);
-            }
+        let song_id = self.project.selections.song;
+        let section_id = self.project.selections.section;
+        if song_id != INVALID_ID && section_id != INVALID_ID {
+            self.audio_controller.queue(song_id, section_id);
         }
     }
 
     fn handle_add(&self, project: Project, request: &AddRequest) -> anyhow::Result<Project> {
-        match request.entity {
-            Entity::Section => self.handle_add_section(project, request),
-            Entity::Song => Ok(project.add_song(1)),
-            Entity::Project => Ok(Project::new()),
+        match request.entity.enum_value_or_default() {
+            Entity::SECTION => self.handle_add_section(project, request),
+            Entity::SONG => Ok(project.add_song(1)),
+            Entity::PROJECT => Ok(Project::new()),
             _ => Ok(project),
         }
     }
 
     fn handle_add_section(&self, project: Project, request: &AddRequest) -> anyhow::Result<Project> {
-        let song_id = request.id.ok_or_else(|| anyhow!("Missing parent ID"))?;
-        project.add_section_to_song(&song_id)
+        if request.id == INVALID_ID {
+            return Err(anyhow!("Missing parent ID"));
+        }
+
+        project.add_section_to_song(request.id)
     }
 
     fn handle_select(&self, project: Project, select_request: &SelectRequest) -> anyhow::Result<Project> {
-        match select_request.entity {
-            Entity::Song => Ok(project.select_song_with_id(&select_request.id)),
-            Entity::Section => project.select_section(&select_request.id),
+        match select_request.entity.enum_value_or_default() {
+            Entity::SONG => Ok(project.select_song_with_id(select_request.id)),
+            Entity::SECTION => project.select_section(select_request.id),
             _ => Ok(project),
         }
     }
 
     async fn handle_remove(&self, project: Project, remove_request: &RemoveRequest) -> anyhow::Result<Project> {
-        match remove_request.entity {
-            Entity::Song => project.remove_song(&remove_request.id),
-            Entity::Section => project.remove_section(&remove_request.id),
-            Entity::Project => {
-                self.project_store.remove_project(&remove_request.id).await?;
+        match remove_request.entity.enum_value_or_default() {
+            Entity::SONG => project.remove_song(remove_request.id),
+            Entity::SECTION => project.remove_section(remove_request.id),
+            Entity::PROJECT => {
+                self.project_store.remove_project(remove_request.id).await?;
                 let projects = self.project_store.projects().await?;
                 self.send_response(Response::default().with_projects(&projects));
                 Ok(project)
@@ -326,74 +373,91 @@ impl MainController {
         project: Project,
         duplicate_request: &DuplicateRequest,
     ) -> anyhow::Result<Project> {
-        match duplicate_request.entity {
-            Entity::Project => {
+        match duplicate_request.entity.enum_value() {
+            Ok(Entity::PROJECT) => {
                 let project = self
                     .project_store
-                    .load(&duplicate_request.id, &mut self.samples_cache)
+                    .load(duplicate_request.id, &mut self.samples_cache)
                     .await?;
                 let project = project.replace_ids();
                 Ok(project)
             }
-            _ => Ok(project),
+            Ok(_) => Ok(project),
+            Err(error) => Err(anyhow!("Invalid entity type: {error}")),
         }
     }
 
-    fn handle_update(&self, project: Project, update_request: &UpdateRequest) -> anyhow::Result<Project> {
-        match update_request {
-            UpdateRequest::Song(song) => project.replace_song(song),
-            UpdateRequest::Section(section) => project.replace_section(section),
-            UpdateRequest::Sample(sample) => project.replace_sample(sample),
-            UpdateRequest::Project(new_project) => {
-                if !new_project.is_valid() {
-                    return Err(anyhow!("Invalid project"));
-                }
-
-                Ok(new_project.clone())
-            }
+    fn handle_update(&self, mut project: Project, update_request: &UpdateRequest) -> anyhow::Result<Project> {
+        if let Some(song) = update_request.song.as_ref() {
+            project = project.replace_song(song)?;
         }
+
+        if let Some(section) = update_request.section.as_ref() {
+            project = project.replace_section(section)?;
+        }
+
+        if let Some(sample) = update_request.sample.as_ref() {
+            project = project.replace_sample(sample)?;
+        }
+
+        if let Some(new_project) = update_request.project.as_ref() {
+            if !new_project.is_valid() {
+                return Err(anyhow!("Invalid project"));
+            }
+
+            project = new_project.clone();
+        }
+
+        Ok(project)
     }
 
     fn handle_rename(&self, project: Project, rename_request: &RenameRequest) -> anyhow::Result<Project> {
-        match rename_request.entity {
-            Entity::Project => Ok(project.with_name(&rename_request.name)),
-            _ => Ok(project),
+        match rename_request.entity.enum_value() {
+            Ok(Entity::PROJECT) => Ok(project.with_name(rename_request.name.clone())),
+            Ok(_) => Ok(project),
+            Err(error) => Err(anyhow!("Invalid entity type: {error}")),
         }
     }
 
     async fn handle_load(&mut self, request: &LoadRequest) -> anyhow::Result<Project> {
-        self.project_store.load(&request.id, &mut self.samples_cache).await
+        self.project_store.load(request.id, &mut self.samples_cache).await
     }
 
-    fn handle_begin_upload(&mut self, request: BeginUploadRequest) -> anyhow::Result<()> {
+    fn handle_begin_upload(&mut self, request: &BeginUploadRequest) -> anyhow::Result<()> {
         info!("Upload started {}", request.upload_id);
-        self.samples_cache
-            .begin_upload(&request.upload_id, &request.format, &request.filename);
-        self.send_response(Response::default().with_upload_ack(UploadAck {
+        self.samples_cache.begin_upload(
+            request.upload_id,
+            request.format.enum_value_or_default(),
+            &request.filename,
+        );
+        self.send_response(Response::default().with_upload_ack(&UploadAck {
             upload_id: request.upload_id,
+            ..Default::default()
         }));
         Ok(())
     }
 
-    fn handle_complete_upload(&mut self, request: CompleteUploadRequest) -> anyhow::Result<()> {
+    fn handle_complete_upload(&mut self, request: &CompleteUploadRequest) -> anyhow::Result<()> {
         info!("Upload complete {}", request.upload_id);
-        self.samples_cache.complete_upload(&request.upload_id)?;
-        self.send_response(Response::default().with_upload_ack(UploadAck {
+        self.samples_cache.complete_upload(request.upload_id)?;
+        self.send_response(Response::default().with_upload_ack(&UploadAck {
             upload_id: request.upload_id,
+            ..Default::default()
         }));
         Ok(())
     }
 
-    async fn handle_upload(&mut self, request: UploadRequest) -> anyhow::Result<()> {
-        self.samples_cache.upload(&request.upload_id, &request.data).await?;
-        self.send_response(Response::default().with_upload_ack(UploadAck {
+    async fn handle_upload(&mut self, request: &UploadRequest) -> anyhow::Result<()> {
+        self.samples_cache.upload(request.upload_id, &request.data).await?;
+        self.send_response(Response::default().with_upload_ack(&UploadAck {
             upload_id: request.upload_id,
+            ..Default::default()
         }));
         Ok(())
     }
 
-    fn handle_add_sample(&mut self, request: AddSampleRequest, mut project: Project) -> anyhow::Result<Project> {
-        let sample_metadata = self.samples_cache.get_sample_metadata(&request.upload_id)?;
+    fn handle_add_sample(&mut self, request: &AddSampleRequest, mut project: Project) -> anyhow::Result<Project> {
+        let sample_metadata = self.samples_cache.get_sample_metadata(request.upload_id)?;
 
         let mut sample = Sample::new_with_id(&request.upload_id);
         sample.name = sample_metadata.name;
@@ -402,26 +466,26 @@ impl MainController {
         sample.sample_count = sample_metadata.sample_count as i64;
 
         if let Some(tempo) = sample_metadata.detected_tempo {
-            sample.tempo = Tempo::new(tempo);
+            sample.tempo = Some(Tempo::new_with_bpm(tempo)).into();
         }
 
-        project = project.add_sample_to_song(sample, &request.song_id)?;
+        project = project.add_sample_to_song(sample, request.song_id)?;
         Ok(project)
     }
 
     fn handle_add_section_with_params(
         &mut self,
-        request: AddSectionRequest,
+        request: &AddSectionRequest,
         mut project: Project,
     ) -> anyhow::Result<Project> {
-        let section = Section::default()
-            .with_name(request.name)
+        let section = Section::empty()
+            .with_name(request.name.clone())
             .with_start(request.start)
-            .with_looping(request.looping)
+            .with_loop(request.loop_)
             .with_metronome(request.metronome);
 
         let song = project
-            .song_with_id_mut(&request.song_id)
+            .song_with_id_mut(request.song_id)
             .ok_or_else(|| anyhow!("Song not found"))?;
 
         song.sections.push(section);
@@ -431,15 +495,20 @@ impl MainController {
         Ok(project)
     }
 
-    fn handle_transport_request(&mut self, transport_method: &TransportMethod) {
-        match transport_method {
-            TransportMethod::Play => self.audio_controller.play(),
-            TransportMethod::Stop => self.audio_controller.stop(),
-            TransportMethod::Loop => self.audio_controller.enter_loop(),
-            TransportMethod::ExitLoop => self.audio_controller.exit_loop(),
-            TransportMethod::Queue(queue_request) => self
+    fn handle_transport_request(&mut self, transport_request: &TransportRequest) -> anyhow::Result<()> {
+        match transport_request.method.enum_value() {
+            Ok(TransportMethod::PLAY) => self.audio_controller.play(),
+            Ok(TransportMethod::STOP) => self.audio_controller.stop(),
+            Ok(TransportMethod::LOOP) => self.audio_controller.enter_loop(),
+            Ok(TransportMethod::EXIT_LOOP) => self.audio_controller.exit_loop(),
+            Ok(TransportMethod::QUEUE) => self
                 .audio_controller
-                .queue(&queue_request.song_id, &queue_request.section_id),
+                .queue(transport_request.queue.song_id, transport_request.queue.section_id),
+            Err(error) => {
+                return Err(anyhow!("Invalid transport method: {error}"));
+            }
         }
+
+        Ok(())
     }
 }

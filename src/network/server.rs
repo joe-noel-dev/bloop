@@ -1,4 +1,4 @@
-use crate::api::{Request, Response};
+use crate::bloop::{Request, Response};
 
 use super::client;
 use libmdns::Responder;

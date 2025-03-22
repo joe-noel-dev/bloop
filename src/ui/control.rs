@@ -2,7 +2,7 @@ use futures::stream::unfold;
 use iced::Subscription;
 use tokio::sync::mpsc;
 
-use crate::api::{Entity, Request, Response, SelectRequest, TransportMethod};
+use crate::bloop::{Entity, Request, Response, TransportMethod};
 
 use super::{message::Message, state::State};
 
@@ -10,29 +10,25 @@ pub fn update(state: &mut State, message: Message) {
     match message {
         Message::ApiResponse(response) => handle_api_response(state, *response),
         Message::StartPlayback => {
-            let request = Request::Transport(TransportMethod::Play);
+            let request = Request::transport_request(TransportMethod::PLAY);
             send_request(state.request_tx.clone(), request);
         }
         Message::StopPlayback => {
-            let request = Request::Transport(TransportMethod::Stop);
+            let request = Request::transport_request(TransportMethod::STOP);
             send_request(state.request_tx.clone(), request);
         }
         Message::SelectPreviousSong => select_song_with_offset(state, -1),
         Message::SelectNextSong => select_song_with_offset(state, 1),
-        Message::SelectSection(uuid) => {
-            let request = Request::Select(SelectRequest {
-                entity: Entity::Section,
-                id: uuid,
-            });
-
+        Message::SelectSection(id) => {
+            let request = Request::select_request(Entity::SECTION, id);
             send_request(state.request_tx.clone(), request);
         }
         Message::EnterLoop => {
-            let request = Request::Transport(TransportMethod::Loop);
+            let request = Request::transport_request(TransportMethod::LOOP);
             send_request(state.request_tx.clone(), request);
         }
         Message::ExitLoop => {
-            let request = Request::Transport(TransportMethod::ExitLoop);
+            let request = Request::transport_request(TransportMethod::EXIT_LOOP);
             send_request(state.request_tx.clone(), request);
         }
     }
@@ -54,11 +50,7 @@ fn select_song_with_offset(state: &State, offset: i64) {
         None => return,
     };
 
-    let request = Request::Select(SelectRequest {
-        entity: Entity::Song,
-        id: song.id,
-    });
-
+    let request = Request::select_request(Entity::SONG, song.id);
     send_request(state.request_tx.clone(), request);
 }
 
@@ -76,16 +68,16 @@ pub fn subscription(state: &State) -> Subscription<Message> {
 }
 
 fn handle_api_response(state: &mut State, response: Response) {
-    if let Some(project) = response.project {
-        state.project = project;
+    if let Some(project) = response.project.as_ref() {
+        state.project = project.clone();
     }
 
-    if let Some(playback) = response.playback_state {
-        state.playback_state = playback;
+    if let Some(playback) = response.playback_state.as_ref() {
+        state.playback_state = playback.clone();
     }
 
-    if let Some(progress) = response.progress {
-        state.progress = progress;
+    if let Some(progress) = response.progress.as_ref() {
+        state.progress = progress.clone();
     }
 }
 

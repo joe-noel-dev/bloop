@@ -6,7 +6,7 @@ use super::{constants::display_units, message::Message};
 
 pub fn metronome(playback_state: &PlaybackState, progress: &Progress) -> Element<'static, Message> {
     let beat = (progress.section_beat % 4.0).floor() as i64;
-    let is_playing = playback_state.playing == PlayingState::Playing;
+    let is_playing = playback_state.playing.enum_value_or_default() == PlayingState::PLAYING;
 
     row((0..4).map(|beat_index| {
         let is_active = is_playing && beat_index == beat;

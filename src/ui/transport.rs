@@ -5,12 +5,12 @@ use iced::{
     Length::Fill,
 };
 
-use crate::model::{PlaybackState, PlayingState, Progress};
+use crate::model::{PlaybackState, Progress};
 
 use super::{constants::display_units, icons::Icon, message::Message, metronome::metronome};
 
 pub fn transport_view(playback_state: &PlaybackState, progress: &Progress) -> Element<'static, Message> {
-    let is_playing = playback_state.playing == PlayingState::Playing;
+    let is_playing = playback_state.is_playing();
 
     let (play_icon, play_message) = if is_playing {
         (Icon::Stop, Message::StopPlayback)

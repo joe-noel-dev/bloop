@@ -33,10 +33,10 @@ impl<Data> SequencePoint<Data> {
 
 impl<Data> Sequence<Data>
 where
-    Data: Copy,
+    Data: Clone,
 {
     pub fn point_at_time(&self, time: Timestamp) -> Option<SequencePoint<Data>> {
-        self.points.iter().find(|point| point.is_playing_at_time(time)).copied()
+        self.points.iter().find(|point| point.is_playing_at_time(time)).cloned()
     }
 
     pub fn next_transition(&self, time: Timestamp) -> Timestamp {

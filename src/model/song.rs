@@ -1,34 +1,14 @@
-use super::tempo::Tempo;
-use super::Sample;
-use super::{id::ID, Section};
-use serde::{Deserialize, Serialize};
-use std::cmp::PartialEq;
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct Song {
-    pub id: ID,
-    pub name: String,
-    pub tempo: Tempo,
-    pub sections: Vec<Section>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub sample: Option<Sample>,
-}
-
-impl Default for Song {
-    fn default() -> Self {
-        Self {
-            id: ID::new_v4(),
-            name: "Song".to_string(),
-            tempo: Tempo::new(120.0),
-            sections: vec![],
-            sample: None,
-        }
-    }
-}
+use super::{random_id, Section, Song, Tempo, ID, INVALID_ID};
 
 impl Song {
+    pub fn empty() -> Self {
+        let mut song = Self::new();
+        song.id = random_id();
+        song.name = "Song".to_string();
+        song.tempo = Some(Tempo::new_with_bpm(120.0)).into();
+        song
+    }
+
     pub fn with_sections(mut self, sections: Vec<Section>) -> Self {
         self.sections = sections;
         self
@@ -36,34 +16,36 @@ impl Song {
 
     pub fn beat_length(&self) -> f64 {
         debug_assert!(self.is_valid());
-        match &self.sample {
+        match self.sample.as_ref() {
             Some(sample) => sample.beat_length(),
             None => 0.0,
         }
     }
 
-    pub fn remove_section(mut self, section_id: &ID) -> Self {
-        self.sections.retain(|section| section.id != *section_id);
+    pub fn remove_section(mut self, section_id: ID) -> Self {
+        self.sections.retain(|section| section.id != section_id);
         self
     }
 
     pub fn is_valid(&self) -> bool {
-        !self.id.is_nil() && !self.sections.is_empty() && self.sections.iter().is_sorted_by(|a, b| a.start <= b.start)
+        self.id != INVALID_ID
+            && !self.sections.is_empty()
+            && self.sections.iter().is_sorted_by(|a, b| a.start <= b.start)
     }
 
-    pub fn find_section(&self, section_id: &ID) -> Option<&Section> {
-        self.sections.iter().find(|section| section.id == *section_id)
+    pub fn find_section(&self, section_id: ID) -> Option<&Section> {
+        self.sections.iter().find(|section| section.id == section_id)
     }
 
-    pub fn find_section_mut(&mut self, section_id: &ID) -> Option<&mut Section> {
-        self.sections.iter_mut().find(|section| section.id == *section_id)
+    pub fn find_section_mut(&mut self, section_id: ID) -> Option<&mut Section> {
+        self.sections.iter_mut().find(|section| section.id == section_id)
     }
 
-    pub fn section_length(&self, section_id: &ID) -> f64 {
+    pub fn section_length(&self, section_id: ID) -> f64 {
         let index = self
             .sections
             .iter()
-            .position(|section| section.id == *section_id)
+            .position(|section| section.id == section_id)
             .expect("Section not found");
 
         let section = self.sections.get(index);
@@ -88,7 +70,7 @@ impl Song {
     }
 
     pub fn replace_ids(mut self) -> Self {
-        self.id = ID::new_v4();
+        self.id = random_id();
 
         self.sections = self
             .sections
@@ -106,28 +88,30 @@ impl Song {
 mod tests {
     use approx::assert_relative_eq;
 
+    use crate::model::Sample;
+
     use super::*;
 
     #[test]
     fn calculates_section_lengths() {
-        let mut song = Song::default();
+        let mut song = Song::empty();
 
         let beat_length = 100.0;
 
-        let mut sample = Sample::new();
+        let mut sample = Sample::empty();
         sample.sample_rate = 48_000;
-        sample.tempo = Tempo::new(120.0);
+        sample.tempo = Some(Tempo::new_with_bpm(120.0)).into();
         sample.sample_count = (sample.sample_rate as f64 * beat_length / sample.tempo.beat_frequency()).ceil() as i64;
 
-        song.sample = Some(sample);
+        song.sample = Some(sample).into();
 
-        let section_1 = Section::default().with_start(23.0);
-        let section_2 = Section::default().with_start(48.0);
-        let section_3 = Section::default().with_start(89.0);
+        let section_1 = Section::empty().with_start(23.0);
+        let section_2 = Section::empty().with_start(48.0);
+        let section_3 = Section::empty().with_start(89.0);
         song.sections = vec![section_1.clone(), section_2.clone(), section_3.clone()];
 
-        assert_relative_eq!(song.section_length(&section_1.id), 25.0);
-        assert_relative_eq!(song.section_length(&section_2.id), 41.0);
-        assert_relative_eq!(song.section_length(&section_3.id), 11.0);
+        assert_relative_eq!(song.section_length(section_1.id), 25.0);
+        assert_relative_eq!(song.section_length(section_2.id), 41.0);
+        assert_relative_eq!(song.section_length(section_3.id), 11.0);
     }
 }

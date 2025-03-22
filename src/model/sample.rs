@@ -1,27 +1,16 @@
-use super::{id::ID, tempo::Tempo};
-use serde::{Deserialize, Serialize};
-use std::cmp::PartialEq;
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct Sample {
-    pub id: ID,
-    pub name: String,
-    pub tempo: Tempo,
-    pub sample_rate: i32,
-    pub sample_count: i64,
-    pub channel_count: i32,
-}
+use super::{id::ID, random_id, Tempo};
+use crate::bloop::Sample;
 
 impl Sample {
-    pub fn new() -> Self {
-        Sample {
-            id: ID::new_v4(),
+    pub fn empty() -> Self {
+        Self {
+            id: random_id(),
             name: "".to_string(),
-            tempo: Tempo::new(120.0),
+            tempo: Some(Tempo::new_with_bpm(120.0)).into(),
             sample_rate: 0,
             sample_count: 0,
             channel_count: 0,
+            ..Default::default()
         }
     }
 
@@ -32,7 +21,7 @@ impl Sample {
 
         self.sample_rate = sample_rate;
         self.sample_count = samples;
-        self.tempo = tempo;
+        self.tempo = Some(tempo).into();
 
         self
     }

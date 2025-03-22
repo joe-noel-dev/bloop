@@ -1,8 +1,8 @@
 use crate::{
-    api::{Response, WaveformResponse},
+    bloop::{Response, WaveformAlgorithm, WaveformResponse},
     model::ID,
     samples::SamplesCache,
-    waveform::{generate_waveform_from_file, Algorithm, Options},
+    waveform::{generate_waveform_from_file, Options},
 };
 use anyhow::anyhow;
 use log::info;
@@ -30,12 +30,12 @@ impl WaveformStore {
         }
     }
 
-    pub fn get_waveform(&mut self, sample_id: &ID, samples_cache: &SamplesCache) -> anyhow::Result<()> {
+    pub fn get_waveform(&mut self, sample_id: ID, samples_cache: &SamplesCache) -> anyhow::Result<()> {
         while let Ok(completed_id) = self.complete_channel_rx.try_recv() {
             self.samples_being_generated.remove(&completed_id);
         }
 
-        if self.samples_being_generated.contains(sample_id) {
+        if self.samples_being_generated.contains(&sample_id) {
             return Ok(());
         }
 
@@ -48,10 +48,9 @@ impl WaveformStore {
             return Err(anyhow!("Sample is not cached: {}", sample_id));
         }
 
-        self.samples_being_generated.insert(*sample_id);
+        self.samples_being_generated.insert(sample_id);
 
         let tx = self.response_tx.clone();
-        let sample_id = *sample_id;
         let sample_path = sample.get_path().to_path_buf();
 
         info!("Generating waveform for sample: {sample_id}");
@@ -66,8 +65,8 @@ impl WaveformStore {
             lengths.insert(8192);
 
             let mut algorithms = HashSet::new();
-            algorithms.insert(Algorithm::Min);
-            algorithms.insert(Algorithm::Max);
+            algorithms.insert(WaveformAlgorithm::MIN);
+            algorithms.insert(WaveformAlgorithm::MAX);
 
             let options = Options {
                 lengths,
@@ -77,9 +76,10 @@ impl WaveformStore {
             };
 
             let response = match generate_waveform_from_file(&sample_path, options) {
-                Ok(waveform_data) => Response::default().with_waveform(WaveformResponse {
+                Ok(waveform_data) => Response::default().with_waveform(&WaveformResponse {
                     sample_id,
-                    waveform_data,
+                    waveform_data: Some(waveform_data).into(),
+                    ..Default::default()
                 }),
                 Err(error) => Response::default().with_error(&error.to_string()),
             };

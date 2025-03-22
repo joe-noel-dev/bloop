@@ -1,4 +1,4 @@
-use crate::api::{Request, Response};
+use crate::bloop::{Request, Response};
 
 use super::server;
 use tokio::sync::{broadcast, mpsc};

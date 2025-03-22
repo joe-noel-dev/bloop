@@ -1,8 +1,6 @@
 use super::sample::Sample;
-use crate::{
-    model::ID,
-    types::{extension_for_format, AudioFileFormat},
-};
+use crate::bloop::AudioFileFormat;
+use crate::{model::ID, types::extension_for_format};
 use anyhow::{anyhow, Context};
 use log::error;
 use std::fs;
@@ -38,27 +36,27 @@ impl SamplesCache {
         }
     }
 
-    pub fn begin_upload(&mut self, id: &ID, format: &AudioFileFormat, filename: &str) {
+    pub fn begin_upload(&mut self, id: ID, format: AudioFileFormat, filename: &str) {
         let mut sample = Sample::new(filename);
         let path = self.path_for_sample(id, format);
         sample.set_cache_location(&path);
-        self.samples.insert(*id, sample);
+        self.samples.insert(id, sample);
     }
 
-    pub async fn upload(&mut self, id: &ID, data: &[u8]) -> anyhow::Result<()> {
+    pub async fn upload(&mut self, id: ID, data: &[u8]) -> anyhow::Result<()> {
         let sample = self
             .samples
-            .get(id)
+            .get(&id)
             .ok_or_else(|| anyhow!("Sample not found: {}", id))?;
         let path = sample.get_path();
         self.write_to_file(data, path).await?;
         Ok(())
     }
 
-    pub fn complete_upload(&mut self, id: &ID) -> anyhow::Result<()> {
+    pub fn complete_upload(&mut self, id: ID) -> anyhow::Result<()> {
         let sample = self
             .samples
-            .get_mut(id)
+            .get_mut(&id)
             .ok_or_else(|| anyhow!("Sample not found: {}", id))?;
 
         let path = sample.get_path();
@@ -87,10 +85,10 @@ impl SamplesCache {
             })
     }
 
-    pub fn get_sample_metadata(&self, id: &ID) -> anyhow::Result<SampleMetadata> {
+    pub fn get_sample_metadata(&self, id: ID) -> anyhow::Result<SampleMetadata> {
         let sample = self
             .samples
-            .get(id)
+            .get(&id)
             .ok_or_else(|| anyhow!("Sample not found: {}", id))?;
 
         let path = sample.get_path();
@@ -111,8 +109,8 @@ impl SamplesCache {
 
     pub async fn add_sample_from_file(
         &mut self,
-        id: &ID,
-        format: &AudioFileFormat,
+        id: ID,
+        format: AudioFileFormat,
         from_path: &Path,
     ) -> anyhow::Result<()> {
         let mut sample = Sample::new("");
@@ -131,7 +129,7 @@ impl SamplesCache {
         sample.set_cache_location(&path);
         sample.set_cached(true);
 
-        self.samples.insert(*id, sample);
+        self.samples.insert(id, sample);
 
         Ok(())
     }
@@ -140,11 +138,11 @@ impl SamplesCache {
         self.samples.clear();
     }
 
-    pub fn get_sample(&self, id: &ID) -> Option<&Sample> {
-        self.samples.get(id)
+    pub fn get_sample(&self, id: ID) -> Option<&Sample> {
+        self.samples.get(&id)
     }
 
-    fn path_for_sample(&self, id: &ID, format: &AudioFileFormat) -> PathBuf {
+    fn path_for_sample(&self, id: ID, format: AudioFileFormat) -> PathBuf {
         let mut path = self.root_directory.clone();
         let filename = id.to_string() + "." + extension_for_format(format);
         path.push(filename);

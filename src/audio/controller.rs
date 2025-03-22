@@ -4,8 +4,8 @@ use super::{
     sampler_converter::{SampleConversionResult, SampleConverter},
     sequencer::Sequencer,
 };
+use crate::bloop::Response;
 use crate::{
-    api::Response,
     model::{PlaybackState, PlayingState, Progress, Project, ID},
     preferences::AudioPreferences,
     samples::SamplesCache,
@@ -110,7 +110,7 @@ impl AudioController {
         self.sequencer.exit_loop(self.lookahead_time(), &mut self.samplers);
     }
 
-    pub fn queue(&mut self, song_id: &ID, section_id: &ID) {
+    pub fn queue(&mut self, song_id: ID, section_id: ID) {
         self.sequencer
             .queue(self.lookahead_time(), song_id, section_id, &mut self.samplers);
     }
@@ -124,14 +124,14 @@ impl AudioController {
     }
 
     pub fn toggle_play(&mut self) {
-        match self.playback_state.playing {
-            PlayingState::Stopped => self.play(),
-            PlayingState::Playing => self.stop(),
+        match self.playback_state.playing.enum_value_or_default() {
+            PlayingState::STOPPED => self.play(),
+            PlayingState::PLAYING => self.stop(),
         }
     }
 
-    pub fn get_playback_state(&self) -> PlaybackState {
-        self.playback_state
+    pub fn get_playback_state(&self) -> &PlaybackState {
+        &self.playback_state
     }
 
     fn interval_tick(&mut self) {
@@ -148,13 +148,13 @@ impl AudioController {
             self.playback_state = playback_state;
             let _ = self
                 .response_tx
-                .send(Response::default().with_playback_state(self.playback_state));
+                .send(Response::default().with_playback_state(&self.playback_state));
         }
 
         let progress = self.sequencer.get_progress();
         if self.progress != progress {
             self.progress = progress;
-            let _ = self.response_tx.send(Response::default().with_progress(self.progress));
+            let _ = self.response_tx.send(Response::default().with_progress(&self.progress));
         }
     }
 
@@ -181,7 +181,7 @@ impl AudioController {
 
     fn add_samples(&mut self, project: &Project, samples_cache: &SamplesCache) {
         for song in project.songs.iter() {
-            let sample = match &song.sample {
+            let sample = match song.sample.as_ref() {
                 Some(sample) => sample,
                 None => continue,
             };
@@ -190,7 +190,7 @@ impl AudioController {
                 continue;
             }
 
-            let cached_sample = match samples_cache.get_sample(&sample.id) {
+            let cached_sample = match samples_cache.get_sample(sample.id) {
                 Some(sample) => sample,
                 None => continue,
             };
@@ -199,30 +199,29 @@ impl AudioController {
                 continue;
             }
 
-            self.add_sample(&sample.id, cached_sample.get_path().to_path_buf());
+            self.add_sample(sample.id, cached_sample.get_path().to_path_buf());
         }
     }
 
-    fn add_sample(&mut self, sample_id: &ID, sample_path: PathBuf) {
-        if self.samplers.contains_key(sample_id) {
+    fn add_sample(&mut self, sample_id: ID, sample_path: PathBuf) {
+        if self.samplers.contains_key(&sample_id) {
             return;
         }
 
-        if self.samples_being_converted.contains(sample_id) {
+        if self.samples_being_converted.contains(&sample_id) {
             return;
         }
 
-        self.samples_being_converted.insert(*sample_id);
-        self.sample_converter.convert(*sample_id, sample_path);
+        self.samples_being_converted.insert(sample_id);
+        self.sample_converter.convert(sample_id, sample_path);
     }
 
     fn remove_samples(&mut self, project: &Project) {
         let samples_to_remove: HashSet<ID> = self
             .samplers
             .iter()
-            .filter(|(sample_id, _)| project.find_sample(sample_id).is_none())
-            .map(|(sample_id, _)| sample_id)
-            .copied()
+            .filter(|(&sample_id, _)| project.find_sample(sample_id).is_none())
+            .map(|(sample_id, _)| *sample_id)
             .collect();
 
         for sample_id in samples_to_remove {

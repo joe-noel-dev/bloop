@@ -1,7 +1,7 @@
 use tokio::sync::{broadcast, mpsc};
 
 use crate::{
-    api::{Request, Response},
+    bloop::{Request, Response},
     model::{PlaybackState, Progress, Project},
 };
 

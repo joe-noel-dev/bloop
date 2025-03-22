@@ -6,7 +6,7 @@ use super::{
     sequence::{Sequence, SequencePoint},
     sequence_generator::{generate_sequence_for_song, SequenceData},
 };
-use crate::model::{PlaybackState, PlayingState, Progress, Project, ID};
+use crate::model::{PlaybackState, PlayingState, Progress, Project, ID, INVALID_ID};
 
 #[derive(Default)]
 pub struct Sequencer {
@@ -50,12 +50,13 @@ impl Sequencer {
                 }
 
                 PlaybackState {
-                    playing: PlayingState::Playing,
-                    song_id: current_point.data.song_id,
-                    section_id: current_point.data.section_id,
-                    queued_song_id: self.queued_song,
-                    queued_section_id: self.queued_section,
+                    playing: PlayingState::PLAYING.into(),
+                    song_id: current_point.data.song_id.unwrap_or(INVALID_ID),
+                    section_id: current_point.data.section_id.unwrap_or(INVALID_ID),
+                    queued_song_id: self.queued_song.unwrap_or(INVALID_ID),
+                    queued_section_id: self.queued_section.unwrap_or(INVALID_ID),
                     looping: current_point.loop_enabled,
+                    ..PlaybackState::default()
                 }
             }
             None => PlaybackState::default(),
@@ -84,17 +85,13 @@ impl Sequencer {
 
         self.project = project;
 
-        let selected_song_id = match self.project.selections.song {
-            Some(id) => id,
-            None => return,
-        };
+        let selected_song_id = self.project.selections.song;
+        let selected_section_id = self.project.selections.section;
+        if selected_song_id == INVALID_ID || selected_section_id == INVALID_ID {
+            return;
+        }
 
-        let selected_section_id = match self.project.selections.section {
-            Some(id) => id,
-            None => return,
-        };
-
-        let sequence = generate_sequence_for_song(start_time, &self.project, &selected_song_id, &selected_section_id);
+        let sequence = generate_sequence_for_song(start_time, &self.project, selected_song_id, selected_section_id);
 
         self.set_sequence(sequence, samplers);
     }
@@ -109,7 +106,7 @@ impl Sequencer {
         self.set_sequence(new_sequence, samplers);
     }
 
-    pub fn queue(&mut self, after_time: Timestamp, song_id: &ID, section_id: &ID, samplers: &mut HashMap<ID, Sampler>) {
+    pub fn queue(&mut self, after_time: Timestamp, song_id: ID, section_id: ID, samplers: &mut HashMap<ID, Sampler>) {
         let transition_time = self.sequence.next_transition(after_time);
         let existing_sequence = self.sequence.truncate_to_time(transition_time);
         let new_sequence = generate_sequence_for_song(transition_time, &self.project, song_id, section_id);
@@ -117,25 +114,25 @@ impl Sequencer {
 
         self.set_sequence(sequence, samplers);
 
-        self.queued_section = Some(*section_id);
-        self.queued_song = Some(*song_id);
+        self.queued_section = Some(section_id);
+        self.queued_song = Some(song_id);
     }
 
     fn progress_through_sequence(&self, time: &Timestamp, point: &SequencePoint<SequenceData>) -> Progress {
         let section = point
             .data
             .section_id
-            .and_then(|section_id| self.project.section_with_id(&section_id));
+            .and_then(|section_id| self.project.section_with_id(section_id));
 
         let song = point
             .data
             .song_id
-            .and_then(|song_id| self.project.song_with_id(&song_id));
+            .and_then(|song_id| self.project.song_with_id(song_id));
 
         let sample = point
             .data
             .sample_id
-            .and_then(|sample_id| self.project.find_sample(&sample_id));
+            .and_then(|sample_id| self.project.find_sample(sample_id));
 
         match (section, song, sample) {
             (Some(section), Some(song), Some(sample)) => {
@@ -147,7 +144,7 @@ impl Sequencer {
                 let sample_duration =
                     Timestamp::from_samples(sample.sample_count as f64, sample.sample_rate as usize).as_seconds();
 
-                let section_length = song.section_length(&section.id);
+                let section_length = song.section_length(section.id);
 
                 Progress {
                     song_progress: if sample_duration > 0.0 {
@@ -155,6 +152,7 @@ impl Sequencer {
                     } else {
                         0.0
                     },
+
                     section_progress: if section_length > 0.0 {
                         beats_into_section / section_length
                     } else {
@@ -162,6 +160,7 @@ impl Sequencer {
                     },
 
                     section_beat: beats_into_section,
+                    ..Default::default()
                 }
             }
             _ => Progress::default(),
@@ -193,8 +192,8 @@ impl Sequencer {
         sequence_point: &SequencePoint<SequenceData>,
         samplers: &mut HashMap<ID, Sampler>,
     ) {
-        if let Some(sample_id) = sequence_point.data.sample_id {
-            if let Some(sampler) = samplers.get_mut(&sample_id) {
+        if let Some(sample_id) = &sequence_point.data.sample_id {
+            if let Some(sampler) = samplers.get_mut(sample_id) {
                 sampler.start_from_position_at_time(sequence_point.start_time, sequence_point.data.position_in_sample);
 
                 if sequence_point.loop_enabled {

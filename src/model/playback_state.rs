@@ -1,29 +1,11 @@
-use super::id::ID;
-use serde::{Deserialize, Serialize};
-use std::cmp::PartialEq;
+use super::{PlaybackState, PlayingState};
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub enum PlayingState {
-    Stopped,
-    Playing,
-}
-
-impl Default for PlayingState {
-    fn default() -> Self {
-        Self::Stopped
+impl PlaybackState {
+    pub fn is_playing(&self) -> bool {
+        self.playing.enum_value_or_default() == PlayingState::PLAYING
     }
-}
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct PlaybackState {
-    pub playing: PlayingState,
-    pub song_id: Option<ID>,
-    pub section_id: Option<ID>,
-
-    pub queued_song_id: Option<ID>,
-    pub queued_section_id: Option<ID>,
-
-    pub looping: bool,
+    pub fn is_stopped(&self) -> bool {
+        self.playing.enum_value_or_default() == PlayingState::STOPPED
+    }
 }

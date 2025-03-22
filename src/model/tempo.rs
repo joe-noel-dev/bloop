@@ -1,15 +1,4 @@
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize, Copy, Debug, Clone, PartialEq)]
-pub struct Tempo {
-    bpm: f64,
-}
-
-impl Default for Tempo {
-    fn default() -> Self {
-        Self { bpm: 120.0 }
-    }
-}
+use crate::bloop::Tempo;
 
 impl Tempo {
     pub fn min() -> f64 {
@@ -24,9 +13,11 @@ impl Tempo {
         self.bpm
     }
 
-    pub fn new(bpm: f64) -> Self {
+    pub fn new_with_bpm(bpm: f64) -> Self {
         assert!(Self::min() <= bpm && bpm <= Self::max());
-        Self { bpm }
+        let mut tempo = Tempo::new();
+        tempo.bpm = 120.0;
+        tempo
     }
 
     pub fn beat_frequency(&self) -> f64 {

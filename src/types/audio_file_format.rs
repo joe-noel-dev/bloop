@@ -1,13 +1,7 @@
-use serde::{Deserialize, Serialize};
+use crate::bloop::AudioFileFormat;
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub enum AudioFileFormat {
-    Wav,
-}
-
-pub fn extension_for_format(format: &AudioFileFormat) -> &'static str {
+pub fn extension_for_format(format: AudioFileFormat) -> &'static str {
     match format {
-        AudioFileFormat::Wav => "wav",
+        AudioFileFormat::WAV => "wav",
     }
 }

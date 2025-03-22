@@ -1,57 +1,38 @@
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
-#[serde(rename_all = "camelCase")]
-pub enum Algorithm {
-    Min,
-    Max,
-    Rms,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[serde(rename_all = "camelCase")]
-pub struct Properties {
-    pub length: i32,
-    pub algorithm: Algorithm,
-    pub channel: i32,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct WaveformGroup {
-    pub properties: Properties,
-    pub values: Vec<f32>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct WaveformData {
-    sample_rate: i32,
-    peaks: Vec<WaveformGroup>,
-}
+use crate::bloop::{WaveformData, WaveformGroup, WaveformProperties};
 
 impl WaveformData {
-    pub fn new(sample_rate: i32) -> Self {
+    pub fn empty(sample_rate: i32) -> Self {
         Self {
             sample_rate,
-            peaks: vec![],
+            peaks: Vec::new(),
+            ..Default::default()
         }
     }
 
-    fn get_group_mut(&mut self, properties: &Properties) -> Option<&mut WaveformGroup> {
-        self.peaks.iter_mut().find(|group| group.properties == *properties)
+    fn get_group_mut(&mut self, properties: &WaveformProperties) -> Option<&mut WaveformGroup> {
+        self.peaks.iter_mut().find(|group| match group.properties.as_ref() {
+            None => false,
+            Some(group_properties) => group_properties == properties,
+        })
     }
 
     pub fn sort(&mut self) {
-        self.peaks.sort_by(|a, b| a.properties.cmp(&b.properties))
+        self.peaks.sort_by(|a, b| {
+            let a = a.properties.as_ref().unwrap();
+            let b = b.properties.as_ref().unwrap();
+            let a_sort = (a.length, a.channel);
+            let b_sort = (b.length, b.channel);
+            a_sort.cmp(&b_sort)
+        });
     }
 
-    pub fn push(&mut self, properties: &Properties, value: f32) {
+    pub fn push(&mut self, properties: &WaveformProperties, value: f32) {
         match self.get_group_mut(properties) {
             None => {
                 self.peaks.push(WaveformGroup {
-                    properties: properties.clone(),
+                    properties: Some(properties.clone()).into(),
                     values: vec![value],
+                    ..Default::default()
                 });
             }
             Some(group) => group.values.push(value),

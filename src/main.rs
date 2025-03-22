@@ -1,3 +1,5 @@
+include!(concat!(env!("OUT_DIR"), "/protos/mod.rs"));
+
 mod api;
 mod audio;
 mod control;
