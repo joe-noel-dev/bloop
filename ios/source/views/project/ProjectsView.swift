@@ -129,10 +129,11 @@ struct ProjectsView_Previews: PreviewProvider {
             $0.id = randomId()
             $0.name = name
             $0.version = "0"
-            $0.lastSaved = Int64((Date() - TimeInterval(savedAgo)).timeIntervalSince1970.magnitude) * 1000
+            $0.lastSaved =
+                Int64((Date() - TimeInterval(savedAgo)).timeIntervalSince1970.magnitude) * 1000
         }
     }
-    
+
     static let projects: [Bloop_ProjectInfo] = [
         projectInfo(name: "Project 1", savedAgo: 19),
         projectInfo(name: "Project 2", savedAgo: 20),

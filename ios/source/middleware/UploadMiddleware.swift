@@ -42,12 +42,16 @@ class UploadMiddleware: Middleware {
 
         let slice = upload.data.subdata(in: start..<end)
 
-        self.dispatch?(.sendRequest(.with {
-            $0.upload = .with {
-                $0.uploadID = uploadId
-                $0.data = slice
-            }
-        }))
+        self.dispatch?(
+            .sendRequest(
+                .with {
+                    $0.upload = .with {
+                        $0.uploadID = uploadId
+                        $0.data = slice
+                    }
+                }
+            )
+        )
 
         uploads[uploadId]?.position = end
     }
@@ -57,11 +61,15 @@ class UploadMiddleware: Middleware {
             return
         }
 
-        self.dispatch?(.sendRequest(.with {
-            $0.completeUpload = .with {
-                $0.uploadID = uploadId
-            }
-        }))
+        self.dispatch?(
+            .sendRequest(
+                .with {
+                    $0.completeUpload = .with {
+                        $0.uploadID = uploadId
+                    }
+                }
+            )
+        )
 
         self.addSampleToSong(songId: upload.songId, uploadId: uploadId)
 
@@ -69,12 +77,16 @@ class UploadMiddleware: Middleware {
     }
 
     private func addSampleToSong(songId: Id, uploadId: Id) {
-        self.dispatch?(.sendRequest(.with {
-            $0.addSample = .with {
-                $0.songID = songId
-                $0.uploadID = uploadId
-            }
-        }))
+        self.dispatch?(
+            .sendRequest(
+                .with {
+                    $0.addSample = .with {
+                        $0.songID = songId
+                        $0.uploadID = uploadId
+                    }
+                }
+            )
+        )
     }
 
     private func startUpload(songId: Id, file: URL) {
@@ -86,13 +98,17 @@ class UploadMiddleware: Middleware {
             let filename = file.deletingPathExtension().lastPathComponent
             let fileExtension = file.pathExtension
 
-            self.dispatch?(.sendRequest(.with {
-                $0.beginUpload = .with {
-                    $0.uploadID = uploadId
-                    $0.filename = filename
-                    $0.format = .wav
-                }
-            }))
+            self.dispatch?(
+                .sendRequest(
+                    .with {
+                        $0.beginUpload = .with {
+                            $0.uploadID = uploadId
+                            $0.filename = filename
+                            $0.format = .wav
+                        }
+                    }
+                )
+            )
         }
         catch (let error) {
             print("Error loading audio file: \(error)")

@@ -32,11 +32,15 @@ extension ApiMiddleware: CoreDelegate {
     func coreConnected() {
         self.dispatch?(.setConnected(.remote))
 
-        self.dispatch?(.sendRequest(.with {
-            $0.get = .with {
-                $0.entity = .all
-            }
-        }))
+        self.dispatch?(
+            .sendRequest(
+                .with {
+                    $0.get = .with {
+                        $0.entity = .all
+                    }
+                }
+            )
+        )
     }
 
     func coreDisconnected() {

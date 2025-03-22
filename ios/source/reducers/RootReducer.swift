@@ -40,7 +40,7 @@ func rootReducer(state: AppState, action: Action) -> AppState {
 
     case .removeAllServers:
         state.servers.removeAll()
-        
+
     default:
         break
     }

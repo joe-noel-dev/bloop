@@ -1,6 +1,4 @@
 import Foundation
-
-import Foundation
 import Network
 
 typealias Server = NWEndpoint
@@ -39,10 +37,10 @@ func demoProject() -> Bloop_Project {
     }
 
     let songs = Array(0..<3).map { demoSong($0) }
-    
+
     let selections = Bloop_Selections.with {
-        $0.song = songs[0].id;
-        $0.section = songs[0].sections[0].id;
+        $0.song = songs[0].id
+        $0.section = songs[0].sections[0].id
     }
 
     return Bloop_Project.with {
@@ -64,20 +62,20 @@ func demoSample() -> Bloop_Sample {
 }
 
 func demoSong(_ index: Int) -> Bloop_Song {
-        .with {
-            $0.id = randomId()
-            $0.name = "Song \(index + 1)"
-            $0.tempo = .with {
-                $0.bpm = 124.0
-            }
-            $0.sections = Array(0..<8).map { demoSection($0) }
-            $0.sample = demoSample()
+    .with {
+        $0.id = randomId()
+        $0.name = "Song \(index + 1)"
+        $0.tempo = .with {
+            $0.bpm = 124.0
         }
+        $0.sections = Array(0..<8).map { demoSection($0) }
+        $0.sample = demoSample()
+    }
 }
 
 func demoSection(_ index: Int) -> Bloop_Section {
     let duration = 16.0
-    
+
     return Bloop_Section.with {
         $0.id = randomId()
         $0.name = "Section \(index + 1)"

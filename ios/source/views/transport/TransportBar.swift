@@ -87,11 +87,11 @@ struct TransportBar: View {
             TransportButton(name: "Jump", systemImageName: "arrow.right") {
                 let songId = project.selections.song
                 let sectionId = project.selections.section
-                
+
                 guard songId != 0, sectionId != 0 else {
                     return
                 }
-                
+
                 let action = queueAction(song: songId, section: sectionId)
                 dispatch(action)
             }

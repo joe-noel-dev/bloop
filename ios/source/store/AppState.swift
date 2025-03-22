@@ -15,7 +15,7 @@ struct AppState {
 
 func emptyProject() -> Bloop_Project {
     Bloop_Project.with {
-        
+
         $0.info = .with {
             $0.id = randomId()
             $0.name = ""

@@ -34,7 +34,7 @@ enum Action {
     case exportProject(URL)
     case importResponse(Bloop_ImportResponse)
     case exportResponse(Bloop_ExportResponse)
-    
+
     case setDiscoveredServers([Server])
     case setScanning(Bool)
     case removeAllServers

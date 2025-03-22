@@ -213,16 +213,16 @@ struct SongView: View {
                 guard song.hasSample else {
                     return
                 }
-                
+
                 self.newTempo = song.sample.tempo.bpm
             }
             .onSubmit {
                 var song = song
-                
+
                 guard song.hasSample else {
                     return
                 }
-                
+
                 song.sample.tempo.bpm = newTempo
                 song.tempo.bpm = newTempo
 
