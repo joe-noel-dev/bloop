@@ -34,8 +34,8 @@
     "mdns": "^2.7.2"
   },
   "scripts": {
-    "start": "yarn run discovery & vite",
-    "build": "tsc && vite build",
+    "start": "yarn run generate-api && yarn run discovery & vite",
+    "build": "yarn run generate-api && tsc && vite build",
     "serve": "yarn run discovery & vite preview",
     "discovery": "node ./src/server.js",
     "generate-api": "protoc --proto_path=../api --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=src/api --ts_proto_opt=esModuleInterop=true,forceLong=long,useOptionals=messages,env=browser ../api/bloop.proto"
