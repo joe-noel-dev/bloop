@@ -326,6 +326,7 @@ impl ProjectStore {
         let export_file = self.temporary_directory.path().join(project_id.to_string() + ".bloop");
 
         let project_dir = self.directory_for_project(project_id);
+
         if let Entry::Vacant(e) = self.export_paths.entry(project_id) {
             info!("Starting export project_id={}", project_id);
 

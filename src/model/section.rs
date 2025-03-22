@@ -3,13 +3,14 @@ use crate::bloop;
 
 impl bloop::Section {
     pub fn empty() -> Self {
-        let mut section = bloop::Section::new();
-        section.id = random_id();
-        section.name = "Section".to_string();
-        section.start = 0.0;
-        section.loop_ = false;
-        section.metronome = false;
-        section
+        Self {
+            id: random_id(),
+            name: "Section".to_string(),
+            start: 0.0,
+            loop_: false,
+            metronome: false,
+            ..Default::default()
+        }
     }
 
     pub fn with_name(mut self, name: String) -> Self {

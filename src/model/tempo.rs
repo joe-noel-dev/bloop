@@ -15,9 +15,10 @@ impl Tempo {
 
     pub fn new_with_bpm(bpm: f64) -> Self {
         assert!(Self::min() <= bpm && bpm <= Self::max());
-        let mut tempo = Tempo::new();
-        tempo.bpm = 120.0;
-        tempo
+        Self {
+            bpm,
+            ..Default::default()
+        }
     }
 
     pub fn beat_frequency(&self) -> f64 {

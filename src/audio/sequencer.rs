@@ -160,6 +160,7 @@ impl Sequencer {
                     },
 
                     section_beat: beats_into_section,
+
                     ..Default::default()
                 }
             }

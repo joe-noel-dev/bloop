@@ -2,11 +2,12 @@ use super::{random_id, Section, Song, Tempo, ID, INVALID_ID};
 
 impl Song {
     pub fn empty() -> Self {
-        let mut song = Self::new();
-        song.id = random_id();
-        song.name = "Song".to_string();
-        song.tempo = Some(Tempo::new_with_bpm(120.0)).into();
-        song
+        Self {
+            id: random_id(),
+            name: "Song".to_string(),
+            tempo: Some(Tempo::new_with_bpm(120.0)).into(),
+            ..Default::default()
+        }
     }
 
     pub fn with_sections(mut self, sections: Vec<Section>) -> Self {
