@@ -1,5 +1,4 @@
 import Foundation
-import SwiftBSON
 
 class ApiCodecMiddleware: Middleware {
     var dispatch: Dispatch?

@@ -35,7 +35,6 @@
 		C229B9872A4DA0B40044F2C6 /* RootReducer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B9862A4DA0B40044F2C6 /* RootReducer.swift */; };
 		C229B99B2A4DD55D0044F2C6 /* Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B99A2A4DD55D0044F2C6 /* Core.swift */; };
 		C229B99D2A4DDE7C0044F2C6 /* CoreConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B99C2A4DDE7C0044F2C6 /* CoreConnection.swift */; };
-		C23F51202A4ED75500F4C383 /* SwiftBSON in Frameworks */ = {isa = PBXBuildFile; productRef = C23F511F2A4ED75500F4C383 /* SwiftBSON */; };
 		C247A6E42A4D949A00001DB2 /* BloopApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A6E32A4D949A00001DB2 /* BloopApp.swift */; };
 		C247A6E62A4D949A00001DB2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A6E52A4D949A00001DB2 /* ContentView.swift */; };
 		C247A6E82A4D949D00001DB2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C247A6E72A4D949D00001DB2 /* Assets.xcassets */; };
@@ -43,7 +42,6 @@
 		C247A6F62A4D949D00001DB2 /* BloopTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A6F52A4D949D00001DB2 /* BloopTests.swift */; };
 		C247A7002A4D949D00001DB2 /* BloopUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A6FF2A4D949D00001DB2 /* BloopUITests.swift */; };
 		C247A7022A4D949D00001DB2 /* BloopUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A7012A4D949D00001DB2 /* BloopUITestsLaunchTests.swift */; };
-		C257C1692A4DEBD60080ECC2 /* SwiftBSON in Frameworks */ = {isa = PBXBuildFile; productRef = C257C1682A4DEBD60080ECC2 /* SwiftBSON */; };
 		C257C1772A4E003F0080ECC2 /* ApiMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C1762A4E003F0080ECC2 /* ApiMiddleware.swift */; };
 		C257F0272A8F806E00E2E77C /* MetronomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257F0262A8F806E00E2E77C /* MetronomeView.swift */; };
 		C25FA0C72A53FAEA0066C539 /* Dispatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25FA0C62A53FAEA0066C539 /* Dispatch.swift */; };
@@ -143,7 +141,6 @@
 			files = (
 				740E75262D8A1D6C006F62C8 /* bloop.xcframework in Frameworks */,
 				740E75152D878D48006F62C8 /* AudioToolbox.framework in Frameworks */,
-				C257C1692A4DEBD60080ECC2 /* SwiftBSON in Frameworks */,
 				740E75302D8F5330006F62C8 /* SwiftProtobuf in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -152,7 +149,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C23F51202A4ED75500F4C383 /* SwiftBSON in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -437,7 +433,6 @@
 			);
 			name = Bloop;
 			packageProductDependencies = (
-				C257C1682A4DEBD60080ECC2 /* SwiftBSON */,
 				740E752F2D8F5330006F62C8 /* SwiftProtobuf */,
 			);
 			productName = Bloop;
@@ -459,7 +454,6 @@
 			);
 			name = BloopTests;
 			packageProductDependencies = (
-				C23F511F2A4ED75500F4C383 /* SwiftBSON */,
 			);
 			productName = BloopTests;
 			productReference = C247A6F12A4D949D00001DB2 /* BloopTests.xctest */;
@@ -516,7 +510,6 @@
 			);
 			mainGroup = C247A6D72A4D949A00001DB2;
 			packageReferences = (
-				C257C1672A4DEBD60080ECC2 /* XCRemoteSwiftPackageReference "swift-bson" */,
 				740E752E2D8F5330006F62C8 /* XCRemoteSwiftPackageReference "swift-protobuf" */,
 			);
 			productRefGroup = C247A6E12A4D949A00001DB2 /* Products */;
@@ -981,14 +974,6 @@
 				minimumVersion = 1.29.0;
 			};
 		};
-		C257C1672A4DEBD60080ECC2 /* XCRemoteSwiftPackageReference "swift-bson" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/mongodb/swift-bson";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 3.1.0;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -996,16 +981,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 740E752E2D8F5330006F62C8 /* XCRemoteSwiftPackageReference "swift-protobuf" */;
 			productName = SwiftProtobuf;
-		};
-		C23F511F2A4ED75500F4C383 /* SwiftBSON */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C257C1672A4DEBD60080ECC2 /* XCRemoteSwiftPackageReference "swift-bson" */;
-			productName = SwiftBSON;
-		};
-		C257C1682A4DEBD60080ECC2 /* SwiftBSON */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C257C1672A4DEBD60080ECC2 /* XCRemoteSwiftPackageReference "swift-bson" */;
-			productName = SwiftBSON;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
