@@ -64,7 +64,7 @@ impl MainController {
             project_store: ProjectStore::new(&directories.projects),
             request_rx,
             response_tx: response_tx.clone(),
-            project: Project::new(),
+            project: Project::empty(),
             audio_controller: AudioController::new(response_tx.clone(), audio_preferences),
             waveform_store: WaveformStore::new(response_tx),
             _midi_controller: MidiController::new(action_tx.clone(), midi_preferences),
@@ -333,7 +333,7 @@ impl MainController {
         match request.entity.enum_value_or_default() {
             Entity::SECTION => self.handle_add_section(project, request),
             Entity::SONG => Ok(project.add_song(1)),
-            Entity::PROJECT => Ok(Project::new()),
+            Entity::PROJECT => Ok(Project::empty()),
             _ => Ok(project),
         }
     }

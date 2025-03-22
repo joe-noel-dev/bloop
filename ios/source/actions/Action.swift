@@ -6,17 +6,17 @@ enum ConnectionType {
 }
 
 enum Action {
-    case sendRequest(Request)
-    case receivedResponse(Response)
+    case sendRequest(Bloop_Request)
+    case receivedResponse(Bloop_Response)
 
     case sendRawRequest(Data)
     case receivedRawResponse(Data)
 
-    case setProject(Project)
-    case setPlaybackState(PlaybackState)
-    case setProgress(Progress)
-    case setProjects([ProjectInfo])
-    case addWaveform((Id, WaveformData))
+    case setProject(Bloop_Project)
+    case setPlaybackState(Bloop_PlaybackState)
+    case setProgress(Bloop_Progress)
+    case setProjects([Bloop_ProjectInfo])
+    case addWaveform((Id, Bloop_WaveformData))
     case removeWaveform(Id)
     case addError(String)
 
@@ -32,8 +32,8 @@ enum Action {
 
     case importProject(URL)
     case exportProject(URL)
-    case importResponse(ImportResponse)
-    case exportResponse(ExportResponse)
+    case importResponse(Bloop_ImportResponse)
+    case exportResponse(Bloop_ExportResponse)
     
     case setDiscoveredServers([Server])
     case setScanning(Bool)

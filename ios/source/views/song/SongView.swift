@@ -1,12 +1,12 @@
 import SwiftUI
 
 struct SongView: View {
-    var song: Song
-    var songs: [Song]
-    var selections: Selections
-    var playbackState: PlaybackState
-    var progress: Progress
-    var waveforms: Waveforms
+    var song: Bloop_Song
+    var songs: [Bloop_Song]
+    var selections: Bloop_Selections
+    var playbackState: Bloop_PlaybackState
+    var progress: Bloop_Progress
+    var waveforms: [Id: Bloop_WaveformData]
     var dispatch: Dispatch
 
     @Binding var navigationPath: [NavigationItem]
@@ -23,7 +23,7 @@ struct SongView: View {
         @Environment(\.horizontalSizeClass) var horizontalSizeClass
     #endif
 
-    private var selectedSection: Section? {
+    private var selectedSection: Bloop_Section? {
         song.sections.first {
             $0.id == selections.section
         }
@@ -34,7 +34,7 @@ struct SongView: View {
     }
 
     private var isPlaying: Bool {
-        playbackState.songId == song.id
+        playbackState.songID == song.id
     }
 
     private func selectSong() {
@@ -53,10 +53,10 @@ struct SongView: View {
     }
 
     private var sampleId: Id? {
-        song.sample?.id
+        song.sample.id == 0 ? nil : song.sample.id
     }
 
-    private var waveformData: WaveformData? {
+    private var waveformData: Bloop_WaveformData? {
         guard let sampleId = sampleId else {
             return nil
         }
@@ -210,13 +210,20 @@ struct SongView: View {
             .padding(Layout.units(2))
             .frame(minWidth: 400)
             .onAppear {
-                if let tempo = song.sample?.tempo.bpm {
-                    self.newTempo = tempo
+                guard song.hasSample else {
+                    return
                 }
+                
+                self.newTempo = song.sample.tempo.bpm
             }
             .onSubmit {
                 var song = song
-                song.sample?.tempo.bpm = newTempo
+                
+                guard song.hasSample else {
+                    return
+                }
+                
+                song.sample.tempo.bpm = newTempo
                 song.tempo.bpm = newTempo
 
                 let action = updateSongAction(song)
@@ -346,23 +353,26 @@ struct SongView: View {
 }
 
 struct SongView_Previews: PreviewProvider {
-    static let song: Song = {
+    static let song: Bloop_Song = {
         var song = demoSong(0)
         song.name = "My Song Name"
         return song
     }()
 
-    static let selections: Selections = {
-        .init(song: song.id, section: song.sections[0].id)
+    static let selections: Bloop_Selections = {
+        Bloop_Selections.with {
+            $0.song = song.id
+            $0.section = song.sections[0].id
+        }
     }()
 
     static let playbackState = {
-        var playbackState = PlaybackState()
-        playbackState.songId = song.id
-        return playbackState
+        Bloop_PlaybackState.with {
+            $0.songID = song.id
+        }
     }()
 
-    static let progress = Progress()
+    static let progress = Bloop_Progress()
 
     @State static var navigationPath: [NavigationItem] = [.song(song.id)]
 
@@ -373,7 +383,7 @@ struct SongView_Previews: PreviewProvider {
             selections: selections,
             playbackState: playbackState,
             progress: progress,
-            waveforms: Waveforms(),
+            waveforms: [:],
             dispatch: loggingDispatch,
             navigationPath: $navigationPath
         )

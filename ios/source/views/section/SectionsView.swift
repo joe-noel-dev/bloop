@@ -1,10 +1,10 @@
 import SwiftUI
 
 struct SectionsView: View {
-    var song: Song
+    var song: Bloop_Song
     var dispatch: Dispatch
 
-    init(song: Song, dispatch: @escaping Dispatch) {
+    init(song: Bloop_Song, dispatch: @escaping Dispatch) {
         self.song = song
         self.dispatch = dispatch
     }
@@ -43,20 +43,20 @@ struct SectionsView: View {
 }
 
 struct SectionRow: View {
-    var section: Section
+    var section: Bloop_Section
     var dispatch: Dispatch
 
     @State private var newStart: Double
     @State private var newName: String
 
-    init(section: Section, dispatch: @escaping Dispatch) {
+    init(section: Bloop_Section, dispatch: @escaping Dispatch) {
         self.section = section
         self.newStart = section.start
         self.newName = section.name
         self.dispatch = dispatch
     }
 
-    private func updateSection(_ newSection: Section) {
+    private func updateSection(_ newSection: Bloop_Section) {
         let action = updateSectionAction(newSection)
         dispatch(action)
     }

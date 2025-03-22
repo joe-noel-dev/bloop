@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct WaveformView: View {
-    let waveform: WaveformData?
+    let waveform: Bloop_WaveformData?
 
     var body: some View {
         ZStack {
@@ -24,10 +24,10 @@ struct WaveformView: View {
 }
 
 func chooseWaveformGroupForWidth(
-    waveform: WaveformData,
+    waveform: Bloop_WaveformData,
     width: CGFloat,
-    algorithm: WaveformAlgorithm
-) -> WaveformGroup? {
+    algorithm: Bloop_WaveformAlgorithm
+) -> Bloop_WaveformGroup? {
     return waveform.peaks
         .filter { group in
             group.properties.algorithm == algorithm
@@ -39,7 +39,7 @@ func chooseWaveformGroupForWidth(
         }.first
 }
 
-func createWaveformPath(waveform: WaveformData, size: CGSize) -> Path {
+func createWaveformPath(waveform: Bloop_WaveformData, size: CGSize) -> Path {
     let minWaveform = chooseWaveformGroupForWidth(
         waveform: waveform,
         width: size.width,

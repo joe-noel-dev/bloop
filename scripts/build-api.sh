@@ -4,11 +4,8 @@ set -ex
 
 API_DIR=./api
 OUT_DIR="${API_DIR}/out"
-RUST_OUT_DIR="${OUT_DIR}/rust"
-CPP_OUT_DIR="${OUT_DIR}/cpp"
+SWIFT_OUT_DIR="${OUT_DIR}/swift"
+PROTO_SOURCE="${API_DIR}/bloop.proto"
 
-mkdir -p "${RUST_OUT_DIR}"
-protoc --rust_out="${RUST_OUT_DIR}" --proto_path="${API_DIR}" --rust_opt=experimental-codegen=enabled "${API_DIR}"/*.proto
-
-mkdir -p "${CPP_OUT_DIR}"
-protoc --cpp_out="${CPP_OUT_DIR}" --proto_path="${API_DIR}" "${API_DIR}"/*.proto
+mkdir -p "${SWIFT_OUT_DIR}"
+protoc --proto_path="${API_DIR}" --swift_out="${SWIFT_OUT_DIR}" "${PROTO_SOURCE}"

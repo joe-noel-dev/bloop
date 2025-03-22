@@ -19,8 +19,8 @@ class ApiCodecMiddleware: Middleware {
     private func onReceivedRawResponse(_ data: Data) {
         queue.async { [weak self] in
             do {
-                let bsonDocument = try BSONDocument(fromBSON: data)
-                let response = try BSONDecoder().decode(Response.self, from: bsonDocument)
+                let response = try Bloop_Response(serializedBytes: data)
+                
                 DispatchQueue.main.async {
                     self?.dispatch?(.receivedResponse(response))
                 }
@@ -31,13 +31,14 @@ class ApiCodecMiddleware: Middleware {
         }
     }
 
-    private func onSendRequest(_ request: Request) {
+    private func onSendRequest(_ request: Bloop_Request) {
         queue.async { [weak self] in
             do {
-                let encodedRequest = try BSONEncoder().encode(request)
-                let data = encodedRequest.toData()
+                
+                let encodedRequest = try request.serializedData()
+                
                 DispatchQueue.main.async {
-                    self?.dispatch?(.sendRawRequest(data))
+                    self?.dispatch?(.sendRawRequest(encodedRequest))
                 }
             }
             catch {

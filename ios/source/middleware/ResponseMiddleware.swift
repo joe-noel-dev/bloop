@@ -9,44 +9,45 @@ class ResponseMiddleware: Middleware {
         }
     }
 
-    private func onResponse(_ response: Response) {
-        if let project = response.project {
-            self.dispatch?(.setProject(project))
+    private func onResponse(_ response: Bloop_Response) {
+        if response.hasProject {
+            self.dispatch?(.setProject(response.project))
         }
 
-        if let playback = response.playbackState {
-            self.dispatch?(.setPlaybackState(playback))
+        if response.hasPlaybackState {
+            self.dispatch?(.setPlaybackState(response.playbackState))
         }
 
-        if let progress = response.progress {
-            self.dispatch?(.setProgress(progress))
+        if response.hasProgress {
+            self.dispatch?(.setProgress(response.progress))
         }
 
-        if let projects = response.projects {
-            self.dispatch?(.setProjects(projects))
+        if !response.projects.isEmpty {
+            self.dispatch?(.setProjects(response.projects))
         }
 
-        if let error = response.error {
-            self.dispatch?(.addError(error))
+        if !response.error.isEmpty {
+            self.dispatch?(.addError(response.error))
         }
 
-        if let waveform = response.waveform {
-            let action = Action.addWaveform((waveform.sampleId, waveform.waveformData))
+        if response.hasWaveform {
+            let waveform = response.waveform
+            let action = Action.addWaveform((waveform.sampleID, waveform.waveformData))
             self.dispatch?(action)
         }
 
-        if let uploadAck = response.upload {
-            let action = Action.uploadAck(uploadAck.uploadId)
-            self.dispatch?(action)
-        }
-        
-        if let importResponse = response.importResponse {
-            let action = Action.importResponse(importResponse)
+        if response.hasUpload {
+            let action = Action.uploadAck(response.upload.uploadID)
             self.dispatch?(action)
         }
         
-        if let exportResponse = response.exportResponse {
-            let action = Action.exportResponse(exportResponse)
+        if response.hasImportResponse {
+            let action = Action.importResponse(response.importResponse)
+            self.dispatch?(action)
+        }
+        
+        if response.hasExportResponse {
+            let action = Action.exportResponse(response.exportResponse)
             self.dispatch?(action)
         }
     }

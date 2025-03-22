@@ -2,7 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ProjectPreview: View {
-    var project: ProjectInfo
+    var project: Bloop_ProjectInfo
     var selected: Bool
 
     var body: some View {
@@ -29,15 +29,15 @@ struct ProjectPreview: View {
 }
 
 struct ProjectsView: View {
-    var projects: [ProjectInfo]
+    var projects: [Bloop_ProjectInfo]
     var dispatch: Dispatch
     var dismiss: () -> Void
 
-    @State private var selected: ProjectInfo.ID?
+    @State private var selected: Bloop_ProjectInfo.ID?
     @State private var showImportFileDialog: Bool = false
     @State private var selectedFileURL: URL?
 
-    private var sortedProjects: [ProjectInfo] {
+    private var sortedProjects: [Bloop_ProjectInfo] {
         projects.sorted { a, b in
             a.lastSaved > b.lastSaved
         }
@@ -124,44 +124,19 @@ struct ProjectsView: View {
 }
 
 struct ProjectsView_Previews: PreviewProvider {
-    static let projects: [ProjectInfo] = [
-        ProjectInfo(
-            id: "id-1",
-            name: "Project 1",
-            version: "0",
-            lastSaved: Int64((Date() - 19).timeIntervalSince1970.magnitude) * 1000
-        ),
-        ProjectInfo(
-            id: "id-2",
-            name: "Project 2",
-            version: "0",
-            lastSaved: Int64((Date() - 20).timeIntervalSince1970.magnitude) * 1000
-        ),
-        ProjectInfo(
-            id: "id-3",
-            name: "Project 3",
-            version: "0",
-            lastSaved: Int64((Date() - 32478).timeIntervalSince1970.magnitude) * 1000
-        ),
-        ProjectInfo(
-            id: "id-4",
-            name: "Project 4",
-            version: "0",
-            lastSaved: Int64((Date() - 37_647_823).timeIntervalSince1970.magnitude) * 1000
-        ),
-        ProjectInfo(
-            id: "id-5",
-            name: "Project 5",
-            version: "0",
-            lastSaved: Int64((Date() - 327863).timeIntervalSince1970.magnitude) * 1000
-        ),
-        ProjectInfo(
-            id: "id-6",
-            name: "Project 6",
-            version: "0",
-            lastSaved: Int64((Date() - 876870).timeIntervalSince1970.magnitude) * 1000
-        ),
-
+    static private func projectInfo(name: String, savedAgo: Int) -> Bloop_ProjectInfo {
+        .with {
+            $0.id = randomId()
+            $0.name = name
+            $0.version = "0"
+            $0.lastSaved = Int64((Date() - TimeInterval(savedAgo)).timeIntervalSince1970.magnitude) * 1000
+        }
+    }
+    
+    static let projects: [Bloop_ProjectInfo] = [
+        projectInfo(name: "Project 1", savedAgo: 19),
+        projectInfo(name: "Project 2", savedAgo: 20),
+        projectInfo(name: "Project 3", savedAgo: 32478),
     ]
 
     static var previews: some View {

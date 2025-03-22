@@ -482,14 +482,14 @@ mod tests {
     fn create_with_songs() {
         let num_songs = 10;
         let num_sections = 10;
-        let project = Project::new().with_songs(num_songs, num_sections);
+        let project = Project::empty().with_songs(num_songs, num_sections);
         assert_eq!(project.songs.len(), num_songs);
         assert!(project.songs.iter().all(|song| song.sections.len() == num_sections));
     }
 
     #[test]
     fn get_song_by_id() {
-        let project = Project::new().with_songs(5, 5);
+        let project = Project::empty().with_songs(5, 5);
         let song = &project.songs[2];
         let retrieved_song = match project.song_with_id(song.id) {
             Some(song) => song,
@@ -500,7 +500,7 @@ mod tests {
 
     #[test]
     fn get_missing_song_by_id() {
-        let project = Project::new().with_songs(5, 5);
+        let project = Project::empty().with_songs(5, 5);
         let id = random_id();
         let retrieved_song = project.song_with_id(id);
         assert!(retrieved_song.is_none());
@@ -508,7 +508,7 @@ mod tests {
 
     #[test]
     fn replace_song() {
-        let mut project = Project::new().with_songs(5, 5);
+        let mut project = Project::empty().with_songs(5, 5);
         let mut song = project.songs[3].clone();
         song.name = "New song name".to_string();
         project = project.replace_song(&song).expect("Couldn't replace song");
@@ -517,7 +517,7 @@ mod tests {
 
     #[test]
     fn select_next_song() {
-        let mut project = Project::new().with_songs(5, 5);
+        let mut project = Project::empty().with_songs(5, 5);
         let song_id = project.songs[1].id;
         project = project.select_next_song();
         assert_eq!(project.selections.song, song_id);
@@ -525,7 +525,7 @@ mod tests {
 
     #[test]
     fn select_next_song_from_end() {
-        let mut project = Project::new().with_songs(5, 5);
+        let mut project = Project::empty().with_songs(5, 5);
         project = project.select_last_song();
         let song_id = project.songs[4].id;
         project = project.select_next_song();
@@ -534,7 +534,7 @@ mod tests {
 
     #[test]
     fn select_previous_song() {
-        let mut project = Project::new().with_songs(5, 5);
+        let mut project = Project::empty().with_songs(5, 5);
         project = project.select_last_song();
         let song_id = project.songs[3].id;
         project = project.select_previous_song();
@@ -543,7 +543,7 @@ mod tests {
 
     #[test]
     fn select_previous_song_from_start() {
-        let mut project = Project::new().with_songs(5, 5);
+        let mut project = Project::empty().with_songs(5, 5);
         let song_id = project.songs[0].id;
         project = project.select_previous_song();
         assert_eq!(project.selections.song, song_id);
@@ -551,7 +551,7 @@ mod tests {
 
     #[test]
     fn select_next_section() {
-        let mut project = Project::new().with_songs(5, 5);
+        let mut project = Project::empty().with_songs(5, 5);
         let section_id = project.songs[0].sections[1].id;
         project = project.select_next_section().expect("Couldn't select next section");
         assert_eq!(project.selections.section, section_id);
@@ -559,7 +559,7 @@ mod tests {
 
     #[test]
     fn select_previous_section() {
-        let mut project = Project::new().with_songs(5, 5);
+        let mut project = Project::empty().with_songs(5, 5);
         let initial_section_id = project.songs[0].sections[4].id;
         project = project
             .select_section(initial_section_id)

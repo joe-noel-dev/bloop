@@ -178,8 +178,8 @@ struct ProjectView_Previews: PreviewProvider {
         connected: .remote,
         projects: [],
         project: demoProject(),
-        playbackState: PlaybackState(),
-        progress: Progress()
+        playbackState: Bloop_PlaybackState(),
+        progress: Bloop_Progress()
     )
 
     static var previews: some View {

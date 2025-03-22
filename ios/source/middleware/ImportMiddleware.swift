@@ -14,7 +14,7 @@ class ImportMiddleware: Middleware {
 
     func execute(state: AppState, action: Action) {
         if case .importResponse(let importResponse) = action {
-            sendChunk(importResponse.projectId)
+            sendChunk(importResponse.projectID)
         }
         
         if case .importProject(let url) = action {
@@ -25,7 +25,7 @@ class ImportMiddleware: Middleware {
     
     private func beginImport(_ url: URL) {
         do {
-            let newProjectId = UUID().uuidString.lowercased()
+            let newProjectId = randomId()
             let fileContents = try Data(contentsOf: url)
             
             imports[newProjectId] = .init(data: fileContents)
@@ -53,9 +53,14 @@ class ImportMiddleware: Middleware {
             print("Project import complete for project: \(projectId)")
             imports.removeValue(forKey: projectId)
         }
-        
-        let action = Action.sendRequest(.projectImport(.init(projectId: projectId, data: chunk, moreComing: moreComing)))
-        self.dispatch?(action)
+    
+        self.dispatch?(.sendRequest(.with {
+            $0.projectImport = .with {
+                $0.projectID = projectId
+                $0.data = chunk
+                $0.moreComing = moreComing
+            }
+        }))
         
         print("Import progress: \(progress)%")
     }

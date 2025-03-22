@@ -10,7 +10,11 @@ class FFIMiddleware: Middleware {
             initialiseCore()
 
             self.dispatch?(.setConnected(.local))
-            self.dispatch?(.sendRequest(.get(EntityId(entity: .all))))
+            self.dispatch?(.sendRequest(.with {
+                $0.get = .with {
+                    $0.entity = .all
+                }
+            }))
         }
 
         if case .disconnect = action {
