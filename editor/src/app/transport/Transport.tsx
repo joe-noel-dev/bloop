@@ -18,14 +18,15 @@ import {
   stopRequest,
 } from '../../api/request';
 import {useCore} from '../../core/use-core';
+import {INVALID_ID} from '../../api/helpers';
 
 export const Transport = () => {
   const playbackState = usePlaybackState();
   const progress = useProgress();
   const core = useCore();
 
-  const playingSong = useSong(playbackState?.songId ?? '');
-  const playingSection = useSectionById(playbackState?.sectionId ?? '');
+  const playingSong = useSong(playbackState?.songId ?? INVALID_ID);
+  const playingSection = useSectionById(playbackState?.sectionId ?? INVALID_ID);
 
   const play = () => {
     const request = playRequest();

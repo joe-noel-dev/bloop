@@ -247,6 +247,7 @@ impl MainController {
     }
 
     fn send_error_response(&self, message: &str) {
+        error!("{}", message);
         self.send_response(Response::default().with_error(message));
     }
 

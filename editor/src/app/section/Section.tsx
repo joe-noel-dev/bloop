@@ -31,15 +31,16 @@ import {
 import {usePlaybackState, useProgress} from '../../model-hooks/transport-hooks';
 import {columnSize, columns} from './TableInfo';
 import isEqual from 'lodash.isequal';
-import {getSectionBeatLength, Song} from '../../model/song';
 import {useSong} from '../../model-hooks/song-hooks';
 import {ClickToEdit} from '../../components/ClickToEdit';
 import {Core} from '../../core/Core';
+import {getSectionBeatLength, ID} from '../../api/helpers';
+import {PlayingState, Song} from '../../api/bloop';
 
 interface Props {
-  songId: string;
-  sectionId: string;
-  requestUpdateDuration(sectionId: string, duration: number): void;
+  songId: ID;
+  sectionId: ID;
+  requestUpdateDuration(sectionId: ID, duration: number): void;
 }
 
 export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
@@ -56,7 +57,9 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
 
   const isSelected = sectionId === selectedSectionId;
   const isPlaying =
-    (playbackState?.playing && playbackState.sectionId === sectionId) ?? false;
+    (playbackState?.playing === PlayingState.PLAYING &&
+      playbackState.sectionId === sectionId) ??
+    false;
 
   if (!section) {
     return <></>;
@@ -336,7 +339,7 @@ const EditButton = ({
 );
 
 const moveSectionIndex = (
-  sectionId: string,
+  sectionId: ID,
   delta: number,
   song: Song,
   core: Core

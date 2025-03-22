@@ -2,7 +2,7 @@ use super::sample::Sample;
 use crate::bloop::AudioFileFormat;
 use crate::{model::ID, types::extension_for_format};
 use anyhow::{anyhow, Context};
-use log::error;
+use log::{debug, error};
 use std::fs;
 use std::{
     collections::HashMap,
@@ -44,6 +44,7 @@ impl SamplesCache {
     }
 
     pub async fn upload(&mut self, id: ID, data: &[u8]) -> anyhow::Result<()> {
+        debug!("Received bytes for upload id={}, length={}", id, data.len());
         let sample = self
             .samples
             .get(&id)

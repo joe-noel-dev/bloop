@@ -1,14 +1,9 @@
-import {getAllRequest, Request} from '../api/request';
-import {Response} from '../api/response';
-import {serialize, deserialize, setInternalBufferSize, Long} from 'bson';
-import {WaveformData} from '../model/waveform';
+import {getAllRequest} from '../api/request';
 import {EventEmitter} from 'events';
-import {ProjectInfo} from '../model/project-info';
+import {Request, Response, WaveformData} from '../api/bloop';
+import {ID} from '../api/helpers';
 
 const logRequests: boolean = import.meta.env.VITE_BLOOP_LOG_REQUESTS === 'true';
-
-const SERIALISATION_BUFFER_SIZE = 100 * 1024 * 1024;
-setInternalBufferSize(SERIALISATION_BUFFER_SIZE);
 
 export interface CoreInstance {
   sendRequest(request: Request): void;
@@ -18,11 +13,11 @@ export interface CoreInstance {
 export const createCore = () => {
   let socket: null | WebSocket = null;
 
-  let uploadPromises: {[uploadId: string]: () => void} = {};
-  let waitingAcks: string[] = [];
+  let uploadPromises = new Map<string, () => void>();
+  let waitingAcks: ID[] = [];
   let pendingRequests: Request[] = [];
 
-  let waveforms = new Map<string, WaveformData>();
+  let waveforms = new Map<ID, WaveformData>();
 
   const eventEmitter = new EventEmitter();
 
@@ -32,7 +27,8 @@ export const createCore = () => {
         console.log('Sending: ', request);
       }
 
-      socket?.send(serialize(request));
+      let data = Request.encode(request).finish();
+      socket?.send(data);
     } else {
       pendingRequests.push(request);
     }
@@ -55,10 +51,9 @@ export const createCore = () => {
 
   const onMessage = (event: MessageEvent) => {
     try {
-      const message: Response = deserialize(event.data);
+      const message: Response = Response.decode(new Uint8Array(event.data));
 
       if (message.project) {
-        fixLastSaved(message.project.info);
         eventEmitter.emit('project', message.project);
       }
 
@@ -71,11 +66,10 @@ export const createCore = () => {
       }
 
       if (message.projects) {
-        message.projects.forEach(fixLastSaved);
         eventEmitter.emit('projects', message.projects);
       }
 
-      if (message.waveform) {
+      if (message.waveform && message.waveform.waveformData) {
         console.info(
           `Received waveform data for sample ${message.waveform.sampleId}`
         );
@@ -85,9 +79,11 @@ export const createCore = () => {
       }
 
       if (message.upload) {
+        console.debug(`Received upload ack for ${message.upload.uploadId}`);
         const uploadId = message.upload.uploadId;
-        if (uploadPromises[uploadId]) {
-          uploadPromises[uploadId]();
+        const action = uploadPromises.get(uploadId.toString());
+        if (action) {
+          action();
         } else {
           waitingAcks.push(uploadId);
         }
@@ -126,12 +122,12 @@ export const createCore = () => {
     socket?.close();
   };
 
-  const waitForUploadAck = (uploadId: string) => {
+  const waitForUploadAck = (uploadId: ID) => {
     return new Promise<void>((resolve) => {
       if (waitingAcks.find((id) => id === uploadId)) {
         resolve();
       } else {
-        uploadPromises[uploadId] = resolve;
+        uploadPromises.set(uploadId.toString(), resolve);
       }
     });
   };
@@ -146,11 +142,3 @@ export const createCore = () => {
 };
 
 export type Core = ReturnType<typeof createCore>;
-
-const fixLastSaved = (projectInfo: ProjectInfo) => {
-  // Hack to workaround we receive lastSaved as number instead of Long, but
-  // the core expects an i64
-  if (typeof projectInfo.lastSaved === 'number') {
-    projectInfo.lastSaved = Long.fromNumber(projectInfo.lastSaved as number);
-  }
-};

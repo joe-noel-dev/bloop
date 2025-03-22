@@ -9,13 +9,14 @@ import {
   uploadRequest,
 } from '../../api/request';
 import {useCore} from '../../core/use-core';
-import {v4 as uuidv4} from 'uuid';
 import {useEffect, useRef, useState} from 'react';
 import {Core} from '../../core/Core';
+import {ID, randomId} from '../../api/helpers';
+import {AudioFileFormat} from '../../api/bloop';
 
 interface Props {
-  sampleId: string;
-  songId: string;
+  sampleId: ID;
+  songId: ID;
 }
 
 export const Sample = ({sampleId, songId}: Props) => {
@@ -88,10 +89,15 @@ export const Sample = ({sampleId, songId}: Props) => {
   );
 };
 
-const addSampleToSong = async (file: File, songId: string, core: Core) => {
-  const uploadId = uuidv4();
+const addSampleToSong = async (file: File, songId: ID, core: Core) => {
+  const uploadId = randomId();
 
-  const beginRequest = beginUploadRequest(uploadId, file.name, 'wav');
+  const beginRequest = beginUploadRequest(
+    uploadId,
+    file.name,
+    AudioFileFormat.WAV
+  );
+
   core.sendRequest(beginRequest);
   await core.waitForUploadAck(uploadId);
 

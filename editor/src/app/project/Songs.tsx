@@ -9,6 +9,7 @@ import {
   updateProjectRequest,
 } from '../../api/request';
 import {useProject} from '../../model-hooks/project-hooks';
+import Long from 'long';
 
 export const Songs = () => {
   const songs = useSongs() || [];
@@ -19,7 +20,7 @@ export const Songs = () => {
     return <></>;
   }
 
-  const selectedSongId = project.selections.song || '';
+  const selectedSongId = project.selections?.song || '';
 
   const addSong = () => {
     const request = addSongRequest();
@@ -49,7 +50,8 @@ export const Songs = () => {
     if (typeof value !== 'string' || value === selectedSongId) {
       return;
     }
-    const request = selectSongRequest(value);
+    const id = Long.fromString(value);
+    const request = selectSongRequest(id);
     core.sendRequest(request);
   };
 
@@ -63,18 +65,18 @@ export const Songs = () => {
 
       <Tabs
         orientation="vertical"
-        value={selectedSongId}
+        value={selectedSongId.toString()}
         onChange={onTabSelected}
       >
         <TabList>
           {songs.map((song) => (
-            <Tab key={song.id} value={song.id}>
+            <Tab key={song.id.toString()} value={song.id.toString()}>
               {song.name}
             </Tab>
           ))}
         </TabList>
         {songs.map((song, index) => (
-          <TabPanel key={song.id} value={song.id}>
+          <TabPanel key={song.id.toString()} value={song.id.toString()}>
             <Song
               songId={song.id}
               moveSong={(delta) => moveSong(index, index + delta)}

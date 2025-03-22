@@ -1,18 +1,21 @@
 import {useEffect, useState} from 'react';
 import {CoreContext} from './core/use-core';
 import {Core, createCore} from './core/Core';
-import {PlaybackState} from './model/playback-state';
-import {ProjectInfo} from './model/project-info';
-import {WaveformData} from './model/waveform';
 import {CoreDataContext} from './core/CoreData';
 import CssBaseline from '@mui/joy/CssBaseline';
 import {CssVarsProvider} from '@mui/joy/styles';
 import {Box, Divider} from '@mui/joy';
-import {Project as ModelProject} from './model';
+import {
+  Project as ModelProject,
+  PlaybackState,
+  Progress,
+  ProjectInfo,
+  WaveformData,
+} from './api/bloop';
 import '@fontsource/inter';
 import {Connection} from './app/Connection';
 import {Project} from './app/project/Project';
-import {Progress} from './model/progress';
+import {ID} from './api/helpers';
 
 const App = () => {
   const [core, setCore] = useState<Core | null>(null);
@@ -20,7 +23,7 @@ const App = () => {
   const [project, setProject] = useState<ModelProject>();
   const [playbackState, setPlaybackState] = useState<PlaybackState>();
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
-  const [waveforms, setWaveforms] = useState(new Map<string, WaveformData>());
+  const [waveforms, setWaveforms] = useState(new Map<ID, WaveformData>());
   const [progress, setProgress] = useState<Progress>({
     songProgress: 0,
     sectionProgress: 0,
