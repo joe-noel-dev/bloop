@@ -9,6 +9,11 @@ pub struct Directories {
 impl Directories {
     pub fn new() -> Self {
         let mut root = home::home_dir().unwrap();
+
+        if cfg!(target_os = "ios") {
+            root.push("Documents");
+        }
+
         root.push("bloop");
 
         let mut projects = root.clone();

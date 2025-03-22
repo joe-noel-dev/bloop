@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct TransportBar: View {
-    var playbackState: PlaybackState
-    var project: Project
+    var playbackState: Bloop_PlaybackState
+    var project: Bloop_Project
     var dispatch: Dispatch
 
     var body: some View {
@@ -69,11 +69,11 @@ struct TransportBar: View {
             return .notReady
         }
 
-        if playbackState.queuedSectionId == project.selections.section {
+        if playbackState.queuedSectionID == project.selections.section {
             return .queued
         }
 
-        if project.selections.section != playbackState.sectionId {
+        if project.selections.section != playbackState.sectionID {
             return .readyToQueue
         }
 
@@ -85,9 +85,10 @@ struct TransportBar: View {
         switch queueState {
         case .readyToQueue, .notReady:
             TransportButton(name: "Jump", systemImageName: "arrow.right") {
-                guard let songId = project.selections.song,
-                    let sectionId = project.selections.section
-                else {
+                let songId = project.selections.song
+                let sectionId = project.selections.section
+
+                guard songId != 0, sectionId != 0 else {
                     return
                 }
 
@@ -124,7 +125,9 @@ struct TransportButton: View {
 
 struct TransportBar_Previews: PreviewProvider {
     static let playbackState = {
-        return PlaybackState.init(playing: .playing)
+        Bloop_PlaybackState.with {
+            $0.playing = .playing
+        }
     }()
 
     static let project = demoProject()

@@ -1,6 +1,6 @@
 use cpal::{
     traits::{DeviceTrait, HostTrait, StreamTrait},
-    Host, Stream, StreamConfig,
+    Device, Host, Stream, StreamConfig,
 };
 use log::{debug, error, info};
 use rawdio::{AudioBuffer, AudioProcess, BorrowedAudioBuffer, MutableBorrowedAudioBuffer, OwnedAudioBuffer};
@@ -26,6 +26,49 @@ fn print_output_devices(host: &Host) {
     });
 
     info!("{output}");
+}
+
+#[cfg(target_os = "linux")]
+fn get_stream_config(preferences: &AudioPreferences, _device: &Device) -> StreamConfig {
+    StreamConfig {
+        channels: preferences.output_channel_count as u16,
+        sample_rate: cpal::SampleRate(preferences.sample_rate as u32),
+        buffer_size: cpal::BufferSize::Fixed(preferences.buffer_size as u32),
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+fn get_stream_config(preferences: &AudioPreferences, device: &Device) -> StreamConfig {
+    let mut configs = device
+        .supported_output_configs()
+        .expect("Unable to get output configurations");
+
+    if let Some(perfect_config) = configs.find(|config| {
+        if config.channels() < preferences.output_channel_count as u16 {
+            return false;
+        }
+
+        if config.sample_format() != cpal::SampleFormat::F32 {
+            return false;
+        }
+
+        if config.min_sample_rate().0 > preferences.sample_rate as u32
+            || config.max_sample_rate().0 < preferences.sample_rate as u32
+        {
+            return false;
+        }
+
+        true
+    }) {
+        return perfect_config
+            .with_sample_rate(cpal::SampleRate(preferences.sample_rate as u32))
+            .config();
+    }
+
+    device
+        .default_output_config()
+        .unwrap_or_else(|_| panic!("Couldn't get default output config"))
+        .config()
 }
 
 impl Process {
@@ -75,23 +118,24 @@ impl Process {
                 );
             });
 
-        info!("Buffer size: {}\n", preferences.buffer_size);
-        info!("Channel count: {}\n", preferences.output_channel_count);
-        info!("Sample rate: {}\n", preferences.sample_rate);
+        let config = get_stream_config(&preferences, &device);
 
-        let config = StreamConfig {
-            channels: preferences.output_channel_count as u16,
-            sample_rate: cpal::SampleRate(preferences.sample_rate as u32),
-            buffer_size: cpal::BufferSize::Fixed(preferences.buffer_size as u32),
-        };
+        info!("Preferences buffer size: {}\n", preferences.buffer_size);
+        info!("Preferences channel count: {}\n", preferences.output_channel_count);
+        info!("Preferences sample rate: {}\n", preferences.sample_rate);
+
+        info!("Config buffer size: {:#?}\n", config.buffer_size);
+        info!("Config channel count: {}\n", config.channels);
+        info!("Config sample rate: {}\n", config.sample_rate.0);
 
         // Allocate larger buffer size in case the system ignores our requested buffer size
-        let buffer_size = preferences.buffer_size * 2;
-
-        let input_buffer = OwnedAudioBuffer::new(buffer_size, 0, preferences.sample_rate);
-
-        let mut output_buffer =
-            OwnedAudioBuffer::new(buffer_size, preferences.output_channel_count, preferences.sample_rate);
+        let maximum_buffer_size = 8192;
+        let input_buffer = OwnedAudioBuffer::new(maximum_buffer_size, 0, preferences.sample_rate);
+        let mut output_buffer = OwnedAudioBuffer::new(
+            maximum_buffer_size,
+            preferences.output_channel_count,
+            preferences.sample_rate,
+        );
 
         let timeout = None;
 

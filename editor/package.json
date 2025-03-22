@@ -16,15 +16,17 @@
     "@types/react-dom": "^19.0.4",
     "@types/react-modal": "^3.16.3",
     "@types/uuid": "^10.0.0",
-    "bson": "^6.10.3",
     "events": "^3.3.0",
     "express": "^4.21.2",
+    "google-protobuf": "^3.21.4",
     "lodash.isequal": "^4.5.0",
+    "long": "^5.3.1",
     "pako": "^2.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-is": "^19.0.0",
     "react-modal": "^3.16.1",
+    "ts-proto": "^2.6.1",
     "typescript": "~5.7.3",
     "uuid": "^11.0.3"
   },
@@ -32,10 +34,11 @@
     "mdns": "^2.7.2"
   },
   "scripts": {
-    "start": "yarn run discovery & vite",
-    "build": "tsc && vite build",
+    "start": "yarn run generate-api && yarn run discovery & vite",
+    "build": "yarn run generate-api && tsc && vite build",
     "serve": "yarn run discovery & vite preview",
-    "discovery": "node ./src/server.js"
+    "discovery": "node ./src/server.js",
+    "generate-api": "protoc --proto_path=../api --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=src/api --ts_proto_opt=esModuleInterop=true,forceLong=long,useOptionals=messages,env=browser ../api/bloop.proto"
   },
   "eslintConfig": {
     "extends": "react-app"

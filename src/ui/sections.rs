@@ -5,28 +5,26 @@ use iced::{
     Length::{Fill, FillPortion},
     Theme,
 };
-use uuid::Uuid;
 
-use crate::model::{PlayingState, Section};
+use crate::model::{Section, ID, INVALID_ID};
 
 use super::{constants::display_units, message::Message, state::State};
 
-pub fn sections_view(song_id: Uuid, state: &State) -> Element<Message> {
-    let song = match state.project.song_with_id(&song_id) {
+pub fn sections_view(song_id: ID, state: &State) -> Element<Message> {
+    let song = match state.project.song_with_id(song_id) {
         Some(song) => song,
         None => return column![].into(),
     };
 
-    let section_id =
-        if state.playback_state.playing == PlayingState::Playing && state.playback_state.song_id == Some(song_id) {
-            state.playback_state.section_id
-        } else {
-            state.project.selections.section
-        };
+    let section_id = if state.playback_state.is_playing() && state.playback_state.song_id == song_id {
+        state.playback_state.section_id
+    } else {
+        state.project.selections.section
+    };
 
     let section_id = match section_id {
-        Some(section_id) => section_id,
-        None => return column![].into(),
+        INVALID_ID => return column![].into(),
+        section_id => section_id,
     };
 
     let index = match song.sections.iter().position(|s| s.id == section_id) {
@@ -43,7 +41,7 @@ pub fn sections_view(song_id: Uuid, state: &State) -> Element<Message> {
 
     let previous_section = previous_index.and_then(|i| song.sections.get(i));
 
-    let section = match song.find_section(&section_id) {
+    let section = match song.find_section(section_id) {
         Some(section) => section,
         None => return column![].into(),
     };
@@ -70,10 +68,8 @@ pub fn sections_view(song_id: Uuid, state: &State) -> Element<Message> {
 }
 
 fn section_view<'a>(section: &'a Section, state: &'a State) -> Element<'a, Message> {
-    let is_playing =
-        state.playback_state.playing == PlayingState::Playing && state.playback_state.section_id == Some(section.id);
-
-    let is_selected = state.project.selections.section == Some(section.id);
+    let is_playing = state.playback_state.is_playing() && state.playback_state.section_id == section.id;
+    let is_selected = state.project.selections.section == section.id;
 
     let progress = match is_playing {
         true => state.progress.section_progress,

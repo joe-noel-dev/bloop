@@ -9,8 +9,8 @@ class WaveformMiddleware: Middleware {
             let newIds = project.songs.reduce(Set<Id>()) { (ids, song) in
                 var ids = ids
 
-                if let sample = song.sample {
-                    ids.insert(sample.id)
+                if song.sample.id != 0 {
+                    ids.insert(song.sample.id)
                 }
 
                 return ids

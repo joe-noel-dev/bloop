@@ -1,33 +1,18 @@
-use super::id::ID;
-use serde::{Deserialize, Serialize};
-use std::cmp::PartialEq;
+use super::random_id;
+use crate::bloop;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct Section {
-    pub id: ID,
-    pub name: String,
-    pub start: f64,
-    #[serde(rename = "loop")]
-    pub looping: bool,
-
-    #[serde(default)]
-    pub metronome: bool,
-}
-
-impl Default for Section {
-    fn default() -> Self {
-        Section {
-            id: ID::new_v4(),
+impl bloop::Section {
+    pub fn empty() -> Self {
+        Self {
+            id: random_id(),
             name: "Section".to_string(),
             start: 0.0,
-            looping: false,
+            loop_: false,
             metronome: false,
+            ..Default::default()
         }
     }
-}
 
-impl Section {
     pub fn with_name(mut self, name: String) -> Self {
         self.name = name;
         self
@@ -38,8 +23,8 @@ impl Section {
         self
     }
 
-    pub fn with_looping(mut self, looping: bool) -> Self {
-        self.looping = looping;
+    pub fn with_loop(mut self, loop_: bool) -> Self {
+        self.loop_ = loop_;
         self
     }
 
@@ -53,7 +38,7 @@ impl Section {
     }
 
     pub fn replace_ids(mut self) -> Self {
-        self.id = ID::new_v4();
+        self.id = random_id();
         self
     }
 }

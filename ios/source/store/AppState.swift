@@ -1,21 +1,28 @@
 import Foundation
 
 struct AppState {
-    var connected = false
+    var connected: ConnectionType? = .none
     var scanning = false
     var servers: [Server] = []
-    var projects: [ProjectInfo] = []
+    var projects: [Bloop_ProjectInfo] = []
     var project = emptyProject()
-    var playbackState = PlaybackState()
-    var progress = Progress()
-    var waveforms = Waveforms()
+    var playbackState = Bloop_PlaybackState()
+    var progress = Bloop_Progress()
+    var waveforms: [Id: Bloop_WaveformData] = [:]
     var navigationPath: [NavigationItem] = []
+    var errors: [String] = []
 }
 
-func emptyProject() -> Project {
-    return Project(
-        info: .init(id: "null", name: "", version: "", lastSaved: 0),
-        songs: [],
-        selections: Selections()
-    )
+func emptyProject() -> Bloop_Project {
+    Bloop_Project.with {
+
+        $0.info = .with {
+            $0.id = randomId()
+            $0.name = ""
+            $0.version = ""
+            $0.lastSaved = 0
+        }
+        $0.songs = []
+        $0.selections = Bloop_Selections()
+    }
 }

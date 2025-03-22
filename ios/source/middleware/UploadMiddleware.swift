@@ -8,7 +8,7 @@ class UploadMiddleware: Middleware {
         var position: Int = 0
     }
 
-    static private let chunkSize = 10 * 1024
+    static private let chunkSize = 1024 * 1024
 
     private var uploads: [Id: Upload] = [:]
     var dispatch: Dispatch?
@@ -42,10 +42,16 @@ class UploadMiddleware: Middleware {
 
         let slice = upload.data.subdata(in: start..<end)
 
-        let uploadRequest = UploadRequest(uploadId: uploadId, data: slice)
-        let request = Request.upload(uploadRequest)
-        let action = Action.sendRequest(request)
-        self.dispatch?(action)
+        self.dispatch?(
+            .sendRequest(
+                .with {
+                    $0.upload = .with {
+                        $0.uploadID = uploadId
+                        $0.data = slice
+                    }
+                }
+            )
+        )
 
         uploads[uploadId]?.position = end
     }
@@ -55,10 +61,15 @@ class UploadMiddleware: Middleware {
             return
         }
 
-        let completeRequest = CompleteUploadRequest(uploadId: uploadId)
-        let request = Request.completeUpload(completeRequest)
-        let action = Action.sendRequest(request)
-        self.dispatch?(action)
+        self.dispatch?(
+            .sendRequest(
+                .with {
+                    $0.completeUpload = .with {
+                        $0.uploadID = uploadId
+                    }
+                }
+            )
+        )
 
         self.addSampleToSong(songId: upload.songId, uploadId: uploadId)
 
@@ -66,29 +77,37 @@ class UploadMiddleware: Middleware {
     }
 
     private func addSampleToSong(songId: Id, uploadId: Id) {
-        let addSampleRequest = AddSampleRequest(songId: songId, uploadId: uploadId)
-        let request = Request.addSample(addSampleRequest)
-        let action = Action.sendRequest(request)
-        self.dispatch?(action)
+        self.dispatch?(
+            .sendRequest(
+                .with {
+                    $0.addSample = .with {
+                        $0.songID = songId
+                        $0.uploadID = uploadId
+                    }
+                }
+            )
+        )
     }
 
     private func startUpload(songId: Id, file: URL) {
         do {
-            let uploadId = UUID().uuidString.lowercased()
+            let uploadId = randomId()
             let fileContents = try Data(contentsOf: file)
             uploads[uploadId] = Upload(data: fileContents, songId: songId)
 
             let filename = file.deletingPathExtension().lastPathComponent
-            let fileExtension = file.pathExtension
 
-            let beginRequest = BeginUploadRequest(
-                uploadId: uploadId,
-                filename: filename,
-                format: fileExtension
+            self.dispatch?(
+                .sendRequest(
+                    .with {
+                        $0.beginUpload = .with {
+                            $0.uploadID = uploadId
+                            $0.filename = filename
+                            $0.format = .wav
+                        }
+                    }
+                )
             )
-            let request = Request.beginUpload(beginRequest)
-            let action = Action.sendRequest(request)
-            self.dispatch?(action)
         }
         catch (let error) {
             print("Error loading audio file: \(error)")

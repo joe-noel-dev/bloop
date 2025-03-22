@@ -6,6 +6,8 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
+      - name: Install system dependencies
+        run: sudo apt install -y protobuf-compiler
       - name: Install dependencies
         run: yarn install
         working-directory: editor

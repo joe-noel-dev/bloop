@@ -1,15 +1,17 @@
+import {Song} from '../api/bloop';
+import {ID, INVALID_ID} from '../api/helpers';
 import {useProject} from './project-hooks';
 
 export const useSongs = () => useProject()?.songs;
 
-export const useSong = (id: string) =>
-  useSongs()?.find((song) => song.id === id);
+export const useSong = (id: ID) =>
+  useSongs()?.find((song: Song) => song.id === id);
 
-export const useSelectedSongId = () => useProject()?.selections.song;
+export const useSelectedSongId = () => useProject()?.selections?.song;
 
 export const useSelectedSong = () => {
   const selectedSongId = useSelectedSongId();
-  return useSong(selectedSongId || '');
+  return useSong(selectedSongId || INVALID_ID);
 };
 
 export const useSelectedSongIndex = () => {

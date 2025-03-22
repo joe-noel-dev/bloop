@@ -4,7 +4,7 @@ struct ContentView: View {
     @EnvironmentObject var store: Store
 
     var body: some View {
-        if store.state.connected {
+        if store.state.connected != nil {
             ProjectView(
                 state: store.state
             ) {

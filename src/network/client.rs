@@ -1,9 +1,10 @@
-use super::error;
-use crate::api::{Request, Response};
+use crate::bloop::{Request, Response};
+
 use futures::SinkExt;
 use futures_util::stream::{SplitSink, SplitStream};
 use futures_util::StreamExt;
 use log::{error, info, warn};
+use protobuf::Message as ProtobufMessage;
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio::select;
@@ -115,35 +116,16 @@ pub async fn run(socket: TcpStream, request_tx: mpsc::Sender<Request>, response_
 }
 
 fn convert_response(response: &Response) -> Option<Message> {
-    let document = match bson::to_document(response) {
-        Ok(doc) => doc,
+    match response.write_to_bytes() {
+        Ok(data) => Some(Message::binary(data)),
         Err(error) => {
             error!("Error serialising response: {error}");
-            return None;
+            None
         }
-    };
-
-    let mut data: Vec<u8> = vec![];
-    document.to_writer(&mut data).unwrap();
-    Some(Message::binary(data))
+    }
 }
 
-fn convert_bytes_to_request(message: &[u8]) -> Result<Request, error::NetworkError> {
-    let document = match bson::Document::from_reader(&mut &message[..]) {
-        Ok(doc) => doc,
-        Err(error) => {
-            let message = format!("Failed to parse JSON: {error}");
-            return Err(error::NetworkError::new(&message));
-        }
-    };
-
-    let request: Request = match bson::from_document(document) {
-        Ok(request) => request,
-        Err(error) => {
-            let message = format!("Error parsing request: {error}");
-            return Err(error::NetworkError::new(&message));
-        }
-    };
-
+fn convert_bytes_to_request(message: &[u8]) -> anyhow::Result<Request> {
+    let request = Request::parse_from_bytes(message)?;
     Ok(request)
 }

@@ -4,7 +4,7 @@ use crate::model::{Project, Section, Song, Tempo, ID};
 
 use super::sequence::{Sequence, SequencePoint};
 
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct SequenceData {
     pub song_id: Option<ID>,
     pub section_id: Option<ID>,
@@ -17,8 +17,8 @@ pub struct SequenceData {
 pub fn generate_sequence_for_song(
     start_time: Timestamp,
     project: &Project,
-    song_id: &ID,
-    from_section: &ID,
+    song_id: ID,
+    from_section: ID,
 ) -> Sequence<SequenceData> {
     let song = match project.song_with_id(song_id) {
         Some(song) => song,
@@ -36,18 +36,18 @@ pub fn generate_sequence_for_song(
 
 fn sequence_point_for_section_from_reference(
     section: &Section,
-    reference_section_id: &ID,
+    reference_section_id: ID,
     reference_time: Timestamp,
     song: &Song,
 ) -> Option<SequencePoint<SequenceData>> {
-    start_time_of_section(song, &section.id, reference_section_id, reference_time)
+    start_time_of_section(song, section.id, reference_section_id, reference_time)
         .map(|start_time| sequence_point_for_section(section, song, start_time))
 }
 
 fn start_time_of_section(
     song: &Song,
-    section_id: &ID,
-    reference_section_id: &ID,
+    section_id: ID,
+    reference_section_id: ID,
     reference_time: Timestamp,
 ) -> Option<Timestamp> {
     if let Some(beat_position) = beat_position_of_section(song, section_id, reference_section_id) {
@@ -57,7 +57,7 @@ fn start_time_of_section(
     None
 }
 
-fn beat_position_of_section(song: &Song, section_id: &ID, reference_section_id: &ID) -> Option<f64> {
+fn beat_position_of_section(song: &Song, section_id: ID, reference_section_id: ID) -> Option<f64> {
     let reference_section = song.find_section(reference_section_id);
     let section = song.find_section(section_id);
 
@@ -71,21 +71,21 @@ fn beat_position_of_section(song: &Song, section_id: &ID, reference_section_id: 
 }
 
 fn sequence_point_for_section(section: &Section, song: &Song, start_time: Timestamp) -> SequencePoint<SequenceData> {
-    let section_length = song.section_length(&section.id);
+    let section_length = song.section_length(section.id);
     let section_duration = Timestamp::from_beats(section_length, song.tempo.get_bpm());
     let start_position_in_sample = Timestamp::from_beats(section.start, song.tempo.get_bpm());
 
     SequencePoint {
         start_time,
         duration: section_duration,
-        loop_enabled: section.looping,
+        loop_enabled: section.loop_,
         data: SequenceData {
             song_id: Some(song.id),
             section_id: Some(section.id),
             sample_id: song.sample.as_ref().map(|sample| sample.id),
             position_in_sample: start_position_in_sample,
             metronome: section.metronome,
-            tempo: song.tempo,
+            tempo: song.tempo.clone().unwrap_or(Tempo::new_with_bpm(120.0)),
         },
     }
 }
@@ -102,16 +102,16 @@ mod test {
         let song_count = 1;
         let section_count = 3;
 
-        let mut project = Project::new().with_songs(song_count, section_count);
+        let mut project = Project::empty().with_songs(song_count, section_count);
 
         let tempo = 123.0;
         let sample_beat_length = 15.0;
-        let sample = Sample::new().with_beat_length(Tempo::new(tempo), sample_beat_length, 48_000);
+        let sample = Sample::empty().with_beat_length(Tempo::new_with_bpm(tempo), sample_beat_length, 48_000);
 
         {
             let song = &mut project.songs[0];
-            song.tempo = Tempo::new(tempo);
-            song.sample = Some(sample.clone());
+            song.tempo = Some(Tempo::new_with_bpm(tempo)).into();
+            song.sample = Some(sample.clone()).into();
 
             {
                 let section_1 = &mut song.sections[0];
@@ -133,7 +133,7 @@ mod test {
         let start_time = Timestamp::from_seconds(8.0);
 
         let song_id = song.id;
-        let sequence = generate_sequence_for_song(start_time, &project, &song_id, &song.sections[0].id);
+        let sequence = generate_sequence_for_song(start_time, &project, song_id, song.sections[0].id);
 
         assert_eq!(sequence.points.len(), 3);
 
@@ -148,7 +148,7 @@ mod test {
                     sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(1.0, tempo),
                     metronome: false,
-                    tempo: Tempo::new(tempo),
+                    tempo: Tempo::new_with_bpm(tempo),
                 },
             },
             SequencePoint {
@@ -161,7 +161,7 @@ mod test {
                     sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(5.0, tempo),
                     metronome: false,
-                    tempo: Tempo::new(tempo),
+                    tempo: Tempo::new_with_bpm(tempo),
                 },
             },
             SequencePoint {
@@ -174,7 +174,7 @@ mod test {
                     sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(10.0, tempo),
                     metronome: false,
-                    tempo: Tempo::new(tempo),
+                    tempo: Tempo::new_with_bpm(tempo),
                 },
             },
         ];
@@ -187,16 +187,16 @@ mod test {
         let song_count = 1;
         let section_count = 3;
 
-        let mut project = Project::new().with_songs(song_count, section_count);
+        let mut project = Project::empty().with_songs(song_count, section_count);
 
         let tempo = 142.0;
         let sample_beat_length = 20.0;
-        let sample = Sample::new().with_beat_length(Tempo::new(tempo), sample_beat_length, 48_000);
+        let sample = Sample::empty().with_beat_length(Tempo::new_with_bpm(tempo), sample_beat_length, 48_000);
 
         {
             let song = &mut project.songs[0];
-            song.tempo = Tempo::new(tempo);
-            song.sample = Some(sample.clone());
+            song.tempo = Some(Tempo::new_with_bpm(tempo)).into();
+            song.sample = Some(sample.clone()).into();
 
             {
                 let section_1 = &mut song.sections[0];
@@ -206,7 +206,7 @@ mod test {
             {
                 let section_2 = &mut song.sections[1];
                 section_2.start = 9.0;
-                section_2.looping = true;
+                section_2.loop_ = true;
             }
 
             {
@@ -218,7 +218,7 @@ mod test {
         let start_time = Timestamp::from_seconds(4.0);
 
         let song = &project.songs[0];
-        let sequence = generate_sequence_for_song(start_time, &project, &song.id, &song.sections[0].id);
+        let sequence = generate_sequence_for_song(start_time, &project, song.id, song.sections[0].id);
 
         assert_eq!(sequence.points.len(), 3);
 
@@ -233,7 +233,7 @@ mod test {
                     sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(7.0, tempo),
                     metronome: false,
-                    tempo: Tempo::new(tempo),
+                    tempo: Tempo::new_with_bpm(tempo),
                 },
             },
             SequencePoint {
@@ -246,7 +246,7 @@ mod test {
                     sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(9.0, tempo),
                     metronome: false,
-                    tempo: Tempo::new(tempo),
+                    tempo: Tempo::new_with_bpm(tempo),
                 },
             },
             SequencePoint {
@@ -259,7 +259,7 @@ mod test {
                     sample_id: Some(sample.id),
                     position_in_sample: Timestamp::from_beats(15.0, tempo),
                     metronome: false,
-                    tempo: Tempo::new(tempo),
+                    tempo: Tempo::new_with_bpm(tempo),
                 },
             },
         ];

@@ -1,0 +1,17 @@
+include!(concat!(env!("OUT_DIR"), "/protos/mod.rs"));
+
+mod api;
+mod audio;
+mod control;
+mod core;
+mod ffi;
+mod generators;
+mod logger;
+mod midi;
+mod model;
+mod network;
+mod preferences;
+mod samples;
+mod switch;
+mod types;
+mod waveform;

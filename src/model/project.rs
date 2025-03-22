@@ -1,47 +1,34 @@
 use super::id::ID;
-use super::sample::Sample;
-use super::section::Section;
-use super::selections::Selections;
-use super::song::Song;
+use super::random_id;
+use super::Song;
+use super::INVALID_ID;
+use crate::bloop::*;
 use anyhow::anyhow;
 use anyhow::Context;
-use serde::{Deserialize, Serialize};
-use std::cmp::PartialEq;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct Project {
-    pub info: ProjectInfo,
-    pub songs: Vec<Song>,
-    pub selections: Selections,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct ProjectInfo {
-    pub id: ID,
-    pub name: String,
-    pub version: String,
-    pub last_saved: i64,
-}
-
-impl Default for Project {
-    fn default() -> Self {
-        Self::empty()
+impl ProjectInfo {
+    pub fn empty() -> Self {
+        Self {
+            id: random_id(),
+            name: "Project".to_string(),
+            version: "1".to_string(),
+            last_saved: 0,
+            ..Default::default()
+        }
     }
 }
 
 impl Project {
     pub fn empty() -> Self {
-        Self {
-            info: ProjectInfo::default(),
-            songs: vec![],
-            selections: Selections::default(),
-        }
+        let mut project = Self::new();
+        project.info = Some(ProjectInfo::empty()).into();
+        project.selections = Some(Selections::default()).into();
+        project
     }
 
-    pub fn with_name(mut self, name: &str) -> Self {
-        self.info.name = String::from(name);
+    pub fn with_name(mut self, name: String) -> Self {
+        let info = self.info.as_mut().expect("Missing project info");
+        info.name = name;
         self
     }
 
@@ -56,19 +43,15 @@ impl Project {
         self
     }
 
-    pub fn new() -> Self {
-        Self::empty().with_songs(1, 1)
+    pub fn song_with_id(&self, id: ID) -> Option<&Song> {
+        self.songs.iter().find(|s| s.id == id)
     }
 
-    pub fn song_with_id(&self, id: &ID) -> Option<&Song> {
-        self.songs.iter().find(|s| s.id == *id)
+    pub fn song_with_id_mut(&mut self, id: ID) -> Option<&mut Song> {
+        self.songs.iter_mut().find(|s| s.id == id)
     }
 
-    pub fn song_with_id_mut(&mut self, id: &ID) -> Option<&mut Song> {
-        self.songs.iter_mut().find(|s| s.id == *id)
-    }
-
-    pub fn section_with_id(&self, id: &ID) -> Option<&Section> {
+    pub fn section_with_id(&self, id: ID) -> Option<&Section> {
         for song in self.songs.iter() {
             if let Some(section) = song.find_section(id) {
                 return Some(section);
@@ -93,7 +76,7 @@ impl Project {
         Ok(self)
     }
 
-    pub fn add_section_to_song(self, song_id: &ID) -> anyhow::Result<Self> {
+    pub fn add_section_to_song(self, song_id: ID) -> anyhow::Result<Self> {
         let song = self
             .song_with_id(song_id)
             .with_context(|| format!("Couldn't find song ID {song_id}"))?;
@@ -107,20 +90,22 @@ impl Project {
             start = last_section.start + default_length;
         }
 
-        let section = Section::default().with_start(start);
+        let section = Section::empty().with_start(start);
 
         song.sections.push(section);
 
         self.replace_song(&song)
     }
 
-    pub fn contains_song(&self, song_id: &ID) -> bool {
-        self.songs.iter().any(|s| s.id == *song_id)
+    pub fn contains_song(&self, song_id: ID) -> bool {
+        self.songs.iter().any(|s| s.id == song_id)
     }
 
     pub fn selected_song_index(&self) -> Option<usize> {
-        let song_id = self.selections.song?;
-        self.songs.iter().position(|song| song.id == song_id)
+        if self.selections.song == INVALID_ID {
+            return None;
+        }
+        self.songs.iter().position(|song| song.id == self.selections.song)
     }
 
     pub fn song_with_index(&self, index: usize) -> Option<&Song> {
@@ -137,27 +122,29 @@ impl Project {
             }
         };
 
-        self.select_song_with_id(&selected_song_id)
+        self.select_song_with_id(selected_song_id)
     }
 
-    pub fn select_song_with_id(mut self, song_id: &ID) -> Self {
+    pub fn select_song_with_id(mut self, song_id: ID) -> Self {
         if let Some(song) = self.song_with_id(song_id) {
-            self.selections = Selections {
-                song: Some(*song_id),
-                section: song.sections.first().map(|section| section.id),
-            }
+            self.selections = Some(Selections {
+                song: song_id,
+                section: song.sections.first().map(|section| section.id).unwrap_or(INVALID_ID),
+                ..Default::default()
+            })
+            .into();
         }
 
         self
     }
 
-    pub fn song_with_section(&self, section_id: &ID) -> Option<&Song> {
+    pub fn song_with_section(&self, section_id: ID) -> Option<&Song> {
         self.songs
             .iter()
-            .find(|song| song.sections.iter().any(|section| section.id == *section_id))
+            .find(|song| song.sections.iter().any(|section| section.id == section_id))
     }
 
-    pub fn remove_section(mut self, section_id: &ID) -> anyhow::Result<Self> {
+    pub fn remove_section(mut self, section_id: ID) -> anyhow::Result<Self> {
         let mut song = self
             .song_with_section(section_id)
             .with_context(|| format!("Couldn't find song with section ID: {section_id}"))?
@@ -167,7 +154,7 @@ impl Project {
             return Err(anyhow!("Can't remove last section"));
         }
 
-        let section_index = song.sections.iter().position(|section| section.id == *section_id);
+        let section_index = song.sections.iter().position(|section| section.id == section_id);
 
         song = song.remove_section(section_id);
 
@@ -188,8 +175,11 @@ impl Project {
     }
 
     pub fn selected_song(&self) -> Option<&Song> {
-        let song_id = self.selections.song?;
-        self.song_with_id(&song_id)
+        if self.selections.song == INVALID_ID {
+            return None;
+        }
+
+        self.song_with_id(self.selections.song)
     }
 
     pub fn select_section_at_index(mut self, index: usize) -> anyhow::Result<Self> {
@@ -201,23 +191,23 @@ impl Project {
         let index = index.min(song.sections.len() - 1);
         let new_section_id = song.sections[index].id;
 
-        self = self.select_section(&new_section_id)?;
+        self = self.select_section(new_section_id)?;
 
         Ok(self)
     }
 
     pub fn selection_is_valid(&self) -> bool {
         let song_id = match self.selections.song {
-            Some(song_id) => song_id,
-            None => return false,
+            INVALID_ID => return false,
+            song_id => song_id,
         };
 
         let section_id = match self.selections.section {
-            Some(section_id) => section_id,
-            None => return false,
+            INVALID_ID => return false,
+            section_id => section_id,
         };
 
-        let song = match self.song_with_id(&song_id) {
+        let song = match self.song_with_id(song_id) {
             Some(song) => song,
             None => return false,
         };
@@ -227,13 +217,13 @@ impl Project {
 
     pub fn add_song(mut self, num_sections: usize) -> Self {
         assert!(num_sections >= 1);
-        let sections: Vec<Section> = (0..num_sections).map(|_| Section::default()).collect();
-        let song = Song::default().with_sections(sections);
+        let sections: Vec<Section> = (0..num_sections).map(|_| Section::empty()).collect();
+        let song = Song::empty().with_sections(sections);
         self.songs.push(song);
         self.select_last_song()
     }
 
-    pub fn remove_song(mut self, song_id: &ID) -> anyhow::Result<Self> {
+    pub fn remove_song(mut self, song_id: ID) -> anyhow::Result<Self> {
         if self.songs.len() < 2 {
             return Err(anyhow!("Can't remove last song"));
         }
@@ -244,7 +234,7 @@ impl Project {
 
         let selected_song_index = self.selected_song_index();
 
-        self.songs.retain(|song| &song.id != song_id);
+        self.songs.retain(|song| song.id != song_id);
 
         if !self.selection_is_valid() {
             self = match selected_song_index {
@@ -263,7 +253,7 @@ impl Project {
 
         self.songs
             .iter_mut()
-            .filter_map(|song| song.find_section_mut(&new_section.id))
+            .filter_map(|song| song.find_section_mut(new_section.id))
             .for_each(|section| *section = new_section.clone());
 
         if !self.is_valid() {
@@ -282,7 +272,7 @@ impl Project {
             return Err(anyhow!("Invalid sample"));
         }
 
-        let old_sample = match self.find_sample_mut(&sample.id) {
+        let old_sample = match self.find_sample_mut(sample.id) {
             Some(sample) => sample,
             None => return Err(anyhow!("Sample not found: {}", sample.id)),
         };
@@ -292,18 +282,18 @@ impl Project {
         self.songs
             .iter_mut()
             .filter(|song| song.sample.is_some() && song.sample.as_ref().unwrap().id == sample.id)
-            .for_each(|song| song.tempo = sample.tempo);
+            .for_each(|song| song.tempo = sample.tempo.clone());
 
         Ok(self)
     }
 
-    pub fn add_sample_to_song(mut self, sample: Sample, song_id: &ID) -> anyhow::Result<Self> {
+    pub fn add_sample_to_song(mut self, sample: Sample, song_id: ID) -> anyhow::Result<Self> {
         let song = self
             .song_with_id_mut(song_id)
             .ok_or_else(|| anyhow!("Couldn't find song with ID: {}", song_id))?;
 
-        let tempo = sample.tempo;
-        song.sample = Some(sample);
+        let tempo = sample.tempo.clone();
+        song.sample = Some(sample).into();
         song.tempo = tempo;
 
         Ok(self)
@@ -312,15 +302,13 @@ impl Project {
     pub fn select_last_song(self) -> Self {
         let last_song_id = match self.songs.last() {
             Some(song) => song.id,
-            None => {
-                return self;
-            }
+            None => return self,
         };
 
-        self.select_song_with_id(&last_song_id)
+        self.select_song_with_id(last_song_id)
     }
 
-    pub fn select_section(mut self, section_id: &ID) -> anyhow::Result<Self> {
+    pub fn select_section(mut self, section_id: ID) -> anyhow::Result<Self> {
         if self.section_with_id(section_id).is_none() {
             return Err(anyhow!("Couldn't find section with ID: {}", section_id));
         }
@@ -330,10 +318,12 @@ impl Project {
             .ok_or_else(|| anyhow!("Couldn't find song with Section ID: {}", section_id))?
             .id;
 
-        self.selections = Selections {
-            song: Some(song_id),
-            section: Some(*section_id),
-        };
+        self.selections = Some(Selections {
+            song: song_id,
+            section: section_id,
+            ..Default::default()
+        })
+        .into();
 
         Ok(self)
     }
@@ -372,11 +362,18 @@ impl Project {
 
     #[allow(dead_code)]
     pub fn select_next_section(self) -> anyhow::Result<Self> {
-        let song_id = self.selections.song.ok_or_else(|| anyhow!("No song selected"))?;
-        let section_id = self.selections.section.ok_or_else(|| anyhow!("No section selected"))?;
+        let song_id = match self.selections.song {
+            INVALID_ID => return Err(anyhow!("No song selected")),
+            song_id => song_id,
+        };
+
+        let section_id = match self.selections.section {
+            INVALID_ID => return Err(anyhow!("No section selected")),
+            section_id => section_id,
+        };
 
         let song = self
-            .song_with_id(&song_id)
+            .song_with_id(song_id)
             .ok_or_else(|| anyhow!("Couldn't find song with ID: {}", song_id))?;
 
         let current_section_index = match song.sections.iter().position(|section| section.id == section_id) {
@@ -391,15 +388,22 @@ impl Project {
         }
 
         let next_section_id = song.sections[current_section_index + 1].id;
-        self.select_section(&next_section_id)
+        self.select_section(next_section_id)
     }
 
     pub fn select_previous_section(self) -> anyhow::Result<Self> {
-        let song_id = self.selections.song.ok_or_else(|| anyhow!("No song selected"))?;
-        let section_id = self.selections.section.ok_or_else(|| anyhow!("No section selected"))?;
+        let song_id = match self.selections.song {
+            INVALID_ID => return Err(anyhow!("No song selected")),
+            song_id => song_id,
+        };
+
+        let section_id = match self.selections.section {
+            INVALID_ID => return Err(anyhow!("No section selected")),
+            section_id => section_id,
+        };
 
         let song = self
-            .song_with_id(&song_id)
+            .song_with_id(song_id)
             .ok_or_else(|| anyhow!("Couldn't find song with ID: {}", song_id))?;
 
         let current_section_index = match song.sections.iter().position(|section| section.id == section_id) {
@@ -414,21 +418,21 @@ impl Project {
         }
 
         let next_section_id = song.sections[current_section_index - 1].id;
-        self.select_section(&next_section_id)
+        self.select_section(next_section_id)
     }
 
-    pub fn remove_sample_from_song(mut self, song_id: &ID) -> anyhow::Result<Self> {
+    pub fn remove_sample_from_song(mut self, song_id: ID) -> anyhow::Result<Self> {
         if let Some(song) = self.song_with_id_mut(song_id) {
-            song.sample = None;
+            song.sample = None.into();
         }
 
         Ok(self)
     }
 
-    pub fn find_sample(&self, sample_id: &ID) -> Option<&Sample> {
+    pub fn find_sample(&self, sample_id: ID) -> Option<&Sample> {
         for song in self.songs.iter() {
-            if let Some(sample) = &song.sample {
-                if sample.id == *sample_id {
+            if let Some(sample) = song.sample.as_ref() {
+                if sample.id == sample_id {
                     return Some(sample);
                 }
             }
@@ -437,10 +441,10 @@ impl Project {
         None
     }
 
-    pub fn find_sample_mut(&mut self, sample_id: &ID) -> Option<&mut Sample> {
+    pub fn find_sample_mut(&mut self, sample_id: ID) -> Option<&mut Sample> {
         for song in self.songs.iter_mut() {
-            if let Some(sample) = &mut song.sample {
-                if sample.id == *sample_id {
+            if let Some(sample) = song.sample.as_mut() {
+                if sample.id == sample_id {
                     return Some(sample);
                 }
             }
@@ -450,22 +454,23 @@ impl Project {
     }
 
     pub fn replace_ids(mut self) -> Self {
-        self.info.id = ID::new_v4();
-        self.songs = self.songs.iter().map(|song| song.clone().replace_ids()).collect();
-        self.selections.song = self.songs.first().map(|song| song.id);
-        self.selections.section = (|| Some(self.songs.first()?.sections.first()?.id))();
-        self
-    }
-}
+        let info = self.info.as_mut().expect("Missing project info");
+        info.id = random_id();
 
-impl Default for ProjectInfo {
-    fn default() -> Self {
-        Self {
-            id: ID::new_v4(),
-            name: "Project".to_string(),
-            version: "1".to_string(),
-            last_saved: 0,
-        }
+        self.songs = self.songs.iter().map(|song| song.clone().replace_ids()).collect();
+        self.selections = Some(Selections {
+            song: self.songs.first().map(|song| song.id).unwrap_or(INVALID_ID),
+            section: self
+                .songs
+                .first()
+                .and_then(|song| song.sections.first())
+                .map(|section| section.id)
+                .unwrap_or(INVALID_ID),
+            ..Default::default()
+        })
+        .into();
+
+        self
     }
 }
 
@@ -477,16 +482,16 @@ mod tests {
     fn create_with_songs() {
         let num_songs = 10;
         let num_sections = 10;
-        let project = Project::new().with_songs(num_songs, num_sections);
+        let project = Project::empty().with_songs(num_songs, num_sections);
         assert_eq!(project.songs.len(), num_songs);
         assert!(project.songs.iter().all(|song| song.sections.len() == num_sections));
     }
 
     #[test]
     fn get_song_by_id() {
-        let project = Project::new().with_songs(5, 5);
+        let project = Project::empty().with_songs(5, 5);
         let song = &project.songs[2];
-        let retrieved_song = match project.song_with_id(&song.id) {
+        let retrieved_song = match project.song_with_id(song.id) {
             Some(song) => song,
             None => panic!("Couldn't find song"),
         };
@@ -495,14 +500,15 @@ mod tests {
 
     #[test]
     fn get_missing_song_by_id() {
-        let project = Project::new().with_songs(5, 5);
-        let retrieved_song = project.song_with_id(&ID::new_v4());
+        let project = Project::empty().with_songs(5, 5);
+        let id = random_id();
+        let retrieved_song = project.song_with_id(id);
         assert!(retrieved_song.is_none());
     }
 
     #[test]
     fn replace_song() {
-        let mut project = Project::new().with_songs(5, 5);
+        let mut project = Project::empty().with_songs(5, 5);
         let mut song = project.songs[3].clone();
         song.name = "New song name".to_string();
         project = project.replace_song(&song).expect("Couldn't replace song");
@@ -511,60 +517,54 @@ mod tests {
 
     #[test]
     fn select_next_song() {
-        let mut project = Project::new().with_songs(5, 5);
+        let mut project = Project::empty().with_songs(5, 5);
         let song_id = project.songs[1].id;
         project = project.select_next_song();
-        let selected_song_id = project.selections.song.expect("No song selected");
-        assert_eq!(selected_song_id, song_id);
+        assert_eq!(project.selections.song, song_id);
     }
 
     #[test]
     fn select_next_song_from_end() {
-        let mut project = Project::new().with_songs(5, 5);
+        let mut project = Project::empty().with_songs(5, 5);
         project = project.select_last_song();
         let song_id = project.songs[4].id;
         project = project.select_next_song();
-        let selected_song_id = project.selections.song.expect("No song selected");
-        assert_eq!(selected_song_id, song_id);
+        assert_eq!(project.selections.song, song_id);
     }
 
     #[test]
     fn select_previous_song() {
-        let mut project = Project::new().with_songs(5, 5);
+        let mut project = Project::empty().with_songs(5, 5);
         project = project.select_last_song();
         let song_id = project.songs[3].id;
         project = project.select_previous_song();
-        let selected_song_id = project.selections.song.expect("No song selected");
-        assert_eq!(selected_song_id, song_id);
+        assert_eq!(project.selections.song, song_id);
     }
 
     #[test]
     fn select_previous_song_from_start() {
-        let mut project = Project::new().with_songs(5, 5);
+        let mut project = Project::empty().with_songs(5, 5);
         let song_id = project.songs[0].id;
         project = project.select_previous_song();
-        let selected_song_id = project.selections.song.expect("No song selected");
-        assert_eq!(selected_song_id, song_id);
+        assert_eq!(project.selections.song, song_id);
     }
 
     #[test]
     fn select_next_section() {
-        let mut project = Project::new().with_songs(5, 5);
+        let mut project = Project::empty().with_songs(5, 5);
         let section_id = project.songs[0].sections[1].id;
         project = project.select_next_section().expect("Couldn't select next section");
-        let selected_section_id = project.selections.section.expect("No section selected");
-        assert_eq!(selected_section_id, section_id);
+        assert_eq!(project.selections.section, section_id);
     }
 
     #[test]
     fn select_previous_section() {
-        let mut project = Project::new().with_songs(5, 5);
+        let mut project = Project::empty().with_songs(5, 5);
         let initial_section_id = project.songs[0].sections[4].id;
         project = project
-            .select_section(&initial_section_id)
+            .select_section(initial_section_id)
             .expect("Couldn't select initial section");
         project = project.select_previous_section().expect("Couldn't select next section");
-        let selected_section_id = project.selections.section.expect("No section selected");
-        assert_eq!(selected_section_id, project.songs[0].sections[3].id);
+        assert_eq!(project.selections.section, project.songs[0].sections[3].id);
     }
 }

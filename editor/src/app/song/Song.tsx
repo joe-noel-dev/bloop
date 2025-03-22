@@ -10,13 +10,13 @@ import {
 } from '../../api/request';
 import {useCore} from '../../core/use-core';
 import {columnSize, columns} from '../section/TableInfo';
-import {Song as ModelSong} from '../../model';
-import {updateSectionBeatLength} from '../../model/song';
 import {ClickToEdit} from '../../components/ClickToEdit';
 import {AbletonUpload} from './AbletonUpload';
+import {ID, INVALID_ID, updateSectionBeatLength} from '../../api/helpers';
+import {Song as ModelSong} from '../../api/bloop';
 
 interface SongProps {
-  songId: string;
+  songId: ID;
   moveSong: (indexDelta: number) => void;
 }
 
@@ -46,7 +46,7 @@ export const Song = ({songId, moveSong}: SongProps) => {
     moveSong(1);
   };
 
-  const updateSectionDuration = (sectionId: string, duration: number) => {
+  const updateSectionDuration = (sectionId: ID, duration: number) => {
     const newSong = {...song};
     updateSectionBeatLength(newSong, sectionId, duration);
     const request = updateSongRequest(newSong);
@@ -105,7 +105,7 @@ const SongDetails = ({
     <ClickToEdit initialValue={song.name} onSave={onEditName} size="large" />
     <Stack direction={'row'} spacing={1} alignItems={'center'}>
       <ClickToEdit
-        initialValue={`${song.tempo.bpm}`}
+        initialValue={`${song.tempo?.bpm ?? 120.0}`}
         onSave={(value) => onEditTempo(parseFloat(value))}
         size="medium"
         endDecorator={
@@ -143,7 +143,7 @@ const SongDetails = ({
 
       <RemoveButton onClick={onRemove} />
 
-      <Sample sampleId={song.sample?.id || ''} songId={song.id} />
+      <Sample sampleId={song.sample?.id ?? INVALID_ID} songId={song.id} />
     </Stack>
   </Stack>
 );
@@ -188,14 +188,14 @@ const SectionsTable = ({
 }: {
   song: ModelSong;
   requestAdd: () => void;
-  requestUpdateSectionDuration: (sectionId: string, duration: number) => void;
+  requestUpdateSectionDuration: (sectionId: ID, duration: number) => void;
 }) => (
   <Stack spacing={1}>
     <TableHeader />
 
     {song.sections.map((section) => (
       <Section
-        key={section.id}
+        key={section.id.toString()}
         songId={song.id}
         sectionId={section.id}
         requestUpdateDuration={requestUpdateSectionDuration}

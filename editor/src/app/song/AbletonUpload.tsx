@@ -5,9 +5,10 @@ import pako from 'pako';
 import {Core} from '../../core/Core';
 import {addSectionWithParamsRequest} from '../../api/request';
 import {useCore} from '../../core/use-core';
+import {ID} from '../../api/helpers';
 
 interface Props {
-  songId: string;
+  songId: ID;
 }
 
 export const AbletonUpload = ({songId}: Props) => {
@@ -50,7 +51,7 @@ export const AbletonUpload = ({songId}: Props) => {
   );
 };
 
-const uploadFromAls = async (alsProject: File, songId: string, core: Core) => {
+const uploadFromAls = async (alsProject: File, songId: ID, core: Core) => {
   const xml = await unzip(alsProject);
   const document = toXmlDocument(xml);
   const locators = getLocators(document);

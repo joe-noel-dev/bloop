@@ -7,10 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		74B089872D11D2B9004DEC24 /* Server.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B089862D11D2B7004DEC24 /* Server.swift */; };
+		740E75152D878D48006F62C8 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 740E75142D878D48006F62C8 /* AudioToolbox.framework */; };
+		740E75172D880F6A006F62C8 /* CoreFFI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75162D880F66006F62C8 /* CoreFFI.swift */; };
+		740E75192D882DA9006F62C8 /* FFIMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75182D882DA5006F62C8 /* FFIMiddleware.swift */; };
+		740E751B2D882E0D006F62C8 /* ResponseMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E751A2D882E06006F62C8 /* ResponseMiddleware.swift */; };
+		740E751D2D88307D006F62C8 /* ApiCodecMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E751C2D883072006F62C8 /* ApiCodecMiddleware.swift */; };
+		740E75262D8A1D6C006F62C8 /* bloop.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 740E751E2D885039006F62C8 /* bloop.xcframework */; };
+		740E75282D8A2720006F62C8 /* AudioSessionMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75272D8A271C006F62C8 /* AudioSessionMiddleware.swift */; };
+		740E752A2D8CC054006F62C8 /* ImportMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75292D8CC050006F62C8 /* ImportMiddleware.swift */; };
+		740E752D2D8F52AC006F62C8 /* bloop.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E752C2D8F52AC006F62C8 /* bloop.pb.swift */; };
+		740E75302D8F5330006F62C8 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 740E752F2D8F5330006F62C8 /* SwiftProtobuf */; };
+		740E75322D8F5478006F62C8 /* ApiHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75312D8F5474006F62C8 /* ApiHelpers.swift */; };
 		74CBF57A2D22DC28005C5ABF /* NavigationItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74CBF5782D22DC28005C5ABF /* NavigationItem.swift */; };
 		C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DB2A4F123400F8138D /* DisconnectedView.swift */; };
-		C20240DE2A4F14D100F8138D /* DemoProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DD2A4F14D100F8138D /* DemoProject.swift */; };
 		C20240E02A4F255B00F8138D /* SongView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DF2A4F255B00F8138D /* SongView.swift */; };
 		C20F17CF2AB07C2B00ECF2EB /* Discovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F17CE2AB07C2B00ECF2EB /* Discovery.swift */; };
 		C222A9542A588ACB00418CBB /* WaveformMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */; };
@@ -24,19 +33,8 @@
 		C229B9822A4D9FD30044F2C6 /* Action.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B9812A4D9FD30044F2C6 /* Action.swift */; };
 		C229B9852A4DA0000044F2C6 /* Middleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B9842A4DA0000044F2C6 /* Middleware.swift */; };
 		C229B9872A4DA0B40044F2C6 /* RootReducer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B9862A4DA0B40044F2C6 /* RootReducer.swift */; };
-		C229B98A2A4DA1F60044F2C6 /* ProjectInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B9892A4DA1F60044F2C6 /* ProjectInfo.swift */; };
-		C229B98C2A4DA25F0044F2C6 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B98B2A4DA25F0044F2C6 /* Project.swift */; };
-		C229B98E2A4DA2850044F2C6 /* Song.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B98D2A4DA2850044F2C6 /* Song.swift */; };
-		C229B9902A4DA2E50044F2C6 /* Selections.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B98F2A4DA2E50044F2C6 /* Selections.swift */; };
-		C229B9922A4DA30B0044F2C6 /* Id.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B9912A4DA30B0044F2C6 /* Id.swift */; };
-		C229B9942A4DA3310044F2C6 /* Tempo.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B9932A4DA3310044F2C6 /* Tempo.swift */; };
-		C229B9962A4DA3510044F2C6 /* Section.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B9952A4DA3510044F2C6 /* Section.swift */; };
-		C229B9982A4DA3820044F2C6 /* Sample.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B9972A4DA3820044F2C6 /* Sample.swift */; };
 		C229B99B2A4DD55D0044F2C6 /* Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B99A2A4DD55D0044F2C6 /* Core.swift */; };
 		C229B99D2A4DDE7C0044F2C6 /* CoreConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B99C2A4DDE7C0044F2C6 /* CoreConnection.swift */; };
-		C229B9A02A4DE4DF0044F2C6 /* Request.swift in Sources */ = {isa = PBXBuildFile; fileRef = C229B99F2A4DE4DF0044F2C6 /* Request.swift */; };
-		C23F51202A4ED75500F4C383 /* SwiftBSON in Frameworks */ = {isa = PBXBuildFile; productRef = C23F511F2A4ED75500F4C383 /* SwiftBSON */; };
-		C23F51222A4EE10100F4C383 /* Request+Codable.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23F51212A4EE10100F4C383 /* Request+Codable.swift */; };
 		C247A6E42A4D949A00001DB2 /* BloopApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A6E32A4D949A00001DB2 /* BloopApp.swift */; };
 		C247A6E62A4D949A00001DB2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A6E52A4D949A00001DB2 /* ContentView.swift */; };
 		C247A6E82A4D949D00001DB2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C247A6E72A4D949D00001DB2 /* Assets.xcassets */; };
@@ -44,11 +42,6 @@
 		C247A6F62A4D949D00001DB2 /* BloopTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A6F52A4D949D00001DB2 /* BloopTests.swift */; };
 		C247A7002A4D949D00001DB2 /* BloopUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A6FF2A4D949D00001DB2 /* BloopUITests.swift */; };
 		C247A7022A4D949D00001DB2 /* BloopUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C247A7012A4D949D00001DB2 /* BloopUITestsLaunchTests.swift */; };
-		C257C1692A4DEBD60080ECC2 /* SwiftBSON in Frameworks */ = {isa = PBXBuildFile; productRef = C257C1682A4DEBD60080ECC2 /* SwiftBSON */; };
-		C257C16B2A4DF5C00080ECC2 /* Response.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C16A2A4DF5C00080ECC2 /* Response.swift */; };
-		C257C16D2A4DF6340080ECC2 /* PlaybackState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C16C2A4DF6340080ECC2 /* PlaybackState.swift */; };
-		C257C16F2A4DF6D40080ECC2 /* Waveform.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C16E2A4DF6D40080ECC2 /* Waveform.swift */; };
-		C257C1712A4DF81E0080ECC2 /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C1702A4DF81E0080ECC2 /* Progress.swift */; };
 		C257C1772A4E003F0080ECC2 /* ApiMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257C1762A4E003F0080ECC2 /* ApiMiddleware.swift */; };
 		C257F0272A8F806E00E2E77C /* MetronomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C257F0262A8F806E00E2E77C /* MetronomeView.swift */; };
 		C25FA0C72A53FAEA0066C539 /* Dispatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25FA0C62A53FAEA0066C539 /* Dispatch.swift */; };
@@ -83,10 +76,21 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		74B089862D11D2B7004DEC24 /* Server.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Server.swift; sourceTree = "<group>"; };
+		740E75112D878B7A006F62C8 /* Bloop-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Bloop-Bridging-Header.h"; sourceTree = "<group>"; };
+		740E75122D878D04006F62C8 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.2.sdk/System/Library/Frameworks/AudioUnit.framework; sourceTree = DEVELOPER_DIR; };
+		740E75142D878D48006F62C8 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.2.sdk/System/Library/Frameworks/AudioToolbox.framework; sourceTree = DEVELOPER_DIR; };
+		740E75162D880F66006F62C8 /* CoreFFI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreFFI.swift; sourceTree = "<group>"; };
+		740E75182D882DA5006F62C8 /* FFIMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFIMiddleware.swift; sourceTree = "<group>"; };
+		740E751A2D882E06006F62C8 /* ResponseMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseMiddleware.swift; sourceTree = "<group>"; };
+		740E751C2D883072006F62C8 /* ApiCodecMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiCodecMiddleware.swift; sourceTree = "<group>"; };
+		740E751E2D885039006F62C8 /* bloop.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = bloop.xcframework; path = "../target/universal-ios/bloop.xcframework"; sourceTree = SOURCE_ROOT; };
+		740E75202D8A1B95006F62C8 /* bloop_Debug.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = bloop_Debug.xcframework; path = "../target/universal-ios/bloop_Debug.xcframework"; sourceTree = SOURCE_ROOT; };
+		740E75272D8A271C006F62C8 /* AudioSessionMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSessionMiddleware.swift; sourceTree = "<group>"; };
+		740E75292D8CC050006F62C8 /* ImportMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportMiddleware.swift; sourceTree = "<group>"; };
+		740E752C2D8F52AC006F62C8 /* bloop.pb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = bloop.pb.swift; path = ../api/out/swift/bloop.pb.swift; sourceTree = SOURCE_ROOT; };
+		740E75312D8F5474006F62C8 /* ApiHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiHelpers.swift; sourceTree = "<group>"; };
 		74CBF5782D22DC28005C5ABF /* NavigationItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationItem.swift; sourceTree = "<group>"; };
 		C20240DB2A4F123400F8138D /* DisconnectedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectedView.swift; sourceTree = "<group>"; };
-		C20240DD2A4F14D100F8138D /* DemoProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoProject.swift; sourceTree = "<group>"; };
 		C20240DF2A4F255B00F8138D /* SongView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongView.swift; sourceTree = "<group>"; };
 		C20F17CE2AB07C2B00ECF2EB /* Discovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Discovery.swift; sourceTree = "<group>"; };
 		C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformMiddleware.swift; sourceTree = "<group>"; };
@@ -100,18 +104,8 @@
 		C229B9812A4D9FD30044F2C6 /* Action.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Action.swift; sourceTree = "<group>"; };
 		C229B9842A4DA0000044F2C6 /* Middleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Middleware.swift; sourceTree = "<group>"; };
 		C229B9862A4DA0B40044F2C6 /* RootReducer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootReducer.swift; sourceTree = "<group>"; };
-		C229B9892A4DA1F60044F2C6 /* ProjectInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectInfo.swift; sourceTree = "<group>"; };
-		C229B98B2A4DA25F0044F2C6 /* Project.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Project.swift; sourceTree = "<group>"; };
-		C229B98D2A4DA2850044F2C6 /* Song.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Song.swift; sourceTree = "<group>"; };
-		C229B98F2A4DA2E50044F2C6 /* Selections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Selections.swift; sourceTree = "<group>"; };
-		C229B9912A4DA30B0044F2C6 /* Id.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Id.swift; sourceTree = "<group>"; };
-		C229B9932A4DA3310044F2C6 /* Tempo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tempo.swift; sourceTree = "<group>"; };
-		C229B9952A4DA3510044F2C6 /* Section.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Section.swift; sourceTree = "<group>"; };
-		C229B9972A4DA3820044F2C6 /* Sample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sample.swift; sourceTree = "<group>"; };
 		C229B99A2A4DD55D0044F2C6 /* Core.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Core.swift; sourceTree = "<group>"; };
 		C229B99C2A4DDE7C0044F2C6 /* CoreConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreConnection.swift; sourceTree = "<group>"; };
-		C229B99F2A4DE4DF0044F2C6 /* Request.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Request.swift; sourceTree = "<group>"; };
-		C23F51212A4EE10100F4C383 /* Request+Codable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Request+Codable.swift"; sourceTree = "<group>"; };
 		C247A6E02A4D949A00001DB2 /* Bloop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Bloop.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C247A6E32A4D949A00001DB2 /* BloopApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloopApp.swift; sourceTree = "<group>"; };
 		C247A6E52A4D949A00001DB2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -123,10 +117,6 @@
 		C247A6FB2A4D949D00001DB2 /* BloopUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BloopUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C247A6FF2A4D949D00001DB2 /* BloopUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloopUITests.swift; sourceTree = "<group>"; };
 		C247A7012A4D949D00001DB2 /* BloopUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloopUITestsLaunchTests.swift; sourceTree = "<group>"; };
-		C257C16A2A4DF5C00080ECC2 /* Response.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Response.swift; sourceTree = "<group>"; };
-		C257C16C2A4DF6340080ECC2 /* PlaybackState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackState.swift; sourceTree = "<group>"; };
-		C257C16E2A4DF6D40080ECC2 /* Waveform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Waveform.swift; sourceTree = "<group>"; };
-		C257C1702A4DF81E0080ECC2 /* Progress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Progress.swift; sourceTree = "<group>"; };
 		C257C1762A4E003F0080ECC2 /* ApiMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiMiddleware.swift; sourceTree = "<group>"; };
 		C257F0262A8F806E00E2E77C /* MetronomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetronomeView.swift; sourceTree = "<group>"; };
 		C25FA0C62A53FAEA0066C539 /* Dispatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dispatch.swift; sourceTree = "<group>"; };
@@ -149,7 +139,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C257C1692A4DEBD60080ECC2 /* SwiftBSON in Frameworks */,
+				740E75262D8A1D6C006F62C8 /* bloop.xcframework in Frameworks */,
+				740E75152D878D48006F62C8 /* AudioToolbox.framework in Frameworks */,
+				740E75302D8F5330006F62C8 /* SwiftProtobuf in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -157,7 +149,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C23F51202A4ED75500F4C383 /* SwiftBSON in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -238,37 +229,23 @@
 		C229B9832A4D9FF20044F2C6 /* middleware */ = {
 			isa = PBXGroup;
 			children = (
-				C229B9842A4DA0000044F2C6 /* Middleware.swift */,
+				740E751C2D883072006F62C8 /* ApiCodecMiddleware.swift */,
 				C257C1762A4E003F0080ECC2 /* ApiMiddleware.swift */,
-				C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */,
+				740E75272D8A271C006F62C8 /* AudioSessionMiddleware.swift */,
+				740E75182D882DA5006F62C8 /* FFIMiddleware.swift */,
+				740E75292D8CC050006F62C8 /* ImportMiddleware.swift */,
+				C229B9842A4DA0000044F2C6 /* Middleware.swift */,
+				740E751A2D882E06006F62C8 /* ResponseMiddleware.swift */,
 				C222A95A2A59D21400418CBB /* UploadMiddleware.swift */,
+				C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */,
 			);
 			path = middleware;
-			sourceTree = "<group>";
-		};
-		C229B9882A4DA1EB0044F2C6 /* model */ = {
-			isa = PBXGroup;
-			children = (
-				C20240DD2A4F14D100F8138D /* DemoProject.swift */,
-				C229B9912A4DA30B0044F2C6 /* Id.swift */,
-				C257C16C2A4DF6340080ECC2 /* PlaybackState.swift */,
-				C257C1702A4DF81E0080ECC2 /* Progress.swift */,
-				C229B98B2A4DA25F0044F2C6 /* Project.swift */,
-				C229B9892A4DA1F60044F2C6 /* ProjectInfo.swift */,
-				C229B9972A4DA3820044F2C6 /* Sample.swift */,
-				C229B9952A4DA3510044F2C6 /* Section.swift */,
-				C229B98F2A4DA2E50044F2C6 /* Selections.swift */,
-				74B089862D11D2B7004DEC24 /* Server.swift */,
-				C229B98D2A4DA2850044F2C6 /* Song.swift */,
-				C229B9932A4DA3310044F2C6 /* Tempo.swift */,
-				C257C16E2A4DF6D40080ECC2 /* Waveform.swift */,
-			);
-			path = model;
 			sourceTree = "<group>";
 		};
 		C229B9992A4DD54F0044F2C6 /* core */ = {
 			isa = PBXGroup;
 			children = (
+				740E75162D880F66006F62C8 /* CoreFFI.swift */,
 				C229B99A2A4DD55D0044F2C6 /* Core.swift */,
 				C229B99C2A4DDE7C0044F2C6 /* CoreConnection.swift */,
 				C20F17CE2AB07C2B00ECF2EB /* Discovery.swift */,
@@ -279,9 +256,8 @@
 		C229B99E2A4DE4D00044F2C6 /* api */ = {
 			isa = PBXGroup;
 			children = (
-				C229B99F2A4DE4DF0044F2C6 /* Request.swift */,
-				C257C16A2A4DF5C00080ECC2 /* Response.swift */,
-				C23F51212A4EE10100F4C383 /* Request+Codable.swift */,
+				740E75312D8F5474006F62C8 /* ApiHelpers.swift */,
+				740E752C2D8F52AC006F62C8 /* bloop.pb.swift */,
 			);
 			path = api;
 			sourceTree = "<group>";
@@ -289,6 +265,10 @@
 		C23F511C2A4ED6C300F4C383 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				740E75142D878D48006F62C8 /* AudioToolbox.framework */,
+				740E75122D878D04006F62C8 /* AudioUnit.framework */,
+				740E751E2D885039006F62C8 /* bloop.xcframework */,
+				740E75202D8A1B95006F62C8 /* bloop_Debug.xcframework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -301,6 +281,7 @@
 				C247A6E22A4D949A00001DB2 /* source */,
 				C247A6F42A4D949D00001DB2 /* tests */,
 				C247A6FE2A4D949D00001DB2 /* ui-tests */,
+				740E75112D878B7A006F62C8 /* Bloop-Bridging-Header.h */,
 			);
 			sourceTree = "<group>";
 		};
@@ -323,7 +304,6 @@
 				C25FA0C12A5345320066C539 /* constants */,
 				C229B9992A4DD54F0044F2C6 /* core */,
 				C229B9832A4D9FF20044F2C6 /* middleware */,
-				C229B9882A4DA1EB0044F2C6 /* model */,
 				C229B97B2A4D9F5F0044F2C6 /* reducers */,
 				C229B9782A4D9EAE0044F2C6 /* store */,
 				C229B9732A4D967C0044F2C6 /* views */,
@@ -453,7 +433,7 @@
 			);
 			name = Bloop;
 			packageProductDependencies = (
-				C257C1682A4DEBD60080ECC2 /* SwiftBSON */,
+				740E752F2D8F5330006F62C8 /* SwiftProtobuf */,
 			);
 			productName = Bloop;
 			productReference = C247A6E02A4D949A00001DB2 /* Bloop.app */;
@@ -474,7 +454,6 @@
 			);
 			name = BloopTests;
 			packageProductDependencies = (
-				C23F511F2A4ED75500F4C383 /* SwiftBSON */,
 			);
 			productName = BloopTests;
 			productReference = C247A6F12A4D949D00001DB2 /* BloopTests.xctest */;
@@ -531,7 +510,7 @@
 			);
 			mainGroup = C247A6D72A4D949A00001DB2;
 			packageReferences = (
-				C257C1672A4DEBD60080ECC2 /* XCRemoteSwiftPackageReference "swift-bson" */,
+				740E752E2D8F5330006F62C8 /* XCRemoteSwiftPackageReference "swift-protobuf" */,
 			);
 			productRefGroup = C247A6E12A4D949A00001DB2 /* Products */;
 			projectDirPath = "";
@@ -577,52 +556,44 @@
 			buildActionMask = 2147483647;
 			files = (
 				C222A9562A58AEB200418CBB /* SectionsView.swift in Sources */,
-				C229B9962A4DA3510044F2C6 /* Section.swift in Sources */,
+				740E752D2D8F52AC006F62C8 /* bloop.pb.swift in Sources */,
+				740E751B2D882E0D006F62C8 /* ResponseMiddleware.swift in Sources */,
 				C27E2A662A51D5F200D48D91 /* Colours.swift in Sources */,
 				C257F0272A8F806E00E2E77C /* MetronomeView.swift in Sources */,
 				C2D82D422A52D7F600DAEA7E /* WaveformView.swift in Sources */,
-				C229B9982A4DA3820044F2C6 /* Sample.swift in Sources */,
-				C257C16D2A4DF6340080ECC2 /* PlaybackState.swift in Sources */,
 				C229B9852A4DA0000044F2C6 /* Middleware.swift in Sources */,
 				C229B97A2A4D9EBF0044F2C6 /* Store.swift in Sources */,
-				C229B9A02A4DE4DF0044F2C6 /* Request.swift in Sources */,
-				C257C1712A4DF81E0080ECC2 /* Progress.swift in Sources */,
 				C229B99D2A4DDE7C0044F2C6 /* CoreConnection.swift in Sources */,
 				74CBF57A2D22DC28005C5ABF /* NavigationItem.swift in Sources */,
 				C229B99B2A4DD55D0044F2C6 /* Core.swift in Sources */,
 				C20F17CF2AB07C2B00ECF2EB /* Discovery.swift in Sources */,
-				C257C16F2A4DF6D40080ECC2 /* Waveform.swift in Sources */,
 				C229B9872A4DA0B40044F2C6 /* RootReducer.swift in Sources */,
 				C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */,
 				C229B9752A4D9DA30044F2C6 /* ProjectView.swift in Sources */,
 				C222A95B2A59D21400418CBB /* UploadMiddleware.swift in Sources */,
 				C229B97F2A4D9F990044F2C6 /* AppState.swift in Sources */,
-				C20240DE2A4F14D100F8138D /* DemoProject.swift in Sources */,
 				C25FA0CD2A54888E0066C539 /* ProjectsView.swift in Sources */,
 				C229B97D2A4D9F6D0044F2C6 /* Reducer.swift in Sources */,
+				740E75192D882DA9006F62C8 /* FFIMiddleware.swift in Sources */,
 				C247A6E62A4D949A00001DB2 /* ContentView.swift in Sources */,
+				740E752A2D8CC054006F62C8 /* ImportMiddleware.swift in Sources */,
+				740E75282D8A2720006F62C8 /* AudioSessionMiddleware.swift in Sources */,
 				C25FA0CB2A54610C0066C539 /* ProgressBar.swift in Sources */,
 				C229B9822A4D9FD30044F2C6 /* Action.swift in Sources */,
-				C229B9922A4DA30B0044F2C6 /* Id.swift in Sources */,
 				C2D82D472A5311EB00DAEA7E /* TransportBar.swift in Sources */,
-				C229B9902A4DA2E50044F2C6 /* Selections.swift in Sources */,
-				C229B9942A4DA3310044F2C6 /* Tempo.swift in Sources */,
 				C28705092A58217400178FC9 /* NameEditor.swift in Sources */,
+				740E75322D8F5478006F62C8 /* ApiHelpers.swift in Sources */,
 				C222A9542A588ACB00418CBB /* WaveformMiddleware.swift in Sources */,
-				74B089872D11D2B9004DEC24 /* Server.swift in Sources */,
 				C257C1772A4E003F0080ECC2 /* ApiMiddleware.swift in Sources */,
 				C247A6E42A4D949A00001DB2 /* BloopApp.swift in Sources */,
-				C257C16B2A4DF5C00080ECC2 /* Response.swift in Sources */,
 				C25FA0C92A53FBA80066C539 /* RequestActionHelpers.swift in Sources */,
-				C229B98A2A4DA1F60044F2C6 /* ProjectInfo.swift in Sources */,
+				740E75172D880F6A006F62C8 /* CoreFFI.swift in Sources */,
 				C25FA0C72A53FAEA0066C539 /* Dispatch.swift in Sources */,
 				C27E2A6F2A51E5FD00D48D91 /* SectionView.swift in Sources */,
-				C229B98E2A4DA2850044F2C6 /* Song.swift in Sources */,
 				C27E2A682A51DE7700D48D91 /* Layout.swift in Sources */,
+				740E751D2D88307D006F62C8 /* ApiCodecMiddleware.swift in Sources */,
 				C20240E02A4F255B00F8138D /* SongView.swift in Sources */,
 				C222A95D2A5B4F7800418CBB /* SongsView.swift in Sources */,
-				C23F51222A4EE10100F4C383 /* Request+Codable.swift in Sources */,
-				C229B98C2A4DA25F0044F2C6 /* Project.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -716,6 +687,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Bloop-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -769,6 +741,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Bloop-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 			};
 			name = Release;
@@ -993,26 +966,21 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		C257C1672A4DEBD60080ECC2 /* XCRemoteSwiftPackageReference "swift-bson" */ = {
+		740E752E2D8F5330006F62C8 /* XCRemoteSwiftPackageReference "swift-protobuf" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/mongodb/swift-bson";
+			repositoryURL = "https://github.com/apple/swift-protobuf.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 3.1.0;
+				minimumVersion = 1.29.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		C23F511F2A4ED75500F4C383 /* SwiftBSON */ = {
+		740E752F2D8F5330006F62C8 /* SwiftProtobuf */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = C257C1672A4DEBD60080ECC2 /* XCRemoteSwiftPackageReference "swift-bson" */;
-			productName = SwiftBSON;
-		};
-		C257C1682A4DEBD60080ECC2 /* SwiftBSON */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C257C1672A4DEBD60080ECC2 /* XCRemoteSwiftPackageReference "swift-bson" */;
-			productName = SwiftBSON;
+			package = 740E752E2D8F5330006F62C8 /* XCRemoteSwiftPackageReference "swift-protobuf" */;
+			productName = SwiftProtobuf;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

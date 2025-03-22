@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SongsView: View {
-    var project: Project
+    var project: Bloop_Project
     var dispatch: Dispatch
 
     @Binding var navigationPath: [NavigationItem]
@@ -48,7 +48,7 @@ struct SongsView: View {
 }
 
 struct SongRow: View {
-    var song: Song
+    var song: Bloop_Song
     var action: () -> Void
 
     var body: some View {

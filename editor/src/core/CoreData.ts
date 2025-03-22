@@ -1,15 +1,18 @@
 import {createContext, useContext} from 'react';
-import {PlaybackState} from '../model/playback-state';
-import {Project} from '../model/project';
-import {ProjectInfo} from '../model/project-info';
-import {WaveformData} from '../model/waveform';
-import {Progress} from '../model/progress';
+import {
+  PlaybackState,
+  Progress,
+  Project,
+  ProjectInfo,
+  WaveformData,
+} from '../api/bloop';
+import {ID} from '../api/helpers';
 
 interface CoreData {
   project?: Project;
   playbackState?: PlaybackState;
   projects: ProjectInfo[];
-  waveforms: Map<string, WaveformData>;
+  waveforms: Map<ID, WaveformData>;
   progress: Progress;
 }
 

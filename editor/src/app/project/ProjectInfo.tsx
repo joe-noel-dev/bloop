@@ -21,6 +21,7 @@ import {
   removeProjectRequest,
 } from '../../api/request';
 import {useState} from 'react';
+import {ID} from '../../api/helpers';
 
 export const ProjectInfo = () => {
   const project = useProject();
@@ -46,7 +47,7 @@ export const ProjectInfo = () => {
   return (
     <Stack spacing={2}>
       <Typography level="title-lg" component="h1">
-        {project?.info.name}
+        {project?.info?.name}
       </Typography>
       <Stack direction="row" spacing={2}>
         <Button startDecorator={<FolderOpen />} onClick={openProjects}>
@@ -81,13 +82,13 @@ const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
     return <></>;
   }
 
-  const loadProject = (projectId: string) => {
+  const loadProject = (projectId: ID) => {
     const request = loadProjectRequest(projectId);
     core.sendRequest(request);
     onRequestClose();
   };
 
-  const removeProject = (projectId: string) => {
+  const removeProject = (projectId: ID) => {
     const request = removeProjectRequest(projectId);
     core.sendRequest(request);
   };
@@ -99,7 +100,7 @@ const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
       <List sx={{overflow: 'scroll'}}>
         {projects.map((projectInfo) => (
           <ListItem
-            key={projectInfo.id}
+            key={projectInfo.id.toString()}
             endAction={
               <IconButton
                 aria-label="Delete"

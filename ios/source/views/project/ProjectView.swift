@@ -175,11 +175,11 @@ struct ProjectView: View {
 
 struct ProjectView_Previews: PreviewProvider {
     static let state: AppState = .init(
-        connected: true,
+        connected: .remote,
         projects: [],
         project: demoProject(),
-        playbackState: PlaybackState(),
-        progress: Progress()
+        playbackState: Bloop_PlaybackState(),
+        progress: Bloop_Progress()
     )
 
     static var previews: some View {

@@ -1,7 +1,7 @@
 use rawdio::{AudioBuffer, BorrowedAudioBuffer, OwnedAudioBuffer, SampleLocation};
 
-use super::data::{Algorithm, Properties, WaveformData};
 use crate::audio::convert::convert_sample;
+use crate::bloop::{WaveformAlgorithm, WaveformData, WaveformProperties};
 use std::convert::TryInto;
 use std::{collections::HashSet, sync::Arc};
 use std::{path::Path, thread::spawn};
@@ -9,7 +9,7 @@ use std::{path::Path, thread::spawn};
 #[derive(Clone)]
 pub struct Options {
     pub lengths: HashSet<i32>,
-    pub algorithms: HashSet<Algorithm>,
+    pub algorithms: HashSet<WaveformAlgorithm>,
     pub num_channels: usize,
     pub sample_rate: usize,
 }
@@ -47,7 +47,7 @@ pub fn generate_waveform_from_audio(audio: OwnedAudioBuffer, mut options: Option
         })
         .collect();
 
-    let mut data = WaveformData::new(audio.sample_rate().try_into().unwrap());
+    let mut data = WaveformData::empty(audio.sample_rate().try_into().unwrap());
     for task in tasks {
         data.add(task.join().unwrap());
     }
@@ -58,7 +58,7 @@ pub fn generate_waveform_from_audio(audio: OwnedAudioBuffer, mut options: Option
 }
 
 fn process_waveform(options: Options, audio: Arc<dyn AudioBuffer>) -> WaveformData {
-    let mut data = WaveformData::new(audio.sample_rate().try_into().unwrap());
+    let mut data = WaveformData::empty(audio.sample_rate().try_into().unwrap());
 
     for length in options.lengths.iter() {
         let length: usize = (*length).try_into().unwrap();
@@ -78,7 +78,7 @@ fn process_waveform(options: Options, audio: Arc<dyn AudioBuffer>) -> WaveformDa
 fn process_channel(
     waveform: &mut WaveformData,
     audio: &dyn AudioBuffer,
-    algorithms: &HashSet<Algorithm>,
+    algorithms: &HashSet<WaveformAlgorithm>,
     length: usize,
     channel: usize,
 ) {
@@ -95,36 +95,39 @@ fn process_channel(
         squared_total += sample as f64 * sample as f64;
     }
 
-    if algorithms.contains(&Algorithm::Min) {
+    if algorithms.contains(&WaveformAlgorithm::MIN) {
         waveform.push(
-            &Properties {
+            &WaveformProperties {
                 length: length.try_into().unwrap(),
-                algorithm: Algorithm::Min,
+                algorithm: WaveformAlgorithm::MIN.into(),
                 channel: channel.try_into().unwrap(),
+                ..Default::default()
             },
             min_sample,
         );
     }
 
-    if algorithms.contains(&Algorithm::Max) {
+    if algorithms.contains(&WaveformAlgorithm::MAX) {
         waveform.push(
-            &Properties {
+            &WaveformProperties {
                 length: length.try_into().unwrap(),
-                algorithm: Algorithm::Max,
+                algorithm: WaveformAlgorithm::MAX.into(),
                 channel: channel.try_into().unwrap(),
+                ..Default::default()
             },
             max_sample,
         );
     }
 
-    if algorithms.contains(&Algorithm::Rms) {
+    if algorithms.contains(&WaveformAlgorithm::RMS) {
         let mean_squared = squared_total / num_frames as f64;
         let rms = mean_squared.sqrt();
         waveform.push(
-            &Properties {
+            &WaveformProperties {
                 length: length.try_into().unwrap(),
-                algorithm: Algorithm::Rms,
+                algorithm: WaveformAlgorithm::RMS.into(),
                 channel: channel.try_into().unwrap(),
+                ..Default::default()
             },
             rms as f32,
         );

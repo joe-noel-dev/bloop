@@ -1,4 +1,4 @@
-use crate::api::{Request, Response};
+use crate::bloop::{Request, Response};
 
 use super::client;
 use libmdns::Responder;
@@ -26,7 +26,8 @@ pub async fn run(request_tx: mpsc::Sender<Request>, response_tx: broadcast::Send
     let responder = Responder::new().expect("Couldn't create an mDNS responder");
     let _service = responder.register("_bloop._tcp".into(), hostname, local_port, &[]);
 
-    info!("Server listening on port {local_port}");
+    let local_ip = local_address.ip().to_string();
+    info!("Server listening on {local_ip}:{local_port}");
 
     while let Ok((stream, _)) = listener.accept().await {
         let tx = request_tx.clone();

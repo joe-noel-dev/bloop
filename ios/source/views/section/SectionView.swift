@@ -1,10 +1,10 @@
 import SwiftUI
 
 struct SectionView: View {
-    var section: Section
-    var selections: Selections
-    var playbackState: PlaybackState
-    var progress: Progress
+    var section: Bloop_Section
+    var selections: Bloop_Selections
+    var playbackState: Bloop_PlaybackState
+    var progress: Bloop_Progress
     var dispatch: Dispatch
 
     private var isSelected: Bool {
@@ -12,11 +12,11 @@ struct SectionView: View {
     }
 
     private var isPlaying: Bool {
-        playbackState.sectionId == section.id
+        playbackState.sectionID == section.id
     }
 
     private var isQueued: Bool {
-        playbackState.queuedSectionId == section.id
+        playbackState.queuedSectionID == section.id
     }
 
     private var border: some View {
@@ -84,21 +84,21 @@ struct SectionView_Previews: PreviewProvider {
     }()
 
     static let selections = {
-        var selections = Selections()
-        selections.section = section.id
-        return selections
+        Bloop_Selections.with {
+            $0.section = section.id
+        }
     }()
 
     static let playbackState = {
-        var playbackState = PlaybackState()
-        playbackState.sectionId = section.id
-        return playbackState
+        Bloop_PlaybackState.with {
+            $0.sectionID = section.id
+        }
     }()
 
     static let progress = {
-        var progress = Progress()
-        progress.sectionProgress = 0.5
-        return progress
+        Bloop_Progress.with {
+            $0.sectionProgress = 0.5
+        }
     }()
 
     static var previews: some View {

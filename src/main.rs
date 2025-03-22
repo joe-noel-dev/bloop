@@ -1,3 +1,5 @@
+include!(concat!(env!("OUT_DIR"), "/protos/mod.rs"));
+
 mod api;
 mod audio;
 mod control;
@@ -18,7 +20,7 @@ mod waveform;
 use core::run_core;
 use git_version::git_version;
 use log::info;
-use logger::set_up_logger;
+use logger::{set_up_logger, LogOptions};
 use tokio::sync::{broadcast, mpsc};
 
 #[cfg(feature = "ui")]
@@ -27,7 +29,12 @@ use ui::run_ui;
 const GIT_SHA: &str = git_version!();
 
 fn main() {
-    set_up_logger();
+    let options = LogOptions::default()
+        .log_to_console(true)
+        .log_to_file("bloop.log".into())
+        .log_dependencies_to_file("bloop.deps.log".into());
+
+    set_up_logger(options);
 
     let version = env!("CARGO_PKG_VERSION");
 

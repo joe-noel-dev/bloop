@@ -1,24 +1,39 @@
 import Foundation
 
-enum Action {
-    case sendRequest(Request)
+enum ConnectionType {
+    case local
+    case remote
+}
 
-    case setProject(Project)
-    case setPlaybackState(PlaybackState)
-    case setProgress(Progress)
-    case setProjects([ProjectInfo])
-    case addWaveform((Id, WaveformData))
+enum Action {
+    case sendRequest(Bloop_Request)
+    case receivedResponse(Bloop_Response)
+
+    case sendRawRequest(Data)
+    case receivedRawResponse(Data)
+
+    case setProject(Bloop_Project)
+    case setPlaybackState(Bloop_PlaybackState)
+    case setProgress(Bloop_Progress)
+    case setProjects([Bloop_ProjectInfo])
+    case addWaveform((Id, Bloop_WaveformData))
     case removeWaveform(Id)
     case addError(String)
 
     case setNavigationPath([NavigationItem])
 
     case connect(Server)
+    case connectLocal
     case disconnect
-    case setConnected(Bool)
+    case setConnected(ConnectionType?)
 
     case uploadSample((Id, URL))
     case uploadAck(Id)
+
+    case importProject(URL)
+    case exportProject(URL)
+    case importResponse(Bloop_ImportResponse)
+    case exportResponse(Bloop_ExportResponse)
 
     case setDiscoveredServers([Server])
     case setScanning(Bool)
