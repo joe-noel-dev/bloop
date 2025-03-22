@@ -8,7 +8,7 @@ class UploadMiddleware: Middleware {
         var position: Int = 0
     }
 
-    static private let chunkSize = 10 * 1024
+    static private let chunkSize = 1024 * 1024
 
     private var uploads: [Id: Upload] = [:]
     var dispatch: Dispatch?
@@ -96,7 +96,6 @@ class UploadMiddleware: Middleware {
             uploads[uploadId] = Upload(data: fileContents, songId: songId)
 
             let filename = file.deletingPathExtension().lastPathComponent
-            let fileExtension = file.pathExtension
 
             self.dispatch?(
                 .sendRequest(

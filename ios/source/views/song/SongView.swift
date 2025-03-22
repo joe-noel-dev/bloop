@@ -148,33 +148,30 @@ struct SongView: View {
         .fileImporter(isPresented: $editingSample, allowedContentTypes: [.wav]) { result in
             switch result {
             case .success(let url):
+                
+                
                 guard url.startAccessingSecurityScopedResource() else {
                     print("Failed to start security-scoped access.")
                     return
                 }
                 defer { url.stopAccessingSecurityScopedResource() }
-
-                // Typically, copy the file to a local URL first:
+                
+                let tempDirectory = FileManager.default.temporaryDirectory
+                let tempURL = tempDirectory.appendingPathComponent(url.lastPathComponent)
+                
                 do {
-                    let fileManager = FileManager.default
-                    let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask)
-                        .first!
-                    let localURL = documents.appendingPathComponent(url.lastPathComponent)
-
-                    if fileManager.fileExists(atPath: localURL.path()) {
-                        try fileManager.removeItem(at: localURL)
+                    if FileManager.default.fileExists(atPath: tempURL.path) {
+                        try FileManager.default.removeItem(at: tempURL)
                     }
-
-                    try fileManager.copyItem(at: url, to: localURL)
-
-                    // Dispatch your action with the new local URL
-                    let action = Action.uploadSample((song.id, localURL))
-                    dispatch(action)
-
+                    try FileManager.default.copyItem(at: url, to: tempURL)
+                    print("File copied to temporary location: \(tempURL)")
+                } catch {
+                    print("Failed to copy file to temporary location: \(error)")
+                    return
                 }
-                catch {
-                    print("Error loading audio file: \(error)")
-                }
+
+                let action = Action.uploadSample((song.id, tempURL))
+                dispatch(action)
 
             case .failure(let error):
                 print("Import failed: \(error)")
@@ -312,7 +309,7 @@ struct SongView: View {
             editingSample = true
         } label: {
             Label(
-                song.sample == nil ? "Add Sample" : "Replace Sample",
+                !song.hasSample ? "Add Sample" : "Replace Sample",
                 systemImage: "waveform"
             )
         }
