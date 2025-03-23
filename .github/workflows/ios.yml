@@ -21,6 +21,11 @@ jobs:
           override: true
           components: rustfmt, clippy
 
+      - name: Add Rust targets for iOS
+        run: |
+          rustup target add aarch64-apple-ios
+          rustup target add aarch64-apple-ios-sim
+
       - name: Cache Cargo registry
         uses: actions/cache@v4
         with:
