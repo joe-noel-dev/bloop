@@ -27,7 +27,7 @@ build_target() {
 }
 
 # Release builds
-build_target release aarch64-apple-ios iphoneos -mios-version-min "-C link-arg=-fembed-bitcode"
+build_target release aarch64-apple-ios iphoneos -mios-version-min
 build_target release aarch64-apple-ios-sim iphonesimulator -mios-simulator-version-min
 
 # Debug builds
