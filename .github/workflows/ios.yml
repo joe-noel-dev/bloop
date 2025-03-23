@@ -60,6 +60,11 @@ jobs:
         working-directory: ios
         run: ./version.sh
 
+      - name: Install protobuf compiler
+        run: |
+          brew install protobuf
+          protoc --version
+
       - name: Generate API
         run: ./scripts/build-api.sh
 
