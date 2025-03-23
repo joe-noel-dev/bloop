@@ -6,7 +6,68 @@ struct DisconnectedView: View {
     var dispatch: Dispatch
 
     var body: some View {
-        VStack(spacing: Layout.units(2)) {
+        VStack(spacing: Layout.units(4)) {
+
+            Spacer()
+            
+        
+            VStack(spacing: Layout.units(2)) {
+
+                Button(
+                    action: {
+                        dispatch(.connectLocal)
+                    },
+                    label: {
+                        Text("Start")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+                    }
+                )
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .padding(.horizontal, Layout.units(4))
+            }
+
+            if servers.isEmpty && scanning {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle())
+                    .scaleEffect(1.8)
+                    .padding(.top, Layout.units(4))
+            }
+
+            if !servers.isEmpty {
+                VStack(alignment: .leading, spacing: Layout.units(2)) {
+                    Text("Available Servers")
+                        .font(.headline)
+                        .padding(.top, Layout.units(4))
+                        .padding(.horizontal, Layout.units(2))
+
+                    ForEach(servers, id: \.self) { server in
+                        HStack {
+                            Text(displayName(server))
+                                .font(.body)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                            Button(
+                                action: {
+                                    dispatch(.connect(server))
+                                },
+                                label: {
+                                    Text("Connect")
+                                        .fontWeight(.medium)
+                                }
+                            ).buttonStyle(.bordered)
+                        }
+                        .padding()
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(10)
+                        .padding(.horizontal, Layout.units(2))
+                    }
+                }
+            }
+
+            Spacer()
 
             Button(
                 action: {
@@ -14,47 +75,19 @@ struct DisconnectedView: View {
                 },
                 label: {
                     Text("Restart scan")
-                        .fontWeight(.bold)
+                        .font(.subheadline)
                 }
-            ).buttonStyle(.bordered)
-
-            Button(
-                action: {
-                    dispatch(.connectLocal)
-                },
-                label: {
-                    Text("Local Audio")
-                        .fontWeight(.bold)
-                }
-            ).buttonStyle(.bordered)
-
-            Spacer()
-
-            if servers.isEmpty && scanning {
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle())
-                    .scaleEffect(2.0)
-            }
-
-            ForEach(self.servers, id: \.self) { server in
-                Button(
-                    action: {
-                        dispatch(.connect(server))
-                    },
-                    label: {
-                        Text(displayName(server))
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                    }
-                ).buttonStyle(.borderedProminent)
-            }
-
-            Spacer()
+            )
+            .buttonStyle(.plain)
+            .foregroundColor(.secondary)
+            .padding(.bottom, Layout.units(2))
 
             Text(version)
-                .font(.caption)
+                .font(.caption2)
+                .foregroundColor(.gray)
+                .padding(.bottom, Layout.units(1))
         }
-        .padding(Layout.units(2))
+        .padding()
     }
 
     private var version: String {
@@ -69,8 +102,8 @@ struct DisconnectedView: View {
 
         return versionString
     }
-
 }
+
 
 private func displayName(_ server: Server) -> String {
     switch server {
@@ -92,10 +125,21 @@ private func displayName(_ server: Server) -> String {
 
 struct DisconnectedView_Previews: PreviewProvider {
     static var previews: some View {
-        DisconnectedView(
-            servers: [],
-            scanning: false,
-            dispatch: loggingDispatch
-        )
+        Group {
+            DisconnectedView(
+                servers: [],
+                scanning: true,
+                dispatch: loggingDispatch
+            )
+            
+            DisconnectedView(
+                servers: [
+                    .hostPort(host: "192.168.1.1", port: 8080),
+                    .service(name: "Test Service", type: "_http._tcp.", domain: "local.", interface: nil)
+                ],
+                scanning: false,
+                dispatch: loggingDispatch
+            )
+        }
     }
 }
