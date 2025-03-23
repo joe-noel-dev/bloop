@@ -63,6 +63,7 @@ jobs:
       - name: Install protobuf compiler
         run: |
           brew install protobuf
+          brew install swift-protobuf
           protoc --version
 
       - name: Generate API
