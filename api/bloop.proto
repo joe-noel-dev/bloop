@@ -173,7 +173,7 @@ message AddSectionRequest {
 }
 
 message ProjectImportRequest {
-    uint64 project_id = 1;
+    uint64 import_id = 1;
     bytes data = 2;
     bool more_coming = 3;
 }
@@ -260,5 +260,5 @@ message ExportResponse {
 }
 
 message ImportResponse {
-    uint64 project_id = 1;
+    uint64 import_id = 1;
 }

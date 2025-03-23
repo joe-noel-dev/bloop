@@ -14,7 +14,7 @@ class ImportMiddleware: Middleware {
 
     func execute(state: AppState, action: Action) {
         if case .importResponse(let importResponse) = action {
-            sendChunk(importResponse.projectID)
+            sendChunk(importResponse.importID)
         }
 
         if case .importProject(let url) = action {
@@ -36,8 +36,8 @@ class ImportMiddleware: Middleware {
         }
     }
 
-    private func sendChunk(_ projectId: Id) {
-        guard let projectImport = imports[projectId] else {
+    private func sendChunk(_ importId: Id) {
+        guard let projectImport = imports[importId] else {
             return
         }
 
@@ -48,18 +48,18 @@ class ImportMiddleware: Middleware {
         let progress = 100 * Double(end) / Double(projectImport.data.count)
 
         if moreComing {
-            imports[projectId]?.position = end
+            imports[importId]?.position = end
         }
         else {
-            print("Project import complete for project: \(projectId)")
-            imports.removeValue(forKey: projectId)
+            print("Project import complete for import: \(importId)")
+            imports.removeValue(forKey: importId)
         }
 
         self.dispatch?(
             .sendRequest(
                 .with {
                     $0.projectImport = .with {
-                        $0.projectID = projectId
+                        $0.importID = importId
                         $0.data = chunk
                         $0.moreComing = moreComing
                     }

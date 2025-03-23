@@ -24,6 +24,7 @@ pub struct ProjectStore {
     root_directory: PathBuf,
     temporary_directory: tempfile::TempDir,
     export_paths: HashMap<ID, tokio::fs::File>,
+    import_paths: HashMap<ID, tokio::fs::File>,
 }
 
 fn current_time() -> i64 {
@@ -43,6 +44,7 @@ impl ProjectStore {
             root_directory: PathBuf::from(root_directory),
             temporary_directory: tempfile::TempDir::new().expect("Unable to create temporary directory"),
             export_paths: HashMap::new(),
+            import_paths: Default::default(),
         }
     }
 
@@ -288,11 +290,36 @@ impl ProjectStore {
         Ok(())
     }
 
-    pub async fn import(&mut self, project_id: ID, data: &[u8], more_coming: bool) -> anyhow::Result<()> {
-        info!("Importing project_id={}", project_id);
+    async fn complete_import(&self, import_id: ID, import_file_path: &Path) -> anyhow::Result<()> {
+        let out_dir = self.temporary_directory.path().join(import_id.to_string());
+        tokio::fs::create_dir(&out_dir).await?;
 
-        let import_file_path = self.temporary_directory.path().join(project_id.to_string() + ".bloop");
-        if let Entry::Vacant(e) = self.export_paths.entry(project_id) {
+        unzip_file(import_file_path, &out_dir).await?;
+
+        let project_file_path = out_dir.join("project.bin");
+        let data = tokio::fs::read(project_file_path).await?;
+        let project = Project::parse_from_bytes(&data).context("Parsing project data")?;
+
+        let project_id = project.info.as_ref().ok_or_else(|| anyhow!("Missing project ID"))?.id;
+
+        let project_dir = self.directory_for_project(project_id);
+
+        if project_dir.exists() {
+            return Err(anyhow!("Project directory already exists: {}", project_id));
+        }
+
+        tokio::fs::rename(&out_dir, &project_dir).await?;
+
+        info!("Finished importing import_id={}", import_id,);
+
+        Ok(())
+    }
+
+    pub async fn import(&mut self, import_id: ID, data: &[u8], more_coming: bool) -> anyhow::Result<()> {
+        info!("Importing import_id={}", import_id);
+
+        let import_file_path = self.temporary_directory.path().join(import_id.to_string() + ".bloop");
+        if let Entry::Vacant(e) = self.import_paths.entry(import_id) {
             let file = tokio::fs::File::create(&import_file_path)
                 .await
                 .with_context(|| format!("Error creating import file: {}", import_file_path.display()))?;
@@ -300,23 +327,13 @@ impl ProjectStore {
             e.insert(file);
         }
 
-        let file = self.export_paths.get_mut(&project_id).unwrap();
+        let file = self.import_paths.get_mut(&import_id).unwrap();
 
         file.write_all(data).await?;
 
         if !more_coming {
-            let out_dir = self.directory_for_project(project_id);
-
-            info!(
-                "Finished importing project_id={} path={} project_dir={}",
-                project_id,
-                import_file_path.display(),
-                out_dir.display()
-            );
-
-            tokio::fs::create_dir(&out_dir).await?;
-            unzip_file(&import_file_path, &out_dir).await?;
-            self.export_paths.remove(&project_id);
+            self.complete_import(import_id, &import_file_path).await?;
+            self.import_paths.remove(&import_id);
         }
 
         Ok(())
@@ -498,7 +515,7 @@ mod tests {
 
         let new_project_id = random_id();
         fixture.import(new_project_id, &exported).await;
-        let project2 = fixture.load(new_project_id).await;
+        let project2 = fixture.load(project_id).await;
         assert_eq!(project2.songs.len(), 4);
         assert!(project2.songs.iter().all(|song| song.sections.len() == 5));
     }
