@@ -61,7 +61,7 @@ jobs:
         run: ./version.sh
 
       - name: Generate API
-        run: ./scripts/generate-api.sh
+        run: ./scripts/build-api.sh
 
       - name: Build core as XCFramework
         run: ./scripts/build-xcframework.sh
