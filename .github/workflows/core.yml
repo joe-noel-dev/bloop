@@ -35,7 +35,8 @@ jobs:
           libasound2-dev \
           libudev-dev \
           jackd2 \
-          libjack-jackd2-dev
+          libjack-jackd2-dev \
+          protobuf-compiler
       env:
         DEBIAN_FRONTEND: noninteractive
 

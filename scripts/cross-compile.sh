@@ -8,13 +8,13 @@ CONTAINER_SRC_DIR=/usr/src/bloop
 DOCKERFILE="Dockerfile.${ARCH}"
 PLATFORM="linux/${ARCH}"
 
-docker build --file ${DOCKERFILE} --tag ${CONTAINER_TAG} --platform ${PLATFORM} . 
+docker build --file ${DOCKERFILE} --tag ${CONTAINER_TAG} --platform ${PLATFORM} .
 
 docker run \
---rm \
---platform ${PLATFORM} \
---volume .:${CONTAINER_SRC_DIR} \
---workdir ${CONTAINER_SRC_DIR} \
---name bloop_cross_${ARCH} \
-${CONTAINER_TAG} \
-cargo build --release
+    --rm \
+    --platform ${PLATFORM} \
+    --volume .:${CONTAINER_SRC_DIR} \
+    --workdir ${CONTAINER_SRC_DIR} \
+    --name bloop_cross_${ARCH} \
+    ${CONTAINER_TAG} \
+    cargo build --release

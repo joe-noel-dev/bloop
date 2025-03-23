@@ -9,9 +9,9 @@ rm -rf ./target/universal-ios
 mkdir -p ./target/universal-ios
 
 build_target() {
-  local build_type=$1     # "release" or "debug"
-  local target=$2         # Rust target triple
-  local sdk=$3            # iphoneos or iphonesimulator
+  local build_type=$1 # "release" or "debug"
+  local target=$2     # Rust target triple
+  local sdk=$3        # iphoneos or iphonesimulator
   local sdk_version_flag=$4
   local extra_flags=$5
 
@@ -27,7 +27,7 @@ build_target() {
 }
 
 # Release builds
-build_target release aarch64-apple-ios iphoneos -mios-version-min "-C link-arg=-fembed-bitcode"
+build_target release aarch64-apple-ios iphoneos -mios-version-min
 build_target release aarch64-apple-ios-sim iphonesimulator -mios-simulator-version-min
 
 # Debug builds
@@ -36,15 +36,15 @@ build_target debug aarch64-apple-ios-sim iphonesimulator -mios-simulator-version
 
 # Generate XCFrameworks
 xcodebuild -create-xcframework \
-    -library ./target/aarch64-apple-ios/release/lib${LIB_NAME}.a \
-    -headers ./target/include \
-    -library ./target/aarch64-apple-ios-sim/release/lib${LIB_NAME}.a \
-    -headers ./target/include \
-    -output ./target/universal-ios/${LIB_NAME}.xcframework
+  -library ./target/aarch64-apple-ios/release/lib${LIB_NAME}.a \
+  -headers ./target/include \
+  -library ./target/aarch64-apple-ios-sim/release/lib${LIB_NAME}.a \
+  -headers ./target/include \
+  -output ./target/universal-ios/${LIB_NAME}.xcframework
 
 xcodebuild -create-xcframework \
-    -library ./target/aarch64-apple-ios/debug/lib${LIB_NAME}.a \
-    -headers ./target/include \
-    -library ./target/aarch64-apple-ios-sim/debug/lib${LIB_NAME}.a \
-    -headers ./target/include \
-    -output ./target/universal-ios/${LIB_NAME}_Debug.xcframework
+  -library ./target/aarch64-apple-ios/debug/lib${LIB_NAME}.a \
+  -headers ./target/include \
+  -library ./target/aarch64-apple-ios-sim/debug/lib${LIB_NAME}.a \
+  -headers ./target/include \
+  -output ./target/universal-ios/${LIB_NAME}_Debug.xcframework
