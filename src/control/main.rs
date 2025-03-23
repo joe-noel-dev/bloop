@@ -64,7 +64,7 @@ impl MainController {
             project_store: ProjectStore::new(&directories.projects),
             request_rx,
             response_tx: response_tx.clone(),
-            project: Project::empty(),
+            project: Project::empty().with_songs(1, 1),
             audio_controller: AudioController::new(response_tx.clone(), audio_preferences),
             waveform_store: WaveformStore::new(response_tx),
             _midi_controller: MidiController::new(action_tx.clone(), midi_preferences),
