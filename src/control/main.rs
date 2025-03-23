@@ -193,11 +193,11 @@ impl MainController {
         request: &ProjectImportRequest,
     ) -> anyhow::Result<Project> {
         self.project_store
-            .import(request.project_id, &request.data, request.more_coming)
+            .import(request.import_id, &request.data, request.more_coming)
             .await?;
 
         self.send_response(Response::default().with_import_response(&ImportResponse {
-            project_id: request.project_id,
+            import_id: request.import_id,
             ..Default::default()
         }));
 
