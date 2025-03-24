@@ -12,18 +12,18 @@ struct SongsView: View {
                     let action = selectSongAction(value)
                     dispatch(action)
                 }
-                
+
             }
         )
     }
-    
+
     private var songs: Binding<[Bloop_Song]> {
         Binding(
-            get: {state.project.songs},
+            get: { state.project.songs },
             set: { value in
                 var project = state.project
                 project.songs = value
-                
+
                 let action = updateProjectAction(project)
                 dispatch(action)
             }
@@ -58,11 +58,9 @@ struct SongsView: View {
     }
 }
 
-
-
 struct SongsView_Previews: PreviewProvider {
     static let project = demoProject()
-    
+
     static let state: AppState = {
         var state = AppState()
         state.project = demoProject()

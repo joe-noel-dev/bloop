@@ -9,8 +9,7 @@ struct DisconnectedView: View {
         VStack(spacing: Layout.units(4)) {
 
             Spacer()
-            
-        
+
             VStack(spacing: Layout.units(2)) {
 
                 Button(
@@ -104,7 +103,6 @@ struct DisconnectedView: View {
     }
 }
 
-
 private func displayName(_ server: Server) -> String {
     switch server {
 
@@ -131,11 +129,16 @@ struct DisconnectedView_Previews: PreviewProvider {
                 scanning: true,
                 dispatch: loggingDispatch
             )
-            
+
             DisconnectedView(
                 servers: [
                     .hostPort(host: "192.168.1.1", port: 8080),
-                    .service(name: "Test Service", type: "_http._tcp.", domain: "local.", interface: nil)
+                    .service(
+                        name: "Test Service",
+                        type: "_http._tcp.",
+                        domain: "local.",
+                        interface: nil
+                    ),
                 ],
                 scanning: false,
                 dispatch: loggingDispatch

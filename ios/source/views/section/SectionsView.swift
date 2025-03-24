@@ -4,88 +4,61 @@ struct SectionsView: View {
     var song: Bloop_Song
     var dispatch: Dispatch
 
+    @State private var newSong: Bloop_Song
+
     init(song: Bloop_Song, dispatch: @escaping Dispatch) {
         self.song = song
         self.dispatch = dispatch
+        self.newSong = song
     }
 
     var body: some View {
         NavigationView {
-            List {
+            List($newSong.sections, editActions: [.delete, .move]) { section in
 
-                ForEach(song.sections) { section in
-                    SectionRow(section: section, dispatch: dispatch)
-                        .padding([.top, .bottom], Layout.units(1))
-                }
-                .onDelete(perform: { values in
-                    let sectionIds = values.map { index in
-                        song.sections[index].id
-                    }
-
-                    for sectionId in sectionIds {
-                        let action = removeSectionAction(sectionId)
-                        dispatch(action)
-                    }
-                })
-
+                SectionRow(section: section)
+                    .padding([.top, .bottom], Layout.units(1))
             }
-            .navigationTitle(song.name)
+            .navigationTitle(newSong.name)
             .toolbar {
+                EditButton()
+
                 Button {
-                    let action = addSectionAction(song.id)
-                    dispatch(action)
+                    let newSection = Bloop_Section.with {
+                        $0.id = randomId()
+                        $0.name = "New Section"
+                    }
+
+                    newSong.sections.append(newSection)
                 } label: {
                     Label("Add Section", systemImage: "plus")
                 }
+            }
+        }
+        .onDisappear {
+            if newSong != song {
+                let action = updateSongAction(newSong)
+                dispatch(action)
             }
         }
     }
 }
 
 struct SectionRow: View {
-    var section: Bloop_Section
-    var dispatch: Dispatch
 
-    @State private var newStart: Double
-    @State private var newName: String
-
-    init(section: Bloop_Section, dispatch: @escaping Dispatch) {
-        self.section = section
-        self.newStart = section.start
-        self.newName = section.name
-        self.dispatch = dispatch
-    }
-
-    private func updateSection(_ newSection: Bloop_Section) {
-        let action = updateSectionAction(newSection)
-        dispatch(action)
-    }
+    @Binding var section: Bloop_Section
 
     var body: some View {
 
         VStack(alignment: .leading) {
 
-            TextField("Name", text: $newName)
+            TextField("Name", text: $section.name)
                 .font(.title2)
-                .onSubmit {
-                    var newSection = section
-                    newSection.name = newName
-                    updateSection(newSection)
-                }
 
             HStack {
 
                 Toggle(
-                    isOn: .init(
-                        get: {
-                            section.metronome
-                        },
-                        set: { value in
-                            var newSection = section
-                            newSection.metronome = value
-                            updateSection(newSection)
-                        }
-                    ),
+                    isOn: $section.metronome,
                     label: {
                         Image(systemName: "metronome")
                     }
@@ -93,32 +66,19 @@ struct SectionRow: View {
                 .toggleStyle(.button)
 
                 Toggle(
-                    isOn: .init(
-                        get: {
-                            section.loop
-                        },
-                        set: { value in
-                            var newSection = section
-                            newSection.loop = value
-                            updateSection(newSection)
-                        }
-                    )
-                ) {
-                    Image(systemName: "repeat")
-                }
+                    isOn: $section.loop,
+                    label: {
+                        Image(systemName: "repeat")
+                    }
+                )
                 .toggleStyle(.button)
 
-                TextField("Start", value: $newStart, formatter: NumberFormatter())
+                TextField("Start", value: $section.start, formatter: NumberFormatter())
                     .textFieldStyle(.roundedBorder)
                     .frame(maxWidth: 64)
                     #if os(iOS)
                         .keyboardType(.decimalPad)
                     #endif
-                    .onSubmit {
-                        var newSection = section
-                        newSection.start = newStart
-                        updateSection(newSection)
-                    }
 
             }
         }

@@ -349,7 +349,10 @@ impl MainController {
 
     fn handle_select(&self, project: Project, select_request: &SelectRequest) -> anyhow::Result<Project> {
         match select_request.entity.enum_value_or_default() {
-            Entity::SONG => Ok(project.select_song_with_id(select_request.id)),
+            Entity::SONG => {
+                info!("Select song request id={}", select_request.id);
+                Ok(project.select_song_with_id(select_request.id))
+            }
             Entity::SECTION => project.select_section(select_request.id),
             _ => Ok(project),
         }

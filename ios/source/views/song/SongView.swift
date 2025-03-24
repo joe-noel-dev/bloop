@@ -5,13 +5,9 @@ struct SongView: View {
     var state: AppState
     var dispatch: Dispatch
 
-    @State private var editingName = false
+    @State private var editing = false
     @State private var editingSections = false
     @State private var editingSample = false
-    @State private var editingTempo = false
-
-    @State private var newName: String = ""
-    @State private var newTempo: Double = 120.0
 
     #if os(iOS)
         @Environment(\.horizontalSizeClass) var horizontalSizeClass
@@ -97,8 +93,6 @@ struct SongView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
         .padding()
-        .overlay(alignment: .leading) { sidebar }
-        .overlay(alignment: .trailing) { sidebar }
         .onTapGesture {
             if !isSelected {
                 selectSong()
@@ -122,24 +116,24 @@ struct SongView: View {
         .fileImporter(isPresented: $editingSample, allowedContentTypes: [.wav]) { result in
             switch result {
             case .success(let url):
-                
-                
+
                 guard url.startAccessingSecurityScopedResource() else {
                     print("Failed to start security-scoped access.")
                     return
                 }
                 defer { url.stopAccessingSecurityScopedResource() }
-                
+
                 let tempDirectory = FileManager.default.temporaryDirectory
                 let tempURL = tempDirectory.appendingPathComponent(url.lastPathComponent)
-                
+
                 do {
                     if FileManager.default.fileExists(atPath: tempURL.path) {
                         try FileManager.default.removeItem(at: tempURL)
                     }
                     try FileManager.default.copyItem(at: url, to: tempURL)
                     print("File copied to temporary location: \(tempURL)")
-                } catch {
+                }
+                catch {
                     print("Failed to copy file to temporary location: \(error)")
                     return
                 }
@@ -155,50 +149,14 @@ struct SongView: View {
         .toolbar {
             headerMenu
         }
-        .popover(isPresented: $editingName) {
-            NameEditor(prompt: "Song Name", value: $newName)
-                .onSubmit {
-                    var song = song
-                    song.name = newName
-
-                    let action = updateSongAction(song)
+        .sheet(isPresented: $editing) {
+            SongEditView(song) { newSong in
+                if newSong != song {
+                    let action = updateSongAction(newSong)
                     dispatch(action)
-
-                    editingName = false
-                }
-                .onAppear {
-                    newName = song.name
-                }
-        }
-        .popover(isPresented: $editingTempo) {
-            VStack(alignment: .leading, spacing: Layout.units(2)) {
-                Text("Tempo")
-
-                TextField("Tempo", value: $newTempo, formatter: NumberFormatter())
-                    .textFieldStyle(.roundedBorder)
-            }
-            .font(.title2)
-            .padding(Layout.units(2))
-            .frame(minWidth: 400)
-            .onAppear {
-                guard song.hasSample else {
-                    return
                 }
 
-                self.newTempo = song.sample.tempo.bpm
-            }
-            .onSubmit {
-                var song = song
-
-                guard song.hasSample else {
-                    return
-                }
-
-                song.sample.tempo.bpm = newTempo
-                song.tempo.bpm = newTempo
-
-                let action = updateSongAction(song)
-                dispatch(action)
+                editing = false
             }
         }
         .navigationTitle(song.name)
@@ -247,23 +205,11 @@ struct SongView: View {
     }
 
     @ViewBuilder
-    private var sidebar: some View {
-        if isPlaying {
-            Colours.playing
-                .frame(width: Layout.units(1))
-        }
-        else if isSelected {
-            Colours.selected
-                .frame(width: Layout.units(1))
-        }
-    }
-
-    @ViewBuilder
-    private var renameButton: some View {
+    private var editButton: some View {
         Button {
-            editingName = true
+            editing = true
         } label: {
-            Label("Rename", systemImage: "pencil")
+            Label("Edit", systemImage: "pencil")
         }
     }
 
@@ -289,15 +235,6 @@ struct SongView: View {
     }
 
     @ViewBuilder
-    private var tempoButton: some View {
-        Button {
-            editingTempo = true
-        } label: {
-            Label("Tempo", systemImage: "metronome")
-        }
-    }
-
-    @ViewBuilder
     private var removeButton: some View {
         Button(role: .destructive) {
             let action = removeSongAction(song.id)
@@ -310,10 +247,9 @@ struct SongView: View {
     @ViewBuilder
     private var headerMenu: some View {
         Menu {
-            renameButton
+            editButton
             sectionsButton
             addSampleButton
-            tempoButton
             removeButton
         } label: {
             Image(systemName: "ellipsis")
@@ -322,15 +258,62 @@ struct SongView: View {
     }
 }
 
+struct SongEditView: View {
+    var song: Bloop_Song
+    var onSubmit: (Bloop_Song) -> Void
+    @State private var newSong: Bloop_Song
+
+    init(_ song: Bloop_Song, onSubmit: @escaping (Bloop_Song) -> Void) {
+        self.song = song
+        self.onSubmit = onSubmit
+        self.newSong = song
+
+        if song.hasSample {
+            newSong.tempo = song.sample.tempo
+        }
+    }
+
+    var body: some View {
+        Form {
+            Section("Name") {
+                TextField("Name", text: $newSong.name)
+                    #if os(iOS)
+                        .textInputAutocapitalization(.words)
+                    #endif
+                    .disableAutocorrection(true)
+            }
+
+            Section("Tempo") {
+                TextField("Tempo", value: $newSong.tempo.bpm, formatter: NumberFormatter())
+            }
+
+            Button("Save") {
+                submit()
+            }
+        }
+        .onDisappear {
+            submit()
+        }
+    }
+
+    private func submit() {
+        if newSong.hasSample {
+            newSong.sample.tempo = newSong.tempo
+        }
+
+        onSubmit(newSong)
+    }
+}
+
 struct SongView_Previews: PreviewProvider {
-    
+
     static let state = {
         var appState = AppState()
         appState.project = demoProject()
         appState.progress = Bloop_Progress()
         return appState
     }()
-    
+
     static let song: Bloop_Song = {
         state.project.songs[0]
     }()

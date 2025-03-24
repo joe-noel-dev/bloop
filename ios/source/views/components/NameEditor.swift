@@ -6,24 +6,20 @@ struct NameEditor: View {
     @FocusState private var textFieldIsFocused: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Layout.units(2)) {
-            Text(prompt)
-
-            TextField(prompt, text: $value)
-                .textFieldStyle(.roundedBorder)
-                #if os(iOS)
-                    .textInputAutocapitalization(.words)
-                #endif
-                .disableAutocorrection(true)
-                .focused($textFieldIsFocused)
+        Form {
+            Section(prompt) {
+                TextField(prompt, text: $value)
+                    #if os(iOS)
+                        .textInputAutocapitalization(.words)
+                    #endif
+                    .disableAutocorrection(true)
+                    .focused($textFieldIsFocused)
+            }
         }
-        .font(.title2)
-        .padding(Layout.units(2))
-        .frame(minWidth: 400)
-        .background(.regularMaterial)
         .onAppear {
             textFieldIsFocused = true
         }
+
     }
 }
 

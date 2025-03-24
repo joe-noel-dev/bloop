@@ -9,7 +9,13 @@ struct ProjectView: View {
     @State private var editingSongs = false
 
     @State private var newProjectName = ""
-    
+
+    init(state: AppState, dispatch: @escaping Dispatch) {
+        self.state = state
+        self.dispatch = dispatch
+        self.newProjectName = state.project.info.name
+    }
+
     private var selectedSong: Bloop_Song? {
         let selectedSongId = state.project.selections.song
         return state.project.songs.first {
@@ -40,7 +46,7 @@ struct ProjectView: View {
                 }
             }
             .frame(maxHeight: .infinity)
-            
+
             transportBar
         }
     }
@@ -63,16 +69,18 @@ struct ProjectView: View {
             } label: {
                 Image(systemName: "ellipsis")
             }
-            .popover(isPresented: $editingProjectName) {
-                NameEditor(prompt: "Project Name", value: $newProjectName)
-                    .onSubmit {
+            .sheet(isPresented: $editingProjectName) {
+                Form {
+                    Section("Project Name") {
+                        TextEditor(text: $newProjectName)
+                    }
+
+                    Button("Save") {
                         let action = renameProjectAction(newProjectName)
                         dispatch(action)
                         editingProjectName = false
                     }
-                    .onAppear {
-                        newProjectName = state.project.info.name
-                    }
+                }
             }
         }
     }
@@ -112,7 +120,7 @@ struct ProjectView: View {
     }
 
     @ViewBuilder
-private var transportBar: some View {
+    private var transportBar: some View {
         TransportBar(
             playbackState: state.playbackState,
             project: state.project,
