@@ -22,6 +22,7 @@ class ApiMiddleware: Middleware {
         }
 
         if case .restartScan = action {
+            self.dispatch?(.setDiscoveredServers([]))
             core.restartScan()
         }
     }

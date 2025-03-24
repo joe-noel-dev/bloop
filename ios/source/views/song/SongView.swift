@@ -2,14 +2,8 @@ import SwiftUI
 
 struct SongView: View {
     var song: Bloop_Song
-    var songs: [Bloop_Song]
-    var selections: Bloop_Selections
-    var playbackState: Bloop_PlaybackState
-    var progress: Bloop_Progress
-    var waveforms: [Id: Bloop_WaveformData]
+    var state: AppState
     var dispatch: Dispatch
-
-    @Binding var navigationPath: [NavigationItem]
 
     @State private var editingName = false
     @State private var editingSections = false
@@ -25,16 +19,16 @@ struct SongView: View {
 
     private var selectedSection: Bloop_Section? {
         song.sections.first {
-            $0.id == selections.section
+            $0.id == state.project.selections.section
         }
     }
 
     private var isSelected: Bool {
-        selections.song == song.id
+        state.project.selections.song == song.id
     }
 
     private var isPlaying: Bool {
-        playbackState.songID == song.id
+        state.playbackState.songID == song.id
     }
 
     private func selectSong() {
@@ -56,35 +50,15 @@ struct SongView: View {
         song.sample.id == 0 ? nil : song.sample.id
     }
 
-    private var waveformData: Bloop_WaveformData? {
-        guard let sampleId = sampleId else {
-            return nil
-        }
-
-        return waveforms[sampleId]
-    }
-
-    private var waveformColour: Color {
-        if isPlaying {
-            return Colours.playing
-        }
-
-        if isSelected {
-            return Colours.selected
-        }
-
-        return Colours.neutral4
-    }
-
     @ViewBuilder
     var sections: some View {
         LazyVGrid(columns: sectionColumns) {
             ForEach(song.sections) { section in
                 SectionView(
                     section: section,
-                    selections: selections,
-                    playbackState: playbackState,
-                    progress: progress,
+                    selections: state.project.selections,
+                    playbackState: state.playbackState,
+                    progress: state.progress,
                     dispatch: dispatch
                 )
             }
@@ -231,21 +205,19 @@ struct SongView: View {
     }
 
     private func selectSongWithOffset(_ offset: Int) {
-        guard let index = songs.firstIndex(where: { $0.id == song.id }) else {
+        guard let index = state.project.songs.firstIndex(where: { $0.id == song.id }) else {
             return
         }
 
         let nextIndex = index + offset
 
-        guard 0 <= nextIndex && nextIndex < songs.count else {
+        guard 0 <= nextIndex && nextIndex < state.project.songs.count else {
             return
         }
 
-        let nextSong = songs[nextIndex].id
+        let nextSong = state.project.songs[nextIndex].id
         let action = selectSongAction(nextSong)
         dispatch(action)
-
-        navigationPath = [.song(nextSong)]
     }
 
     private func selectNextSong() {
@@ -253,6 +225,7 @@ struct SongView: View {
     }
 
     private func offsetSongName(_ offset: Int) -> String? {
+        let songs = state.project.songs
         let index = songs.firstIndex { $0.id == song.id }
         guard let index else { return nil }
         let nextIndex = index + offset
@@ -350,39 +323,23 @@ struct SongView: View {
 }
 
 struct SongView_Previews: PreviewProvider {
+    
+    static let state = {
+        var appState = AppState()
+        appState.project = demoProject()
+        appState.progress = Bloop_Progress()
+        return appState
+    }()
+    
     static let song: Bloop_Song = {
-        var song = demoSong(0)
-        song.name = "My Song Name"
-        return song
+        state.project.songs[0]
     }()
-
-    static let selections: Bloop_Selections = {
-        Bloop_Selections.with {
-            $0.song = song.id
-            $0.section = song.sections[0].id
-        }
-    }()
-
-    static let playbackState = {
-        Bloop_PlaybackState.with {
-            $0.songID = song.id
-        }
-    }()
-
-    static let progress = Bloop_Progress()
-
-    @State static var navigationPath: [NavigationItem] = [.song(song.id)]
 
     static var previews: some View {
         SongView(
             song: song,
-            songs: [song],
-            selections: selections,
-            playbackState: playbackState,
-            progress: progress,
-            waveforms: [:],
-            dispatch: loggingDispatch,
-            navigationPath: $navigationPath
+            state: state,
+            dispatch: loggingDispatch
         )
         .padding()
 
