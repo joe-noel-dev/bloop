@@ -1,26 +1,26 @@
 import SwiftUI
 
 struct MainToolbar: View {
-    
+
     var currentSong: Bloop_Song
-    
+
     @Binding var editingSong: Bool
     @Binding var editingSections: Bool
     @Binding var editingSample: Bool
     @Binding var editingProjects: Bool
     @Binding var editingProjectName: Bool
-    
+
     var dispatch: Dispatch
-    
+
     var body: some View {
         Menu {
             projectsButton
             renameProjectButton
-            
+
             editButton
             sectionsButton
             addSampleButton
-            
+
             removeButton
             disconnectButton
         } label: {
@@ -28,7 +28,7 @@ struct MainToolbar: View {
         }
         .font(.title)
     }
-    
+
     @ViewBuilder
     private var editButton: some View {
         Button {
@@ -68,7 +68,7 @@ struct MainToolbar: View {
             Label("Remove Song", systemImage: "trash")
         }
     }
-    
+
     @ViewBuilder
     private var projectsButton: some View {
         Button {

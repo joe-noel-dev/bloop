@@ -18,8 +18,7 @@ struct SongView: View {
         self.dispatch = dispatch
         self.newProjectName = newProjectName
     }
-    
-    
+
     #if os(iOS)
         @Environment(\.horizontalSizeClass) var horizontalSizeClass
     #endif
@@ -158,7 +157,15 @@ struct SongView: View {
         }
 
         .toolbar {
-            MainToolbar(currentSong: song, editingSong: $editingSong, editingSections: $editingSections, editingSample: $editingSample, editingProjects: $editingProjects, editingProjectName: $editingProjectName, dispatch: dispatch)
+            MainToolbar(
+                currentSong: song,
+                editingSong: $editingSong,
+                editingSections: $editingSections,
+                editingSample: $editingSample,
+                editingProjects: $editingProjects,
+                editingProjectName: $editingProjectName,
+                dispatch: dispatch
+            )
         }
         .sheet(isPresented: $editingSong) {
             SongEditView(song) { newSong in
