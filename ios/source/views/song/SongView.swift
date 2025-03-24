@@ -5,10 +5,21 @@ struct SongView: View {
     var state: AppState
     var dispatch: Dispatch
 
-    @State private var editing = false
+    @State private var editingSong = false
     @State private var editingSections = false
     @State private var editingSample = false
+    @State private var editingProjects = false
+    @State private var editingProjectName = false
+    @State private var newProjectName = ""
 
+    init(song: Bloop_Song, state: AppState, dispatch: @escaping Dispatch) {
+        self.song = song
+        self.state = state
+        self.dispatch = dispatch
+        self.newProjectName = newProjectName
+    }
+    
+    
     #if os(iOS)
         @Environment(\.horizontalSizeClass) var horizontalSizeClass
     #endif
@@ -147,16 +158,34 @@ struct SongView: View {
         }
 
         .toolbar {
-            headerMenu
+            MainToolbar(currentSong: song, editingSong: $editingSong, editingSections: $editingSections, editingSample: $editingSample, editingProjects: $editingProjects, editingProjectName: $editingProjectName, dispatch: dispatch)
         }
-        .sheet(isPresented: $editing) {
+        .sheet(isPresented: $editingSong) {
             SongEditView(song) { newSong in
                 if newSong != song {
                     let action = updateSongAction(newSong)
                     dispatch(action)
                 }
 
-                editing = false
+                editingSong = false
+            }
+        }
+        .sheet(isPresented: $editingProjects) {
+            ProjectsView(projects: state.projects, dispatch: dispatch) {
+                editingProjects = false
+            }
+        }
+        .sheet(isPresented: $editingProjectName) {
+            Form {
+                Section("Project Name") {
+                    TextEditor(text: $newProjectName)
+                }
+
+                Button("Save") {
+                    let action = renameProjectAction(newProjectName)
+                    dispatch(action)
+                    editingProjectName = false
+                }
             }
         }
         .navigationTitle(song.name)
@@ -202,59 +231,6 @@ struct SongView: View {
 
     private func selectPreviousSong() {
         selectSongWithOffset(-1)
-    }
-
-    @ViewBuilder
-    private var editButton: some View {
-        Button {
-            editing = true
-        } label: {
-            Label("Edit", systemImage: "pencil")
-        }
-    }
-
-    @ViewBuilder
-    private var sectionsButton: some View {
-        Button {
-            editingSections = true
-        } label: {
-            Label("Sections", systemImage: "rectangle.grid.1x2")
-        }
-    }
-
-    @ViewBuilder
-    private var addSampleButton: some View {
-        Button {
-            editingSample = true
-        } label: {
-            Label(
-                !song.hasSample ? "Add Sample" : "Replace Sample",
-                systemImage: "waveform"
-            )
-        }
-    }
-
-    @ViewBuilder
-    private var removeButton: some View {
-        Button(role: .destructive) {
-            let action = removeSongAction(song.id)
-            dispatch(action)
-        } label: {
-            Label("Remove", systemImage: "trash")
-        }
-    }
-
-    @ViewBuilder
-    private var headerMenu: some View {
-        Menu {
-            editButton
-            sectionsButton
-            addSampleButton
-            removeButton
-        } label: {
-            Image(systemName: "ellipsis")
-        }
-        .font(.title)
     }
 }
 

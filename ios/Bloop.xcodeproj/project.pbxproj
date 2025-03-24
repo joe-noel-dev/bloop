@@ -18,6 +18,7 @@
 		740E752D2D8F52AC006F62C8 /* bloop.pb.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E752C2D8F52AC006F62C8 /* bloop.pb.swift */; };
 		740E75302D8F5330006F62C8 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 740E752F2D8F5330006F62C8 /* SwiftProtobuf */; };
 		740E75322D8F5478006F62C8 /* ApiHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75312D8F5474006F62C8 /* ApiHelpers.swift */; };
+		740E75462D917998006F62C8 /* MainToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75452D917995006F62C8 /* MainToolbar.swift */; };
 		C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DB2A4F123400F8138D /* DisconnectedView.swift */; };
 		C20240E02A4F255B00F8138D /* SongView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DF2A4F255B00F8138D /* SongView.swift */; };
 		C20F17CF2AB07C2B00ECF2EB /* Discovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F17CE2AB07C2B00ECF2EB /* Discovery.swift */; };
@@ -87,6 +88,7 @@
 		740E75292D8CC050006F62C8 /* ImportMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportMiddleware.swift; sourceTree = "<group>"; };
 		740E752C2D8F52AC006F62C8 /* bloop.pb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = bloop.pb.swift; path = ../api/out/swift/bloop.pb.swift; sourceTree = SOURCE_ROOT; };
 		740E75312D8F5474006F62C8 /* ApiHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiHelpers.swift; sourceTree = "<group>"; };
+		740E75452D917995006F62C8 /* MainToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainToolbar.swift; sourceTree = "<group>"; };
 		C20240DB2A4F123400F8138D /* DisconnectedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectedView.swift; sourceTree = "<group>"; };
 		C20240DF2A4F255B00F8138D /* SongView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongView.swift; sourceTree = "<group>"; };
 		C20F17CE2AB07C2B00ECF2EB /* Discovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Discovery.swift; sourceTree = "<group>"; };
@@ -355,6 +357,7 @@
 		C27E2A6B2A51E1FF00D48D91 /* song */ = {
 			isa = PBXGroup;
 			children = (
+				740E75452D917995006F62C8 /* MainToolbar.swift */,
 				C20240DF2A4F255B00F8138D /* SongView.swift */,
 				C222A95C2A5B4F7800418CBB /* SongsView.swift */,
 			);
@@ -541,6 +544,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				740E75462D917998006F62C8 /* MainToolbar.swift in Sources */,
 				C222A9562A58AEB200418CBB /* SectionsView.swift in Sources */,
 				740E752D2D8F52AC006F62C8 /* bloop.pb.swift in Sources */,
 				740E751B2D882E0D006F62C8 /* ResponseMiddleware.swift in Sources */,

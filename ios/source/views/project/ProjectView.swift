@@ -4,10 +4,6 @@ struct ProjectView: View {
     var state: AppState
     var dispatch: Dispatch
 
-    @State private var projectsViewOpen = false
-    @State private var editingProjectName = false
-    @State private var editingSongs = false
-
     @State private var newProjectName = ""
 
     init(state: AppState, dispatch: @escaping Dispatch) {
@@ -37,51 +33,9 @@ struct ProjectView: View {
                     SongView(song: selectedSong, state: state, dispatch: dispatch)
                 }
             }
-            .toolbar {
-                toolbarContent
-            }
-            .sheet(isPresented: $projectsViewOpen) {
-                ProjectsView(projects: state.projects, dispatch: dispatch) {
-                    projectsViewOpen = false
-                }
-            }
             .frame(maxHeight: .infinity)
 
             transportBar
-        }
-    }
-
-    @ToolbarContentBuilder private var toolbarContent: some ToolbarContent {
-        #if os(iOS)
-            ToolbarItem(placement: .navigationBarLeading) {
-                MetronomeView(
-                    isPlaying: state.playbackState.playing == .playing,
-                    sectionBeat: Int(floor(state.progress.sectionBeat))
-                )
-            }
-        #endif
-
-        ToolbarItem {
-            Menu {
-                projectsButton
-                renameProjectButton
-                disconnectButton
-            } label: {
-                Image(systemName: "ellipsis")
-            }
-            .sheet(isPresented: $editingProjectName) {
-                Form {
-                    Section("Project Name") {
-                        TextEditor(text: $newProjectName)
-                    }
-
-                    Button("Save") {
-                        let action = renameProjectAction(newProjectName)
-                        dispatch(action)
-                        editingProjectName = false
-                    }
-                }
-            }
         }
     }
 
@@ -111,48 +65,12 @@ struct ProjectView: View {
     }
 
     @ViewBuilder
-    private var songsButton: some View {
-        Button {
-            editingSongs = true
-        } label: {
-            Label("Songs", systemImage: "music.note.list")
-        }
-    }
-
-    @ViewBuilder
     private var transportBar: some View {
         TransportBar(
             playbackState: state.playbackState,
             project: state.project,
             dispatch: dispatch
         )
-    }
-
-    @ViewBuilder
-    private var projectsButton: some View {
-        Button {
-            projectsViewOpen = true
-        } label: {
-            Label("Projects", systemImage: "externaldrive")
-        }
-    }
-
-    @ViewBuilder
-    private var renameProjectButton: some View {
-        Button {
-            editingProjectName = true
-        } label: {
-            Label("Rename Project", systemImage: "pencil")
-        }
-    }
-
-    @ViewBuilder
-    private var disconnectButton: some View {
-        Button {
-            dispatch(.disconnect)
-        } label: {
-            Label("Disconnect", systemImage: "phone.down.fill")
-        }
     }
 }
 
