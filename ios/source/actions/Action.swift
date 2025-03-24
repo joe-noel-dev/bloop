@@ -20,8 +20,6 @@ enum Action {
     case removeWaveform(Id)
     case addError(String)
 
-    case setNavigationPath([NavigationItem])
-
     case connect(Server)
     case connectLocal
     case disconnect

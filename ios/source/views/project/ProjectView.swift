@@ -10,59 +10,45 @@ struct ProjectView: View {
 
     @State private var newProjectName = ""
 
-    private var navigationPath: Binding<[NavigationItem]> {
-        Binding(
-            get: {
-                state.navigationPath
-            },
-            set: { value in
-                dispatch(.setNavigationPath(value))
-            }
-        )
+    init(state: AppState, dispatch: @escaping Dispatch) {
+        self.state = state
+        self.dispatch = dispatch
+        self.newProjectName = state.project.info.name
+    }
+
+    private var selectedSong: Bloop_Song? {
+        let selectedSongId = state.project.selections.song
+        return state.project.songs.first {
+            $0.id == selectedSongId
+        }
     }
 
     @Environment(\.colorScheme) var colorScheme
     var body: some View {
 
         VStack(spacing: 0) {
-            NavigationStack(path: navigationPath) {
-
+            NavigationSplitView {
                 SongsView(
-                    project: state.project,
-                    dispatch: dispatch,
-                    navigationPath: navigationPath
+                    state: state,
+                    dispatch: dispatch
                 )
-                .toolbar {
-                    toolbarContent
+            } detail: {
+                if let selectedSong = self.selectedSong {
+                    SongView(song: selectedSong, state: state, dispatch: dispatch)
                 }
-                .navigationDestination(for: NavigationItem.self) { item in
-                    if case .song(let songId) = item {
-                        let song = state.project.songs.first { $0.id == songId }
-
-                        if song != nil {
-                            SongView(
-                                song: song!,
-                                songs: state.project.songs,
-                                selections: state.project.selections,
-                                playbackState: state.playbackState,
-                                progress: state.progress,
-                                waveforms: state.waveforms,
-                                dispatch: dispatch,
-                                navigationPath: navigationPath
-                            )
-                            .navigationTitle(song!.name)
-                        }
-
-                    }
-                }
+            }
+            .toolbar {
+                toolbarContent
             }
             .sheet(isPresented: $projectsViewOpen) {
                 ProjectsView(projects: state.projects, dispatch: dispatch) {
                     projectsViewOpen = false
                 }
             }
+            .frame(maxHeight: .infinity)
+
+            transportBar
         }
-        transportBar
     }
 
     @ToolbarContentBuilder private var toolbarContent: some ToolbarContent {
@@ -83,16 +69,18 @@ struct ProjectView: View {
             } label: {
                 Image(systemName: "ellipsis")
             }
-            .popover(isPresented: $editingProjectName) {
-                NameEditor(prompt: "Project Name", value: $newProjectName)
-                    .onSubmit {
+            .sheet(isPresented: $editingProjectName) {
+                Form {
+                    Section("Project Name") {
+                        TextEditor(text: $newProjectName)
+                    }
+
+                    Button("Save") {
                         let action = renameProjectAction(newProjectName)
                         dispatch(action)
                         editingProjectName = false
                     }
-                    .onAppear {
-                        newProjectName = state.project.info.name
-                    }
+                }
             }
         }
     }
@@ -112,13 +100,8 @@ struct ProjectView: View {
             ForEach(state.project.songs) { song in
                 SongView(
                     song: song,
-                    songs: state.project.songs,
-                    selections: state.project.selections,
-                    playbackState: state.playbackState,
-                    progress: state.progress,
-                    waveforms: state.waveforms,
-                    dispatch: dispatch,
-                    navigationPath: navigationPath
+                    state: state,
+                    dispatch: dispatch
                 )
             }
         }

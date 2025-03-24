@@ -23,9 +23,6 @@ func rootReducer(state: AppState, action: Action) -> AppState {
         print("Error from core: \(error)")
         state.errors.append(error)
 
-    case .setNavigationPath(let path):
-        state.navigationPath = path
-
     case .addWaveform((let id, let waveform)):
         state.waveforms[id] = waveform
 

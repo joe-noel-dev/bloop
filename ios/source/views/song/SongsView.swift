@@ -1,39 +1,50 @@
 import SwiftUI
 
 struct SongsView: View {
-    var project: Bloop_Project
+    var state: AppState
     var dispatch: Dispatch
 
-    @Binding var navigationPath: [NavigationItem]
-
-    var body: some View {
-        NavigationView {
-            List {
-                ForEach(project.songs) { song in
-                    SongRow(song: song) {
-                        let action = selectSongAction(song.id)
-                        dispatch(action)
-
-                        navigationPath.append(.song(song.id))
-                    }
-                }
-                .onMove { fromOffsets, toOffset in
-                    var project = project
-                    project.songs.move(fromOffsets: fromOffsets, toOffset: toOffset)
-
-                    let action = updateProjectAction(project)
-                    dispatch(action)
-                }
-                .onDelete { offsets in
-                    var project = project
-                    project.songs.remove(atOffsets: offsets)
-
-                    let action = updateProjectAction(project)
+    private var selectedSongId: Binding<ID?> {
+        Binding(
+            get: { state.project.selections.song },
+            set: { newValue in
+                if let value = newValue {
+                    let action = selectSongAction(value)
                     dispatch(action)
                 }
 
             }
+        )
+    }
+
+    private var songs: Binding<[Bloop_Song]> {
+        Binding(
+            get: { state.project.songs },
+            set: { value in
+                var project = state.project
+                project.songs = value
+
+                let action = updateProjectAction(project)
+                dispatch(action)
+            }
+        )
+    }
+
+    var body: some View {
+        NavigationView {
+            List(songs, editActions: [.delete, .move]) { song in
+                NavigationLink {
+                    SongView(song: song.wrappedValue, state: state, dispatch: dispatch)
+                } label: {
+                    Text(song.wrappedValue.name)
+                        .onTapGesture {
+                            let action = selectSongAction(song.wrappedValue.id)
+                            dispatch(action)
+                        }
+                }
+            }
             .toolbar {
+                EditButton()
 
                 Button {
                     let action = addSongAction()
@@ -42,31 +53,21 @@ struct SongsView: View {
                     Label("Add Song", systemImage: "plus")
                 }
             }
-            .navigationTitle(project.info.name)
+            .navigationTitle(state.project.info.name)
         }
-    }
-}
-
-struct SongRow: View {
-    var song: Bloop_Song
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(song.name)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
-        }
-
     }
 }
 
 struct SongsView_Previews: PreviewProvider {
     static let project = demoProject()
 
-    @State static var navigationPath: [NavigationItem] = []
+    static let state: AppState = {
+        var state = AppState()
+        state.project = demoProject()
+        return state
+    }()
 
     static var previews: some View {
-        SongsView(project: project, dispatch: loggingDispatch, navigationPath: $navigationPath)
+        SongsView(state: state, dispatch: loggingDispatch)
     }
 }
