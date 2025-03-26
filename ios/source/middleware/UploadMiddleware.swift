@@ -89,13 +89,42 @@ class UploadMiddleware: Middleware {
         )
     }
 
+    private func copyFileLocally(url: URL) -> URL? {
+        guard url.startAccessingSecurityScopedResource() else {
+            print("Failed to start security-scoped access.")
+            return nil
+        }
+        defer { url.stopAccessingSecurityScopedResource() }
+
+        let tempDirectory = FileManager.default.temporaryDirectory
+        let tempURL = tempDirectory.appendingPathComponent(url.lastPathComponent)
+
+        do {
+            if FileManager.default.fileExists(atPath: tempURL.path) {
+                try FileManager.default.removeItem(at: tempURL)
+            }
+            try FileManager.default.copyItem(at: url, to: tempURL)
+            print("File copied to temporary location: \(tempURL)")
+        }
+        catch {
+            print("Failed to copy file to temporary location: \(error)")
+            return nil
+        }
+
+        return tempURL
+    }
+
     private func startUpload(songId: Id, file: URL) {
+        guard let localURL = copyFileLocally(url: file) else {
+            return
+        }
+
         do {
             let uploadId = randomId()
-            let fileContents = try Data(contentsOf: file)
+            let fileContents = try Data(contentsOf: localURL)
             uploads[uploadId] = Upload(data: fileContents, songId: songId)
 
-            let filename = file.deletingPathExtension().lastPathComponent
+            let filename = localURL.deletingPathExtension().lastPathComponent
 
             self.dispatch?(
                 .sendRequest(

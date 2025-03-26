@@ -11,17 +11,10 @@ struct TransportBar: View {
     }
 
     private var foreground: some View {
-        HStack {
-
+        HStack(spacing: Layout.units(2)) {
             loopButton
-                .frame(maxWidth: .infinity)
-
             playButton
-                .frame(maxWidth: .infinity)
-
             queueButton
-                .frame(maxWidth: .infinity)
-
         }
         .padding([.top, .bottom])
         .frame(maxWidth: .infinity)

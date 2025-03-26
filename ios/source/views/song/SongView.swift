@@ -5,9 +5,23 @@ struct SongView: View {
     var state: AppState
     var dispatch: Dispatch
 
-    @State private var editing = false
+    @Environment(\.editMode) var editMode
+
+    @State var editSong: Bloop_Song
+
     @State private var editingSections = false
     @State private var editingSample = false
+    @State private var editingProjects = false
+    @State private var editingProjectName = false
+    @State private var newProjectName = ""
+
+    init(song: Bloop_Song, state: AppState, dispatch: @escaping Dispatch) {
+        self.song = song
+        self.state = state
+        self.dispatch = dispatch
+        self.editSong = song
+        self.newProjectName = state.project.info.name
+    }
 
     #if os(iOS)
         @Environment(\.horizontalSizeClass) var horizontalSizeClass
@@ -46,120 +60,137 @@ struct SongView: View {
         song.sample.id == 0 ? nil : song.sample.id
     }
 
-    @ViewBuilder
-    var sections: some View {
-        LazyVGrid(columns: sectionColumns) {
-            ForEach(song.sections) { section in
-                SectionView(
-                    section: section,
-                    selections: state.project.selections,
-                    playbackState: state.playbackState,
-                    progress: state.progress,
-                    dispatch: dispatch
-                )
+    private func onSampleSelected(_ result: Result<URL, any Error>) {
+        switch result {
+        case .success(let url):
+            print("Selected URL for upload: \(url)")
+            let action = Action.uploadSample((song.id, url))
+            dispatch(action)
+        case .failure(let error):
+            print("Import failed: \(error)")
+        }
+    }
+
+    private func onEditModeChanged(_ newValue: EditMode?) {
+        if newValue == .active {
+            editSong = song
+        }
+        else if newValue == .inactive {
+            if editSong != song {
+                let action = updateSongAction(editSong)
+                dispatch(action)
             }
         }
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading) {
-                HStack {
-                    if let previousSongName = previousSongName {
-                        Button {
-                            selectPreviousSong()
-                        } label: {
-                            Image(systemName: "arrow.left")
-                            Text(previousSongName)
-                        }
-                    }
 
-                    Spacer()
-
-                    if let nextSongName = nextSongName {
-                        Button {
-                            selectNextSong()
-                        } label: {
-                            Text(nextSongName)
-                            Image(systemName: "arrow.right")
-                        }
-                    }
-
-                }
-                sections
-                Spacer()
+        VStack(alignment: .leading) {
+            if editMode?.wrappedValue == .active {
+                SongDetailsEditor(song: $editSong)
             }
+            
+            ScrollView(.vertical) {
+
+                
+
+                SectionsList(editSong: $editSong, state: state, dispatch: dispatch)
+            }
+
+            Spacer()
         }
+        .padding(Layout.units(2))
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
-        .padding()
+        .onAppear {
+            selectSong()
+        }
         .onTapGesture {
             if !isSelected {
                 selectSong()
             }
-
         }
         .gesture(
-            DragGesture(minimumDistance: 20, coordinateSpace: .global).onEnded { value in
-                if value.translation.width < 0 {
-                    selectNextSong()
-                }
-
-                if value.translation.width > 0 {
-                    selectPreviousSong()
-                }
-            }
+            songSwipeGesture
         )
         .sheet(isPresented: $editingSections) {
             SectionsView(song: song, dispatch: dispatch)
         }
         .fileImporter(isPresented: $editingSample, allowedContentTypes: [.wav]) { result in
-            switch result {
-            case .success(let url):
+            onSampleSelected(result)
+        }
+        .toolbar {
+            ToolbarItemGroup(placement: .navigationBarLeading) {
+                EditButton()
 
-                guard url.startAccessingSecurityScopedResource() else {
-                    print("Failed to start security-scoped access.")
-                    return
+                Button(action: selectPreviousSong) {
+                    Image(systemName: "chevron.backward")
                 }
-                defer { url.stopAccessingSecurityScopedResource() }
+                .disabled(previousSongId(state.project) == nil)
 
-                let tempDirectory = FileManager.default.temporaryDirectory
-                let tempURL = tempDirectory.appendingPathComponent(url.lastPathComponent)
+                Button(action: selectNextSong) {
+                    Image(systemName: "chevron.forward")
+                }
+                .disabled(nextSongId(state.project) == nil)
+            }
 
-                do {
-                    if FileManager.default.fileExists(atPath: tempURL.path) {
-                        try FileManager.default.removeItem(at: tempURL)
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                if editMode?.wrappedValue == .active {
+                    Button(action: addNewSection) {
+                        Label("Add Section", systemImage: "plus")
                     }
-                    try FileManager.default.copyItem(at: url, to: tempURL)
-                    print("File copied to temporary location: \(tempURL)")
-                }
-                catch {
-                    print("Failed to copy file to temporary location: \(error)")
-                    return
                 }
 
-                let action = Action.uploadSample((song.id, tempURL))
-                dispatch(action)
-
-            case .failure(let error):
-                print("Import failed: \(error)")
+                MainToolbar(
+                    currentSong: song,
+                    editingSections: $editingSections,
+                    editingSample: $editingSample,
+                    editingProjects: $editingProjects,
+                    editingProjectName: $editingProjectName,
+                    dispatch: dispatch
+                )
             }
         }
-
-        .toolbar {
-            headerMenu
+        .sheet(isPresented: $editingProjects) {
+            ProjectsView(projects: state.projects, dispatch: dispatch) {
+                editingProjects = false
+            }
         }
-        .sheet(isPresented: $editing) {
-            SongEditView(song) { newSong in
-                if newSong != song {
-                    let action = updateSongAction(newSong)
-                    dispatch(action)
-                }
-
-                editing = false
+        .sheet(isPresented: $editingProjectName) {
+            RenameProjectSheet(newProjectName: $newProjectName) {
+                saveProjectName()
             }
         }
         .navigationTitle(song.name)
+        .onChange(of: editMode?.wrappedValue) { oldValue, newValue in
+            onEditModeChanged(newValue)
+        }
+        .onChange(of: song) { oldSong, newSong in
+            if editMode?.wrappedValue != .active {
+                editSong = newSong
+            } else if editSong == oldSong {
+                editSong = newSong
+            }
+        }
+    }
+
+    private var songSwipeGesture: some Gesture {
+        DragGesture(minimumDistance: 20, coordinateSpace: .global).onEnded { value in
+            if value.translation.width < 0 {
+                selectNextSong()
+            }
+
+            if value.translation.width > 0 {
+                selectPreviousSong()
+            }
+        }
+    }
+
+    private func addNewSection() {
+        var section = Bloop_Section()
+        section.id = randomId()
+        section.name = "New Section"
+        editSong.sections.append(section)
     }
 
     private func selectSongWithOffset(_ offset: Int) {
@@ -204,105 +235,67 @@ struct SongView: View {
         selectSongWithOffset(-1)
     }
 
-    @ViewBuilder
-    private var editButton: some View {
-        Button {
-            editing = true
-        } label: {
-            Label("Edit", systemImage: "pencil")
-        }
-    }
-
-    @ViewBuilder
-    private var sectionsButton: some View {
-        Button {
-            editingSections = true
-        } label: {
-            Label("Sections", systemImage: "rectangle.grid.1x2")
-        }
-    }
-
-    @ViewBuilder
-    private var addSampleButton: some View {
-        Button {
-            editingSample = true
-        } label: {
-            Label(
-                !song.hasSample ? "Add Sample" : "Replace Sample",
-                systemImage: "waveform"
-            )
-        }
-    }
-
-    @ViewBuilder
-    private var removeButton: some View {
-        Button(role: .destructive) {
-            let action = removeSongAction(song.id)
-            dispatch(action)
-        } label: {
-            Label("Remove", systemImage: "trash")
-        }
-    }
-
-    @ViewBuilder
-    private var headerMenu: some View {
-        Menu {
-            editButton
-            sectionsButton
-            addSampleButton
-            removeButton
-        } label: {
-            Image(systemName: "ellipsis")
-        }
-        .font(.title)
+    private func saveProjectName() {
+        let action = renameProjectAction(newProjectName)
+        dispatch(action)
+        editingProjectName = false
     }
 }
 
-struct SongEditView: View {
-    var song: Bloop_Song
-    var onSubmit: (Bloop_Song) -> Void
-    @State private var newSong: Bloop_Song
-
-    init(_ song: Bloop_Song, onSubmit: @escaping (Bloop_Song) -> Void) {
-        self.song = song
-        self.onSubmit = onSubmit
-        self.newSong = song
-
-        if song.hasSample {
-            newSong.tempo = song.sample.tempo
+private struct SongDetailsEditor: View {
+    @Binding var song: Bloop_Song
+    
+    var body: some View {
+        HStack {
+            TextField("Name", text: $song.name)
+#if os(iOS)
+                .textInputAutocapitalization(.words)
+#endif
+                .disableAutocorrection(true)
+            
+            
+            TextField("Tempo", value: $song.tempo.bpm, formatter: NumberFormatter())
+                .keyboardType(.decimalPad)
+                .submitLabel(.done)
         }
     }
+}
+
+private struct RenameProjectSheet: View {
+    @Binding var newProjectName: String
+    var onSave: () -> Void
 
     var body: some View {
         Form {
-            Section("Name") {
-                TextField("Name", text: $newSong.name)
-                    #if os(iOS)
-                        .textInputAutocapitalization(.words)
-                    #endif
-                    .disableAutocorrection(true)
+            Section("Project Name") {
+                TextEditor(text: $newProjectName)
             }
 
-            Section("Tempo") {
-                TextField("Tempo", value: $newSong.tempo.bpm, formatter: NumberFormatter())
-            }
-
-            Button("Save") {
-                submit()
-            }
+            Button("Save", action: onSave)
         }
-        .onDisappear {
-            submit()
+    }
+}
+
+
+struct SectionsList: View {
+    @Binding var editSong: Bloop_Song
+    var state: AppState
+    var dispatch: Dispatch
+
+    var body: some View {
+        LazyVStack(spacing: Layout.units(2)) {
+            ForEach($editSong.sections) { section in
+                SectionView(
+                    section: section,
+                    selections: state.project.selections,
+                    playbackState: state.playbackState,
+                    progress: state.progress,
+                    dispatch: dispatch
+                )
+            }
         }
     }
 
-    private func submit() {
-        if newSong.hasSample {
-            newSong.sample.tempo = newSong.tempo
-        }
-
-        onSubmit(newSong)
-    }
 }
 
 struct SongView_Previews: PreviewProvider {

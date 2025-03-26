@@ -13,26 +13,24 @@ struct SectionsView: View {
     }
 
     var body: some View {
-        NavigationView {
-            List($newSong.sections, editActions: [.delete, .move]) { section in
+        ForEach($newSong.sections, editActions: [.delete, .move]) { section in
 
-                SectionRow(section: section)
-                    .padding([.top, .bottom], Layout.units(1))
-            }
-            .navigationTitle(newSong.name)
-            .toolbar {
-                EditButton()
+            SectionRow(section: section)
+                .padding([.top, .bottom], Layout.units(1))
+        }
+        .navigationTitle(newSong.name)
+        .toolbar {
+            EditButton()
 
-                Button {
-                    let newSection = Bloop_Section.with {
-                        $0.id = randomId()
-                        $0.name = "New Section"
-                    }
-
-                    newSong.sections.append(newSection)
-                } label: {
-                    Label("Add Section", systemImage: "plus")
+            Button {
+                let newSection = Bloop_Section.with {
+                    $0.id = randomId()
+                    $0.name = "New Section"
                 }
+
+                newSong.sections.append(newSection)
+            } label: {
+                Label("Add Section", systemImage: "plus")
             }
         }
         .onDisappear {
