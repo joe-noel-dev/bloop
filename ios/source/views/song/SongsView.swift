@@ -37,10 +37,11 @@ struct SongsView: View {
                     SongView(song: song.wrappedValue, state: state, dispatch: dispatch)
                 } label: {
                     Text(song.wrappedValue.name)
-                        .onTapGesture {
-                            let action = selectSongAction(song.wrappedValue.id)
-                            dispatch(action)
-                        }
+
+                }
+                .onTapGesture {
+                    let action = selectSongAction(song.wrappedValue.id)
+                    dispatch(action)
                 }
             }
             .toolbar {

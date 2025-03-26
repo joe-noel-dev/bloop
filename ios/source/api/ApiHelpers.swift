@@ -13,6 +13,53 @@ func selectedSongIndex(_ project: Bloop_Project) -> Int? {
     }
 }
 
+func songWithOffsetId(_ project: Bloop_Project, offset: Int) -> Id? {
+    guard let index = selectedSongIndex(project) else {
+        return nil
+    }
+
+    let songCount = project.songs.count
+    let newIndex = index + offset
+    guard 0 <= newIndex && newIndex < songCount else {
+        return nil
+    }
+
+    return project.songs[newIndex].id
+}
+
+func nextSongId(_ project: Bloop_Project) -> Id? {
+    songWithOffsetId(project, offset: 1)
+}
+
+func previousSongId(_ project: Bloop_Project) -> Id? {
+    songWithOffsetId(project, offset: -1)
+}
+
+private func sectionWithOffset(_ project: Bloop_Project, songId: Id, sectionId: Id, offset: Int)
+    -> Bloop_Section?
+{
+    guard let song = project.songs.first(where: { $0.id == songId }),
+        let sectionIndex = song.sections.firstIndex(where: { $0.id == sectionId })
+    else {
+        return nil
+    }
+
+    let newIndex = sectionIndex + offset
+    guard song.sections.indices.contains(newIndex) else {
+        return nil
+    }
+
+    return song.sections[newIndex]
+}
+
+func previousSection(_ project: Bloop_Project, songId: Id, sectionId: Id) -> Bloop_Section? {
+    return sectionWithOffset(project, songId: songId, sectionId: sectionId, offset: -1)
+}
+
+func nextSection(_ project: Bloop_Project, songId: Id, sectionId: Id) -> Bloop_Section? {
+    return sectionWithOffset(project, songId: songId, sectionId: sectionId, offset: 1)
+}
+
 func isSongSelected(selections: Bloop_Selections, songId: UInt64) -> Bool {
     selections.song == songId
 }

@@ -1,11 +1,13 @@
 import SwiftUI
 
 struct SectionView: View {
-    var section: Bloop_Section
+    @Binding var section: Bloop_Section
     var selections: Bloop_Selections
     var playbackState: Bloop_PlaybackState
     var progress: Bloop_Progress
     var dispatch: Dispatch
+
+    @Environment(\.editMode) var editMode
 
     private var isSelected: Bool {
         selections.section == section.id
@@ -43,17 +45,46 @@ struct SectionView: View {
     var body: some View {
         VStack(spacing: Layout.units(0.5)) {
             HStack {
-                Text(section.name)
-                    .font(.title2)
+                TextField("Name", text: $section.name)
+                    .frame(maxWidth: .infinity)
+                    .disabled(editMode?.wrappedValue != .active)
 
                 Spacer()
 
-                statusIcons
+                if editMode?.wrappedValue == .active {
+                    TextField("Start", value: $section.start, formatter: NumberFormatter())
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: 64)
+                        #if os(iOS)
+                            .keyboardType(.decimalPad)
+                        #endif
+
+                    Toggle(
+                        isOn: $section.metronome,
+                        label: {
+                            Image(systemName: "metronome")
+                        }
+                    )
+                    .toggleStyle(.button)
+
+                    Toggle(
+                        isOn: $section.loop,
+                        label: {
+                            Image(systemName: "repeat")
+                        }
+                    )
+                    .toggleStyle(.button)
+
+                }
+                else {
+                    statusIcons
+                }
+
             }
             .padding([.leading, .trailing])
 
         }
-        .frame(minHeight: 48)
+        .frame(minHeight: 64)
         .contentShape(Rectangle())
         .overlay(alignment: .leading) {
             border
@@ -78,20 +109,32 @@ struct SectionView: View {
 }
 
 struct SectionView_Previews: PreviewProvider {
-    static let section = {
-        let section = demoSection(0)
-        return section
-    }()
+
+    struct PreviewWrapper: View {
+        @State var section = demoSection(0)
+
+        var body: some View {
+            SectionView(
+                section: $section,
+                selections: selections,
+                playbackState: playbackState,
+                progress: progress
+            ) { action in
+                print("Dispatch: \(action)")
+            }
+            .padding()
+        }
+    }
 
     static let selections = {
         Bloop_Selections.with {
-            $0.section = section.id
+            $0.section = demoSection(0).id
         }
     }()
 
     static let playbackState = {
         Bloop_PlaybackState.with {
-            $0.sectionID = section.id
+            $0.sectionID = demoSection(0).id
         }
     }()
 
@@ -102,15 +145,6 @@ struct SectionView_Previews: PreviewProvider {
     }()
 
     static var previews: some View {
-        SectionView(
-            section: section,
-            selections: selections,
-            playbackState: playbackState,
-            progress: progress
-        ) {
-            action in
-            print("Dipatch: \(action)")
-        }
-        .padding()
+        PreviewWrapper()
     }
 }

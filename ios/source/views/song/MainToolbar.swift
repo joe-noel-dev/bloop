@@ -4,7 +4,6 @@ struct MainToolbar: View {
 
     var currentSong: Bloop_Song
 
-    @Binding var editingSong: Bool
     @Binding var editingSections: Bool
     @Binding var editingSample: Bool
     @Binding var editingProjects: Bool
@@ -13,11 +12,11 @@ struct MainToolbar: View {
     var dispatch: Dispatch
 
     var body: some View {
+
         Menu {
             projectsButton
             renameProjectButton
 
-            editButton
             sectionsButton
             addSampleButton
 
@@ -27,15 +26,7 @@ struct MainToolbar: View {
             Image(systemName: "ellipsis")
         }
         .font(.title)
-    }
 
-    @ViewBuilder
-    private var editButton: some View {
-        Button {
-            editingSong = true
-        } label: {
-            Label("Edit Song", systemImage: "pencil")
-        }
     }
 
     @ViewBuilder

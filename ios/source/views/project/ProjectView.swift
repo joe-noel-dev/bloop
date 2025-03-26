@@ -20,22 +20,26 @@ struct ProjectView: View {
     }
 
     @Environment(\.colorScheme) var colorScheme
+
+    @ViewBuilder
     var body: some View {
 
-        VStack(spacing: 0) {
-            NavigationSplitView {
-                SongsView(
-                    state: state,
-                    dispatch: dispatch
-                )
-            } detail: {
+        NavigationStack {
+            VStack(spacing: 0) {
+
                 if let selectedSong = self.selectedSong {
                     SongView(song: selectedSong, state: state, dispatch: dispatch)
+                        .frame(maxHeight: .infinity)
+                } else {
+                    Spacer()
                 }
-            }
-            .frame(maxHeight: .infinity)
 
-            transportBar
+                TransportBar(
+                    playbackState: state.playbackState,
+                    project: state.project,
+                    dispatch: dispatch
+                )
+            }
         }
     }
 
@@ -62,15 +66,6 @@ struct ProjectView: View {
         .frame(width: UIScreen.main.bounds.width)
         .tabViewStyle(.page)
 
-    }
-
-    @ViewBuilder
-    private var transportBar: some View {
-        TransportBar(
-            playbackState: state.playbackState,
-            project: state.project,
-            dispatch: dispatch
-        )
     }
 }
 
