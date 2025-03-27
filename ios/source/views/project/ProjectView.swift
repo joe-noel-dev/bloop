@@ -30,7 +30,8 @@ struct ProjectView: View {
                 if let selectedSong = self.selectedSong {
                     SongView(song: selectedSong, state: state, dispatch: dispatch)
                         .frame(maxHeight: .infinity)
-                } else {
+                }
+                else {
                     Spacer()
                 }
 
