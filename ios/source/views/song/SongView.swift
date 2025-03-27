@@ -89,10 +89,8 @@ struct SongView: View {
             if editMode?.wrappedValue == .active {
                 SongDetailsEditor(song: $editSong)
             }
-            
-            ScrollView(.vertical) {
 
-                
+            ScrollView(.vertical) {
 
                 SectionsList(editSong: $editSong, state: state, dispatch: dispatch)
             }
@@ -168,7 +166,8 @@ struct SongView: View {
         .onChange(of: song) { oldSong, newSong in
             if editMode?.wrappedValue != .active {
                 editSong = newSong
-            } else if editSong == oldSong {
+            }
+            else if editSong == oldSong {
                 editSong = newSong
             }
         }
@@ -244,16 +243,15 @@ struct SongView: View {
 
 private struct SongDetailsEditor: View {
     @Binding var song: Bloop_Song
-    
+
     var body: some View {
         HStack {
             TextField("Name", text: $song.name)
-#if os(iOS)
-                .textInputAutocapitalization(.words)
-#endif
+                #if os(iOS)
+                    .textInputAutocapitalization(.words)
+                #endif
                 .disableAutocorrection(true)
-            
-            
+
             TextField("Tempo", value: $song.tempo.bpm, formatter: NumberFormatter())
                 .keyboardType(.decimalPad)
                 .submitLabel(.done)
@@ -275,7 +273,6 @@ private struct RenameProjectSheet: View {
         }
     }
 }
-
 
 struct SectionsList: View {
     @Binding var editSong: Bloop_Song

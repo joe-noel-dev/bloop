@@ -50,7 +50,7 @@ export const Songs = () => {
     if (typeof value !== 'string' || value === selectedSongId) {
       return;
     }
-    const id = Long.fromString(value);
+    const id = Long.fromString(value, true);
     const request = selectSongRequest(id);
     core.sendRequest(request);
   };

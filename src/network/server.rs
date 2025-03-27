@@ -1,8 +1,8 @@
 use super::client;
 use crate::bloop::{Request, Response};
 use get_if_addrs::{get_if_addrs, Interface};
-use libmdns::Responder;
-use log::{debug, info};
+use log::{debug, info, warn};
+use mdns_sd::{ServiceDaemon, ServiceInfo};
 use std::net::IpAddr;
 use tokio::net::TcpListener;
 use tokio::sync::{broadcast, mpsc};
@@ -17,21 +17,37 @@ pub async fn run(request_tx: mpsc::Sender<Request>, response_tx: broadcast::Send
     let local_address = listener.local_addr().expect("Unable to get address from port");
 
     let local_port = local_address.port();
-    let hostname = hostname::get()
+    let raw_hostname = hostname::get()
         .expect("Failed to get hostname")
         .into_string()
-        .expect("Failed to convert hostname to String")
-        .replace(".local", "")
-        .replace(".lan", "");
+        .expect("Failed to convert hostname to String");
+    let clean_hostname = raw_hostname.replace(".local", "").replace(".lan", "");
 
     let ips = get_ips_for_responder();
+
+    let mdns = ServiceDaemon::new().expect("Failed to create daemon");
 
     for ip in ips.iter() {
         info!("Responding on IP: {ip}");
     }
 
-    let responder = Responder::new_with_ip_list(ips).expect("Couldn't create an mDNS responder");
-    let _service = responder.register("_bloop._tcp".into(), hostname, local_port, &[]);
+    let service_type = "_bloop._tcp.local.";
+    let instance_name = clean_hostname.as_str();
+    let host_name = format!("{}.local.", ips.first().expect("No valid IPs found"));
+    let version = env!("CARGO_PKG_VERSION");
+    let properties = [("version", version)];
+
+    let service_info = ServiceInfo::new(
+        service_type,
+        instance_name,
+        &host_name,
+        &ips[..],
+        local_port,
+        &properties[..],
+    )
+    .expect("Unable to create service info");
+
+    mdns.register(service_info).expect("Failed to register service");
 
     let local_ip = local_address.ip().to_string();
     info!("Server listening on {local_ip}:{local_port}");
@@ -42,6 +58,10 @@ pub async fn run(request_tx: mpsc::Sender<Request>, response_tx: broadcast::Send
         tokio::spawn(async move {
             client::run(stream, tx, rx).await;
         });
+    }
+
+    if let Err(error) = mdns.shutdown() {
+        warn!("Failed to shutdown mDNS daemon: {error}");
     }
 }
 

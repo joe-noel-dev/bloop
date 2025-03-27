@@ -38,6 +38,17 @@ const createBrowser = () => {
     services = services.filter((s) => !isSameService(s, service));
   });
 
+  browser.on('serviceChanged', (service) => {
+    console.log('Service changed:', service);
+    removeIPv6(service);
+    services = services.filter((s) => !isSameService(s, service));
+    services.push(service);
+  });
+
+  browser.on('error', (error) => {
+    console.error('Error:', error);
+  });
+
   browser.start();
 
   return {
