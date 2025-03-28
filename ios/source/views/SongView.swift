@@ -9,7 +9,6 @@ struct SongView: View {
 
     @State var editSong: Bloop_Song
 
-    @State private var editingSections = false
     @State private var editingSample = false
     @State private var editingProjects = false
     @State private var editingProjectName = false
@@ -111,9 +110,6 @@ struct SongView: View {
         .gesture(
             songSwipeGesture
         )
-        .sheet(isPresented: $editingSections) {
-            SectionsView(song: song, dispatch: dispatch)
-        }
         .fileImporter(isPresented: $editingSample, allowedContentTypes: [.wav]) { result in
             onSampleSelected(result)
         }
@@ -141,7 +137,6 @@ struct SongView: View {
 
                 MainToolbar(
                     currentSong: song,
-                    editingSections: $editingSections,
                     editingSample: $editingSample,
                     editingProjects: $editingProjects,
                     editingProjectName: $editingProjectName,
