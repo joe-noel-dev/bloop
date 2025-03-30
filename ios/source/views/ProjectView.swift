@@ -37,6 +37,7 @@ struct ProjectView: View {
 
                 TransportBar(
                     playbackState: state.playbackState,
+                    progress: state.progress,
                     project: state.project,
                     dispatch: dispatch
                 )
