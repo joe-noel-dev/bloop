@@ -2,22 +2,27 @@ import SwiftUI
 
 struct TransportBar: View {
     var playbackState: Bloop_PlaybackState
+    var progress: Bloop_Progress
     var project: Bloop_Project
     var dispatch: Dispatch
 
     var body: some View {
-        foreground
+        VStack(spacing: Layout.units(2)) {
+                
+            MetronomeView(isPlaying: playbackState.playing == .playing, sectionBeat: progress.sectionBeat)
+         
+            HStack(alignment: .center, spacing: Layout.units(4)) {
+                loopButton
+                    .frame(width: Layout.units(4))
+                playButton
+                    .frame(width: Layout.units(4))
+                queueButton
+                    .frame(width: Layout.units(4))
+            }
+            .padding(Layout.units(2))
+            .frame(maxWidth: .infinity)
             .background(.thinMaterial)
-    }
-
-    private var foreground: some View {
-        HStack(spacing: Layout.units(2)) {
-            loopButton
-            playButton
-            queueButton
         }
-        .padding([.top, .bottom])
-        .frame(maxWidth: .infinity)
     }
 
     @ViewBuilder
@@ -130,6 +135,9 @@ struct TransportBar_Previews: PreviewProvider {
             Spacer()
             TransportBar(
                 playbackState: playbackState,
+                progress: .with {
+                    $0.sectionBeat = 45.2
+                },
                 project: project,
                 dispatch: loggingDispatch
             )
