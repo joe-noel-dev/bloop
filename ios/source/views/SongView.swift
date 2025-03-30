@@ -9,9 +9,7 @@ struct SongView: View {
 
     @State var editSong: Bloop_Song
 
-    @State private var editingSections = false
-    @State private var editingSample = false
-    @State private var editingProjects = false
+    @State private var editingEntity: EditingEntity?
     @State private var editingProjectName = false
     @State private var newProjectName = ""
 
@@ -111,10 +109,7 @@ struct SongView: View {
         .gesture(
             songSwipeGesture
         )
-        .sheet(isPresented: $editingSections) {
-            SectionsView(song: song, dispatch: dispatch)
-        }
-        .fileImporter(isPresented: $editingSample, allowedContentTypes: [.wav]) { result in
+        .fileImporter(isPresented: editingEntityBinding(.sample), allowedContentTypes: [.wav]) { result in
             onSampleSelected(result)
         }
         .toolbar {
@@ -131,35 +126,36 @@ struct SongView: View {
                 }
                 .disabled(nextSongId(state.project) == nil)
             }
-
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
-                if editMode?.wrappedValue == .active {
-                    Button(action: addNewSection) {
-                        Label("Add Section", systemImage: "plus")
-                    }
+            
+            
+            MainToolbar(
+                currentSong: song,
+                editingEntity: $editingEntity
+            ) { action in
+                switch (action) {
+                case .addSection:
+                    addNewSection()
+                case .disconnect:
+                    dispatch(.disconnect)
                 }
-
-                MainToolbar(
-                    currentSong: song,
-                    editingSections: $editingSections,
-                    editingSample: $editingSample,
-                    editingProjects: $editingProjects,
-                    editingProjectName: $editingProjectName,
-                    dispatch: dispatch
-                )
             }
         }
-        .sheet(isPresented: $editingProjects) {
+        .sheet(isPresented: editingEntityBinding(.projects)) {
             ProjectsView(projects: state.projects, dispatch: dispatch) {
-                editingProjects = false
+                editingEntity = nil
             }
         }
         .sheet(isPresented: $editingProjectName) {
             RenameProjectSheet(newProjectName: $newProjectName) {
                 saveProjectName()
+            }.onAppear {
+                newProjectName = state.project.info.name
             }
         }
-        .navigationTitle(song.name)
+        .sheet(isPresented: editingEntityBinding(.songs)) {
+            SongsView(state: state, dispatch: dispatch)
+        }
+        .navigationTitle(editMode?.wrappedValue == .active ? editSong.name : song.name)
         .onChange(of: editMode?.wrappedValue) { oldValue, newValue in
             onEditModeChanged(newValue)
         }
@@ -184,7 +180,7 @@ struct SongView: View {
             }
         }
     }
-
+    
     private func addNewSection() {
         var section = Bloop_Section()
         section.id = randomId()
@@ -239,25 +235,80 @@ struct SongView: View {
         dispatch(action)
         editingProjectName = false
     }
+    
+    private func editingEntityBinding(_ entity: EditingEntity) -> Binding<Bool> {
+        Binding(get: {
+            editingEntity == entity
+        }, set: { value in
+            if (value) {
+                editingEntity = entity
+            } else {
+                editingEntity = nil
+            }
+            
+        })
+    }
 }
 
 private struct SongDetailsEditor: View {
     @Binding var song: Bloop_Song
+    @FocusState private var focusedField: Field?
+
+    private enum Field: Hashable {
+        case name
+        case tempo
+    }
 
     var body: some View {
-        HStack {
-            TextField("Name", text: $song.name)
-                #if os(iOS)
-                    .textInputAutocapitalization(.words)
-                #endif
-                .disableAutocorrection(true)
+        VStack(alignment: .leading, spacing: Layout.units(2)) {
+            Text("Song Details")
+                .font(.title2)
+                .bold()
+                .padding(.bottom, Layout.units(0.5))
 
-            TextField("Tempo", value: $song.tempo.bpm, formatter: NumberFormatter())
-                .keyboardType(.decimalPad)
-                .submitLabel(.done)
+            VStack(spacing: Layout.units(1.5)) {
+                VStack(alignment: .leading, spacing: Layout.units(0.5)) {
+                    Text("Name")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+
+                    TextField("Enter song name", text: $song.name)
+                        .textFieldStyle(.roundedBorder)
+#if os(iOS)
+                        .textInputAutocapitalization(.words)
+#endif
+                        .disableAutocorrection(true)
+                        .focused($focusedField, equals: .name)
+                        .submitLabel(.next)
+                }
+
+                VStack(alignment: .leading, spacing: Layout.units(0.5)) {
+                    Text("Tempo (BPM)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+
+                    TextField("120", value: $song.tempo.bpm, formatter: NumberFormatter())
+                        .keyboardType(.decimalPad)
+                        .textFieldStyle(.roundedBorder)
+                        .focused($focusedField, equals: .tempo)
+                        .submitLabel(.done)
+                }
+            }
+        }
+        .padding(Layout.units(2))
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(Layout.corderRadiusMedium)
+        .onSubmit {
+            switch focusedField {
+            case .name:
+                focusedField = .tempo
+            default:
+                focusedField = nil
+            }
         }
     }
 }
+
 
 private struct RenameProjectSheet: View {
     @Binding var newProjectName: String
@@ -266,7 +317,7 @@ private struct RenameProjectSheet: View {
     var body: some View {
         Form {
             Section("Project Name") {
-                TextEditor(text: $newProjectName)
+                TextField("Project Name", text: $newProjectName)
             }
 
             Button("Save", action: onSave)
@@ -295,26 +346,30 @@ struct SectionsList: View {
 
 }
 
-struct SongView_Previews: PreviewProvider {
-
-    static let state = {
-        var appState = AppState()
-        appState.project = demoProject()
-        appState.progress = Bloop_Progress()
-        return appState
-    }()
-
-    static let song: Bloop_Song = {
-        state.project.songs[0]
-    }()
-
-    static var previews: some View {
-        SongView(
-            song: song,
-            state: state,
-            dispatch: loggingDispatch
-        )
-        .padding()
-
-    }
+private let state = {
+    var appState = AppState()
+    appState.project = demoProject()
+    appState.progress = Bloop_Progress()
+    return appState
+}()
+    
+private let song: Bloop_Song = {
+    state.project.songs[0]
+}()
+    
+#Preview {
+    SongView(
+        song: song,
+        state: state,
+        dispatch: loggingDispatch
+    )
+    .padding()
+}
+    
+#Preview {
+    SongView(song: song, state: state, dispatch: loggingDispatch).padding().environment(\.editMode, .constant(.active))
+}
+    
+#Preview {
+    SongView(song: song, state: state, dispatch: loggingDispatch).padding().environment(\.colorScheme, .dark).environment(\.editMode, .constant(.active))
 }
