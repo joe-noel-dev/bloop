@@ -1,78 +1,69 @@
 import SwiftUI
 
-struct MainToolbar: View {
+enum EditingEntity {
+    case sample
+    case projects
+    case projectName
+    case songs
+}
 
+enum ToolbarAction {
+    case disconnect
+    case addSection
+}
+
+struct MainToolbar: ToolbarContent {
     var currentSong: Bloop_Song
 
-    @Binding var editingSample: Bool
-    @Binding var editingProjects: Bool
-    @Binding var editingProjectName: Bool
+    @Binding var editingEntity: EditingEntity?
+    @Environment(\.editMode) var editMode
+    var onAction: (ToolbarAction) -> Void
 
-    var dispatch: Dispatch
+    var body: some ToolbarContent {
+        
+        ToolbarItemGroup(placement: .navigationBarLeading) {
+            Button {
+                editingEntity = .projects
+            } label: {
+                Image(systemName: "externaldrive")
+            }
 
-    var body: some View {
-
-        Menu {
-            projectsButton
-            renameProjectButton
-
-            addSampleButton
-
-            removeButton
-            disconnectButton
-        } label: {
-            Image(systemName: "ellipsis")
+            Button {
+                editingEntity = .songs
+            } label: {
+                Image(systemName: "music.note.list")
+            }
         }
-        .font(.title)
 
-    }
+        
+        ToolbarItemGroup(placement: .navigationBarTrailing) {
+            if editMode?.wrappedValue == .active {
+                Menu {
+                    Button("Rename Project", systemImage: "pencil") {
+                        editingEntity = .projectName
+                    }
 
-    @ViewBuilder
-    private var addSampleButton: some View {
-        Button {
-            editingSample = true
-        } label: {
-            Label(
-                !currentSong.hasSample ? "Add Sample" : "Replace Sample",
-                systemImage: "waveform"
-            )
-        }
-    }
+                    Button(
+                        currentSong.hasSample ? "Replace Sample" : "Add Sample",
+                        systemImage: "waveform"
+                    ) {
+                        editingEntity = .sample
+                    }
 
-    @ViewBuilder
-    private var removeButton: some View {
-        Button(role: .destructive) {
-            let action = removeSongAction(currentSong.id)
-            dispatch(action)
-        } label: {
-            Label("Remove Song", systemImage: "trash")
-        }
-    }
+                    Button("Add Section", systemImage: "plus") {
+                        onAction(.addSection)
+                    }
 
-    @ViewBuilder
-    private var projectsButton: some View {
-        Button {
-            editingProjects = true
-        } label: {
-            Label("Projects", systemImage: "externaldrive")
-        }
-    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+            }
 
-    @ViewBuilder
-    private var renameProjectButton: some View {
-        Button {
-            editingProjectName = true
-        } label: {
-            Label("Rename Project", systemImage: "pencil")
-        }
-    }
-
-    @ViewBuilder
-    private var disconnectButton: some View {
-        Button(role: .destructive) {
-            dispatch(.disconnect)
-        } label: {
-            Label("Disconnect", systemImage: "phone.down.fill")
+            Button(role: .destructive) {
+                onAction(.disconnect)
+            } label: {
+                Image(systemName: "xmark")
+            }
         }
     }
 }

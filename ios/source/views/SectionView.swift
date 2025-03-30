@@ -52,29 +52,7 @@ struct SectionView: View {
                 Spacer()
 
                 if editMode?.wrappedValue == .active {
-                    TextField("Start", value: $section.start, formatter: NumberFormatter())
-                        .textFieldStyle(.roundedBorder)
-                        .frame(maxWidth: 64)
-                        #if os(iOS)
-                            .keyboardType(.decimalPad)
-                        #endif
-
-                    Toggle(
-                        isOn: $section.metronome,
-                        label: {
-                            Image(systemName: "metronome")
-                        }
-                    )
-                    .toggleStyle(.button)
-
-                    Toggle(
-                        isOn: $section.loop,
-                        label: {
-                            Image(systemName: "repeat")
-                        }
-                    )
-                    .toggleStyle(.button)
-
+                    SectionEditView(section: $section)
                 }
                 else {
                     statusIcons
@@ -105,6 +83,37 @@ struct SectionView: View {
             }
         }
         .cornerRadius(Layout.cornerRadiusSmall)
+    }
+}
+
+private struct SectionEditView: View {
+    @Binding var section: Bloop_Section
+    
+    var body: some View {
+        Group {
+            TextField("Start", value: $section.start, formatter: NumberFormatter())
+                .textFieldStyle(.roundedBorder)
+                .frame(maxWidth: 64)
+                #if os(iOS)
+                    .keyboardType(.decimalPad)
+                #endif
+
+            Toggle(
+                isOn: $section.metronome,
+                label: {
+                    Image(systemName: "metronome")
+                }
+            )
+            .toggleStyle(.button)
+
+            Toggle(
+                isOn: $section.loop,
+                label: {
+                    Image(systemName: "repeat")
+                }
+            )
+            .toggleStyle(.button)
+        }
     }
 }
 
@@ -145,6 +154,11 @@ struct SectionView_Previews: PreviewProvider {
     }()
 
     static var previews: some View {
-        PreviewWrapper()
+        Group {
+            PreviewWrapper()
+            
+            PreviewWrapper().environment(\.colorScheme, .dark)
+        }
+        
     }
 }
