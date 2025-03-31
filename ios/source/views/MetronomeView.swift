@@ -25,7 +25,6 @@ struct MetronomeView: View {
     }
 }
 
-
 struct MetronomeView_Previews: PreviewProvider {
     static var previews: some View {
         MetronomeView(isPlaying: true, sectionBeat: 1)

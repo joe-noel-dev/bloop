@@ -3,11 +3,11 @@ import SwiftUI
 struct SongsView: View {
     var state: AppState
     var dispatch: Dispatch
-    
+
     private var songs: [Bloop_Song] {
         state.project.songs
     }
-    
+
     private func updateSongs(_ songs: [Bloop_Song]) {
         var project = state.project
         project.songs = songs
@@ -21,7 +21,9 @@ struct SongsView: View {
                     HStack {
                         Text(song.name)
                             .font(.body)
-                            .foregroundColor(song.id == state.project.selections.song ? .accentColor : .primary)
+                            .foregroundColor(
+                                song.id == state.project.selections.song ? .accentColor : .primary
+                            )
                             .padding(.vertical, 6)
 
                         Spacer()
@@ -29,7 +31,8 @@ struct SongsView: View {
                         if song.id == state.project.selections.song {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(.accentColor)
-                        } else {
+                        }
+                        else {
                             Image(systemName: "chevron.right")
                                 .foregroundColor(.secondary)
                                 .opacity(0.4)
@@ -69,7 +72,6 @@ struct SongsView: View {
         }
     }
 }
-
 
 struct SongsView_Previews: PreviewProvider {
     static let project = demoProject()

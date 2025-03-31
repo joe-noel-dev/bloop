@@ -58,17 +58,6 @@ struct SongView: View {
         song.sample.id == 0 ? nil : song.sample.id
     }
 
-    private func onSampleSelected(_ result: Result<URL, any Error>) {
-        switch result {
-        case .success(let url):
-            print("Selected URL for upload: \(url)")
-            let action = Action.uploadSample((song.id, url))
-            dispatch(action)
-        case .failure(let error):
-            print("Import failed: \(error)")
-        }
-    }
-
     private func onEditModeChanged(_ newValue: EditMode?) {
         if newValue == .active {
             editSong = song
@@ -83,17 +72,18 @@ struct SongView: View {
 
     var body: some View {
 
-        VStack(alignment: .leading) {
-            if editMode?.wrappedValue == .active {
-                SongDetailsEditor(song: $editSong)
-            }
+        ScrollView(.vertical) {
+            VStack(alignment: .leading) {
+                if editMode?.wrappedValue == .active {
+                    SongDetailsEditor(song: $editSong)
 
-            ScrollView(.vertical) {
+                    SampleDetailsEditor(song: editSong, dispatch: dispatch)
+                }
 
                 SectionsList(editSong: $editSong, state: state, dispatch: dispatch)
-            }
 
-            Spacer()
+                Spacer()
+            }
         }
         .padding(Layout.units(2))
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -109,9 +99,6 @@ struct SongView: View {
         .gesture(
             songSwipeGesture
         )
-        .fileImporter(isPresented: editingEntityBinding(.sample), allowedContentTypes: [.wav]) { result in
-            onSampleSelected(result)
-        }
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarLeading) {
                 EditButton()
@@ -126,15 +113,12 @@ struct SongView: View {
                 }
                 .disabled(nextSongId(state.project) == nil)
             }
-            
-            
+
             MainToolbar(
                 currentSong: song,
                 editingEntity: $editingEntity
             ) { action in
-                switch (action) {
-                case .addSection:
-                    addNewSection()
+                switch action {
                 case .disconnect:
                     dispatch(.disconnect)
                 }
@@ -179,13 +163,6 @@ struct SongView: View {
                 selectPreviousSong()
             }
         }
-    }
-    
-    private func addNewSection() {
-        var section = Bloop_Section()
-        section.id = randomId()
-        section.name = "New Section"
-        editSong.sections.append(section)
     }
 
     private func selectSongWithOffset(_ offset: Int) {
@@ -235,18 +212,89 @@ struct SongView: View {
         dispatch(action)
         editingProjectName = false
     }
-    
+
     private func editingEntityBinding(_ entity: EditingEntity) -> Binding<Bool> {
-        Binding(get: {
-            editingEntity == entity
-        }, set: { value in
-            if (value) {
-                editingEntity = entity
-            } else {
-                editingEntity = nil
+        Binding(
+            get: {
+                editingEntity == entity
+            },
+            set: { value in
+                if value {
+                    editingEntity = entity
+                }
+                else {
+                    editingEntity = nil
+                }
+
             }
-            
-        })
+        )
+    }
+}
+
+private struct SampleDetailsEditor: View {
+    var song: Bloop_Song
+    var dispatch: Dispatch
+
+    @State var editingSample: Bool = false
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: Layout.units(1)) {
+                Text("Sample Details")
+                    .font(.title2)
+                    .padding(.bottom, Layout.units(0.5))
+
+                if song.hasSample {
+
+                    Text("Name")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+
+                    Text(song.sample.name)
+
+                }
+
+                HStack {
+                    Button(
+                        song.hasSample ? "Replace Sample" : "Add Sample",
+                        systemImage: song.hasSample ? "arrow.2.squarepath" : "plus"
+                    ) {
+                        editingSample = true
+                    }
+                    .buttonStyle(.bordered)
+
+                    if song.hasSample {
+                        Button(role: .destructive) {
+                            var newSong = song
+                            newSong.clearSample()
+                            dispatch(updateSongAction(newSong))
+                        } label: {
+                            Label("Remove Sample", systemImage: "trash")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+            }
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+        .padding(Layout.units(2))
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(Layout.corderRadiusMedium)
+        .fileImporter(isPresented: $editingSample, allowedContentTypes: [.wav]) { result in
+            onSampleSelected(result)
+        }
+    }
+
+    private func onSampleSelected(_ result: Result<URL, any Error>) {
+        switch result {
+        case .success(let url):
+            print("Selected URL for upload: \(url)")
+            dispatch(.uploadSample((song.id, url)))
+        case .failure(let error):
+            print("Import failed: \(error)")
+        }
     }
 }
 
@@ -263,10 +311,9 @@ private struct SongDetailsEditor: View {
         VStack(alignment: .leading, spacing: Layout.units(2)) {
             Text("Song Details")
                 .font(.title2)
-                .bold()
                 .padding(.bottom, Layout.units(0.5))
 
-            VStack(spacing: Layout.units(1.5)) {
+            HStack(spacing: Layout.units(1.5)) {
                 VStack(alignment: .leading, spacing: Layout.units(0.5)) {
                     Text("Name")
                         .font(.subheadline)
@@ -274,9 +321,9 @@ private struct SongDetailsEditor: View {
 
                     TextField("Enter song name", text: $song.name)
                         .textFieldStyle(.roundedBorder)
-#if os(iOS)
-                        .textInputAutocapitalization(.words)
-#endif
+                        #if os(iOS)
+                            .textInputAutocapitalization(.words)
+                        #endif
                         .disableAutocorrection(true)
                         .focused($focusedField, equals: .name)
                         .submitLabel(.next)
@@ -309,7 +356,6 @@ private struct SongDetailsEditor: View {
     }
 }
 
-
 private struct RenameProjectSheet: View {
     @Binding var newProjectName: String
     var onSave: () -> Void
@@ -330,6 +376,8 @@ struct SectionsList: View {
     var state: AppState
     var dispatch: Dispatch
 
+    @Environment(\.editMode) private var editMode
+
     var body: some View {
         LazyVStack(spacing: Layout.units(2)) {
             ForEach($editSong.sections) { section in
@@ -340,6 +388,18 @@ struct SectionsList: View {
                     progress: state.progress,
                     dispatch: dispatch
                 )
+            }
+
+            if editMode?.wrappedValue == .active {
+                Button("Add Section") {
+                    let section = Bloop_Section.with {
+                        $0.id = randomId()
+                        $0.name = "Section"
+                        $0.start = (editSong.sections.last?.start ?? 0.0) + 16.0
+                    }
+
+                    editSong.sections.append(section)
+                }
             }
         }
     }
@@ -352,11 +412,11 @@ private let state = {
     appState.progress = Bloop_Progress()
     return appState
 }()
-    
+
 private let song: Bloop_Song = {
     state.project.songs[0]
 }()
-    
+
 #Preview {
     SongView(
         song: song,
@@ -365,11 +425,17 @@ private let song: Bloop_Song = {
     )
     .padding()
 }
-    
+
 #Preview {
-    SongView(song: song, state: state, dispatch: loggingDispatch).padding().environment(\.editMode, .constant(.active))
+    SongView(song: song, state: state, dispatch: loggingDispatch).padding().environment(
+        \.editMode,
+        .constant(.active)
+    )
 }
-    
+
 #Preview {
-    SongView(song: song, state: state, dispatch: loggingDispatch).padding().environment(\.colorScheme, .dark).environment(\.editMode, .constant(.active))
+    SongView(song: song, state: state, dispatch: loggingDispatch).padding().environment(
+        \.colorScheme,
+        .dark
+    ).environment(\.editMode, .constant(.active))
 }

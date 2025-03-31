@@ -88,7 +88,7 @@ struct SectionView: View {
 
 private struct SectionEditView: View {
     @Binding var section: Bloop_Section
-    
+
     var body: some View {
         Group {
             TextField("Start", value: $section.start, formatter: NumberFormatter())
@@ -97,6 +97,7 @@ private struct SectionEditView: View {
                 #if os(iOS)
                     .keyboardType(.decimalPad)
                 #endif
+                .submitLabel(.return)
 
             Toggle(
                 isOn: $section.metronome,
@@ -156,9 +157,9 @@ struct SectionView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
             PreviewWrapper()
-            
+
             PreviewWrapper().environment(\.colorScheme, .dark)
         }
-        
+
     }
 }
