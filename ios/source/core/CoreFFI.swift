@@ -52,6 +52,9 @@ class CoreFFI {
         let contextPtr = Unmanaged.passUnretained(callbackStorage).toOpaque()
 
         print("Initializing Bloop via FFI")
+        
+        let homeDirectory = getICloudHome() ?? getDocumentsDirectory()
+        setHomeDirectory(homeDirectory)
 
         guard
             let ctx = bloopInit(
@@ -95,4 +98,32 @@ class CoreFFI {
     deinit {
         bloopShutdown(context)
     }
+}
+
+func getICloudHome() -> URL? {
+    guard let iCloudURL = FileManager.default.url(forUbiquityContainerIdentifier: nil) else {
+        print("iCloud container not found")
+        return nil
+    }
+
+    return iCloudURL.appendingPathComponent("Documents")
+}
+
+func getDocumentsDirectory() -> URL? {
+    guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first  else {
+        print("Documents directory not found")
+        return nil
+    }
+    
+    return documentsDirectory
+}
+
+func setHomeDirectory(_ path: URL?) {
+    guard let path = path else {
+        return
+    }
+
+    let pathString = path.path
+    setenv("BLOOP_HOME", pathString, 1)
+    print("BLOOP_HOME set to \(pathString)")
 }

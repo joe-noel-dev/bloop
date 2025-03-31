@@ -76,7 +76,9 @@ impl ProjectStore {
 
     pub async fn load_last_project(&mut self, samples_cache: &mut SamplesCache) -> anyhow::Result<Project> {
         let last_project_file = self.last_project_file();
-        let last_project_id = tokio::fs::read_to_string(last_project_file).await?;
+        let last_project_id = tokio::fs::read_to_string(last_project_file)
+            .await
+            .context("Opening last project file")?;
         let last_project_id = ID::from_str(&last_project_id)?;
         self.load(last_project_id, samples_cache).await
     }
