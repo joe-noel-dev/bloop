@@ -8,9 +8,12 @@ struct TransportBar: View {
 
     var body: some View {
         VStack(spacing: Layout.units(2)) {
-                
-            MetronomeView(isPlaying: playbackState.playing == .playing, sectionBeat: progress.sectionBeat)
-         
+
+            MetronomeView(
+                isPlaying: playbackState.playing == .playing,
+                sectionBeat: progress.sectionBeat
+            )
+
             HStack(alignment: .center, spacing: Layout.units(4)) {
                 loopButton
                     .frame(width: Layout.units(4))

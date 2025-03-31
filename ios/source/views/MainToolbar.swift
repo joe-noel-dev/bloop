@@ -1,7 +1,6 @@
 import SwiftUI
 
 enum EditingEntity {
-    case sample
     case projects
     case projectName
     case songs
@@ -9,7 +8,6 @@ enum EditingEntity {
 
 enum ToolbarAction {
     case disconnect
-    case addSection
 }
 
 struct MainToolbar: ToolbarContent {
@@ -20,7 +18,7 @@ struct MainToolbar: ToolbarContent {
     var onAction: (ToolbarAction) -> Void
 
     var body: some ToolbarContent {
-        
+
         ToolbarItemGroup(placement: .navigationBarLeading) {
             Button {
                 editingEntity = .projects
@@ -35,23 +33,11 @@ struct MainToolbar: ToolbarContent {
             }
         }
 
-        
         ToolbarItemGroup(placement: .navigationBarTrailing) {
             if editMode?.wrappedValue == .active {
                 Menu {
                     Button("Rename Project", systemImage: "pencil") {
                         editingEntity = .projectName
-                    }
-
-                    Button(
-                        currentSong.hasSample ? "Replace Sample" : "Add Sample",
-                        systemImage: "waveform"
-                    ) {
-                        editingEntity = .sample
-                    }
-
-                    Button("Add Section", systemImage: "plus") {
-                        onAction(.addSection)
                     }
 
                 } label: {
