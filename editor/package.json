@@ -28,7 +28,7 @@
     "react-modal": "^3.16.1",
     "ts-proto": "^2.6.1",
     "typescript": "~5.7.3",
-    "uuid": "^11.0.3"
+    "uuid": "^11.1.0"
   },
   "optionalDependencies": {
     "mdns": "^2.7.2"
