@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.96"
+anyhow = "1.0.97"
 approx = "0.5.1"
 async_zip = { version = "0.0.17", features = ["full"] }
 cpal = { version = "0.15.2", features = ["jack"] }
