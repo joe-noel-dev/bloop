@@ -87,6 +87,7 @@ jobs:
           APP_STORE_CONNECT_API_KEY_PATH: ${{ github.workspace }}/ios/fastlane/AuthKey.p8
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
         run: |
           bundle install
           bundle exec fastlane beta
