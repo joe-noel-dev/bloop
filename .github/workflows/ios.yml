@@ -77,6 +77,11 @@ jobs:
       - name: Build core as XCFramework
         run: ./scripts/build-xcframework.sh
 
+      - name: Clean match and provisioning cache
+        run: |
+          rm -rf ~/Library/MobileDevice/Provisioning\ Profiles
+          rm -rf ~/.fastlane
+
       - name: Prepare App Store Connect API Key
         run: |
           echo "${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}" | base64 --decode > ${{github.workspace}}/ios/fastlane/AuthKey.p8
