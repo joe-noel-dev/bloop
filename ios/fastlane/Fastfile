@@ -1,18 +1,3 @@
-# This file contains the fastlane.tools configuration
-# You can find the documentation at https://docs.fastlane.tools
-#
-# For a list of all available actions, check out
-#
-#     https://docs.fastlane.tools/actions
-#
-# For a list of all available plugins, check out
-#
-#     https://docs.fastlane.tools/plugins/available-plugins
-#
-
-# Uncomment the line if you want fastlane to automatically update itself
-# update_fastlane
-
 default_platform(:ios)
 
 platform :ios do
@@ -33,7 +18,7 @@ platform :ios do
     )
   
     match(
-      type: "adhoc",
+      type: "appstore",
       readonly: true,
       keychain_name: "fastlane_tmp",
       keychain_password: "fastlane"
@@ -47,14 +32,15 @@ platform :ios do
   
     build_app(scheme: "Bloop")
   
-    app_store_connect_api_key(
+    api_key = app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
       issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
       key_filepath: ENV["APP_STORE_CONNECT_API_KEY_PATH"]
     )
     
-    upload_to_testflight
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true
+    )
   end
-  
-  
 end
