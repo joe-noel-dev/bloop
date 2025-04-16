@@ -39,13 +39,6 @@ platform :ios do
       keychain_password: "fastlane"
     )
   
-    import_certificate(
-      certificate_path: Dir["#{ENV['HOME']}/.fastlane/**/*.p12"].first,
-      certificate_password: "",
-      keychain_name: "fastlane_tmp",
-      keychain_password: "fastlane"
-    )
-  
     build_number = ENV["BUILD_NUMBER"] || Time.now.strftime("%Y%m%d%H%M")
     increment_build_number(
       build_number: build_number,
