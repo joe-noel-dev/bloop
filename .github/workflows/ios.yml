@@ -14,9 +14,12 @@ jobs:
       - name: check Xcode version
         run: /usr/bin/xcodebuild -version
 
-      - name: Setup secrets access for Match
+      - name: Setup SSH access for Match
         run: |
-          echo "${{ secrets.MATCH_DEPLOY_KEY }}" > match_deploy_key
+          mkdir -p ~/.ssh
+          echo "${{ secrets.MATCH_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name: Install Rust Nightly
         uses: actions-rs/toolchain@v1
@@ -84,7 +87,6 @@ jobs:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
-          MATCH_GIT_PRIVATE_KEY: match_deploy_key
         run: |
           bundle install
           bundle exec fastlane beta
