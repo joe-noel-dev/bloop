@@ -14,11 +14,6 @@ jobs:
       - name: check Xcode version
         run: /usr/bin/xcodebuild -version
 
-      - name: Extract crate version from Cargo.toml
-        run: |
-          VERSION=$(grep '^version =' Cargo.toml | awk -F\" '{ print $2 }')
-          echo "VERSION_NUMBER=$VERSION" >> $GITHUB_ENV
-
       - name: Setup SSH access for Match
         run: |
           mkdir -p ~/.ssh
@@ -64,6 +59,11 @@ jobs:
 
       - name: checkout repository
         uses: actions/checkout@v3
+
+      - name: Extract crate version from Cargo.toml
+        run: |
+          VERSION=$(grep '^version =' Cargo.toml | awk -F\" '{ print $2 }')
+          echo "VERSION_NUMBER=$VERSION" >> $GITHUB_ENV
 
       - name: Generate version file
         working-directory: ios
