@@ -60,11 +60,6 @@ jobs:
       - name: checkout repository
         uses: actions/checkout@v3
 
-      - name: Extract crate version from Cargo.toml
-        run: |
-          VERSION=$(grep '^version =' Cargo.toml | awk -F\" '{ print $2 }')
-          echo "VERSION_NUMBER=$VERSION" >> $GITHUB_ENV
-
       - name: Generate version file
         working-directory: ios
         run: ./version.sh
@@ -90,7 +85,6 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           BUILD_NUMBER: ${{ github.run_number }}
-          VERSION_NUMBER: ${{ env.VERSION_NUMBER }}
         run: |
           bundle install
           bundle exec fastlane beta

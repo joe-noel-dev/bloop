@@ -28,10 +28,6 @@ platform :ios do
       key_content: ENV["APP_STORE_CONNECT_API_KEY_CONTENT"],
       is_key_content_base64: false,
     )
-  
-    increment_version_number(
-      version_number: ENV["VERSION_NUMBER"]
-    )
 
     increment_build_number(
       build_number: ENV["BUILD_NUMBER"],
