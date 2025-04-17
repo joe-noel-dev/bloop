@@ -73,17 +73,13 @@ jobs:
       - name: Generate API
         run: ./scripts/build-api.sh
 
-      - name: Build core as XCFramework
-        run: ./scripts/build-xcframework.sh
+      # - name: Build core as XCFramework
+      #   run: ./scripts/build-xcframework.sh
 
-      - name: Prepare App Store Connect API Key
-        run: |
-          echo "${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}" > ${{github.workspace}}/ios/fastlane/AuthKey.p8
-      
       - name: Run Fastlane beta lane
         working-directory: ios
         env:
-          APP_STORE_CONNECT_API_KEY_PATH: ${{ github.workspace }}/ios/fastlane/AuthKey.p8
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}

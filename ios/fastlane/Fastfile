@@ -16,12 +16,19 @@ platform :ios do
       timeout: 3600,
       lock_when_sleeps: false
     )
-  
+
     match(
       type: "appstore",
       readonly: true,
       keychain_name: "fastlane_tmp",
       keychain_password: "fastlane"
+    )
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY_CONTENT"],
+      is_key_content_base64: false,
     )
   
     build_number = ENV["BUILD_NUMBER"] || Time.now.strftime("%Y%m%d%H%M")
@@ -31,12 +38,6 @@ platform :ios do
     )
   
     build_app(scheme: "Bloop")
-  
-    api_key = app_store_connect_api_key(
-      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
-      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-      key_filepath: ENV["APP_STORE_CONNECT_API_KEY_PATH"]
-    )
     
     upload_to_testflight(
       api_key: api_key,
