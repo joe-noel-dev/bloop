@@ -76,7 +76,8 @@ jobs:
       - name: Build core as XCFramework
         run: ./scripts/build-xcframework.sh
 
-      - name: Run Fastlane beta lane
+      - name: Run Fastlane beta
+        if: startsWith(github.ref, 'refs/tags/')
         working-directory: ios
         env:
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
@@ -87,4 +88,12 @@ jobs:
         run: |
           bundle install
           bundle exec fastlane beta
-      
+
+      - name: Run Fastlane dev
+        if: startsWith(github.ref, 'refs/tags/') == false
+        working-directory: ios
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+        run: |
+          bundle install
+          bundle exec fastlane beta
