@@ -78,7 +78,7 @@ jobs:
 
       - name: Prepare App Store Connect API Key
         run: |
-          echo "${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}" | base64 --decode > ${{github.workspace}}/ios/fastlane/AuthKey.p8
+          echo "${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}" > ${{github.workspace}}/ios/fastlane/AuthKey.p8
       
       - name: Run Fastlane beta lane
         working-directory: ios
