@@ -88,6 +88,7 @@
 		740E752C2D8F52AC006F62C8 /* bloop.pb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = bloop.pb.swift; path = ../api/out/swift/bloop.pb.swift; sourceTree = SOURCE_ROOT; };
 		740E75312D8F5474006F62C8 /* ApiHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiHelpers.swift; sourceTree = "<group>"; };
 		740E75452D917995006F62C8 /* MainToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainToolbar.swift; sourceTree = "<group>"; };
+		74C682E32DB1A25800A0F2F7 /* BloopDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BloopDebug.entitlements; sourceTree = "<group>"; };
 		C20240DB2A4F123400F8138D /* DisconnectedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectedView.swift; sourceTree = "<group>"; };
 		C20240DF2A4F255B00F8138D /* SongView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongView.swift; sourceTree = "<group>"; };
 		C20F17CE2AB07C2B00ECF2EB /* Discovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Discovery.swift; sourceTree = "<group>"; };
@@ -107,7 +108,7 @@
 		C247A6E32A4D949A00001DB2 /* BloopApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloopApp.swift; sourceTree = "<group>"; };
 		C247A6E52A4D949A00001DB2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C247A6E72A4D949D00001DB2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		C247A6E92A4D949D00001DB2 /* Bloop.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Bloop.entitlements; sourceTree = "<group>"; };
+		C247A6E92A4D949D00001DB2 /* BloopRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BloopRelease.entitlements; sourceTree = "<group>"; };
 		C247A6EB2A4D949D00001DB2 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		C247A6F12A4D949D00001DB2 /* BloopTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BloopTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C247A6F52A4D949D00001DB2 /* BloopTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloopTests.swift; sourceTree = "<group>"; };
@@ -162,9 +163,10 @@
 			isa = PBXGroup;
 			children = (
 				C247A6E72A4D949D00001DB2 /* Assets.xcassets */,
-				C247A6E92A4D949D00001DB2 /* Bloop.entitlements */,
 				C2C4F7A12AB0808D009F13FB /* Bloop-Info.plist */,
 				C247A6E32A4D949A00001DB2 /* BloopApp.swift */,
+				74C682E32DB1A25800A0F2F7 /* BloopDebug.entitlements */,
+				C247A6E92A4D949D00001DB2 /* BloopRelease.entitlements */,
 				C247A6EA2A4D949D00001DB2 /* Preview Content */,
 			);
 			path = app;
@@ -671,8 +673,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = source/app/Bloop.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_ENTITLEMENTS = source/app/BloopDebug.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 7;
 				DEAD_CODE_STRIPPING = YES;
@@ -718,7 +721,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = source/app/Bloop.entitlements;
+				CODE_SIGN_ENTITLEMENTS = source/app/BloopRelease.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
