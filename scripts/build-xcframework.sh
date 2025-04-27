@@ -2,7 +2,8 @@
 
 set -e
 
-LIB_NAME="bloop"
+SOURCE_LIB_NAME="bloop_core"
+DEST_LIB_NAME="bloop"
 DEPLOYMENT_TARGET="15.0"
 
 rm -rf ./target/universal-ios
@@ -36,15 +37,15 @@ build_target debug aarch64-apple-ios-sim iphonesimulator -mios-simulator-version
 
 # Generate XCFrameworks
 xcodebuild -create-xcframework \
-  -library ./target/aarch64-apple-ios/release/lib${LIB_NAME}.a \
+  -library ./target/aarch64-apple-ios/release/lib${SOURCE_LIB_NAME}.a \
   -headers ./target/include \
-  -library ./target/aarch64-apple-ios-sim/release/lib${LIB_NAME}.a \
+  -library ./target/aarch64-apple-ios-sim/release/lib${SOURCE_LIB_NAME}.a \
   -headers ./target/include \
-  -output ./target/universal-ios/${LIB_NAME}.xcframework
+  -output ./target/universal-ios/${DEST_LIB_NAME}.xcframework
 
 xcodebuild -create-xcframework \
-  -library ./target/aarch64-apple-ios/debug/lib${LIB_NAME}.a \
+  -library ./target/aarch64-apple-ios/debug/lib${SOURCE_LIB_NAME}.a \
   -headers ./target/include \
-  -library ./target/aarch64-apple-ios-sim/debug/lib${LIB_NAME}.a \
+  -library ./target/aarch64-apple-ios-sim/debug/lib${SOURCE_LIB_NAME}.a \
   -headers ./target/include \
-  -output ./target/universal-ios/${LIB_NAME}_Debug.xcframework
+  -output ./target/universal-ios/${DEST_LIB_NAME}_Debug.xcframework
