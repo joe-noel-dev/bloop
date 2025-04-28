@@ -1,9 +1,35 @@
-use bloop::backend::{create_pocketbase_backend, Backend};
+use bloop::backend::{create_pocketbase_backend, Backend, User};
 use httpmock::MockServer;
-use iced::Length::Fill;
+use serde_json::json;
 use std::sync::Once;
 
 static INIT: Once = Once::new();
+
+fn get_user_id() -> String {
+    "abc123".to_string()
+}
+
+fn get_user_json() -> serde_json::Value {
+    serde_json::json!({
+        "collectionId": "_pb_users_auth_",
+        "collectionName": "users",
+        "id": get_user_id(),
+        "email": "test@example.com",
+        "emailVisibility": true,
+        "verified": true,
+        "name": "test",
+        "avatar": "filename.jpg",
+        "created": "2022-01-01 10:00:00.123Z",
+        "updated": "2022-01-01 10:00:00.123Z"
+    })
+}
+
+fn verify_user(user: &User) {
+    assert_eq!(user.id, get_user_id());
+    assert_eq!(user.email, "test@example.com");
+    assert!(user.email_visibility);
+    assert_eq!(user.name, "test");
+}
 
 fn init_logger() {
     INIT.call_once(|| {
@@ -25,7 +51,7 @@ impl Fixture {
         init_logger();
         let mock_server = MockServer::start();
         let base_url = mock_server.base_url();
-        let mut backend = create_pocketbase_backend(Some(base_url));
+        let backend = create_pocketbase_backend(Some(base_url));
 
         Self { mock_server, backend }
     }
@@ -38,16 +64,25 @@ async fn test_successful_log_in() {
     let email = "user@abc.com";
     let password = "password";
 
+    let response = json!(
+        {
+            "record": get_user_json(),
+            "token": "test_token"
+        }
+    );
+
     let login_mock = fixture.mock_server.mock(|when, then| {
         when.method("POST").path("/api/collections/users/auth-with-password");
         then.status(200)
             .header("Content-Type", "application/json")
-            .body(r#"{"record": { "name": "Name of User" }, "token":"test_token"}"#);
+            .body(response.to_string());
     });
 
     let result = fixture.backend.log_in(email.to_string(), password.to_string()).await;
 
-    assert!(result.is_ok());
+    let user = result.unwrap();
+    verify_user(&user);
+
     login_mock.assert();
 }
 
@@ -69,4 +104,26 @@ async fn test_unsuccessful_log_in() {
 
     assert!(result.is_err());
     login_mock.assert();
+}
+
+#[tokio::test]
+async fn test_get_user_successful() {
+    let fixture = Fixture::new();
+
+    let mock = fixture.mock_server.mock(|when, then| {
+        when.method("GET")
+            .path(format!("/api/collections/users/records/{}", get_user_id()));
+        then.status(200)
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .json_body(get_user_json());
+    });
+
+    let result = fixture.backend.get_user(&get_user_id()).await;
+    assert!(result.is_ok());
+
+    let user = result.unwrap();
+    verify_user(&user);
+
+    mock.assert();
 }
