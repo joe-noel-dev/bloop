@@ -1,4 +1,5 @@
 use bloop::backend::{create_pocketbase_backend, Backend, User};
+use chrono::DateTime;
 use httpmock::MockServer;
 use serde_json::json;
 use std::sync::Once;
@@ -20,7 +21,7 @@ fn get_user_json() -> serde_json::Value {
         "name": "test",
         "avatar": "filename.jpg",
         "created": "2022-01-01 10:00:00.123Z",
-        "updated": "2022-01-01 10:00:00.123Z"
+        "updated": "2022-02-03 10:00:00.123Z"
     })
 }
 
@@ -29,6 +30,12 @@ fn verify_user(user: &User) {
     assert_eq!(user.email, "test@example.com");
     assert!(user.email_visibility);
     assert_eq!(user.name, "test");
+
+    let expected_created_date = DateTime::parse_from_rfc3339("2022-01-01 10:00:00.123Z").unwrap();
+    assert_eq!(user.created, expected_created_date);
+
+    let expected_updated_date = DateTime::parse_from_rfc3339("2022-02-03 10:00:00.123Z").unwrap();
+    assert_eq!(user.updated, expected_updated_date);
 }
 
 fn init_logger() {

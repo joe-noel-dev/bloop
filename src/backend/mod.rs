@@ -1,6 +1,7 @@
 mod pocketbase;
 
 pub use anyhow::Result;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -11,8 +12,8 @@ pub struct User {
     pub email_visibility: bool,
     pub verified: bool,
     pub name: String,
-    pub created: String,
-    pub updated: String,
+    pub created: DateTime<Utc>,
+    pub updated: DateTime<Utc>,
 }
 
 #[async_trait::async_trait]
