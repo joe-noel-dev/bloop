@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@types/events": "^3.0.3",
-    "@vitejs/plugin-react": "^4.2.1",
+    "@vitejs/plugin-react": "^4.4.1",
     "vite": "^6.2.4",
     "vite-plugin-top-level-await": "^1.4.4",
     "vite-tsconfig-paths": "^5.1.4"
