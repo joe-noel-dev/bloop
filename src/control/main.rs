@@ -94,7 +94,7 @@ impl MainController {
         }
 
         if let Some(load_request) = request.load.as_ref() {
-            self.handle_load(load_request).await?;
+            project = self.handle_load(load_request).await?;
         }
 
         if let Some(remove_request) = request.remove.as_ref() {
@@ -334,7 +334,7 @@ impl MainController {
         match request.entity.enum_value_or_default() {
             Entity::SECTION => self.handle_add_section(project, request),
             Entity::SONG => Ok(project.add_song(1)),
-            Entity::PROJECT => Ok(Project::empty()),
+            Entity::PROJECT => Ok(Project::empty().with_songs(1, 1)),
             _ => Ok(project),
         }
     }
