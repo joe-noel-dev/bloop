@@ -1,10 +1,9 @@
-use bloop::backend::{create_pocketbase_backend, Backend, User};
-use chrono::DateTime;
-use httpmock::MockServer;
-use serde_json::json;
-use std::sync::Once;
+mod common;
 
-static INIT: Once = Once::new();
+use bloop::backend::User;
+use chrono::DateTime;
+use common::BackendFixture;
+use serde_json::json;
 
 fn get_user_id() -> String {
     "abc123".to_string()
@@ -38,35 +37,9 @@ fn verify_user(user: &User) {
     assert_eq!(user.updated, expected_updated_date);
 }
 
-fn init_logger() {
-    INIT.call_once(|| {
-        env_logger::builder()
-            .is_test(true)
-            .filter_level(log::LevelFilter::Debug)
-            .try_init()
-            .ok();
-    });
-}
-
-struct Fixture {
-    mock_server: MockServer,
-    backend: Box<dyn Backend>,
-}
-
-impl Fixture {
-    fn new() -> Self {
-        init_logger();
-        let mock_server = MockServer::start();
-        let base_url = mock_server.base_url();
-        let backend = create_pocketbase_backend(Some(base_url));
-
-        Self { mock_server, backend }
-    }
-}
-
 #[tokio::test]
 async fn test_successful_log_in() {
-    let mut fixture = Fixture::new();
+    let mut fixture = BackendFixture::new();
 
     let email = "user@abc.com";
     let password = "password";
@@ -95,7 +68,7 @@ async fn test_successful_log_in() {
 
 #[tokio::test]
 async fn test_unsuccessful_log_in() {
-    let mut fixture = Fixture::new();
+    let mut fixture = BackendFixture::new();
 
     let email = "user@abc.com";
     let password = "wrong_password";
@@ -115,7 +88,7 @@ async fn test_unsuccessful_log_in() {
 
 #[tokio::test]
 async fn test_get_user_successful() {
-    let fixture = Fixture::new();
+    let fixture = BackendFixture::new();
 
     let mock = fixture.mock_server.mock(|when, then| {
         when.method("GET")
@@ -131,6 +104,25 @@ async fn test_get_user_successful() {
 
     let user = result.unwrap();
     verify_user(&user);
+
+    mock.assert();
+}
+
+#[tokio::test]
+async fn test_get_user_unsuccessful() {
+    let fixture = BackendFixture::new();
+
+    let mock = fixture.mock_server.mock(|when, then| {
+        when.method("GET")
+            .path(format!("/api/collections/users/records/{}", get_user_id()));
+        then.status(404)
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .body(r#"{"status": 404,"message": "The requested resource wasn't found.","data": {}}"#);
+    });
+
+    let result = fixture.backend.get_user(&get_user_id()).await;
+    assert!(result.is_err());
 
     mock.assert();
 }
