@@ -1,32 +1,12 @@
 mod common;
 
-use bloop::backend::User;
+use bloop::backend::DbUser;
 use chrono::DateTime;
-use common::BackendFixture;
-use serde_json::json;
+use common::{user_json, BackendFixture};
 
-fn user_json() -> (String, serde_json::Value) {
-    let id = "abc123".to_string();
-
-    let user = serde_json::json!({
-        "collectionId": "_pb_users_auth_",
-        "collectionName": "users",
-        "id": id,
-        "email": "test@example.com",
-        "emailVisibility": true,
-        "verified": true,
-        "name": "test",
-        "avatar": "filename.jpg",
-        "created": "2022-01-01 10:00:00.123Z",
-        "updated": "2022-02-03 10:00:00.123Z"
-    });
-
-    (id, user)
-}
-
-fn verify_user(user: &User, id: &str) {
+fn verify_user(user: &DbUser, id: &str) {
     assert_eq!(user.id, id);
-    assert_eq!(user.email, "test@example.com");
+    assert_eq!(user.email, "user@abc.com");
     assert!(user.email_visibility);
     assert_eq!(user.name, "test");
 
@@ -40,31 +20,9 @@ fn verify_user(user: &User, id: &str) {
 #[tokio::test]
 async fn test_successful_log_in() {
     let mut fixture = BackendFixture::new();
-
-    let email = "user@abc.com";
-    let password = "password";
-    let (id, user_json) = user_json();
-
-    let response = json!(
-        {
-            "record": user_json,
-            "token": "test_token"
-        }
-    );
-
-    let login_mock = fixture.mock_server.mock(|when, then| {
-        when.method("POST").path("/api/collections/users/auth-with-password");
-        then.status(200)
-            .header("Content-Type", "application/json")
-            .body(response.to_string());
-    });
-
-    let result = fixture.backend.log_in(email.to_string(), password.to_string()).await;
-
-    let user = result.unwrap();
+    let (id, _) = user_json();
+    let user = fixture.log_in().await;
     verify_user(&user, &id);
-
-    login_mock.assert();
 }
 
 #[tokio::test]

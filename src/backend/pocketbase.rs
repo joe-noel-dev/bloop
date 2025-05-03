@@ -1,4 +1,4 @@
-use super::{Backend, User};
+use super::{Backend, DbProject, DbUser};
 use anyhow::{Context, Result};
 use log::{info, warn};
 use reqwest::Response;
@@ -22,7 +22,7 @@ impl PocketbaseBackend {
 
 #[async_trait::async_trait]
 impl Backend for PocketbaseBackend {
-    async fn log_in(&mut self, username: String, password: String) -> Result<User> {
+    async fn log_in(&mut self, username: String, password: String) -> Result<DbUser> {
         let client = reqwest::Client::new();
         let url = format!("{}/api/collections/users/auth-with-password", self.host);
 
@@ -61,7 +61,7 @@ impl Backend for PocketbaseBackend {
         Ok(())
     }
 
-    async fn get_user(&self, user_id: &str) -> Result<User> {
+    async fn get_user(&self, user_id: &str) -> Result<DbUser> {
         let url = format!("{}/api/collections/users/records/{}", self.host, user_id);
         let client = reqwest::Client::new();
 
@@ -71,7 +71,65 @@ impl Backend for PocketbaseBackend {
             return Err(handle_error_response(response, "Get User").await);
         }
 
-        Ok(response.json::<User>().await?)
+        Ok(response.json::<DbUser>().await?)
+    }
+
+    async fn get_projects(&self) -> Result<Vec<DbProject>> {
+        let token = self.token.as_ref().ok_or(anyhow::anyhow!("Not logged in"))?;
+
+        let url = format!("{}/api/collections/projects/records", self.host);
+        let client = reqwest::Client::new();
+
+        let response = client
+            .get(&url)
+            .header("Accept", "application/json")
+            .bearer_auth(token)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(handle_error_response(response, "Get Projects").await);
+        }
+
+        let json: serde_json::Value = response.json().await?;
+        let projects = json["items"]
+            .as_array()
+            .ok_or(anyhow::anyhow!("Missing items in response"))?;
+        let projects = projects
+            .iter()
+            .filter_map(|item| {
+                let project = serde_json::from_value(item.clone())
+                    .context(anyhow::anyhow!("Unable to parse project in response"));
+                match project {
+                    Ok(project) => Some(project),
+                    Err(error) => {
+                        warn!("Failed to parse project (item = {:?}, error = {})", item, error);
+                        None
+                    }
+                }
+            })
+            .collect();
+        Ok(projects)
+    }
+
+    async fn get_project(&self, project_id: &str) -> Result<DbProject> {
+        let token = self.token.as_ref().ok_or(anyhow::anyhow!("Not logged in"))?;
+
+        let url = format!("{}/api/collections/projects/records/{}", self.host, project_id);
+        let client = reqwest::Client::new();
+
+        let response = client
+            .get(&url)
+            .header("Accept", "application/json")
+            .bearer_auth(token)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(handle_error_response(response, "Get Project").await);
+        }
+
+        Ok(response.json::<DbProject>().await?)
     }
 }
 
