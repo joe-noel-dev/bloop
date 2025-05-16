@@ -131,6 +131,85 @@ impl Backend for PocketbaseBackend {
 
         Ok(response.json::<DbProject>().await?)
     }
+
+    async fn create_project(&self, user_id: &str) -> Result<DbProject> {
+        let token = self.token.as_ref().ok_or(anyhow::anyhow!("Not logged in"))?;
+
+        let url = format!("{}/api/collections/projects/records", self.host);
+        let client = reqwest::Client::new();
+
+        let project_json = serde_json::json!({
+            "userId": user_id
+        });
+
+        let response = client
+            .post(&url)
+            .header("Accept", "application/json")
+            .bearer_auth(token)
+            .json(&project_json)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(handle_error_response(response, "Create Project").await);
+        }
+
+        Ok(response.json::<DbProject>().await?)
+    }
+
+    async fn update_project(
+        &self,
+        project_id: &str,
+        name: Option<&str>,
+        project: Option<&[u8]>,
+        samples: Option<&[Vec<u8>]>,
+    ) -> Result<DbProject> {
+        let token = self.token.as_ref().ok_or(anyhow::anyhow!("Not logged in"))?;
+        let url = format!("{}/api/collections/projects/records/{}", self.host, project_id);
+        let client = reqwest::Client::new();
+
+        let mut form = reqwest::multipart::Form::new();
+
+        if let Some(name) = name {
+            form = form.text("name", name.to_string());
+        }
+
+        if let Some(project_bytes) = project {
+            form = form.part(
+                "project",
+                reqwest::multipart::Part::bytes(project_bytes.to_vec())
+                    .file_name("project.bin")
+                    .mime_str("application/octet-stream")
+                    .unwrap(),
+            );
+        }
+
+        if let Some(samples_vec) = samples {
+            for (i, sample_bytes) in samples_vec.iter().enumerate() {
+                form = form.part(
+                    "samples",
+                    reqwest::multipart::Part::bytes(sample_bytes.clone())
+                        .file_name(format!("sample{}.wav", i))
+                        .mime_str("audio/wav")
+                        .unwrap(),
+                );
+            }
+        }
+
+        let response = client
+            .patch(&url)
+            .header("Accept", "application/json")
+            .bearer_auth(token)
+            .multipart(form)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(handle_error_response(response, "Update Project").await);
+        }
+
+        Ok(response.json::<DbProject>().await?)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
