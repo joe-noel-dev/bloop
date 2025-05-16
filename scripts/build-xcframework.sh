@@ -2,7 +2,7 @@
 
 set -e
 
-SOURCE_LIB_NAME="bloop_core"
+SOURCE_LIB_NAME="bloop"
 DEST_LIB_NAME="bloop"
 DEPLOYMENT_TARGET="15.0"
 
