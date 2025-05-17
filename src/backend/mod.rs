@@ -43,7 +43,7 @@ pub trait Backend {
     async fn remove_project_sample(&self, project_id: &str, sample_name: &str) -> Result<DbProject>;
     async fn remove_project(&self, project_id: &str) -> Result<()>;
 
-    async fn get_project_file(&self, project_id: &str) -> Result<Vec<u8>>;
+    async fn get_project_file(&self, project_id: &str, project_filename: &str) -> Result<Vec<u8>>;
 }
 
 pub fn create_pocketbase_backend(host: Option<String>) -> Box<impl Backend> {

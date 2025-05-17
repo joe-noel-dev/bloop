@@ -226,9 +226,9 @@ impl Backend for PocketbaseBackend {
         Ok(())
     }
 
-    async fn get_project_file(&self, project_id: &str) -> Result<Vec<u8>> {
+    async fn get_project_file(&self, project_id: &str, project_filename: &str) -> Result<Vec<u8>> {
         let token = self.token.as_ref().ok_or(anyhow::anyhow!("Not logged in"))?;
-        let url = format!("{}/api/files/projects/{}/project.bin", self.host, project_id);
+        let url = format!("{}/api/files/projects/{}/{}", self.host, project_id, project_filename);
         let client = reqwest::Client::new();
 
         let response = client

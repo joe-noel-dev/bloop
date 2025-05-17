@@ -375,7 +375,11 @@ async fn get_project_file() {
             .body(file_bytes);
     });
 
-    let bytes = fixture.backend.get_project_file("project_id").await.unwrap();
+    let bytes = fixture
+        .backend
+        .get_project_file("project_id", "project.bin")
+        .await
+        .unwrap();
     assert_eq!(bytes, file_bytes);
 
     mock.assert();
