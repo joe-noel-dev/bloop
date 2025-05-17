@@ -185,22 +185,19 @@ async fn create_project() {
 }
 
 #[tokio::test]
-async fn update_project() {
+async fn update_project_name() {
     let mut fixture = BackendFixture::new();
     fixture.log_in().await;
 
-    let update_project_response = r#"
+    let response_body = r#"
     {
         "collectionId": "pbc_484305853",
         "collectionName": "projects",
         "id": "project_id",
         "name": "Updated Project Name",
         "userId": "user_id",
-        "project": "updated_project.bin",
-        "samples": [
-            "updated_sample1.wav",
-            "updated_sample2.wav"
-        ],
+        "project": "project.bin",
+        "samples": ["sample.wav"],
         "created": "2022-01-02 10:00:00.123Z",
         "updated": "2022-05-04 10:00:00.123Z"
     }
@@ -208,40 +205,142 @@ async fn update_project() {
 
     let mock = fixture.mock_server.mock(|when, then| {
         when.method("PATCH")
-            .path("/api/collections/projects/records/project_id");
+            .path("/api/collections/projects/records/project_id")
+            .body_contains("name")
+            .body_contains("Updated Project Name");
         then.status(200)
             .header("Content-Type", "application/json")
             .header("Accept", "application/json")
-            .body(update_project_response);
+            .body(response_body);
     });
-
-    let name = Some("Updated Project Name");
-    let project_bytes = Some(b"updated project bytes".as_ref());
-    let samples_vec = vec![b"sample1".to_vec(), b"sample2".to_vec()];
-    let samples: Option<&[Vec<u8>]> = Some(&samples_vec);
 
     let updated_project = fixture
         .backend
-        .update_project("project_id", name, project_bytes, samples)
+        .update_project_name("project_id", "Updated Project Name")
         .await
         .unwrap();
 
-    assert_eq!(updated_project.id, "project_id");
     assert_eq!(updated_project.name, "Updated Project Name");
-    assert_eq!(updated_project.user_id, "user_id");
-    assert_eq!(updated_project.project, "updated_project.bin");
-    assert_eq!(
-        updated_project.samples,
-        vec!["updated_sample1.wav", "updated_sample2.wav"]
-    );
-    assert_eq!(
-        updated_project.created,
-        DateTime::parse_from_rfc3339("2022-01-02 10:00:00.123Z").unwrap()
-    );
-    assert_eq!(
-        updated_project.updated,
-        DateTime::parse_from_rfc3339("2022-05-04 10:00:00.123Z").unwrap()
-    );
 
+    mock.assert();
+}
+
+#[tokio::test]
+async fn update_project_file() {
+    let mut fixture = BackendFixture::new();
+    fixture.log_in().await;
+
+    let response_body = r#"
+    {
+        "collectionId": "pbc_484305853",
+        "collectionName": "projects",
+        "id": "project_id",
+        "name": "Project Name",
+        "userId": "user_id",
+        "project": "updated_project.bin",
+        "samples": ["sample.wav"],
+        "created": "2022-01-02 10:00:00.123Z",
+        "updated": "2022-05-04 10:00:00.123Z"
+    }
+    "#;
+
+    let mock = fixture.mock_server.mock(|when, then| {
+        when.method("PATCH")
+            .path("/api/collections/projects/records/project_id")
+            .body_contains("project")
+            .body_contains("project.bin");
+        then.status(200)
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .body(response_body);
+    });
+
+    let updated_project = fixture
+        .backend
+        .update_project_file("project_id", b"updated project bytes")
+        .await
+        .unwrap();
+
+    assert_eq!(updated_project.project, "updated_project.bin");
+    mock.assert();
+}
+
+#[tokio::test]
+async fn add_project_sample() {
+    let mut fixture = BackendFixture::new();
+    fixture.log_in().await;
+
+    let response_body = r#"
+    {
+        "collectionId": "pbc_484305853",
+        "collectionName": "projects",
+        "id": "project_id",
+        "name": "Project Name",
+        "userId": "user_id",
+        "project": "project.bin",
+        "samples": ["sample.wav", "added_sample.wav"],
+        "created": "2022-01-02 10:00:00.123Z",
+        "updated": "2022-05-04 10:00:00.123Z"
+    }
+    "#;
+
+    let mock = fixture.mock_server.mock(|when, then| {
+        when.method("PATCH")
+            .path("/api/collections/projects/records/project_id")
+            .body_contains("sample")
+            .body_contains("added_sample.wav");
+        then.status(200)
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .body(response_body);
+    });
+
+    let updated_project = fixture
+        .backend
+        .add_project_sample("project_id", b"sample-bytes", "added_sample.wav")
+        .await
+        .unwrap();
+
+    assert!(updated_project.samples.contains(&"added_sample.wav".to_string()));
+    mock.assert();
+}
+
+#[tokio::test]
+async fn remove_project_sample() {
+    let mut fixture = BackendFixture::new();
+    fixture.log_in().await;
+
+    let response_body = r#"
+    {
+        "collectionId": "pbc_484305853",
+        "collectionName": "projects",
+        "id": "project_id",
+        "name": "Project Name",
+        "userId": "user_id",
+        "project": "project.bin",
+        "samples": ["sample.wav"],
+        "created": "2022-01-02 10:00:00.123Z",
+        "updated": "2022-05-04 10:00:00.123Z"
+    }
+    "#;
+
+    let mock = fixture.mock_server.mock(|when, then| {
+        when.method("PATCH")
+            .path("/api/collections/projects/records/project_id")
+            .body_contains("samples-")
+            .body_contains("removed_sample.wav");
+        then.status(200)
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .body(response_body);
+    });
+
+    let updated_project = fixture
+        .backend
+        .remove_project_sample("project_id", "removed_sample.wav")
+        .await
+        .unwrap();
+
+    assert!(!updated_project.samples.contains(&"removed_sample.wav".to_string()));
     mock.assert();
 }

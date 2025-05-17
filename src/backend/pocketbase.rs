@@ -18,6 +18,25 @@ impl PocketbaseBackend {
             token: None,
         }
     }
+
+    async fn update_project(&self, project_id: &str, form: reqwest::multipart::Form) -> Result<DbProject> {
+        let token = self.token.as_ref().ok_or(anyhow::anyhow!("Not logged in"))?;
+        let url = format!("{}/api/collections/projects/records/{}", self.host, project_id);
+        let client = reqwest::Client::new();
+        let response = client
+            .patch(&url)
+            .header("Accept", "application/json")
+            .bearer_auth(token)
+            .multipart(form)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(handle_error_response(response, "Update Project").await);
+        }
+
+        Ok(response.json::<DbProject>().await?)
+    }
 }
 
 #[async_trait::async_trait]
@@ -157,58 +176,36 @@ impl Backend for PocketbaseBackend {
         Ok(response.json::<DbProject>().await?)
     }
 
-    async fn update_project(
-        &self,
-        project_id: &str,
-        name: Option<&str>,
-        project: Option<&[u8]>,
-        samples: Option<&[Vec<u8>]>,
-    ) -> Result<DbProject> {
-        let token = self.token.as_ref().ok_or(anyhow::anyhow!("Not logged in"))?;
-        let url = format!("{}/api/collections/projects/records/{}", self.host, project_id);
-        let client = reqwest::Client::new();
+    async fn update_project_name(&self, project_id: &str, name: &str) -> Result<DbProject> {
+        let form = reqwest::multipart::Form::new().text("name", name.to_string());
+        self.update_project(project_id, form).await
+    }
 
-        let mut form = reqwest::multipart::Form::new();
+    async fn update_project_file(&self, project_id: &str, project_bytes: &[u8]) -> Result<DbProject> {
+        let form = reqwest::multipart::Form::new().part(
+            "project",
+            reqwest::multipart::Part::bytes(project_bytes.to_vec())
+                .file_name("project.bin")
+                .mime_str("application/octet-stream")
+                .unwrap(),
+        );
+        self.update_project(project_id, form).await
+    }
 
-        if let Some(name) = name {
-            form = form.text("name", name.to_string());
-        }
+    async fn add_project_sample(&self, project_id: &str, sample_bytes: &[u8], sample_name: &str) -> Result<DbProject> {
+        let form = reqwest::multipart::Form::new().part(
+            "samples+",
+            reqwest::multipart::Part::bytes(sample_bytes.to_vec())
+                .file_name(sample_name.to_string())
+                .mime_str("audio/wav")
+                .unwrap(),
+        );
+        self.update_project(project_id, form).await
+    }
 
-        if let Some(project_bytes) = project {
-            form = form.part(
-                "project",
-                reqwest::multipart::Part::bytes(project_bytes.to_vec())
-                    .file_name("project.bin")
-                    .mime_str("application/octet-stream")
-                    .unwrap(),
-            );
-        }
-
-        if let Some(samples_vec) = samples {
-            for (i, sample_bytes) in samples_vec.iter().enumerate() {
-                form = form.part(
-                    "samples",
-                    reqwest::multipart::Part::bytes(sample_bytes.clone())
-                        .file_name(format!("sample{}.wav", i))
-                        .mime_str("audio/wav")
-                        .unwrap(),
-                );
-            }
-        }
-
-        let response = client
-            .patch(&url)
-            .header("Accept", "application/json")
-            .bearer_auth(token)
-            .multipart(form)
-            .send()
-            .await?;
-
-        if !response.status().is_success() {
-            return Err(handle_error_response(response, "Update Project").await);
-        }
-
-        Ok(response.json::<DbProject>().await?)
+    async fn remove_project_sample(&self, project_id: &str, sample_name: &str) -> Result<DbProject> {
+        let form = reqwest::multipart::Form::new().text("samples-", sample_name.to_string());
+        self.update_project(project_id, form).await
     }
 }
 
