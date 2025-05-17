@@ -344,3 +344,20 @@ async fn remove_project_sample() {
     assert!(!updated_project.samples.contains(&"removed_sample.wav".to_string()));
     mock.assert();
 }
+
+#[tokio::test]
+async fn remove_project() {
+    let mut fixture = BackendFixture::new();
+    fixture.log_in().await;
+
+    let mock = fixture.mock_server.mock(|when, then| {
+        when.method("DELETE")
+            .path("/api/collections/projects/records/project_id");
+        then.status(204);
+    });
+
+    let result = fixture.backend.remove_project("project_id").await;
+    assert!(result.is_ok());
+
+    mock.assert();
+}

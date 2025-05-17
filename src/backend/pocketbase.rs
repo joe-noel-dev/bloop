@@ -207,6 +207,24 @@ impl Backend for PocketbaseBackend {
         let form = reqwest::multipart::Form::new().text("samples-", sample_name.to_string());
         self.update_project(project_id, form).await
     }
+
+    async fn remove_project(&self, project_id: &str) -> Result<()> {
+        let token = self.token.as_ref().ok_or(anyhow::anyhow!("Not logged in"))?;
+        let url = format!("{}/api/collections/projects/records/{}", self.host, project_id);
+        let client = reqwest::Client::new();
+        let response = client
+            .delete(&url)
+            .header("Accept", "application/json")
+            .bearer_auth(token)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(handle_error_response(response, "Remove Project").await);
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
