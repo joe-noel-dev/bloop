@@ -225,6 +225,25 @@ impl Backend for PocketbaseBackend {
 
         Ok(())
     }
+
+    async fn get_project_file(&self, project_id: &str) -> Result<Vec<u8>> {
+        let token = self.token.as_ref().ok_or(anyhow::anyhow!("Not logged in"))?;
+        let url = format!("{}/api/files/projects/{}/project.bin", self.host, project_id);
+        let client = reqwest::Client::new();
+
+        let response = client
+            .get(&url)
+            .header("Accept", "application/json")
+            .bearer_auth(token)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(handle_error_response(response, "Get Project File").await);
+        }
+
+        Ok(response.bytes().await?.to_vec())
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

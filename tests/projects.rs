@@ -361,3 +361,22 @@ async fn remove_project() {
 
     mock.assert();
 }
+
+#[tokio::test]
+async fn get_project_file() {
+    let mut fixture = BackendFixture::new();
+    fixture.log_in().await;
+
+    let file_bytes = b"project file bytes";
+    let mock = fixture.mock_server.mock(|when, then| {
+        when.method("GET").path("/api/files/projects/project_id/project.bin");
+        then.status(200)
+            .header("Content-Type", "application/octet-stream")
+            .body(file_bytes);
+    });
+
+    let bytes = fixture.backend.get_project_file("project_id").await.unwrap();
+    assert_eq!(bytes, file_bytes);
+
+    mock.assert();
+}
