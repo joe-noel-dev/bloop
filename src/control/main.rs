@@ -2,6 +2,7 @@ use super::{directories::Directories, project_store::ProjectStore, waveform_stor
 
 use crate::{
     audio::AudioController,
+    backend::create_pocketbase_backend,
     bloop::*,
     midi::MidiController,
     model::{Action, Project, Sample, Section, Tempo, INVALID_ID},
@@ -37,6 +38,7 @@ struct MainController {
     action_tx: mpsc::Sender<Action>,
     should_save: bool,
     preferences: Preferences,
+    project_id: Option<String>,
 }
 
 impl MainController {
@@ -59,9 +61,12 @@ impl MainController {
         let audio_preferences = preferences.clone().audio.unwrap_or_default();
         let midi_preferences = preferences.clone().midi.unwrap_or_default();
 
+        let host = std::env::var("BACKEND_HOST").ok();
+        let backend = create_pocketbase_backend(host);
+
         Self {
             samples_cache: SamplesCache::new(&directories.samples),
-            project_store: ProjectStore::new(&directories.projects),
+            project_store: ProjectStore::new(&directories.projects, backend),
             request_rx,
             response_tx: response_tx.clone(),
             project: Project::empty().with_songs(1, 1),
@@ -72,12 +77,16 @@ impl MainController {
             action_tx,
             should_save: false,
             preferences,
+            project_id: None,
         }
     }
 
     pub async fn load_last_project(&mut self) {
         match self.project_store.load_last_project(&mut self.samples_cache).await {
-            Ok(project) => self.set_project(project),
+            Ok((id, project)) => {
+                self.set_project(project);
+                self.project_id = Some(id);
+            }
             Err(error) => error!("Unable to open last project: {error}"),
         };
     }
@@ -101,16 +110,8 @@ impl MainController {
             project = self.handle_remove(project, remove_request).await?;
         }
 
-        if let Some(duplicate_request) = request.duplicate.as_ref() {
-            project = self.handle_duplicate(project, duplicate_request).await?;
-        }
-
         if let Some(remove_sample_request) = request.remove_sample.as_ref() {
             project = project.remove_sample_from_song(remove_sample_request.song_id)?;
-        }
-
-        if let Some(rename_request) = request.rename.as_ref() {
-            project = self.handle_rename(project, rename_request)?;
         }
 
         if request.save.as_ref().is_some() {
@@ -149,12 +150,26 @@ impl MainController {
             project = self.handle_add_section_with_params(add_section_request, project)?;
         }
 
-        if let Some(project_export_request) = request.project_export.as_ref() {
-            project = self.handle_project_export(project, project_export_request).await?;
+        if let Some(remove_project_request) = request.remove_project.as_ref() {
+            self.project_store
+                .remove_project(&remove_project_request.project_id)
+                .await?;
+            let projects = self.project_store.projects().await?;
+            self.send_response(Response::default().with_projects(&projects));
         }
 
-        if let Some(project_import_request) = request.project_import.as_ref() {
-            project = self.handle_project_import(project, project_import_request).await?;
+        if let Some(duplicate_project_request) = request.duplicate_project.as_ref() {
+            let old_project = self
+                .project_store
+                .load(&duplicate_project_request.project_id, &mut self.samples_cache)
+                .await?;
+            self.project_id = Some(self.project_store.save(None, old_project, &self.samples_cache).await?);
+        }
+
+        if let Some(rename_project_request) = request.rename_project.as_ref() {
+            self.project_store
+                .rename_project(&rename_project_request.project_id, &rename_project_request.new_name)
+                .await?;
         }
 
         self.set_project(project);
@@ -162,51 +177,19 @@ impl MainController {
     }
 
     async fn save_project(&mut self, project: Project) -> anyhow::Result<Project> {
-        self.project_store
-            .save(project.clone(), &self.samples_cache)
-            .await
-            .map(|_| project)
-    }
-
-    async fn handle_project_export(
-        &mut self,
-        project: Project,
-        request: &ProjectExportRequest,
-    ) -> anyhow::Result<Project> {
-        let project_id = request.project_id;
-
-        let (data, more_coming) = self.project_store.export(project_id).await?;
-
-        self.send_response(Response::default().with_export_response(&ExportResponse {
-            project_id,
-            data,
-            more_coming,
-            ..Default::default()
-        }));
-
-        Ok(project)
-    }
-
-    async fn handle_project_import(
-        &mut self,
-        project: Project,
-        request: &ProjectImportRequest,
-    ) -> anyhow::Result<Project> {
-        self.project_store
-            .import(request.import_id, &request.data, request.more_coming)
+        let project_id = self
+            .project_store
+            .save(self.project_id.clone(), project.clone(), &self.samples_cache)
             .await?;
 
-        self.send_response(Response::default().with_import_response(&ImportResponse {
-            import_id: request.import_id,
-            ..Default::default()
-        }));
+        self.project_id = Some(project_id.clone());
 
         Ok(project)
     }
 
     fn set_project(&mut self, project: Project) {
         if self.project != project {
-            self.should_save = project.info.id == self.project.info.id;
+            self.should_save = true; // FIXME: don't save if the project has changed
             self.project = project;
             self.send_project_response(&self.project);
             self.audio_controller
@@ -224,11 +207,24 @@ impl MainController {
         };
 
         match entity {
-            Entity::ALL => self.send_response(
-                Response::default()
-                    .with_project(&self.project)
-                    .with_playback_state(self.audio_controller.get_playback_state()),
-            ),
+            Entity::ALL => {
+                let username = std::env::var("USERNAME").ok();
+                let password = std::env::var("PASSWORD").ok();
+
+                if let (Some(username), Some(password)) = (username, password) {
+                    let user = self.project_store.log_in(username.clone(), password).await;
+                    match user {
+                        Ok(_) => info!("Logged in successfully: {}", username),
+                        Err(error) => error!("Unable to log in: {}", error),
+                    }
+                }
+
+                self.send_response(
+                    Response::default()
+                        .with_project(&self.project)
+                        .with_playback_state(self.audio_controller.get_playback_state()),
+                )
+            }
             Entity::PROJECTS => {
                 let projects = self.project_store.projects().await?;
                 self.send_response(Response::default().with_projects(&projects));
@@ -362,32 +358,7 @@ impl MainController {
         match remove_request.entity.enum_value_or_default() {
             Entity::SONG => project.remove_song(remove_request.id),
             Entity::SECTION => project.remove_section(remove_request.id),
-            Entity::PROJECT => {
-                self.project_store.remove_project(remove_request.id).await?;
-                let projects = self.project_store.projects().await?;
-                self.send_response(Response::default().with_projects(&projects));
-                Ok(project)
-            }
             _ => Ok(project),
-        }
-    }
-
-    async fn handle_duplicate(
-        &mut self,
-        project: Project,
-        duplicate_request: &DuplicateRequest,
-    ) -> anyhow::Result<Project> {
-        match duplicate_request.entity.enum_value() {
-            Ok(Entity::PROJECT) => {
-                let project = self
-                    .project_store
-                    .load(duplicate_request.id, &mut self.samples_cache)
-                    .await?;
-                let project = project.replace_ids();
-                Ok(project)
-            }
-            Ok(_) => Ok(project),
-            Err(error) => Err(anyhow!("Invalid entity type: {error}")),
         }
     }
 
@@ -415,16 +386,13 @@ impl MainController {
         Ok(project)
     }
 
-    fn handle_rename(&self, project: Project, rename_request: &RenameRequest) -> anyhow::Result<Project> {
-        match rename_request.entity.enum_value() {
-            Ok(Entity::PROJECT) => Ok(project.with_name(rename_request.name.clone())),
-            Ok(_) => Ok(project),
-            Err(error) => Err(anyhow!("Invalid entity type: {error}")),
-        }
-    }
-
-    async fn handle_load(&mut self, request: &LoadRequest) -> anyhow::Result<Project> {
-        self.project_store.load(request.id, &mut self.samples_cache).await
+    async fn handle_load(&mut self, request: &LoadProjectRequest) -> anyhow::Result<Project> {
+        let project = self
+            .project_store
+            .load(&request.project_id, &mut self.samples_cache)
+            .await?;
+        self.project_id = Some(request.project_id.clone());
+        Ok(project)
     }
 
     fn handle_begin_upload(&mut self, request: &BeginUploadRequest) -> anyhow::Result<()> {

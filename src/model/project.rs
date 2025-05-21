@@ -1,5 +1,4 @@
 use super::id::ID;
-use super::random_id;
 use super::Song;
 use super::INVALID_ID;
 use crate::bloop::*;
@@ -9,10 +8,10 @@ use anyhow::Context;
 impl ProjectInfo {
     pub fn empty() -> Self {
         Self {
-            id: random_id(),
+            id: "".to_string(),
             name: "Project".to_string(),
             version: "1".to_string(),
-            last_saved: 0,
+            last_saved: "".to_string(),
             ..Default::default()
         }
     }
@@ -21,15 +20,8 @@ impl ProjectInfo {
 impl Project {
     pub fn empty() -> Self {
         let mut project = Self::new();
-        project.info = Some(ProjectInfo::empty()).into();
         project.selections = Some(Selections::default()).into();
         project
-    }
-
-    pub fn with_name(mut self, name: String) -> Self {
-        let info = self.info.as_mut().expect("Missing project info");
-        info.name = name;
-        self
     }
 
     pub fn with_songs(mut self, num_songs: usize, num_sections: usize) -> Self {
@@ -454,9 +446,6 @@ impl Project {
     }
 
     pub fn replace_ids(mut self) -> Self {
-        let info = self.info.as_mut().expect("Missing project info");
-        info.id = random_id();
-
         self.songs = self.songs.iter().map(|song| song.clone().replace_ids()).collect();
         self.selections = Some(Selections {
             song: self.songs.first().map(|song| song.id).unwrap_or(INVALID_ID),
@@ -476,6 +465,8 @@ impl Project {
 
 #[cfg(test)]
 mod tests {
+    use crate::model::random_id;
+
     use super::*;
 
     #[test]

@@ -3,16 +3,16 @@ syntax = "proto3";
 package bloop;
  
 message Project {
-    ProjectInfo info = 1;
+    reserved 1;
     repeated Song songs = 2;
     Selections selections = 3;
 }
 
 message ProjectInfo {
-    uint64 id = 1; 
+    string id = 1; 
     string name = 2;
     string version = 3;
-    int64 last_saved = 4;
+    string last_saved = 4;
 }
 
 message Selections {
@@ -69,10 +69,10 @@ message Request {
     SelectRequest select = 3; 
     RemoveRequest remove = 4;
     UpdateRequest update = 5;
-    DuplicateRequest duplicate = 6;
-    SaveRequest save = 7; 
-    LoadRequest load = 8;
-    RenameRequest rename = 9;
+    reserved 6;
+    SaveProjectRequest save = 7; 
+    LoadProjectRequest load = 8;
+    reserved 9;
     BeginUploadRequest begin_upload = 10;
     UploadRequest upload = 11; 
     CompleteUploadRequest complete_upload = 12;
@@ -80,8 +80,13 @@ message Request {
     RemoveSampleRequest remove_sample = 14;
     TransportRequest transport = 15;
     AddSectionRequest add_section = 16;
-    ProjectExportRequest project_export = 17;
-    ProjectImportRequest project_import = 18; 
+    reserved 17;
+    reserved 18; 
+    RemoveProjectRequest remove_project = 19;
+    DuplicateProjectRequest duplicate_project = 20; 
+    RenameProjectRequest rename_project = 21;
+    LoginRequest login = 22;
+    LogoutRequest logout = 23;
 }
 
 message GetRequest {
@@ -121,23 +126,12 @@ message UpdateRequest {
     Project project = 4;
 }
 
-message DuplicateRequest {
-    Entity entity = 1;
-    uint64 id = 2;
-}
-
-message SaveRequest {
+message SaveProjectRequest {
     
 }
 
-message LoadRequest {
-    uint64 id = 1;
-}
-
-message RenameRequest {
-    Entity entity = 1;
-    uint64 id = 2;
-    string name = 3;
+message LoadProjectRequest {
+    string project_id = 1;
 }
 
 message BeginUploadRequest {
@@ -172,16 +166,6 @@ message AddSectionRequest {
     bool metronome = 5;
 }
 
-message ProjectImportRequest {
-    uint64 import_id = 1;
-    bytes data = 2;
-    bool more_coming = 3;
-}
-
-message ProjectExportRequest {
-    uint64 project_id = 1;
-}
-
 message RemoveSampleRequest {
     uint64 song_id = 1;
 }
@@ -211,9 +195,10 @@ message Response {
     WaveformResponse waveform = 4;
     Progress progress = 5;
     UploadAck upload = 6;
-    ExportResponse export_response = 7;
-    ImportResponse import_response = 8;
+    reserved 7;
+    reserved 8;
     string error = 9;
+    UserStatusResponse user_status = 10;
 } 
 
 message WaveformResponse {
@@ -253,12 +238,32 @@ message UploadAck {
     uint64 upload_id = 1;
 }
 
-message ExportResponse {
-    uint64 project_id = 1;
-    bytes data = 2;
-    bool more_coming = 3;
+message RemoveProjectRequest {
+    string project_id = 1;
 }
 
-message ImportResponse {
-    uint64 import_id = 1;
+message DuplicateProjectRequest {
+    string project_id = 1;
+}
+
+message RenameProjectRequest {
+    string project_id = 1;
+    string new_name = 2;
+}
+
+message LoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LogoutRequest {}
+ 
+message User {
+    string id = 1;
+    string email = 2;
+    string name = 3;
+}
+
+message UserStatusResponse {
+    User user = 1;
 }

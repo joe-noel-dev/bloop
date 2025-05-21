@@ -1,8 +1,6 @@
 #![allow(dead_code)]
 
-use crate::bloop::{
-    ExportResponse, ImportResponse, PlaybackState, Progress, Project, ProjectInfo, UploadAck, WaveformResponse,
-};
+use crate::bloop::{PlaybackState, Progress, Project, ProjectInfo, UploadAck, UserStatusResponse, WaveformResponse};
 
 impl crate::bloop::Response {
     pub fn with_error(mut self, message: &str) -> Self {
@@ -40,13 +38,8 @@ impl crate::bloop::Response {
         self
     }
 
-    pub fn with_export_response(mut self, export_response: &ExportResponse) -> Self {
-        self.export_response = Some(export_response.clone()).into();
-        self
-    }
-
-    pub fn with_import_response(mut self, import_response: &ImportResponse) -> Self {
-        self.import_response = Some(import_response.clone()).into();
+    pub fn with_user_status(mut self, user_status: &UserStatusResponse) -> Self {
+        self.user_status = Some(user_status.clone()).into();
         self
     }
 }

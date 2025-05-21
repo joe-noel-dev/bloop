@@ -4,7 +4,7 @@ use log::{info, warn};
 use reqwest::Response;
 use serde::{Deserialize, Serialize};
 
-const DEFAULT_HOST: &str = "https://joe-noel-dev-bloop.fly.dev/";
+const DEFAULT_HOST: &str = "https://joe-noel-dev-bloop.fly.dev";
 
 pub struct PocketbaseBackend {
     host: String,
