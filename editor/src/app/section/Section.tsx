@@ -1,41 +1,15 @@
-import {
-  ColorPaletteProp,
-  Grid,
-  IconButton,
-  LinearProgress,
-  Stack,
-  Switch,
-} from '@mui/joy';
+import {ColorPaletteProp, Grid, IconButton, Stack, Switch} from '@mui/joy';
 import {
   useSectionById,
   useSelectedSectionId,
 } from '../../model-hooks/section-hooks';
-import {useCore} from '../../core/use-core';
-import {
-  playRequest,
-  queueRequest,
-  removeSectionRequest,
-  selectSectionRequest,
-  stopRequest,
-  updateSectionRequest,
-  updateSongRequest,
-} from '../../api/request';
-import {
-  ArrowDownward,
-  ArrowForward,
-  ArrowUpward,
-  Delete,
-  PlayArrow,
-  Stop,
-} from '@mui/icons-material';
-import {usePlaybackState, useProgress} from '../../model-hooks/transport-hooks';
+import {ArrowDownward, ArrowUpward, Delete} from '@mui/icons-material';
 import {columnSize, columns} from './TableInfo';
 import isEqual from 'lodash.isequal';
 import {useSong} from '../../model-hooks/song-hooks';
 import {ClickToEdit} from '../../components/ClickToEdit';
-import {Core} from '../../core/Core';
 import {getSectionBeatLength, ID} from '../../api/helpers';
-import {PlayingState, Song} from '../../api/bloop';
+import {Section as ModelSection, Song} from '../../api/bloop';
 
 interface Props {
   songId: ID;
@@ -45,54 +19,36 @@ interface Props {
 
 export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
   const section = useSectionById(sectionId);
-  const core = useCore();
   const song = useSong(songId);
-  const selectedSectionId = useSelectedSectionId();
-  const playbackState = usePlaybackState();
-  const progress = useProgress();
 
   const duration = song ? getSectionBeatLength(song, sectionId) : 0;
   const isFirst = song?.sections.at(0)?.id === sectionId;
   const isLast = song?.sections.at(-1)?.id === sectionId;
 
-  const isSelected = sectionId === selectedSectionId;
-  const isPlaying =
-    (playbackState?.playing === PlayingState.PLAYING &&
-      playbackState.sectionId === sectionId) ??
-    false;
-
   if (!section) {
     return <></>;
   }
 
+  const updateSection = (section: ModelSection) => {
+    // FIXME: update section
+  };
+
   const enableLoop = (enable: boolean) => {
-    const request = updateSectionRequest({
+    updateSection({
       ...section,
       loop: enable,
     });
-    core.sendRequest(request);
   };
 
   const enableMetronome = (enable: boolean) => {
-    const request = updateSectionRequest({
+    updateSection({
       ...section,
       metronome: enable,
     });
-    core.sendRequest(request);
-  };
-
-  const select = () => {
-    if (isSelected) {
-      return;
-    }
-
-    const request = selectSectionRequest(sectionId);
-    core.sendRequest(request);
   };
 
   const remove = () => {
-    const request = removeSectionRequest(sectionId);
-    core.sendRequest(request);
+    // FIXME: remove section
   };
 
   const submitName = (name: string) => {
@@ -102,8 +58,7 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
       return;
     }
 
-    const request = updateSectionRequest(newSection);
-    core.sendRequest(request);
+    updateSection(newSection);
   };
 
   const submitStart = (value: string) => {
@@ -114,8 +69,7 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
     }
 
     const newSection = {...section, start: newStart};
-    const request = updateSectionRequest(newSection);
-    core.sendRequest(request);
+    updateSection(newSection);
   };
 
   const submitDuration = (value: string) => {
@@ -128,40 +82,10 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
     requestUpdateDuration(sectionId, newDuration);
   };
 
-  const stop = () => {
-    const stop = stopRequest();
-    core.sendRequest(stop);
-  };
-
-  const play = () => {
-    stop();
-    select();
-
-    const play = playRequest();
-    core.sendRequest(play);
-  };
-
-  const queue = () => {
-    const request = queueRequest(songId, sectionId);
-    core.sendRequest(request);
-  };
-
   return (
     <Grid container spacing={1}>
       {columns.map((name) => {
         switch (name) {
-          case 'Play':
-            return (
-              <TransportCell
-                key={name}
-                isPlaying={isPlaying}
-                progress={progress.sectionProgress}
-                sectionBeat={progress.sectionBeat}
-                onRequestPlay={play}
-                onRequestStop={stop}
-                onRequestQueue={queue}
-              />
-            );
           case 'Name':
             return (
               <Grid
@@ -237,7 +161,7 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
                       }
 
                       const delta = -1;
-                      moveSectionIndex(sectionId, delta, song, core);
+                      moveSectionIndex(sectionId, delta, song);
                     }}
                     color="primary"
                     disabled={isFirst}
@@ -252,7 +176,7 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
                       }
 
                       const delta = 1;
-                      moveSectionIndex(sectionId, delta, song, core);
+                      moveSectionIndex(sectionId, delta, song);
                     }}
                     color="primary"
                     disabled={isLast}
@@ -271,46 +195,6 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
     </Grid>
   );
 };
-
-const TransportCell = ({
-  isPlaying,
-  progress,
-  onRequestPlay,
-  onRequestStop,
-  onRequestQueue,
-}: {
-  isPlaying: boolean;
-  progress: number;
-  sectionBeat: number;
-  onRequestPlay: () => void;
-  onRequestStop: () => void;
-  onRequestQueue: () => void;
-}) => (
-  <Grid xs={columnSize('Play')}>
-    <Stack direction="row" spacing={1} alignItems="center">
-      {!isPlaying && (
-        <IconButton onClick={onRequestPlay}>
-          <PlayArrow />
-        </IconButton>
-      )}
-      {isPlaying && (
-        <IconButton onClick={onRequestStop}>
-          <Stop />
-        </IconButton>
-      )}
-      <IconButton onClick={onRequestQueue}>
-        <ArrowForward />
-      </IconButton>
-      {isPlaying && (
-        <LinearProgress
-          determinate
-          value={progress * 100}
-          sx={{maxWidth: 64}}
-        />
-      )}
-    </Stack>
-  </Grid>
-);
 
 const EditButton = ({
   onClick,
@@ -338,12 +222,7 @@ const EditButton = ({
   </IconButton>
 );
 
-const moveSectionIndex = (
-  sectionId: ID,
-  delta: number,
-  song: Song,
-  core: Core
-) => {
+const moveSectionIndex = (sectionId: ID, delta: number, song: Song) => {
   const currentIndex = song.sections.findIndex((s) => s.id === sectionId);
   if (currentIndex === -1) {
     console.warn(`Section not found: ${sectionId}`);
@@ -366,6 +245,5 @@ const moveSectionIndex = (
     section.start = startPositions[index];
   });
 
-  const request = updateSongRequest(newSong);
-  core.sendRequest(request);
+  // FIXME: update song
 };

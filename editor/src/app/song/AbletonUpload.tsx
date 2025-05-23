@@ -2,9 +2,7 @@ import {Upload} from '@mui/icons-material';
 import {Button} from '@mui/joy';
 import {useRef} from 'react';
 import pako from 'pako';
-import {Core} from '../../core/Core';
 import {addSectionWithParamsRequest} from '../../api/request';
-import {useCore} from '../../core/use-core';
 import {ID} from '../../api/helpers';
 
 interface Props {
@@ -12,8 +10,6 @@ interface Props {
 }
 
 export const AbletonUpload = ({songId}: Props) => {
-  const core = useCore();
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const onFileSelected = async () => {
     if (!fileInputRef.current?.files?.length) {
@@ -21,7 +17,7 @@ export const AbletonUpload = ({songId}: Props) => {
     }
 
     const file = fileInputRef.current.files[0];
-    await uploadFromAls(file, songId, core);
+    await uploadFromAls(file, songId);
   };
 
   const InvisibleFileInput = () => (
@@ -51,7 +47,7 @@ export const AbletonUpload = ({songId}: Props) => {
   );
 };
 
-const uploadFromAls = async (alsProject: File, songId: ID, core: Core) => {
+const uploadFromAls = async (alsProject: File, songId: ID) => {
   const xml = await unzip(alsProject);
   const document = toXmlDocument(xml);
   const locators = getLocators(document);
@@ -64,7 +60,7 @@ const uploadFromAls = async (alsProject: File, songId: ID, core: Core) => {
       locator.start
     );
 
-    core.sendRequest(request);
+    // FIXME: add section
   });
 };
 

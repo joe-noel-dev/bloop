@@ -11,43 +11,28 @@ import {
   Stack,
   Typography,
 } from '@mui/joy';
-import {useProject, useProjects} from '../../model-hooks/project-hooks';
+import {useProjectInfo, useProjects} from '../../model-hooks/project-hooks';
 import {Create, Delete, FolderOpen} from '@mui/icons-material';
-import {useCore} from '../../core/use-core';
-import {
-  addProjectRequest,
-  loadProjectRequest,
-  loadProjectsRequest,
-  removeProjectRequest,
-} from '../../api/request';
 import {useState} from 'react';
-import {ID} from '../../api/helpers';
+import {useBackend} from '../../backend/Backend';
 
 export const ProjectInfo = () => {
-  const project = useProject();
-  const core = useCore();
+  const projectInfo = useProjectInfo();
+  const backend = useBackend();
   const [projectsModalOpen, setProjectsModalOpen] = useState(false);
 
-  if (!core) {
-    return <></>;
-  }
-
   const create = () => {
-    const request = addProjectRequest();
-    core.sendRequest(request);
+    // FIXME: create project
   };
 
   const openProjects = () => {
-    const request = loadProjectsRequest();
-    core.sendRequest(request);
-
     setProjectsModalOpen(true);
   };
 
   return (
     <Stack spacing={2}>
       <Typography level="title-lg" component="h1">
-        {project?.info?.name}
+        {projectInfo?.name || 'Untitled'}
       </Typography>
       <Stack direction="row" spacing={2}>
         <Button startDecorator={<FolderOpen />} onClick={openProjects}>
@@ -76,21 +61,16 @@ interface ProjectsModalProps {
 
 const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
   const projects = useProjects();
-  const core = useCore();
+  const backend = useBackend();
 
-  if (!core) {
-    return <></>;
-  }
-
-  const loadProject = (projectId: ID) => {
-    const request = loadProjectRequest(projectId);
-    core.sendRequest(request);
+  const loadProject = async (projectId: string) => {
+    await backend.loadProject(projectId);
     onRequestClose();
   };
 
-  const removeProject = (projectId: ID) => {
-    const request = removeProjectRequest(projectId);
-    core.sendRequest(request);
+  const removeProject = (projectId: string) => {
+    // FIXME: remove project
+    // backend.removeProject(projectId);
   };
 
   return (

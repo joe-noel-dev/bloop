@@ -2,29 +2,24 @@ import {Button, Stack, Tab, TabList, TabPanel, Tabs} from '@mui/joy';
 import {useSongs} from '../../model-hooks/song-hooks';
 import {Song} from '../song/Song';
 import {Add} from '@mui/icons-material';
-import {useCore} from '../../core/use-core';
-import {
-  addSongRequest,
-  selectSongRequest,
-  updateProjectRequest,
-} from '../../api/request';
 import {useProject} from '../../model-hooks/project-hooks';
 import Long from 'long';
+import {useDispatcher} from '../../dispatcher/Dispatcher';
+import {addSongAction} from '../../dispatcher/action';
 
 export const Songs = () => {
   const songs = useSongs() || [];
   const project = useProject();
-  const core = useCore();
+  const dispatcher = useDispatcher();
 
-  if (!core || !project) {
+  if (!project) {
     return <></>;
   }
 
   const selectedSongId = project.selections?.song || '';
 
   const addSong = () => {
-    const request = addSongRequest();
-    core.sendRequest(request);
+    dispatcher(addSongAction());
   };
 
   const moveSong = (fromIndex: number, toIndex: number) => {
@@ -35,12 +30,12 @@ export const Songs = () => {
     const newSongs = [...songs];
     newSongs.splice(toIndex, 0, newSongs.splice(fromIndex, 1)[0]);
 
-    const request = updateProjectRequest({
+    const newProject = {
       ...project,
       songs: newSongs,
-    });
+    };
 
-    core.sendRequest(request);
+    // FIXME: update project
   };
 
   const onTabSelected = (
@@ -51,8 +46,7 @@ export const Songs = () => {
       return;
     }
     const id = Long.fromString(value, true);
-    const request = selectSongRequest(id);
-    core.sendRequest(request);
+    // FIXME: select song
   };
 
   return (

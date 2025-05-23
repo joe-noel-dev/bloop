@@ -1,89 +1,83 @@
 import {useEffect, useState} from 'react';
-import {CoreContext} from './core/use-core';
-import {Core, createCore} from './core/Core';
 import {CoreDataContext} from './core/CoreData';
 import CssBaseline from '@mui/joy/CssBaseline';
 import {CssVarsProvider} from '@mui/joy/styles';
-import {Box, Divider} from '@mui/joy';
-import {
-  Project as ModelProject,
-  PlaybackState,
-  Progress,
-  ProjectInfo,
-  WaveformData,
-} from './api/bloop';
+import {Box} from '@mui/joy';
+import {Project as ModelProject} from './api/bloop';
 import '@fontsource/inter';
-import {Connection} from './app/Connection';
 import {Project} from './app/project/Project';
-import {ID} from './api/helpers';
+import {LoginScreen} from './app/login/LoginScreen';
+import {
+  Backend,
+  BackendContext,
+  createBackend,
+  DbProject,
+  DbUser,
+} from './backend/Backend';
+import {DispatcherContext} from './dispatcher/Dispatcher';
+import {Action, ADD_SONG} from './dispatcher/action';
 
 const App = () => {
-  const [core, setCore] = useState<Core | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [backend, setBackend] = useState<Backend | null>(null);
   const [project, setProject] = useState<ModelProject>();
-  const [playbackState, setPlaybackState] = useState<PlaybackState>();
-  const [projects, setProjects] = useState<ProjectInfo[]>([]);
-  const [waveforms, setWaveforms] = useState(new Map<ID, WaveformData>());
-  const [progress, setProgress] = useState<Progress>({
-    songProgress: 0,
-    sectionProgress: 0,
-    sectionBeat: 0,
-  });
+  const [projects, setProjects] = useState<DbProject[]>([]);
+  const [projectInfo, setProjectInfo] = useState<DbProject | null>(null);
+
+  const user = backend?.getUser();
 
   useEffect(() => {
-    if (core) {
-      core.disconnect();
-    }
-
-    const newCore = createCore();
-    newCore.events.on('connect', () => setIsConnected(true));
-    newCore.events.on('disconnect', () => setIsConnected(false));
-    newCore.events.on('project', setProject);
-    newCore.events.on('playback-state', setPlaybackState);
-    newCore.events.on('projects', setProjects);
-    newCore.events.on('waveforms', setWaveforms);
-    newCore.events.on('progress', setProgress);
-
-    setCore(newCore);
+    const newBackend = createBackend();
+    newBackend.fetchProjects();
+    newBackend.events.on('user', (user: DbUser | null) => {
+      if (user) {
+        newBackend.fetchProjects();
+      }
+    });
+    newBackend.events.on('project', setProject);
+    newBackend.events.on('projects', setProjects);
+    newBackend.events.on('project-info', setProjectInfo);
+    setBackend(newBackend);
   }, []);
 
-  if (!core) {
-    return <></>;
+  if (!backend) {
+    return;
   }
+
+  const dispatcher = (action: Action) => {
+    switch (action.type) {
+      case ADD_SONG:
+        // FIXME: implement add song
+        break;
+      default:
+        console.error('Unknown action type:', action.type);
+    }
+  };
 
   return (
     <CssVarsProvider>
       <CssBaseline />
-
-      <CoreContext.Provider value={core}>
-        <CoreDataContext.Provider
-          value={{
-            project,
-            playbackState,
-            projects,
-            progress,
-            waveforms,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: '100vh',
+      <DispatcherContext.Provider value={dispatcher}>
+        <BackendContext.Provider value={backend}>
+          <CoreDataContext.Provider
+            value={{
+              project,
+              projectInfo,
+              projects,
             }}
           >
-            <Box>
-              <Connection
-                isConnected={isConnected}
-                connect={core.connect}
-                disconnect={core.disconnect}
-              />
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: '100vh',
+              }}
+            >
+              {!user && <LoginScreen />}
+              {user && <Box sx={{flexGrow: 1}}>{<Project />}</Box>}
             </Box>
-            <Divider />
-            <Box sx={{flexGrow: 1}}>{isConnected && <Project />}</Box>
-          </Box>
-        </CoreDataContext.Provider>
-      </CoreContext.Provider>
+          </CoreDataContext.Provider>
+        </BackendContext.Provider>
+      </DispatcherContext.Provider>
     </CssVarsProvider>
   );
 };

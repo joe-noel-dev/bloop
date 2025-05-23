@@ -3,12 +3,6 @@ import {useSong} from '../../model-hooks/song-hooks';
 import {Add, ArrowDownward, ArrowUpward, Delete} from '@mui/icons-material';
 import {Sample} from '../sample/Sample';
 import {Section} from '../section/Section';
-import {
-  addSectionRequest,
-  removeSongRequest,
-  updateSongRequest,
-} from '../../api/request';
-import {useCore} from '../../core/use-core';
 import {columnSize, columns} from '../section/TableInfo';
 import {ClickToEdit} from '../../components/ClickToEdit';
 import {AbletonUpload} from './AbletonUpload';
@@ -22,20 +16,17 @@ interface SongProps {
 
 export const Song = ({songId, moveSong}: SongProps) => {
   const song = useSong(songId);
-  const core = useCore();
 
   if (!song) {
     return <></>;
   }
 
   const addSection = () => {
-    const request = addSectionRequest(songId);
-    core.sendRequest(request);
+    // FIXME: add section
   };
 
   const remove = () => {
-    const request = removeSongRequest(songId);
-    core.sendRequest(request);
+    // FIXME: remove song
   };
 
   const moveUp = () => {
@@ -49,20 +40,17 @@ export const Song = ({songId, moveSong}: SongProps) => {
   const updateSectionDuration = (sectionId: ID, duration: number) => {
     const newSong = {...song};
     updateSectionBeatLength(newSong, sectionId, duration);
-    const request = updateSongRequest(newSong);
-    core.sendRequest(request);
+    // FIXME: update song
   };
 
   const editSongName = (newName: string) => {
     const newSong = {...song, name: newName};
-    const request = updateSongRequest(newSong);
-    core.sendRequest(request);
+    // FIXME: update song
   };
 
   const editTempo = (newTempo: number) => {
     const newSong = {...song, tempo: {bpm: newTempo}};
-    const request = updateSongRequest(newSong);
-    core.sendRequest(request);
+    // FIXME: update song
   };
 
   return (

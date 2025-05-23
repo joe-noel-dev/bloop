@@ -1,18 +1,8 @@
 import {Button} from '@mui/joy';
 import {useSampleWithId} from '../../model-hooks/sample-hooks';
 import {Delete, FileUpload} from '@mui/icons-material';
-import {
-  addSampleRequest,
-  beginUploadRequest,
-  completeUploadRequest,
-  removeSampleRequest,
-  uploadRequest,
-} from '../../api/request';
-import {useCore} from '../../core/use-core';
 import {useEffect, useRef, useState} from 'react';
-import {Core} from '../../core/Core';
-import {ID, randomId} from '../../api/helpers';
-import {AudioFileFormat} from '../../api/bloop';
+import {ID} from '../../api/helpers';
 
 interface Props {
   sampleId: ID;
@@ -21,13 +11,8 @@ interface Props {
 
 export const Sample = ({sampleId, songId}: Props) => {
   const sample = useSampleWithId(sampleId);
-  const core = useCore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-
-  if (!core) {
-    return <></>;
-  }
 
   useEffect(() => {
     if (sample) {
@@ -36,15 +21,14 @@ export const Sample = ({sampleId, songId}: Props) => {
   }, [sample]);
 
   const remove = () => {
-    const request = removeSampleRequest(songId);
-    core.sendRequest(request);
+    // FIXME: remove sample
   };
 
   const onFileSelected = async () => {
     if (fileInputRef.current?.files?.length) {
       const file = fileInputRef.current.files[0];
       setUploading(true);
-      await addSampleToSong(file, songId, core);
+      // FIXME: add file to song
     }
   };
 
@@ -89,40 +73,40 @@ export const Sample = ({sampleId, songId}: Props) => {
   );
 };
 
-const addSampleToSong = async (file: File, songId: ID, core: Core) => {
-  const uploadId = randomId();
+// const addSampleToSong = async (file: File, songId: ID, core: Core) => {
+//   const uploadId = randomId();
 
-  const beginRequest = beginUploadRequest(
-    uploadId,
-    file.name,
-    AudioFileFormat.WAV
-  );
+//   const beginRequest = beginUploadRequest(
+//     uploadId,
+//     file.name,
+//     AudioFileFormat.WAV
+//   );
 
-  core.sendRequest(beginRequest);
-  await core.waitForUploadAck(uploadId);
+//   core.sendRequest(beginRequest);
+//   await core.waitForUploadAck(uploadId);
 
-  const reader = new FileReader();
+//   const reader = new FileReader();
 
-  reader.onload = async () => {
-    const result = reader.result as ArrayBuffer;
+//   reader.onload = async () => {
+//     const result = reader.result as ArrayBuffer;
 
-    const chunkSize = 1024 * 1024;
-    let position = 0;
-    while (position < result.byteLength) {
-      const chunk = result.slice(position, position + chunkSize);
-      const chunkRequest = uploadRequest(uploadId, chunk);
-      core?.sendRequest(chunkRequest);
-      await core?.waitForUploadAck(uploadId);
-      position += chunkSize;
-    }
+//     const chunkSize = 1024 * 1024;
+//     let position = 0;
+//     while (position < result.byteLength) {
+//       const chunk = result.slice(position, position + chunkSize);
+//       const chunkRequest = uploadRequest(uploadId, chunk);
+//       core?.sendRequest(chunkRequest);
+//       await core?.waitForUploadAck(uploadId);
+//       position += chunkSize;
+//     }
 
-    const completeRequest = completeUploadRequest(uploadId);
-    core?.sendRequest(completeRequest);
-    await core?.waitForUploadAck(uploadId);
+//     const completeRequest = completeUploadRequest(uploadId);
+//     core?.sendRequest(completeRequest);
+//     await core?.waitForUploadAck(uploadId);
 
-    const addRequest = addSampleRequest(songId, uploadId);
-    core?.sendRequest(addRequest);
-  };
+//     const addRequest = addSampleRequest(songId, uploadId);
+//     core?.sendRequest(addRequest);
+//   };
 
-  reader.readAsArrayBuffer(file);
-};
+//   reader.readAsArrayBuffer(file);
+// };
