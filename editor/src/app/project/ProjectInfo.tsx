@@ -25,9 +25,7 @@ export const ProjectInfo = () => {
     // FIXME: create project
   };
 
-  const openProjects = () => {
-    setProjectsModalOpen(true);
-  };
+  const openProjects = () => setProjectsModalOpen(true);
 
   return (
     <Stack spacing={2}>

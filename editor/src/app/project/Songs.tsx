@@ -4,8 +4,12 @@ import {Song} from '../song/Song';
 import {Add} from '@mui/icons-material';
 import {useProject} from '../../model-hooks/project-hooks';
 import Long from 'long';
-import {useDispatcher} from '../../dispatcher/Dispatcher';
-import {addSongAction} from '../../dispatcher/action';
+import {useDispatcher} from '../../dispatcher/dispatcher';
+import {
+  addSongAction,
+  moveSongAction,
+  selectSongAction,
+} from '../../dispatcher/action';
 
 export const Songs = () => {
   const songs = useSongs() || [];
@@ -22,21 +26,8 @@ export const Songs = () => {
     dispatcher(addSongAction());
   };
 
-  const moveSong = (fromIndex: number, toIndex: number) => {
-    if (toIndex < 0 || toIndex >= songs.length) {
-      return;
-    }
-
-    const newSongs = [...songs];
-    newSongs.splice(toIndex, 0, newSongs.splice(fromIndex, 1)[0]);
-
-    const newProject = {
-      ...project,
-      songs: newSongs,
-    };
-
-    // FIXME: update project
-  };
+  const moveSong = (fromIndex: number, toIndex: number) =>
+    dispatcher(moveSongAction(fromIndex, toIndex));
 
   const onTabSelected = (
     _: React.SyntheticEvent | null,
@@ -46,7 +37,7 @@ export const Songs = () => {
       return;
     }
     const id = Long.fromString(value, true);
-    // FIXME: select song
+    dispatcher(selectSongAction(id));
   };
 
   return (

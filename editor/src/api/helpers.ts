@@ -16,12 +16,6 @@ export const randomId = (): Long => {
 
 export function emptyProject(): Project {
   return {
-    info: {
-      id: randomId(),
-      name: '',
-      version: '',
-      lastSaved: Long.fromNumber(0),
-    },
     songs: [],
     selections: {
       song: Long.fromNumber(0),

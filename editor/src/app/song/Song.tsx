@@ -8,6 +8,8 @@ import {ClickToEdit} from '../../components/ClickToEdit';
 import {AbletonUpload} from './AbletonUpload';
 import {ID, INVALID_ID, updateSectionBeatLength} from '../../api/helpers';
 import {Song as ModelSong} from '../../api/bloop';
+import {addSectionAction, updateSongAction} from '../../dispatcher/action';
+import {useDispatcher} from '../../dispatcher/dispatcher';
 
 interface SongProps {
   songId: ID;
@@ -16,42 +18,32 @@ interface SongProps {
 
 export const Song = ({songId, moveSong}: SongProps) => {
   const song = useSong(songId);
+  const dispatch = useDispatcher();
 
   if (!song) {
     return <></>;
   }
 
-  const addSection = () => {
-    // FIXME: add section
-  };
+  const addSection = () => dispatch(addSectionAction(song.id));
 
   const remove = () => {
     // FIXME: remove song
   };
 
-  const moveUp = () => {
-    moveSong(-1);
-  };
-
-  const moveDown = () => {
-    moveSong(1);
-  };
+  const moveUp = () => moveSong(-1);
+  const moveDown = () => moveSong(1);
 
   const updateSectionDuration = (sectionId: ID, duration: number) => {
     const newSong = {...song};
     updateSectionBeatLength(newSong, sectionId, duration);
-    // FIXME: update song
+    dispatch(updateSongAction(newSong));
   };
 
-  const editSongName = (newName: string) => {
-    const newSong = {...song, name: newName};
-    // FIXME: update song
-  };
+  const editSongName = (newName: string) =>
+    dispatch(updateSongAction({...song, name: newName}));
 
-  const editTempo = (newTempo: number) => {
-    const newSong = {...song, tempo: {bpm: newTempo}};
-    // FIXME: update song
-  };
+  const editTempo = (newTempo: number) =>
+    dispatch(updateSongAction({...song, tempo: {bpm: newTempo}}));
 
   return (
     <Stack spacing={2}>

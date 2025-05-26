@@ -1,8 +1,5 @@
 import {ColorPaletteProp, Grid, IconButton, Stack, Switch} from '@mui/joy';
-import {
-  useSectionById,
-  useSelectedSectionId,
-} from '../../model-hooks/section-hooks';
+import {useSectionById} from '../../model-hooks/section-hooks';
 import {ArrowDownward, ArrowUpward, Delete} from '@mui/icons-material';
 import {columnSize, columns} from './TableInfo';
 import isEqual from 'lodash.isequal';
@@ -10,6 +7,8 @@ import {useSong} from '../../model-hooks/song-hooks';
 import {ClickToEdit} from '../../components/ClickToEdit';
 import {getSectionBeatLength, ID} from '../../api/helpers';
 import {Section as ModelSection, Song} from '../../api/bloop';
+import {useDispatcher} from '../../dispatcher/dispatcher';
+import {updateSectionAction, updateSongAction} from '../../dispatcher/action';
 
 interface Props {
   songId: ID;
@@ -20,6 +19,7 @@ interface Props {
 export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
   const section = useSectionById(sectionId);
   const song = useSong(songId);
+  const dispatch = useDispatcher();
 
   const duration = song ? getSectionBeatLength(song, sectionId) : 0;
   const isFirst = song?.sections.at(0)?.id === sectionId;
@@ -29,9 +29,8 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
     return <></>;
   }
 
-  const updateSection = (section: ModelSection) => {
-    // FIXME: update section
-  };
+  const updateSection = (section: ModelSection) =>
+    dispatch(updateSectionAction(songId, section));
 
   const enableLoop = (enable: boolean) => {
     updateSection({
@@ -162,6 +161,7 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
 
                       const delta = -1;
                       moveSectionIndex(sectionId, delta, song);
+                      dispatch(updateSongAction(song));
                     }}
                     color="primary"
                     disabled={isFirst}
@@ -177,6 +177,7 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
 
                       const delta = 1;
                       moveSectionIndex(sectionId, delta, song);
+                      dispatch(updateSongAction(song));
                     }}
                     color="primary"
                     disabled={isLast}
