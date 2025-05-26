@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {CoreDataContext} from './core/CoreData';
+import {AppState, AppStateContext} from './state/AppState';
 import CssBaseline from '@mui/joy/CssBaseline';
 import {CssVarsProvider} from '@mui/joy/styles';
 import {Box} from '@mui/joy';
@@ -16,26 +16,48 @@ import {
 } from './backend/Backend';
 import {DispatcherContext} from './dispatcher/Dispatcher';
 import {Action, ADD_SONG} from './dispatcher/action';
+import {addSong} from './api/project-helpers';
 
 const App = () => {
   const [backend, setBackend] = useState<Backend | null>(null);
-  const [project, setProject] = useState<ModelProject>();
-  const [projects, setProjects] = useState<DbProject[]>([]);
-  const [projectInfo, setProjectInfo] = useState<DbProject | null>(null);
+  const [state, setState] = useState<AppState>({
+    project: undefined,
+    projectInfo: null,
+    projects: [],
+  });
 
   const user = backend?.getUser();
 
   useEffect(() => {
     const newBackend = createBackend();
     newBackend.fetchProjects();
+
     newBackend.events.on('user', (user: DbUser | null) => {
       if (user) {
         newBackend.fetchProjects();
       }
     });
-    newBackend.events.on('project', setProject);
-    newBackend.events.on('projects', setProjects);
-    newBackend.events.on('project-info', setProjectInfo);
+
+    newBackend.events.on('project', (project) => {
+      setState((prevState) => ({
+        ...prevState,
+        project: project as ModelProject,
+      }));
+    });
+    newBackend.events.on('projects', (projects: DbProject[]) => {
+      setState((prevState) => ({
+        ...prevState,
+        projects: projects,
+      }));
+    });
+
+    newBackend.events.on('project-info', (projectInfo: DbProject | null) => {
+      setState((prevState) => ({
+        ...prevState,
+        projectInfo: projectInfo,
+      }));
+    });
+
     setBackend(newBackend);
   }, []);
 
@@ -44,9 +66,18 @@ const App = () => {
   }
 
   const dispatcher = (action: Action) => {
+    if (!state.project) {
+      console.error('No project selected');
+      return;
+    }
+
     switch (action.type) {
       case ADD_SONG:
-        // FIXME: implement add song
+        const newProject = addSong(state.project);
+        setState({
+          ...state,
+          project: newProject,
+        });
         break;
       default:
         console.error('Unknown action type:', action.type);
@@ -58,13 +89,7 @@ const App = () => {
       <CssBaseline />
       <DispatcherContext.Provider value={dispatcher}>
         <BackendContext.Provider value={backend}>
-          <CoreDataContext.Provider
-            value={{
-              project,
-              projectInfo,
-              projects,
-            }}
-          >
+          <AppStateContext.Provider value={state}>
             <Box
               sx={{
                 display: 'flex',
@@ -75,7 +100,7 @@ const App = () => {
               {!user && <LoginScreen />}
               {user && <Box sx={{flexGrow: 1}}>{<Project />}</Box>}
             </Box>
-          </CoreDataContext.Provider>
+          </AppStateContext.Provider>
         </BackendContext.Provider>
       </DispatcherContext.Provider>
     </CssVarsProvider>
