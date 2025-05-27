@@ -1,5 +1,5 @@
-import {useCoreData} from '../core/CoreData';
+import {useAppState} from '../state/AppState';
 
-export const useProject = () => useCoreData().project;
-
-export const useProjects = () => useCoreData().projects;
+export const useProject = () => useAppState().project;
+export const useProjectInfo = () => useAppState().projectInfo;
+export const useProjects = () => useAppState().projects;

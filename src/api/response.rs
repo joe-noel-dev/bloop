@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::bloop::{
-    ExportResponse, ImportResponse, PlaybackState, Progress, Project, ProjectInfo, UploadAck, WaveformResponse,
+    PlaybackState, Progress, Project, ProjectInfo, UploadAck, User, UserStatusResponse, WaveformResponse,
 };
 
 impl crate::bloop::Response {
@@ -40,13 +40,24 @@ impl crate::bloop::Response {
         self
     }
 
-    pub fn with_export_response(mut self, export_response: &ExportResponse) -> Self {
-        self.export_response = Some(export_response.clone()).into();
+    pub fn with_user_status(mut self, user_status: &UserStatusResponse) -> Self {
+        self.user_status = Some(user_status.clone()).into();
         self
     }
 
-    pub fn with_import_response(mut self, import_response: &ImportResponse) -> Self {
-        self.import_response = Some(import_response.clone()).into();
+    pub fn with_project_info(mut self, project_info: &ProjectInfo) -> Self {
+        self.project_info = Some(project_info.clone()).into();
+        self
+    }
+
+    pub fn with_user(mut self, user: Option<User>) -> Self {
+        self.user_status = Some({
+            UserStatusResponse {
+                user: user.into(),
+                ..Default::default()
+            }
+        })
+        .into();
         self
     }
 }

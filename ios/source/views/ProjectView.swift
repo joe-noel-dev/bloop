@@ -9,7 +9,7 @@ struct ProjectView: View {
     init(state: AppState, dispatch: @escaping Dispatch) {
         self.state = state
         self.dispatch = dispatch
-        self.newProjectName = state.project.info.name
+        self.newProjectName = state.projectInfo?.name ?? ""
     }
 
     private var selectedSong: Bloop_Song? {

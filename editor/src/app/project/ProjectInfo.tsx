@@ -11,44 +11,34 @@ import {
   Stack,
   Typography,
 } from '@mui/joy';
-import {useProject, useProjects} from '../../model-hooks/project-hooks';
+import {useProjectInfo, useProjects} from '../../model-hooks/project-hooks';
 import {Create, Delete, FolderOpen} from '@mui/icons-material';
-import {useCore} from '../../core/use-core';
-import {
-  addProjectRequest,
-  loadProjectRequest,
-  loadProjectsRequest,
-  removeProjectRequest,
-} from '../../api/request';
 import {useState} from 'react';
-import {ID} from '../../api/helpers';
+import {ClickToEdit} from '../../components/ClickToEdit';
+import {useDispatcher} from '../../dispatcher/dispatcher';
+import {
+  createProjectAction,
+  loadProjectAction,
+  removeProjectAction,
+  renameProjectAction,
+} from '../../dispatcher/action';
 
 export const ProjectInfo = () => {
-  const project = useProject();
-  const core = useCore();
+  const projectInfo = useProjectInfo();
   const [projectsModalOpen, setProjectsModalOpen] = useState(false);
+  const dispatch = useDispatcher();
 
-  if (!core) {
-    return <></>;
-  }
-
-  const create = () => {
-    const request = addProjectRequest();
-    core.sendRequest(request);
-  };
-
-  const openProjects = () => {
-    const request = loadProjectsRequest();
-    core.sendRequest(request);
-
-    setProjectsModalOpen(true);
-  };
+  const create = async () => dispatch(createProjectAction());
+  const openProjects = () => setProjectsModalOpen(true);
+  const renameProject = (name: string) => dispatch(renameProjectAction(name));
 
   return (
     <Stack spacing={2}>
-      <Typography level="title-lg" component="h1">
-        {project?.info?.name}
-      </Typography>
+      <ClickToEdit
+        size="large"
+        initialValue={projectInfo?.name || ''}
+        onSave={renameProject}
+      />
       <Stack direction="row" spacing={2}>
         <Button startDecorator={<FolderOpen />} onClick={openProjects}>
           Projects
@@ -76,21 +66,19 @@ interface ProjectsModalProps {
 
 const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
   const projects = useProjects();
-  const core = useCore();
+  const dispatch = useDispatcher();
 
-  if (!core) {
-    return <></>;
-  }
-
-  const loadProject = (projectId: ID) => {
-    const request = loadProjectRequest(projectId);
-    core.sendRequest(request);
+  const loadProject = async (projectId: string) => {
+    dispatch(loadProjectAction(projectId));
     onRequestClose();
   };
 
-  const removeProject = (projectId: ID) => {
-    const request = removeProjectRequest(projectId);
-    core.sendRequest(request);
+  const removeProject = async (projectId: string) => {
+    if (!window.confirm('Are you sure you want to delete this project?')) {
+      return;
+    }
+
+    dispatch(removeProjectAction(projectId));
   };
 
   return (

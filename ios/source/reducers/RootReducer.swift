@@ -18,6 +18,9 @@ func rootReducer(state: AppState, action: Action) -> AppState {
 
     case .setProjects(let projects):
         state.projects = projects
+        
+    case .setProjectInfo(let projectInfo):
+        state.projectInfo = projectInfo
 
     case .addError(let error):
         print("Error from core: \(error)")

@@ -1,89 +1,63 @@
 import {useEffect, useState} from 'react';
-import {CoreContext} from './core/use-core';
-import {Core, createCore} from './core/Core';
-import {CoreDataContext} from './core/CoreData';
+import {AppState, AppStateContext} from './state/AppState';
 import CssBaseline from '@mui/joy/CssBaseline';
 import {CssVarsProvider} from '@mui/joy/styles';
-import {Box, Divider} from '@mui/joy';
-import {
-  Project as ModelProject,
-  PlaybackState,
-  Progress,
-  ProjectInfo,
-  WaveformData,
-} from './api/bloop';
+import {Box} from '@mui/joy';
 import '@fontsource/inter';
-import {Connection} from './app/Connection';
 import {Project} from './app/project/Project';
-import {ID} from './api/helpers';
+import {LoginScreen} from './app/login/LoginScreen';
+import {Backend, BackendContext, createBackend} from './backend/Backend';
+import {DispatcherContext} from './dispatcher/dispatcher';
+import {Action} from './dispatcher/action';
+import {reducer} from './dispatcher/reducer';
+import {emptyProject} from './api/project-helpers';
 
 const App = () => {
-  const [core, setCore] = useState<Core | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [project, setProject] = useState<ModelProject>();
-  const [playbackState, setPlaybackState] = useState<PlaybackState>();
-  const [projects, setProjects] = useState<ProjectInfo[]>([]);
-  const [waveforms, setWaveforms] = useState(new Map<ID, WaveformData>());
-  const [progress, setProgress] = useState<Progress>({
-    songProgress: 0,
-    sectionProgress: 0,
-    sectionBeat: 0,
+  const [backend, setBackend] = useState<Backend | null>(null);
+  const [state, setState] = useState<AppState>({
+    project: emptyProject(),
+    projects: [],
   });
 
+  const user = backend?.getUser();
+
   useEffect(() => {
-    if (core) {
-      core.disconnect();
-    }
+    const newBackend = createBackend();
+    newBackend
+      .fetchProjects()
+      .then((projects) => setState({...state, projects}));
 
-    const newCore = createCore();
-    newCore.events.on('connect', () => setIsConnected(true));
-    newCore.events.on('disconnect', () => setIsConnected(false));
-    newCore.events.on('project', setProject);
-    newCore.events.on('playback-state', setPlaybackState);
-    newCore.events.on('projects', setProjects);
-    newCore.events.on('waveforms', setWaveforms);
-    newCore.events.on('progress', setProgress);
-
-    setCore(newCore);
+    setBackend(newBackend);
   }, []);
 
-  if (!core) {
-    return <></>;
+  if (!backend) {
+    return;
   }
+
+  const dispatch = async (action: Action) => {
+    const newState = await reducer(action, state, backend);
+    setState(newState);
+  };
 
   return (
     <CssVarsProvider>
       <CssBaseline />
-
-      <CoreContext.Provider value={core}>
-        <CoreDataContext.Provider
-          value={{
-            project,
-            playbackState,
-            projects,
-            progress,
-            waveforms,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: '100vh',
-            }}
-          >
-            <Box>
-              <Connection
-                isConnected={isConnected}
-                connect={core.connect}
-                disconnect={core.disconnect}
-              />
+      <DispatcherContext.Provider value={dispatch}>
+        <BackendContext.Provider value={backend}>
+          <AppStateContext.Provider value={state}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: '100vh',
+              }}
+            >
+              {!user && <LoginScreen />}
+              {user && <Box sx={{flexGrow: 1}}>{<Project />}</Box>}
             </Box>
-            <Divider />
-            <Box sx={{flexGrow: 1}}>{isConnected && <Project />}</Box>
-          </Box>
-        </CoreDataContext.Provider>
-      </CoreContext.Provider>
+          </AppStateContext.Provider>
+        </BackendContext.Provider>
+      </DispatcherContext.Provider>
     </CssVarsProvider>
   );
 };

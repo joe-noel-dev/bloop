@@ -1,5 +1,5 @@
 import Long from 'long';
-import {Project, Sample, Song, Tempo} from './bloop';
+import {Sample, Song, Tempo} from './bloop';
 
 export type ID = Long;
 export const INVALID_ID = Long.fromNumber(0);
@@ -13,22 +13,6 @@ export const randomId = (): Long => {
   const high = Math.floor(Math.random() * 0x100000000); // 32-bit unsigned
   return Long.fromBits(low, high, true); // `true` = unsigned
 };
-
-export function emptyProject(): Project {
-  return {
-    info: {
-      id: randomId(),
-      name: '',
-      version: '',
-      lastSaved: Long.fromNumber(0),
-    },
-    songs: [],
-    selections: {
-      song: Long.fromNumber(0),
-      section: Long.fromNumber(0),
-    },
-  };
-}
 
 export const getSampleBeatLength = (sample: Sample): number =>
   sample.tempo

@@ -55,7 +55,7 @@ struct SongsView: View {
                 }
             }
             .listStyle(.insetGrouped)
-            .navigationTitle(state.project.info.name)
+            .navigationTitle(state.projectInfo?.name ?? "")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     EditButton()

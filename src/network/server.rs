@@ -8,10 +8,18 @@ use tokio::net::TcpListener;
 use tokio::sync::{broadcast, mpsc};
 
 const PORT: u16 = 0;
-const BIND_ADDRESS: &str = "0.0.0.0";
 
 pub async fn run(request_tx: mpsc::Sender<Request>, response_tx: broadcast::Sender<Response>) {
-    let address = format!("{BIND_ADDRESS}:{PORT}");
+    let ips = get_ips_for_responder();
+
+    for ip in ips.iter() {
+        tokio::spawn(listen_on_ip(*ip, request_tx.clone(), response_tx.clone()));
+    }
+}
+
+pub async fn listen_on_ip(ip: IpAddr, request_tx: mpsc::Sender<Request>, response_tx: broadcast::Sender<Response>) {
+    let address = format!("{ip}:{PORT}");
+    info!("Binding to: {address}");
     let listener = TcpListener::bind(address).await.expect("Failed to bind");
 
     let local_address = listener.local_addr().expect("Unable to get address from port");
@@ -23,29 +31,16 @@ pub async fn run(request_tx: mpsc::Sender<Request>, response_tx: broadcast::Send
         .expect("Failed to convert hostname to String");
     let clean_hostname = raw_hostname.replace(".local", "").replace(".lan", "");
 
-    let ips = get_ips_for_responder();
-
     let mdns = ServiceDaemon::new().expect("Failed to create daemon");
-
-    for ip in ips.iter() {
-        info!("Responding on IP: {ip}");
-    }
 
     let service_type = "_bloop._tcp.local.";
     let instance_name = clean_hostname.as_str();
-    let host_name = format!("{}.local.", ips.first().expect("No valid IPs found"));
+    let host_name = format!("{ip}.local.");
     let version = env!("CARGO_PKG_VERSION");
     let properties = [("version", version)];
 
-    let service_info = ServiceInfo::new(
-        service_type,
-        instance_name,
-        &host_name,
-        &ips[..],
-        local_port,
-        &properties[..],
-    )
-    .expect("Unable to create service info");
+    let service_info = ServiceInfo::new(service_type, instance_name, &host_name, ip, local_port, &properties[..])
+        .expect("Unable to create service info");
 
     mdns.register(service_info).expect("Failed to register service");
 
@@ -67,12 +62,10 @@ pub async fn run(request_tx: mpsc::Sender<Request>, response_tx: broadcast::Send
 
 fn should_respond_on_interface(iface: &Interface) -> bool {
     let ignored_interfaces = [
-        "utun", "tun", "lo", "tap", "wg", "docker", "veth", "br-", "bridge", "virbr", "pdp_ip", "ipsec",
+        "utun", "tun", "tap", "wg", "docker", "veth", "br-", "bridge", "virbr", "pdp_ip", "ipsec",
     ];
 
-    !iface.is_loopback()
-        && iface.addr.ip().is_ipv4()
-        && !ignored_interfaces.iter().any(|ignored| iface.name.contains(ignored))
+    iface.addr.ip().is_ipv4() && !ignored_interfaces.iter().any(|ignored| iface.name.contains(ignored))
 }
 
 fn get_ips_for_responder() -> Vec<IpAddr> {

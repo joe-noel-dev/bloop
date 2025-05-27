@@ -18,10 +18,13 @@ struct ProjectPreview: View {
         }
     }
 
-    private func formatLastSaved(_ millisecondsSince1970: Int64) -> String {
-        let secondsSince1970 = millisecondsSince1970 / 1000
-        let interval = TimeInterval(secondsSince1970)
-        let date = Date(timeIntervalSince1970: interval)
+    private func formatLastSaved(_ rfc3339Timestamp: String) -> String {
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        guard let date = isoFormatter.date(from: rfc3339Timestamp) else {
+            return rfc3339Timestamp
+        }
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .full
         return formatter.localizedString(for: date, relativeTo: Date())
@@ -33,8 +36,7 @@ struct ProjectsView: View {
     var dispatch: Dispatch
     var dismiss: () -> Void
 
-    @State private var selected: Bloop_ProjectInfo.ID?
-    @State private var showImportFileDialog: Bool = false
+    @State private var selected: String?
     @State private var selectedFileURL: URL?
 
     private var sortedProjects: [Bloop_ProjectInfo] {
@@ -88,12 +90,6 @@ struct ProjectsView: View {
                 }
 
                 Button {
-                    showImportFileDialog = true
-                } label: {
-                    Label("Import", systemImage: "square.and.arrow.down")
-                }
-
-                Button {
                     let action = newProjectAction()
                     dispatch(action)
                     dismiss()
@@ -107,37 +103,25 @@ struct ProjectsView: View {
                 let action = getProjectsAction()
                 dispatch(action)
             }
-            .fileImporter(isPresented: $showImportFileDialog, allowedContentTypes: [UTType.data]) {
-                result in
-                switch result {
-                case .success(let url):
-                    print("Selected file for import: \(url)")
-                    dispatch(.importProject(url))
-
-                case .failure(let error):
-                    print("Error selecting file: \(error.localizedDescription)")
-                }
-            }
         }
 
     }
 }
 
 struct ProjectsView_Previews: PreviewProvider {
-    static private func projectInfo(name: String, savedAgo: Int) -> Bloop_ProjectInfo {
+    static private func projectInfo(name: String, lastSaved: String) -> Bloop_ProjectInfo {
         .with {
-            $0.id = randomId()
+            $0.id = name
             $0.name = name
             $0.version = "0"
-            $0.lastSaved =
-                Int64((Date() - TimeInterval(savedAgo)).timeIntervalSince1970.magnitude) * 1000
+            $0.lastSaved = lastSaved
         }
     }
 
     static let projects: [Bloop_ProjectInfo] = [
-        projectInfo(name: "Project 1", savedAgo: 19),
-        projectInfo(name: "Project 2", savedAgo: 20),
-        projectInfo(name: "Project 3", savedAgo: 32478),
+        projectInfo(name: "Project 1", lastSaved: "2025-05-27T15:34:00Z"),
+        projectInfo(name: "Project 2", lastSaved: "2025-05-27T16:34:00Z"),
+        projectInfo(name: "Project 3", lastSaved: "2025-05-27T17:34:00Z"),
     ]
 
     static var previews: some View {

@@ -9,7 +9,9 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0.97"
 approx = "0.5.1"
+async-trait = "0.1.88"
 async_zip = { version = "0.0.17", features = ["full"] }
+chrono = { version = "0.4.41", features = ["serde"] }
 cpal = { version = "0.15.2", features = ["jack"] }
 fern = "0.7.1"
 fixed = "1.29.0"
@@ -33,6 +35,7 @@ protobuf = "3.7.2"
 rand = "0.9.1"
 rawdio = { git = "https://github.com/joe-noel-dev/rawdio.git" }
 regex = "1.11"
+reqwest = { version = "0.12.15", features = ["json", "multipart", "stream"] }
 serde = { version= "1.0.219", features = ["derive"] }
 serde_derive = "1.0.126"
 serde_json = "1.0.140"
@@ -41,6 +44,10 @@ tokio = { version = "1.44.1", features = ["full"] }
 tokio-tungstenite = "0.26.1"
 tokio-util = "0.7.15"
 
+[dev-dependencies]
+httpmock = "0.7.0"
+env_logger = "0.11.8"
+
 [build-dependencies]
 cbindgen = "0.28.0"
 protobuf-codegen = "3.7.1"
@@ -48,7 +55,7 @@ protoc-rust = "2.28.0"
 
 [lib]
 name = "bloop"
-crate-type = ["staticlib"]
+crate-type = ["staticlib", "rlib"]
 
 [features]
 default = ["ui", "midi"]
