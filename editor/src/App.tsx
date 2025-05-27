@@ -3,17 +3,10 @@ import {AppState, AppStateContext} from './state/AppState';
 import CssBaseline from '@mui/joy/CssBaseline';
 import {CssVarsProvider} from '@mui/joy/styles';
 import {Box} from '@mui/joy';
-import {Project as ModelProject} from './api/bloop';
 import '@fontsource/inter';
 import {Project} from './app/project/Project';
 import {LoginScreen} from './app/login/LoginScreen';
-import {
-  Backend,
-  BackendContext,
-  createBackend,
-  DbProject,
-  DbUser,
-} from './backend/Backend';
+import {Backend, BackendContext, createBackend} from './backend/Backend';
 import {DispatcherContext} from './dispatcher/dispatcher';
 import {Action} from './dispatcher/action';
 import {reducer} from './dispatcher/reducer';
@@ -30,35 +23,9 @@ const App = () => {
 
   useEffect(() => {
     const newBackend = createBackend();
-    newBackend.fetchProjects();
-
-    newBackend.events.on('user', (user: DbUser | null) => {
-      if (user) {
-        newBackend.fetchProjects();
-      }
-    });
-
-    newBackend.events.on('project', (project) => {
-      setState({
-        ...state,
-        project: project as ModelProject,
-      });
-    });
-
-    newBackend.events.on('projects', (projects: DbProject[]) => {
-      setState({
-        ...state,
-        projects,
-      });
-    });
-
-    newBackend.events.on('project-info', (projectInfo: DbProject | null) => {
-      console.log('Project info set to:', projectInfo);
-      setState({
-        ...state,
-        projectInfo: projectInfo ?? undefined,
-      });
-    });
+    newBackend
+      .fetchProjects()
+      .then((projects) => setState({...state, projects}));
 
     setBackend(newBackend);
   }, []);
@@ -67,7 +34,6 @@ const App = () => {
     return;
   }
 
-  console.log('App state:', state);
   const dispatch = async (action: Action) => {
     const newState = await reducer(action, state, backend);
     setState(newState);

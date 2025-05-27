@@ -53,18 +53,17 @@ export const reducer = async (
   state: AppState,
   backend: Backend
 ): Promise<AppState> => {
-  const newProject = {...state.project};
-  console.log('state = ', state);
-  const previousSamplesInUse = getSamplesInProject(newProject);
+  const newState = {...state};
+  const previousSamplesInUse = getSamplesInProject(newState.project);
 
   switch (action.type) {
     case ADD_SAMPLE: {
       const {sample, songId} = action as AddSampleAction;
 
-      addSampleToSong(
+      await addSampleToSong(
         backend,
-        newProject,
-        state.projectInfo?.id ?? '',
+        newState.project,
+        newState.projectInfo?.id ?? '',
         songId,
         sample
       );
@@ -74,80 +73,93 @@ export const reducer = async (
 
     case ADD_SECTION: {
       const {section, songId} = action as AddSectionAction;
-      addSection(newProject, songId, section);
+      addSection(newState.project, songId, section);
       break;
     }
 
     case ADD_SONG: {
-      addSong(newProject);
+      addSong(newState.project);
       break;
     }
 
     case CREATE_PROJECT: {
-      await backend.createProject();
-      await backend.fetchProjects();
+      const [project, info] = await backend.createProject();
+      newState.project = project;
+      newState.projectInfo = info;
+      const projects = await backend.fetchProjects();
+      newState.projects = projects;
       break;
     }
 
     case LOAD_PROJECT: {
       const {projectId} = action as LoadProjectAction;
-      await backend.loadProject(projectId);
+      const [project, info] = await backend.loadProject(projectId);
+      newState.project = project;
+      newState.projectInfo = info;
       break;
     }
 
     case MOVE_SECTION: {
       const {songId, fromIndex, toIndex} = action as MoveSectionAction;
-      moveSection(newProject, songId, fromIndex, toIndex);
+      moveSection(newState.project, songId, fromIndex, toIndex);
       break;
     }
 
     case MOVE_SONG: {
       const {fromIndex, toIndex} = action as MoveSongAction;
-      moveSong(newProject, fromIndex, toIndex);
+      moveSong(newState.project, fromIndex, toIndex);
       break;
     }
 
     case REMOVE_SAMPLE: {
       const {songId} = action as RemoveSampleAction;
-      const song = newProject.songs.find((s) => s.id.equals(songId));
+      const song = newState.project.songs.find((s) => s.id.equals(songId));
       if (!song || !song.sample) {
         console.error(`Song with ID ${songId} not found or has no sample`);
         break;
       }
 
-      await backend.removeSample(state.projectInfo?.id ?? '', song.sample.id);
+      updateSong(newState.project, {
+        ...song,
+        sample: undefined,
+      });
+
       break;
     }
 
     case REMOVE_PROJECT: {
       const {projectId} = action as RemoveProjectAction;
       await backend.removeProject(projectId);
-      await backend.fetchProjects();
+      newState.projects = await backend.fetchProjects();
       break;
     }
 
     case REMOVE_SECTION: {
       const {songId, sectionId} = action as RemoveSectionAction;
-      removeSection(newProject, songId, sectionId);
+      removeSection(newState.project, songId, sectionId);
       break;
     }
 
     case REMOVE_SONG: {
       const {songId} = action as RemoveSongAction;
-      removeSong(newProject, songId);
+      removeSong(newState.project, songId);
       break;
     }
 
     case RENAME_PROJECT: {
       const {newName} = action as RenameProjectAction;
-      await backend.renameProject(state.projectInfo?.id ?? '', newName);
-      await backend.fetchProjects();
+      const projectInfo = await backend.renameProject(
+        newState.projectInfo?.id ?? '',
+        newName
+      );
+      newState.projectInfo = projectInfo;
+      newState.projects = await backend.fetchProjects();
       break;
     }
 
     case SELECT_SONG: {
       const {songId} = action as SelectSongAction;
-      selectSong(newProject, songId);
+      selectSong(newState.project, songId);
       break;
     }
 
@@ -160,13 +172,13 @@ export const reducer = async (
 
     case UPDATE_SECTION: {
       const {songId, newSection} = action as UpdateSectionAction;
-      updateSection(newProject, songId, newSection);
+      updateSection(newState.project, songId, newSection);
       break;
     }
 
     case UPDATE_SONG: {
       const {newSong} = action as UpdateSongAction;
-      updateSong(newProject, newSong);
+      updateSong(newState.project, newSong);
       break;
     }
 
@@ -175,23 +187,18 @@ export const reducer = async (
       return state;
   }
 
-  const currentSamplesInUse = getSamplesInProject(newProject);
+  const currentSamplesInUse = getSamplesInProject(newState.project);
 
   await garbageCollectSamples(
     backend,
-    state.projectInfo?.id ?? '',
+    newState.projectInfo?.id ?? '',
     previousSamplesInUse,
     currentSamplesInUse
   );
 
-  await backend.updateProject(state.projectInfo?.id ?? '', newProject);
+  await backend.updateProject(newState.projectInfo?.id ?? '', newState.project);
 
-  console.debug('Updated project:', newProject);
-
-  return {
-    ...state,
-    project: newProject,
-  };
+  return newState;
 };
 
 const addSampleToSong = async (
@@ -282,6 +289,7 @@ const getTempoFromFileName = (fileName: string): number => {
   if (!match) {
     return defaultBPM;
   }
+
   const bpm = parseInt(match[1], 10);
   if (isNaN(bpm)) {
     return defaultBPM;

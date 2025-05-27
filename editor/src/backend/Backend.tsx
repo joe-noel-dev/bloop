@@ -1,6 +1,5 @@
 import {createContext} from 'react';
-import PocketBase from 'pocketbase';
-import {EventEmitter} from 'events';
+import PocketBase, {RecordModel} from 'pocketbase';
 import {Project} from '../api/bloop';
 import {ID} from '../api/helpers';
 import {emptyProject} from '../api/project-helpers';
@@ -33,23 +32,16 @@ export const BackendContext = createContext<Backend | null>(null);
 
 export const createBackend = () => {
   const pocketbase = new PocketBase('https://joe-noel-dev-bloop.fly.dev');
-  const events = new EventEmitter();
 
   pocketbase.authStore.onChange(() => {
-    events.emit('user', {...pocketbase.authStore.record});
+    console.log('Auth store changed:', pocketbase.authStore.record);
   });
 
   return {
-    signIn: async (username: string, password: string) => {
-      const user = await signIn(pocketbase, username, password);
-      events.emit('user', user);
-      return user;
-    },
+    signIn: async (username: string, password: string) =>
+      await signIn(pocketbase, username, password),
 
-    signOut: async () => {
-      pocketbase.authStore.clear();
-      events.emit('user', null);
-    },
+    signOut: async () => pocketbase.authStore.clear(),
 
     getUser: (): DbUser | null => {
       if (!pocketbase.authStore.isValid || !pocketbase.authStore.record) {
@@ -63,38 +55,27 @@ export const createBackend = () => {
       };
     },
 
-    fetchProjects: async () => {
-      const projects = await fetchProjects(pocketbase);
-      events.emit('projects', projects);
-    },
+    fetchProjects: async () => await fetchProjects(pocketbase),
 
-    loadProject: async (projectId: string) => {
-      const [project, projectInfo] = await loadProject(pocketbase, projectId);
-      events.emit('project-info', projectInfo);
-      events.emit('project', project);
-    },
+    loadProject: async (projectId: string) =>
+      await loadProject(pocketbase, projectId),
 
-    createProject: async () => {
-      const [project, projectInfo] = await createProject(pocketbase);
-      events.emit('project-info', projectInfo);
-      events.emit('project', project);
-    },
+    createProject: async () => await createProject(pocketbase),
 
-    removeProject: async (projectId: string) => {
-      await removeProject(pocketbase, projectId);
-    },
+    removeProject: async (projectId: string) =>
+      await removeProject(pocketbase, projectId),
 
-    renameProject: async (projectId: string, newName: string) => {
-      const projectInfo = await renameProject(pocketbase, projectId, newName);
-      events.emit('project-info', projectInfo);
-    },
+    renameProject: async (projectId: string, newName: string) =>
+      await renameProject(pocketbase, projectId, newName),
 
     updateProject: async (projectId: string, project: Project) => {
       if (!projectId) {
+        console.warn('Project not updated: no project ID provided');
         return;
       }
+
       await updateProject(pocketbase, projectId, project);
-      events.emit('project', project);
+      console.debug('Updated project:', projectId, project);
     },
 
     addSample: async (projectId: string, sampleId: ID, sample: File) =>
@@ -102,8 +83,6 @@ export const createBackend = () => {
 
     removeSample: async (projectId: string, sampleId: ID) =>
       await removeSample(pocketbase, projectId, sampleId),
-
-    events,
   };
 };
 
@@ -125,31 +104,28 @@ const fetchProjects = async (pocketbase: PocketBase) => {
   const records = await pocketbase.collection('projects').getFullList({
     sort: '-created',
   });
-  return records.map((record) => ({
-    collectionId: record.collectionId,
-    collectionName: record.collectionName,
-    created: new Date(record.created),
-    id: record.id,
-    name: record.name,
-    project: record.project,
-    samples: record.samples,
-    userId: record.userId,
-  }));
+  return records.map(toDbProject);
 };
 
-const loadProject = async (pocketbase: PocketBase, projectId: string) => {
-  const record = await pocketbase.collection('projects').getOne(projectId);
-
-  const projectInfo = {
+const toDbProject = (record: RecordModel): DbProject => {
+  return {
     collectionId: record.collectionId,
     collectionName: record.collectionName,
     created: new Date(record.created),
     id: record.id,
     name: record.name,
     project: record.project,
-    samples: record.samples,
+    samples: record.samples || [],
     userId: record.userId,
   };
+};
+
+const loadProject = async (
+  pocketbase: PocketBase,
+  projectId: string
+): Promise<[Project, DbProject]> => {
+  const record = await pocketbase.collection('projects').getOne(projectId);
+  const projectInfo = toDbProject(record);
 
   console.log('Loaded project:', projectInfo);
 
@@ -180,7 +156,7 @@ const renameProject = async (
   pocketbase: PocketBase,
   projectId: string,
   newName: string
-) => {
+): Promise<DbProject> => {
   if (!pocketbase.authStore.isValid || !pocketbase.authStore.record) {
     throw new Error('User is not authenticated');
   }
@@ -191,10 +167,12 @@ const renameProject = async (
 
   console.log(`Renamed project with ID: ${projectId} to ${newName}`);
 
-  return projectInfo;
+  return toDbProject(projectInfo);
 };
 
-const createProject = async (pocketbase: PocketBase) => {
+const createProject = async (
+  pocketbase: PocketBase
+): Promise<[Project, DbProject]> => {
   if (!pocketbase.authStore.isValid || !pocketbase.authStore.record) {
     throw new Error('User is not authenticated');
   }
@@ -202,15 +180,17 @@ const createProject = async (pocketbase: PocketBase) => {
   const project = emptyProject();
   const projectData = Project.encode(project).finish();
 
-  const projectInfo = await pocketbase.collection('projects').create({
+  const record = await pocketbase.collection('projects').create({
     name: 'Project',
     userId: pocketbase.authStore.record.id,
     project: new File([projectData], 'project.bin'),
   });
 
-  console.log('Created project:', projectInfo);
+  const dbProject = toDbProject(record);
 
-  return [project, projectInfo];
+  console.log('Created project:', dbProject);
+
+  return [project, dbProject];
 };
 
 const removeProject = async (pocketbase: PocketBase, projectId: string) => {
