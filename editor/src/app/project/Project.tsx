@@ -7,7 +7,6 @@ export const Project = () => {
     <Stack padding={2} spacing={2}>
       <ProjectInfo />
       <Divider />
-      <Divider />
       <Songs />
     </Stack>
   );

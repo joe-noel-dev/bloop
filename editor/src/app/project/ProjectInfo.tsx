@@ -14,24 +14,31 @@ import {
 import {useProjectInfo, useProjects} from '../../model-hooks/project-hooks';
 import {Create, Delete, FolderOpen} from '@mui/icons-material';
 import {useState} from 'react';
-import {useBackend} from '../../backend/Backend';
+import {ClickToEdit} from '../../components/ClickToEdit';
+import {useDispatcher} from '../../dispatcher/dispatcher';
+import {
+  createProjectAction,
+  loadProjectAction,
+  removeProjectAction,
+  renameProjectAction,
+} from '../../dispatcher/action';
 
 export const ProjectInfo = () => {
   const projectInfo = useProjectInfo();
-  const backend = useBackend();
   const [projectsModalOpen, setProjectsModalOpen] = useState(false);
+  const dispatch = useDispatcher();
 
-  const create = () => {
-    // FIXME: create project
-  };
-
+  const create = async () => dispatch(createProjectAction());
   const openProjects = () => setProjectsModalOpen(true);
+  const renameProject = (name: string) => dispatch(renameProjectAction(name));
 
   return (
     <Stack spacing={2}>
-      <Typography level="title-lg" component="h1">
-        {projectInfo?.name || 'Untitled'}
-      </Typography>
+      <ClickToEdit
+        size="large"
+        initialValue={projectInfo?.name || ''}
+        onSave={renameProject}
+      />
       <Stack direction="row" spacing={2}>
         <Button startDecorator={<FolderOpen />} onClick={openProjects}>
           Projects
@@ -59,16 +66,19 @@ interface ProjectsModalProps {
 
 const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
   const projects = useProjects();
-  const backend = useBackend();
+  const dispatch = useDispatcher();
 
   const loadProject = async (projectId: string) => {
-    await backend.loadProject(projectId);
+    dispatch(loadProjectAction(projectId));
     onRequestClose();
   };
 
-  const removeProject = (projectId: string) => {
-    // FIXME: remove project
-    // backend.removeProject(projectId);
+  const removeProject = async (projectId: string) => {
+    if (!window.confirm('Are you sure you want to delete this project?')) {
+      return;
+    }
+
+    dispatch(removeProjectAction(projectId));
   };
 
   return (

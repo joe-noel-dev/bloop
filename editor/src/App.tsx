@@ -17,12 +17,12 @@ import {
 import {DispatcherContext} from './dispatcher/dispatcher';
 import {Action} from './dispatcher/action';
 import {reducer} from './dispatcher/reducer';
+import {emptyProject} from './api/project-helpers';
 
 const App = () => {
   const [backend, setBackend] = useState<Backend | null>(null);
   const [state, setState] = useState<AppState>({
-    project: undefined,
-    projectInfo: null,
+    project: emptyProject(),
     projects: [],
   });
 
@@ -39,23 +39,25 @@ const App = () => {
     });
 
     newBackend.events.on('project', (project) => {
-      setState((prevState) => ({
-        ...prevState,
+      setState({
+        ...state,
         project: project as ModelProject,
-      }));
+      });
     });
+
     newBackend.events.on('projects', (projects: DbProject[]) => {
-      setState((prevState) => ({
-        ...prevState,
-        projects: projects,
-      }));
+      setState({
+        ...state,
+        projects,
+      });
     });
 
     newBackend.events.on('project-info', (projectInfo: DbProject | null) => {
-      setState((prevState) => ({
-        ...prevState,
-        projectInfo: projectInfo,
-      }));
+      console.log('Project info set to:', projectInfo);
+      setState({
+        ...state,
+        projectInfo: projectInfo ?? undefined,
+      });
     });
 
     setBackend(newBackend);
@@ -65,8 +67,9 @@ const App = () => {
     return;
   }
 
-  const dispatch = (action: Action) => {
-    const newState = reducer(action, state);
+  console.log('App state:', state);
+  const dispatch = async (action: Action) => {
+    const newState = await reducer(action, state, backend);
     setState(newState);
   };
 

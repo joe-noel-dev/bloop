@@ -8,13 +8,14 @@ import {
   Box,
   Alert,
 } from '@mui/joy';
-import {useBackend} from '../../backend/Backend';
+import {useDispatcher} from '../../dispatcher/dispatcher';
+import {signInAction} from '../../dispatcher/action';
 
 export const LoginScreen = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const backend = useBackend();
+  const dispatch = useDispatcher();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +26,7 @@ export const LoginScreen = () => {
     setError('');
 
     try {
-      const user = await backend.signIn(username, password);
-      console.log('User signed in:', user);
+      dispatch(signInAction(username, password));
     } catch (err) {
       setError('Error signing in');
       console.error(err);

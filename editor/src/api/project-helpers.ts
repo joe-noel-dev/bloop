@@ -210,3 +210,14 @@ export const updateSong = (project: Project, newSong: Song) => {
 
   Object.assign(song, newSong);
 };
+
+export const emptyProject = (): Project => {
+  const song = defaultSong();
+  return {
+    songs: [song],
+    selections: {
+      song: song.id,
+      section: song.sections[0]?.id,
+    },
+  };
+};

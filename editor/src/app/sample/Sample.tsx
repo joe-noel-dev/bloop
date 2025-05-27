@@ -3,6 +3,9 @@ import {useSampleWithId} from '../../model-hooks/sample-hooks';
 import {Delete, FileUpload} from '@mui/icons-material';
 import {useEffect, useRef, useState} from 'react';
 import {ID} from '../../api/helpers';
+import {useSong} from '../../model-hooks/song-hooks';
+import {useDispatcher} from '../../dispatcher/dispatcher';
+import {addSampleAction, updateSongAction} from '../../dispatcher/action';
 
 interface Props {
   sampleId: ID;
@@ -13,6 +16,8 @@ export const Sample = ({sampleId, songId}: Props) => {
   const sample = useSampleWithId(sampleId);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const song = useSong(songId);
+  const dispatch = useDispatcher();
 
   useEffect(() => {
     if (sample) {
@@ -20,15 +25,23 @@ export const Sample = ({sampleId, songId}: Props) => {
     }
   }, [sample]);
 
-  const remove = () => {
-    // FIXME: remove sample
-  };
+  if (!song) {
+    return <></>;
+  }
+
+  const remove = async () =>
+    dispatch(
+      updateSongAction({
+        ...song,
+        sample: undefined,
+      })
+    );
 
   const onFileSelected = async () => {
     if (fileInputRef.current?.files?.length) {
       const file = fileInputRef.current.files[0];
       setUploading(true);
-      // FIXME: add file to song
+      dispatch(addSampleAction(songId, file));
     }
   };
 
@@ -72,41 +85,3 @@ export const Sample = ({sampleId, songId}: Props) => {
     </>
   );
 };
-
-// const addSampleToSong = async (file: File, songId: ID, core: Core) => {
-//   const uploadId = randomId();
-
-//   const beginRequest = beginUploadRequest(
-//     uploadId,
-//     file.name,
-//     AudioFileFormat.WAV
-//   );
-
-//   core.sendRequest(beginRequest);
-//   await core.waitForUploadAck(uploadId);
-
-//   const reader = new FileReader();
-
-//   reader.onload = async () => {
-//     const result = reader.result as ArrayBuffer;
-
-//     const chunkSize = 1024 * 1024;
-//     let position = 0;
-//     while (position < result.byteLength) {
-//       const chunk = result.slice(position, position + chunkSize);
-//       const chunkRequest = uploadRequest(uploadId, chunk);
-//       core?.sendRequest(chunkRequest);
-//       await core?.waitForUploadAck(uploadId);
-//       position += chunkSize;
-//     }
-
-//     const completeRequest = completeUploadRequest(uploadId);
-//     core?.sendRequest(completeRequest);
-//     await core?.waitForUploadAck(uploadId);
-
-//     const addRequest = addSampleRequest(songId, uploadId);
-//     core?.sendRequest(addRequest);
-//   };
-
-//   reader.readAsArrayBuffer(file);
-// };
