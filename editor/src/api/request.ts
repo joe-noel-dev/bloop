@@ -180,20 +180,22 @@ export const loadProjectsRequest = (): Request => {
   };
 };
 
-export const loadProjectRequest = (projectId: ID): Request => {
+export const loadProjectRequest = (projectId: string): Request => {
   return {
     load: {
-      id: projectId,
+      projectId,
     },
   };
 };
 
-export const renameProjectRequest = (name: string): Request => {
+export const renameProjectRequest = (
+  projectId: string,
+  name: string
+): Request => {
   return {
-    rename: {
-      entity: Entity.PROJECT,
-      id: INVALID_ID,
-      name,
+    renameProject: {
+      projectId,
+      newName: name,
     },
   };
 };
