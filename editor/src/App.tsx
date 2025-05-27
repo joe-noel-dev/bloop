@@ -15,28 +15,8 @@ import {
   DbUser,
 } from './backend/Backend';
 import {DispatcherContext} from './dispatcher/dispatcher';
-import {
-  Action,
-  ADD_SECTION,
-  ADD_SONG,
-  AddSectionAction,
-  MOVE_SONG,
-  MoveSongAction,
-  SELECT_SONG,
-  SelectSongAction,
-  UPDATE_SECTION,
-  UPDATE_SONG,
-  UpdateSectionAction,
-  UpdateSongAction,
-} from './dispatcher/action';
-import {
-  addSection,
-  addSong,
-  moveSong,
-  selectSong,
-  updateSection,
-  updateSong,
-} from './api/project-helpers';
+import {Action} from './dispatcher/action';
+import {reducer} from './dispatcher/reducer';
 
 const App = () => {
   const [backend, setBackend] = useState<Backend | null>(null);
@@ -45,8 +25,6 @@ const App = () => {
     projectInfo: null,
     projects: [],
   });
-
-  console.dir(state.project);
 
   const user = backend?.getUser();
 
@@ -87,62 +65,15 @@ const App = () => {
     return;
   }
 
-  const dispatcher = (action: Action) => {
-    if (!state.project) {
-      console.error('No project selected');
-      return;
-    }
-
-    const newProject = {...state.project};
-
-    switch (action.type) {
-      case ADD_SONG:
-        addSong(newProject);
-        break;
-
-      case ADD_SECTION:
-        const addSectionAction = action as AddSectionAction;
-        addSection(newProject, addSectionAction.songId);
-        break;
-
-      case SELECT_SONG:
-        const selectSongAction = action as SelectSongAction;
-        selectSong(newProject, selectSongAction.songId);
-        break;
-
-      case MOVE_SONG:
-        const moveSongAction = action as MoveSongAction;
-        moveSong(newProject, moveSongAction.fromIndex, moveSongAction.toIndex);
-        break;
-
-      case UPDATE_SECTION:
-        const updateSectionAction = action as UpdateSectionAction;
-        updateSection(
-          newProject,
-          updateSectionAction.songId,
-          updateSectionAction.newSection
-        );
-        break;
-
-      case UPDATE_SONG:
-        const updateSongAction = action as UpdateSongAction;
-        updateSong(newProject, updateSongAction.newSong);
-        break;
-
-      default:
-        console.error('Unknown action type:', action.type);
-    }
-
-    setState({
-      ...state,
-      project: newProject,
-    });
+  const dispatch = (action: Action) => {
+    const newState = reducer(action, state);
+    setState(newState);
   };
 
   return (
     <CssVarsProvider>
       <CssBaseline />
-      <DispatcherContext.Provider value={dispatcher}>
+      <DispatcherContext.Provider value={dispatch}>
         <BackendContext.Provider value={backend}>
           <AppStateContext.Provider value={state}>
             <Box

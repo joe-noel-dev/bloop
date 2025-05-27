@@ -2,8 +2,9 @@ import {Upload} from '@mui/icons-material';
 import {Button} from '@mui/joy';
 import {useRef} from 'react';
 import pako from 'pako';
-import {addSectionWithParamsRequest} from '../../api/request';
 import {ID} from '../../api/helpers';
+import {Dispatcher, useDispatcher} from '../../dispatcher/dispatcher';
+import {addSectionAction} from '../../dispatcher/action';
 
 interface Props {
   songId: ID;
@@ -11,13 +12,15 @@ interface Props {
 
 export const AbletonUpload = ({songId}: Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dispatch = useDispatcher();
+
   const onFileSelected = async () => {
     if (!fileInputRef.current?.files?.length) {
       return;
     }
 
     const file = fileInputRef.current.files[0];
-    await uploadFromAls(file, songId);
+    await uploadFromAls(file, songId, dispatch);
   };
 
   const InvisibleFileInput = () => (
@@ -47,21 +50,24 @@ export const AbletonUpload = ({songId}: Props) => {
   );
 };
 
-const uploadFromAls = async (alsProject: File, songId: ID) => {
+const uploadFromAls = async (
+  alsProject: File,
+  songId: ID,
+  dispatch: Dispatcher
+) => {
   const xml = await unzip(alsProject);
   const document = toXmlDocument(xml);
   const locators = getLocators(document);
   console.log('Found locators in Ableton Project:', locators);
 
-  locators.forEach((locator) => {
-    const request = addSectionWithParamsRequest(
-      songId,
-      locator.name,
-      locator.start
-    );
-
-    // FIXME: add section
-  });
+  locators.forEach((locator) =>
+    dispatch(
+      addSectionAction(songId, {
+        name: locator.name,
+        start: locator.start,
+      })
+    )
+  );
 };
 
 const unzip = async (project: File): Promise<string> => {

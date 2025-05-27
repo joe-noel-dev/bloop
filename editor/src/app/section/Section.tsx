@@ -6,9 +6,13 @@ import isEqual from 'lodash.isequal';
 import {useSong} from '../../model-hooks/song-hooks';
 import {ClickToEdit} from '../../components/ClickToEdit';
 import {getSectionBeatLength, ID} from '../../api/helpers';
-import {Section as ModelSection, Song} from '../../api/bloop';
+import {Section as ModelSection} from '../../api/bloop';
 import {useDispatcher} from '../../dispatcher/dispatcher';
-import {updateSectionAction, updateSongAction} from '../../dispatcher/action';
+import {
+  moveSectionAction,
+  removeSectionAction,
+  updateSectionAction,
+} from '../../dispatcher/action';
 
 interface Props {
   songId: ID;
@@ -24,6 +28,8 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
   const duration = song ? getSectionBeatLength(song, sectionId) : 0;
   const isFirst = song?.sections.at(0)?.id === sectionId;
   const isLast = song?.sections.at(-1)?.id === sectionId;
+  const sectionIndex =
+    song?.sections.findIndex((section) => section.id.equals(sectionId)) ?? 0;
 
   if (!section) {
     return <></>;
@@ -32,23 +38,19 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
   const updateSection = (section: ModelSection) =>
     dispatch(updateSectionAction(songId, section));
 
-  const enableLoop = (enable: boolean) => {
+  const enableLoop = (enable: boolean) =>
     updateSection({
       ...section,
       loop: enable,
     });
-  };
 
-  const enableMetronome = (enable: boolean) => {
+  const enableMetronome = (enable: boolean) =>
     updateSection({
       ...section,
       metronome: enable,
     });
-  };
 
-  const remove = () => {
-    // FIXME: remove section
-  };
+  const remove = () => dispatch(removeSectionAction(songId, sectionId));
 
   const submitName = (name: string) => {
     const newSection = {...section, name};
@@ -154,15 +156,15 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
               <Grid xs={columnSize('Edit')} key={name}>
                 <Stack direction="row" spacing={1} alignItems="center">
                   <EditButton
-                    onClick={() => {
-                      if (!song) {
-                        return;
-                      }
-
-                      const delta = -1;
-                      moveSectionIndex(sectionId, delta, song);
-                      dispatch(updateSongAction(song));
-                    }}
+                    onClick={() =>
+                      dispatch(
+                        moveSectionAction(
+                          songId,
+                          sectionIndex,
+                          sectionIndex - 1
+                        )
+                      )
+                    }
                     color="primary"
                     disabled={isFirst}
                   >
@@ -170,15 +172,15 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
                   </EditButton>
 
                   <EditButton
-                    onClick={() => {
-                      if (!song) {
-                        return;
-                      }
-
-                      const delta = 1;
-                      moveSectionIndex(sectionId, delta, song);
-                      dispatch(updateSongAction(song));
-                    }}
+                    onClick={() =>
+                      dispatch(
+                        moveSectionAction(
+                          songId,
+                          sectionIndex,
+                          sectionIndex + 1
+                        )
+                      )
+                    }
                     color="primary"
                     disabled={isLast}
                   >
@@ -222,29 +224,3 @@ const EditButton = ({
     {children}
   </IconButton>
 );
-
-const moveSectionIndex = (sectionId: ID, delta: number, song: Song) => {
-  const currentIndex = song.sections.findIndex((s) => s.id === sectionId);
-  if (currentIndex === -1) {
-    console.warn(`Section not found: ${sectionId}`);
-    return;
-  }
-
-  const newIndex = currentIndex + delta;
-  if (newIndex < 0 || newIndex >= song.sections.length) {
-    console.warn(`Section move out of range: ${sectionId} -> ${newIndex}`);
-    return;
-  }
-
-  const startPositions = song.sections.map((s) => s.start);
-  const newSong = {...song};
-  const [movedSection] = newSong.sections.splice(currentIndex, 1);
-  newSong.sections.splice(newIndex, 0, movedSection);
-
-  // Maintain beat start positions
-  newSong.sections.forEach((section, index) => {
-    section.start = startPositions[index];
-  });
-
-  // FIXME: update song
-};

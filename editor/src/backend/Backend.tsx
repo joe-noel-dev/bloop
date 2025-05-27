@@ -2,6 +2,7 @@ import {createContext, useContext} from 'react';
 import PocketBase from 'pocketbase';
 import {EventEmitter} from 'events';
 import {Project} from '../api/bloop';
+import {ID} from '../api/helpers';
 
 export interface DbUser {
   email: string;
@@ -36,6 +37,7 @@ export const createBackend = () => {
   pocketbase.authStore.onChange(() => {
     events.emit('user', {...pocketbase.authStore.record});
   });
+
   return {
     signIn: async (username: string, password: string) => {
       const user = await signIn(pocketbase, username, password);
@@ -69,6 +71,30 @@ export const createBackend = () => {
       const [project, projectInfo] = await loadProject(pocketbase, projectId);
       events.emit('project-info', projectInfo);
       events.emit('project', project);
+    },
+
+    createProject: async () => {
+      // TODO:
+    },
+
+    removeProject: async (projectId: string) => {
+      // TODO:
+    },
+
+    renameProject: async (projectId: string, newName: string) => {
+      // TODO:
+    },
+
+    updateProject: async (projectId: string, project: Project) => {
+      // TODO:
+    },
+
+    addSample: async (projectId: string, sampleId: ID, sample: File) => {
+      // TODO:
+    },
+
+    removeSample: async (projectId: string, sampleId: string) => {
+      // TODO:
     },
 
     events,

@@ -8,7 +8,11 @@ import {ClickToEdit} from '../../components/ClickToEdit';
 import {AbletonUpload} from './AbletonUpload';
 import {ID, INVALID_ID, updateSectionBeatLength} from '../../api/helpers';
 import {Song as ModelSong} from '../../api/bloop';
-import {addSectionAction, updateSongAction} from '../../dispatcher/action';
+import {
+  addSectionAction,
+  removeSongAction,
+  updateSongAction,
+} from '../../dispatcher/action';
 import {useDispatcher} from '../../dispatcher/dispatcher';
 
 interface SongProps {
@@ -25,11 +29,7 @@ export const Song = ({songId, moveSong}: SongProps) => {
   }
 
   const addSection = () => dispatch(addSectionAction(song.id));
-
-  const remove = () => {
-    // FIXME: remove song
-  };
-
+  const remove = () => dispatch(removeSongAction(song.id));
   const moveUp = () => moveSong(-1);
   const moveDown = () => moveSong(1);
 
