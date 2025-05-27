@@ -30,12 +30,12 @@ func updateProjectAction(_ project: Bloop_Project) -> Action {
     )
 }
 
-func renameProjectAction(_ name: String) -> Action {
+func renameProjectAction(projectId: String, name: String) -> Action {
     .sendRequest(
         .with {
-            $0.rename = .with {
-                $0.entity = .project
-                $0.name = name
+            $0.renameProject = .with {
+                $0.projectID = projectId
+                $0.newName = name
             }
         }
     )
@@ -156,22 +156,21 @@ func getProjectsAction() -> Action {
     )
 }
 
-func removeProjectAction(_ projectId: Id) -> Action {
+func removeProjectAction(_ projectId: String) -> Action {
     .sendRequest(
         .with {
-            $0.remove = .with {
-                $0.entity = .project
-                $0.id = projectId
+            $0.removeProject = .with {
+                $0.projectID = projectId
             }
         }
     )
 }
 
-func loadProjectAction(_ projectId: Id) -> Action {
+func loadProjectAction(_ projectId: String) -> Action {
     .sendRequest(
         .with {
             $0.load = .with {
-                $0.id = projectId
+                $0.projectID = projectId
             }
         }
     )
@@ -187,12 +186,11 @@ func newProjectAction() -> Action {
     )
 }
 
-func duplicateProjectAction(_ projectId: Id) -> Action {
+func duplicateProjectAction(_ projectId: String) -> Action {
     .sendRequest(
         .with {
-            $0.duplicate = .with {
-                $0.entity = .project
-                $0.id = projectId
+            $0.duplicateProject = .with {
+                $0.projectID = projectId
             }
         }
     )

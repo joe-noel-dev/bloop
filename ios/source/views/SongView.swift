@@ -17,7 +17,7 @@ struct SongView: View {
         self.state = state
         self.dispatch = dispatch
         self.editSong = song
-        self.newProjectName = state.project.info.name
+        self.newProjectName = state.projectInfo?.name ?? "Project"
     }
 
     #if os(iOS)
@@ -132,7 +132,7 @@ struct SongView: View {
             RenameProjectSheet(newProjectName: $newProjectName) {
                 saveProjectName()
             }.onAppear {
-                newProjectName = state.project.info.name
+                newProjectName = state.projectInfo?.name ?? ""
             }
         }
         .sheet(isPresented: editingEntityBinding(.songs)) {
@@ -207,7 +207,7 @@ struct SongView: View {
     }
 
     private func saveProjectName() {
-        let action = renameProjectAction(newProjectName)
+        let action = renameProjectAction(projectId: state.projectInfo?.id ?? "", name: newProjectName)
         dispatch(action)
         editingEntity = nil
     }

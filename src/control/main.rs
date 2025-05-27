@@ -38,7 +38,8 @@ struct MainController {
     action_tx: mpsc::Sender<Action>,
     should_save: bool,
     preferences: Preferences,
-    project_id: Option<String>,
+    project_info: ProjectInfo,
+    user: Option<User>,
 }
 
 impl MainController {
@@ -77,15 +78,16 @@ impl MainController {
             action_tx,
             should_save: false,
             preferences,
-            project_id: None,
+            project_info: ProjectInfo::default(),
+            user: None,
         }
     }
 
     pub async fn load_last_project(&mut self) {
         match self.project_store.load_last_project(&mut self.samples_cache).await {
-            Ok((id, project)) => {
+            Ok((project_info, project)) => {
                 self.set_project(project);
-                self.project_id = Some(id);
+                self.set_project_info(project_info);
             }
             Err(error) => error!("Unable to open last project: {error}"),
         };
@@ -159,11 +161,26 @@ impl MainController {
         }
 
         if let Some(duplicate_project_request) = request.duplicate_project.as_ref() {
-            let old_project = self
+            let (old_project, old_project_info) = self
                 .project_store
                 .load(&duplicate_project_request.project_id, &mut self.samples_cache)
                 .await?;
-            self.project_id = Some(self.project_store.save(None, old_project, &self.samples_cache).await?);
+
+            let user_id = match &self.user {
+                Some(user) => user.id.clone(),
+                None => {
+                    return Err(anyhow!("User not logged in, cannot duplicate project"));
+                }
+            };
+
+            let project_id = self
+                .project_store
+                .save(None, old_project, &self.samples_cache, &user_id)
+                .await?;
+
+            let mut project_info = old_project_info.clone();
+            project_info.id = project_id.clone();
+            self.set_project_info(project_info);
         }
 
         if let Some(rename_project_request) = request.rename_project.as_ref() {
@@ -177,12 +194,27 @@ impl MainController {
     }
 
     async fn save_project(&mut self, project: Project) -> anyhow::Result<Project> {
+        let project_id = if self.project_info.id.is_empty() {
+            None
+        } else {
+            Some(self.project_info.id.clone())
+        };
+
+        let user_id = match &self.user {
+            Some(user) => user.id.clone(),
+            None => {
+                return Err(anyhow!("User not logged in, cannot save project"));
+            }
+        };
+
         let project_id = self
             .project_store
-            .save(self.project_id.clone(), project.clone(), &self.samples_cache)
+            .save(project_id, project.clone(), &self.samples_cache, &user_id)
             .await?;
 
-        self.project_id = Some(project_id.clone());
+        let mut project_info = self.project_info.clone();
+        project_info.id = project_id.clone();
+        self.set_project_info(project_info);
 
         Ok(project)
     }
@@ -194,6 +226,13 @@ impl MainController {
             self.send_project_response(&self.project);
             self.audio_controller
                 .on_project_updated(&self.project, &self.samples_cache);
+        }
+    }
+
+    fn set_project_info(&mut self, project_info: ProjectInfo) {
+        if self.project_info != project_info {
+            self.project_info = project_info.clone();
+            self.send_response(Response::default().with_project_info(&project_info));
         }
     }
 
@@ -214,15 +253,23 @@ impl MainController {
                 if let (Some(username), Some(password)) = (username, password) {
                     let user = self.project_store.log_in(username.clone(), password).await;
                     match user {
-                        Ok(_) => info!("Logged in successfully: {}", username),
-                        Err(error) => error!("Unable to log in: {}", error),
+                        Ok(user) => {
+                            info!("Logged in successfully: {}", username);
+                            self.user = Some(user);
+                        }
+                        Err(error) => {
+                            error!("Unable to log in: {}", error);
+                            self.user = None;
+                        }
                     }
                 }
 
                 self.send_response(
                     Response::default()
                         .with_project(&self.project)
-                        .with_playback_state(self.audio_controller.get_playback_state()),
+                        .with_playback_state(self.audio_controller.get_playback_state())
+                        .with_project_info(&self.project_info)
+                        .with_user(self.user.clone()),
                 )
             }
             Entity::PROJECTS => {
@@ -387,11 +434,13 @@ impl MainController {
     }
 
     async fn handle_load(&mut self, request: &LoadProjectRequest) -> anyhow::Result<Project> {
-        let project = self
+        let (project, project_info) = self
             .project_store
             .load(&request.project_id, &mut self.samples_cache)
             .await?;
-        self.project_id = Some(request.project_id.clone());
+
+        self.set_project_info(project_info);
+
         Ok(project)
     }
 

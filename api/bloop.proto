@@ -199,6 +199,7 @@ message Response {
     reserved 8;
     string error = 9;
     UserStatusResponse user_status = 10;
+    ProjectInfo project_info = 11;
 } 
 
 message WaveformResponse {

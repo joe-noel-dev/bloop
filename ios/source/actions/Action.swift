@@ -16,6 +16,7 @@ enum Action {
     case setPlaybackState(Bloop_PlaybackState)
     case setProgress(Bloop_Progress)
     case setProjects([Bloop_ProjectInfo])
+    case setProjectInfo(Bloop_ProjectInfo)
     case addWaveform((Id, Bloop_WaveformData))
     case removeWaveform(Id)
     case addError(String)
@@ -27,11 +28,6 @@ enum Action {
 
     case uploadSample((Id, URL))
     case uploadAck(Id)
-
-    case importProject(URL)
-    case exportProject(URL)
-    case importResponse(Bloop_ImportResponse)
-    case exportResponse(Bloop_ExportResponse)
 
     case setDiscoveredServers([Server])
     case setScanning(Bool)

@@ -1,6 +1,6 @@
 use crate::{
     backend::Backend,
-    bloop::AudioFileFormat,
+    bloop::{AudioFileFormat, User},
     model::{Project, ProjectInfo, ID},
     samples::SamplesCache,
 };
@@ -33,15 +33,21 @@ impl ProjectStore {
         }
     }
 
-    pub async fn log_in(&mut self, username: String, password: String) -> anyhow::Result<()> {
-        self.backend
+    pub async fn log_in(&mut self, username: String, password: String) -> anyhow::Result<User> {
+        let db_user = self
+            .backend
             .log_in(username, password)
             .await
             .context("Error logging in")?;
 
         info!("Logged in successfully");
 
-        Ok(())
+        Ok(User {
+            id: db_user.id,
+            name: db_user.name,
+            email: db_user.email,
+            ..Default::default()
+        })
     }
 
     pub async fn save(
@@ -49,11 +55,12 @@ impl ProjectStore {
         project_id: Option<String>,
         project: Project,
         samples_cache: &SamplesCache,
+        user_id: &str,
     ) -> anyhow::Result<String> {
         let project_id = match project_id {
             Some(id) => id,
             None => {
-                let new_project = self.backend.create_project("user_id").await?;
+                let new_project = self.backend.create_project(user_id).await?;
                 new_project.id
             }
         };
@@ -72,20 +79,27 @@ impl ProjectStore {
             .context("Error writing last project ID")
     }
 
-    pub async fn load(&mut self, project_id: &str, samples_cache: &mut SamplesCache) -> anyhow::Result<Project> {
-        let project = self.read_project_file(project_id).await?;
+    pub async fn load(
+        &mut self,
+        project_id: &str,
+        samples_cache: &mut SamplesCache,
+    ) -> anyhow::Result<(Project, ProjectInfo)> {
+        let (project, project_info) = self.read_project_file(project_id).await?;
         self.load_samples_into_cache(project_id, samples_cache).await?;
         self.save_last_project(project_id).await?;
-        Ok(project)
+        Ok((project, project_info))
     }
 
-    pub async fn load_last_project(&mut self, samples_cache: &mut SamplesCache) -> anyhow::Result<(String, Project)> {
+    pub async fn load_last_project(
+        &mut self,
+        samples_cache: &mut SamplesCache,
+    ) -> anyhow::Result<(ProjectInfo, Project)> {
         let last_project_file = self.last_project_file();
         let last_project_id = tokio::fs::read_to_string(last_project_file)
             .await
             .context("Opening last project file")?;
-        let project = self.load(&last_project_id, samples_cache).await?;
-        Ok((last_project_id, project))
+        let (project, project_info) = self.load(&last_project_id, samples_cache).await?;
+        Ok((project_info, project))
     }
 
     fn last_project_file(&self) -> PathBuf {
@@ -100,6 +114,7 @@ impl ProjectStore {
         let projects_info = projects
             .iter()
             .map(|db_project| ProjectInfo {
+                id: db_project.id.clone(),
                 name: db_project.name.clone(),
                 last_saved: db_project.updated.to_rfc3339(),
                 ..Default::default()
@@ -145,15 +160,24 @@ impl ProjectStore {
         Ok(())
     }
 
-    async fn read_project_file(&self, project_id: &str) -> anyhow::Result<Project> {
+    async fn read_project_file(&self, project_id: &str) -> anyhow::Result<(Project, ProjectInfo)> {
         let project = self.backend.get_project(project_id).await.context("Get project")?;
+
+        let project_info = ProjectInfo {
+            id: project.id.clone(),
+            name: project.name.clone(),
+            last_saved: project.updated.to_rfc3339(),
+            ..Default::default()
+        };
+
         let project_data = self
             .backend
             .get_project_file(project_id, &project.project)
             .await
             .context("Get project file")?;
         let project = Project::parse_from_bytes(&project_data).context("Parse project data")?;
-        Ok(project)
+
+        Ok((project, project_info))
     }
 
     async fn copy_samples_from_cache(
