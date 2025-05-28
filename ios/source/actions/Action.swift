@@ -19,6 +19,8 @@ enum Action {
     case setProjectInfo(Bloop_ProjectInfo)
     case addWaveform((Id, Bloop_WaveformData))
     case removeWaveform(Id)
+    case setUser(Bloop_User)
+    case clearUser
     case addError(String)
 
     case connect(Server)
@@ -34,5 +36,4 @@ enum Action {
     case removeAllServers
 
     case restartScan
-
 }

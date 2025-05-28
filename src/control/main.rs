@@ -63,7 +63,7 @@ impl MainController {
         let midi_preferences = preferences.clone().midi.unwrap_or_default();
 
         let host = std::env::var("BACKEND_HOST").ok();
-        let backend = create_pocketbase_backend(host);
+        let backend = create_pocketbase_backend(host, &directories.backend);
 
         Self {
             samples_cache: SamplesCache::new(&directories.samples),
@@ -189,6 +189,29 @@ impl MainController {
                 .await?;
         }
 
+        if let Some(login_request) = request.login.as_ref() {
+            let username = login_request.username.clone();
+            let password = login_request.password.clone();
+            let user = self.project_store.log_in(username, password).await;
+            match user {
+                Ok(user) => {
+                    info!("Logged in successfully: {}", user.name);
+                    self.set_user(Some(user));
+                }
+                Err(error) => {
+                    error!("Unable to log in: {}", error);
+                    self.set_user(None);
+                }
+            }
+        }
+
+        if request.logout.as_ref().is_some() {
+            if let Err(error) = self.project_store.log_out().await {
+                error!("Error logging out: {}", error);
+            }
+            self.set_user(None);
+        }
+
         self.set_project(project);
         Ok(())
     }
@@ -236,6 +259,13 @@ impl MainController {
         }
     }
 
+    fn set_user(&mut self, user: Option<User>) {
+        if self.user != user {
+            self.user = user.clone();
+            self.send_response(Response::default().with_user(self.user.clone()));
+        }
+    }
+
     async fn handle_get(&mut self, get_request: &GetRequest) -> anyhow::Result<()> {
         let entity = match get_request.entity.enum_value() {
             Ok(entity) => entity,
@@ -247,20 +277,15 @@ impl MainController {
 
         match entity {
             Entity::ALL => {
-                let username = std::env::var("USERNAME").ok();
-                let password = std::env::var("PASSWORD").ok();
-
-                if let (Some(username), Some(password)) = (username, password) {
-                    let user = self.project_store.log_in(username.clone(), password).await;
-                    match user {
-                        Ok(user) => {
-                            info!("Logged in successfully: {}", username);
-                            self.user = Some(user);
-                        }
-                        Err(error) => {
-                            error!("Unable to log in: {}", error);
-                            self.user = None;
-                        }
+                let user = self.project_store.refresh_auth().await;
+                match user {
+                    Ok(user) => {
+                        info!("Successfully refreshed auth: {}", user.name);
+                        self.set_user(Some(user));
+                    }
+                    Err(error) => {
+                        info!("Unable to refresh auth: {}", error);
+                        self.set_user(None);
                     }
                 }
 

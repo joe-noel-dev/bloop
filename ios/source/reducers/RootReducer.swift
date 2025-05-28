@@ -40,6 +40,12 @@ func rootReducer(state: AppState, action: Action) -> AppState {
 
     case .removeAllServers:
         state.servers.removeAll()
+        
+    case .setUser(let user):
+        state.user = user
+        
+    case .clearUser:
+        state.user = nil
 
     default:
         break

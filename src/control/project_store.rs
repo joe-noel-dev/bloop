@@ -33,6 +33,23 @@ impl ProjectStore {
         }
     }
 
+    pub async fn refresh_auth(&mut self) -> anyhow::Result<User> {
+        let db_user = self
+            .backend
+            .refresh_auth()
+            .await
+            .context("Error refreshing authentication")?;
+
+        info!("Authentication refreshed successfully");
+
+        Ok(User {
+            id: db_user.id,
+            name: db_user.name,
+            email: db_user.email,
+            ..Default::default()
+        })
+    }
+
     pub async fn log_in(&mut self, username: String, password: String) -> anyhow::Result<User> {
         let db_user = self
             .backend
@@ -48,6 +65,12 @@ impl ProjectStore {
             email: db_user.email,
             ..Default::default()
         })
+    }
+
+    pub async fn log_out(&mut self) -> anyhow::Result<()> {
+        self.backend.log_out().await.context("Error logging out")?;
+        info!("Logged out successfully");
+        Ok(())
     }
 
     pub async fn save(
@@ -85,6 +108,7 @@ impl ProjectStore {
         samples_cache: &mut SamplesCache,
     ) -> anyhow::Result<(Project, ProjectInfo)> {
         let (project, project_info) = self.read_project_file(project_id).await?;
+        info!("Project loaded: id = {}", project_info.id);
         self.load_samples_into_cache(project_id, samples_cache).await?;
         self.save_last_project(project_id).await?;
         Ok((project, project_info))
@@ -234,7 +258,9 @@ impl ProjectStore {
         let db_project = self.backend.get_project(project_id).await.context("Get project")?;
 
         for sample in db_project.samples.iter() {
-            let sample_id = match ID::from_str(sample) {
+            let sample_id = sample.split('_').next().unwrap();
+
+            let sample_id = match ID::from_str(sample_id) {
                 std::result::Result::Ok(id) => id,
                 Err(error) => {
                     error!("Invalid sample ID ({}): {}", sample, error);

@@ -1,3 +1,5 @@
+use std::path::{Path, PathBuf};
+
 use super::{Backend, DbProject, DbUser};
 use anyhow::{Context, Result};
 use log::{info, warn};
@@ -9,13 +11,16 @@ const DEFAULT_HOST: &str = "https://joe-noel-dev-bloop.fly.dev";
 pub struct PocketbaseBackend {
     host: String,
     token: Option<String>,
+    root_directory: PathBuf,
 }
 
 impl PocketbaseBackend {
-    pub fn new(host: Option<String>) -> Self {
+    pub fn new(host: Option<String>, root_directory: &Path) -> Self {
+        let token = Self::read_token(root_directory);
         Self {
             host: host.unwrap_or(String::from(DEFAULT_HOST)),
-            token: None,
+            token,
+            root_directory: root_directory.to_path_buf(),
         }
     }
 
@@ -37,6 +42,46 @@ impl PocketbaseBackend {
 
         Ok(response.json::<DbProject>().await?)
     }
+
+    fn read_token(root_directory: &Path) -> Option<String> {
+        let token_path = root_directory.join("token");
+        std::fs::read_to_string(&token_path).ok().map(|s| s.trim().to_string())
+    }
+
+    fn write_token(root_directory: &Path, token: &str) {
+        if !root_directory.exists() {
+            if let Err(e) = std::fs::create_dir_all(root_directory) {
+                warn!("Failed to create directory: {}", e);
+                return;
+            }
+        }
+
+        let token_path = root_directory.join("token");
+        if let Err(e) = std::fs::write(&token_path, token) {
+            warn!("Failed to write token to disk: {}", e);
+        }
+    }
+
+    async fn handle_login(&mut self, response: Response, request_name: &str) -> Result<DbUser> {
+        if !response.status().is_success() {
+            return Err(handle_error_response(response, request_name).await);
+        }
+
+        let json: serde_json::Value = response.json().await?;
+        self.token = json["token"].as_str().map(|s| s.to_string());
+
+        if let Some(token) = &self.token {
+            Self::write_token(&self.root_directory, token);
+        }
+
+        let user = json
+            .get("record")
+            .ok_or(anyhow::anyhow!("Missing record in response"))?;
+        let user: DbUser =
+            serde_json::from_value(user.clone()).context(anyhow::anyhow!("Unable to parse user in response"))?;
+        info!("Logged in a user: {}", user.name);
+        Ok(user)
+    }
 }
 
 #[async_trait::async_trait]
@@ -54,19 +99,7 @@ impl Backend for PocketbaseBackend {
             .send()
             .await?;
 
-        if !response.status().is_success() {
-            return Err(handle_error_response(response, "Log In").await);
-        }
-
-        let json: serde_json::Value = response.json().await?;
-        info!("Logged in as user: {}", json["name"].as_str().unwrap_or("Unknown"));
-        self.token = json["token"].as_str().map(|s| s.to_string());
-
-        let user = json
-            .get("record")
-            .ok_or(anyhow::anyhow!("Missing record in response"))?;
-        let user = serde_json::from_value(user.clone()).context(anyhow::anyhow!("Unable to parse user in response"))?;
-        Ok(user)
+        self.handle_login(response, "Log in").await
     }
 
     async fn log_out(&mut self) -> anyhow::Result<()> {
@@ -77,14 +110,47 @@ impl Backend for PocketbaseBackend {
 
         info!("Logging out");
         self.token = None;
+
+        let token_path = self.root_directory.join("token");
+        if let Err(e) = std::fs::remove_file(&token_path) {
+            warn!("Failed to remove token file: {}", e);
+        } else {
+            info!("Token file removed successfully");
+        }
+
         Ok(())
     }
 
+    async fn refresh_auth(&mut self) -> Result<DbUser> {
+        if self.token.is_none() {
+            return Err(anyhow::anyhow!("Not logged in"));
+        }
+
+        let client = reqwest::Client::new();
+        let url = format!("{}/api/collections/users/auth-refresh", self.host);
+
+        let response = client
+            .post(&url)
+            .header("Accept", "application/json")
+            .bearer_auth(self.token.as_ref().unwrap())
+            .send()
+            .await?;
+
+        self.handle_login(response, "Auth refresh").await
+    }
+
     async fn get_user(&self, user_id: &str) -> Result<DbUser> {
+        let token = self.token.as_ref().ok_or(anyhow::anyhow!("Not logged in"))?;
+
         let url = format!("{}/api/collections/users/records/{}", self.host, user_id);
         let client = reqwest::Client::new();
 
-        let response = client.get(&url).header("Accept", "application/json").send().await?;
+        let response = client
+            .get(&url)
+            .header("Accept", "application/json")
+            .bearer_auth(token)
+            .send()
+            .await?;
 
         if !response.status().is_success() {
             return Err(handle_error_response(response, "Get User").await);

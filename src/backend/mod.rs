@@ -1,6 +1,11 @@
+#[allow(clippy::module_inception)]
+mod backend;
 mod pocketbase;
 
+use std::path::Path;
+
 pub use anyhow::Result;
+pub use backend::Backend;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -28,23 +33,6 @@ pub struct DbProject {
     pub updated: DateTime<Utc>,
 }
 
-#[async_trait::async_trait]
-pub trait Backend {
-    async fn log_in(&mut self, username: String, password: String) -> Result<DbUser>;
-    async fn log_out(&mut self) -> Result<()>;
-    async fn get_user(&self, user_id: &str) -> Result<DbUser>;
-
-    async fn get_projects(&self) -> Result<Vec<DbProject>>;
-    async fn get_project(&self, project_id: &str) -> Result<DbProject>;
-    async fn create_project(&self, user_id: &str) -> Result<DbProject>;
-    async fn update_project_name(&self, project_id: &str, name: &str) -> Result<DbProject>;
-    async fn update_project_file(&self, project_id: &str, project_bytes: &[u8]) -> Result<DbProject>;
-    async fn add_project_sample(&self, project_id: &str, sample_bytes: &[u8], sample_name: &str) -> Result<DbProject>;
-    async fn remove_project_sample(&self, project_id: &str, sample_name: &str) -> Result<DbProject>;
-    async fn remove_project(&self, project_id: &str) -> Result<()>;
-    async fn get_project_file(&self, project_id: &str, project_filename: &str) -> Result<Vec<u8>>;
-}
-
-pub fn create_pocketbase_backend(host: Option<String>) -> Box<impl Backend> {
-    Box::new(pocketbase::PocketbaseBackend::new(host))
+pub fn create_pocketbase_backend(host: Option<String>, root_directory: &Path) -> Box<impl Backend> {
+    Box::new(pocketbase::PocketbaseBackend::new(host, root_directory))
 }

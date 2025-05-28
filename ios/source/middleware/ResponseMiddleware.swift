@@ -44,5 +44,14 @@ class ResponseMiddleware: Middleware {
         if response.hasProjectInfo {
             self.dispatch?(.setProjectInfo(response.projectInfo))
         }
+        
+        if response.hasUserStatus {
+            if response.userStatus.hasUser {
+                self.dispatch?(.setUser(response.userStatus.user))
+            } else {
+                self.dispatch?(.clearUser)
+            }
+            
+        }
     }
 }
