@@ -258,7 +258,13 @@ impl ProjectStore {
         let db_project = self.backend.get_project(project_id).await.context("Get project")?;
 
         for sample in db_project.samples.iter() {
-            let sample_id = sample.split('_').next().unwrap();
+            let sample_id = match sample.split_once('_') {
+                Some((first_part, _)) => first_part,
+                None => {
+                    error!("Invalid sample format: {}", sample);
+                    continue;
+                }
+            };
 
             let sample_id = match ID::from_str(sample_id) {
                 std::result::Result::Ok(id) => id,

@@ -12,7 +12,8 @@ struct ContentView: View {
                     action in
                     store.dispatch(action)
                 }
-            } else {
+            }
+            else {
                 LoginView(dispatch: store.dispatch)
             }
         }

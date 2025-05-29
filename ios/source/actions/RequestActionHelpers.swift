@@ -208,16 +208,20 @@ func getWaveformAction(_ sampleId: Id) -> Action {
 }
 
 func logInAction(email: String, password: String) -> Action {
-    .sendRequest(.with {
-        $0.login = .with {
-            $0.username = email
-            $0.password = password
+    .sendRequest(
+        .with {
+            $0.login = .with {
+                $0.username = email
+                $0.password = password
+            }
         }
-    })
+    )
 }
 
 func logOutAction() -> Action {
-    .sendRequest(.with {
-        $0.logout = .init()
-    })
+    .sendRequest(
+        .with {
+            $0.logout = .init()
+        }
+    )
 }

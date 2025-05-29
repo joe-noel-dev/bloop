@@ -18,7 +18,7 @@ func rootReducer(state: AppState, action: Action) -> AppState {
 
     case .setProjects(let projects):
         state.projects = projects
-        
+
     case .setProjectInfo(let projectInfo):
         state.projectInfo = projectInfo
 
@@ -40,10 +40,10 @@ func rootReducer(state: AppState, action: Action) -> AppState {
 
     case .removeAllServers:
         state.servers.removeAll()
-        
+
     case .setUser(let user):
         state.user = user
-        
+
     case .clearUser:
         state.user = nil
 

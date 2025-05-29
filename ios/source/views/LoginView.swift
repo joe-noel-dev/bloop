@@ -1,11 +1,11 @@
-import SwiftUICore
 import SwiftUI
+import SwiftUICore
 
-struct LoginView : View {
+struct LoginView: View {
     @State private var username: String = ""
     @State private var password: String = ""
     var dispatch: Dispatch
-    
+
     var body: some View {
         VStack(spacing: 20) {
             TextField("Username", text: $username)

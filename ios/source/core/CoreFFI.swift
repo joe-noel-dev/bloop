@@ -52,7 +52,7 @@ class CoreFFI {
         let contextPtr = Unmanaged.passUnretained(callbackStorage).toOpaque()
 
         print("Initializing Bloop via FFI")
-        
+
         let homeDirectory = getICloudHome() ?? getDocumentsDirectory()
         setHomeDirectory(homeDirectory)
 
@@ -110,11 +110,16 @@ func getICloudHome() -> URL? {
 }
 
 func getDocumentsDirectory() -> URL? {
-    guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first  else {
+    guard
+        let documentsDirectory = FileManager.default.urls(
+            for: .documentDirectory,
+            in: .userDomainMask
+        ).first
+    else {
         print("Documents directory not found")
         return nil
     }
-    
+
     return documentsDirectory
 }
 
