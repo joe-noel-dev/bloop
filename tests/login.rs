@@ -47,7 +47,9 @@ async fn test_unsuccessful_log_in() {
 
 #[tokio::test]
 async fn test_get_user_successful() {
-    let fixture = BackendFixture::new();
+    let mut fixture = BackendFixture::new();
+
+    fixture.log_in().await;
 
     let (id, user_json) = user_json();
 
@@ -71,7 +73,9 @@ async fn test_get_user_successful() {
 
 #[tokio::test]
 async fn test_get_user_unsuccessful() {
-    let fixture = BackendFixture::new();
+    let mut fixture = BackendFixture::new();
+
+    fixture.log_in().await;
 
     let (id, _) = user_json();
 
