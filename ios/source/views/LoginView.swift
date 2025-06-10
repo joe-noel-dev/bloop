@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftUICore
 
 struct LoginView: View {
     @State private var username: String = ""
