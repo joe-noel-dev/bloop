@@ -10,6 +10,7 @@ struct AppState {
     var playbackState = Bloop_PlaybackState()
     var progress = Bloop_Progress()
     var waveforms: [Id: Bloop_WaveformData] = [:]
+    var user: Bloop_User? = .none
     var errors: [String] = []
 }
 

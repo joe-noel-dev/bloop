@@ -5,11 +5,16 @@ struct ContentView: View {
 
     var body: some View {
         if store.state.connected != nil {
-            ProjectView(
-                state: store.state
-            ) {
-                action in
-                store.dispatch(action)
+            if store.state.user != .none {
+                ProjectView(
+                    state: store.state
+                ) {
+                    action in
+                    store.dispatch(action)
+                }
+            }
+            else {
+                LoginView(dispatch: store.dispatch)
             }
         }
         else {

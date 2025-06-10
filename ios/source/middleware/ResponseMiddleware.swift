@@ -40,9 +40,16 @@ class ResponseMiddleware: Middleware {
             let action = Action.uploadAck(response.upload.uploadID)
             self.dispatch?(action)
         }
-        
+
         if response.hasProjectInfo {
             self.dispatch?(.setProjectInfo(response.projectInfo))
+        }
+
+        if response.hasUserStatus && response.userStatus.hasUser {
+            self.dispatch?(.setUser(response.userStatus.user))
+        }
+        else if response.hasUserStatus {
+            self.dispatch?(.clearUser)
         }
     }
 }

@@ -207,7 +207,10 @@ struct SongView: View {
     }
 
     private func saveProjectName() {
-        let action = renameProjectAction(projectId: state.projectInfo?.id ?? "", name: newProjectName)
+        let action = renameProjectAction(
+            projectId: state.projectInfo?.id ?? "",
+            name: newProjectName
+        )
         dispatch(action)
         editingEntity = nil
     }

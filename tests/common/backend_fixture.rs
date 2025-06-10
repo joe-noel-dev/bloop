@@ -17,6 +17,7 @@ fn init_logger() {
 }
 
 pub struct BackendFixture {
+    pub temporary_directory: tempfile::TempDir,
     pub mock_server: MockServer,
     pub backend: Box<dyn Backend>,
 }
@@ -24,11 +25,16 @@ pub struct BackendFixture {
 impl BackendFixture {
     pub fn new() -> Self {
         init_logger();
+        let temporary_directory = tempfile::TempDir::new().expect("Unable to create temporary directory");
         let mock_server = MockServer::start();
         let base_url = mock_server.base_url();
-        let backend = create_pocketbase_backend(Some(base_url));
+        let backend = create_pocketbase_backend(Some(base_url), temporary_directory.path());
         add_login_mock(&mock_server);
-        Self { mock_server, backend }
+        Self {
+            temporary_directory,
+            mock_server,
+            backend,
+        }
     }
 
     pub async fn log_in(&mut self) -> DbUser {

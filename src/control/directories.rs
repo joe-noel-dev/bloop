@@ -6,6 +6,7 @@ pub struct Directories {
     pub projects: PathBuf,
     pub samples: PathBuf,
     pub root: PathBuf,
+    pub backend: PathBuf,
 }
 
 impl Directories {
@@ -32,10 +33,14 @@ impl Directories {
         let mut samples = root.clone();
         samples.push("samples");
 
+        let mut backend = root.clone();
+        backend.push("backend");
+
         Self {
             projects,
             samples,
             root,
+            backend,
         }
     }
 }

@@ -73,10 +73,6 @@ func randomId() -> Id {
 }
 
 func demoProject() -> Bloop_Project {
-    let lastSaved = Int64(Date().timeIntervalSince1970)
-    let projectName = "My Project"
-    let version = "1"
-
     let songs = Array(0..<3).map { demoSong($0) }
 
     let selections = Bloop_Selections.with {
