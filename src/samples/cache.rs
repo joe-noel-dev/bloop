@@ -3,9 +3,9 @@ use crate::bloop::AudioFileFormat;
 use crate::{model::ID, types::extension_for_format};
 use anyhow::{anyhow, Context};
 use log::debug;
-use std::fs;
 use std::{
     collections::HashMap,
+    ffi::OsStr,
     path::{Path, PathBuf},
 };
 use tokio::{fs::OpenOptions, io::AsyncWriteExt};
@@ -26,7 +26,7 @@ pub struct SampleMetadata {
 impl SamplesCache {
     pub fn new(root_directory: &Path) -> Self {
         if !root_directory.exists() {
-            fs::create_dir_all(root_directory)
+            std::fs::create_dir_all(root_directory)
                 .unwrap_or_else(|_| panic!("Couldn't create directory: {}", root_directory.to_str().unwrap()));
         }
 
@@ -136,10 +136,7 @@ impl SamplesCache {
     }
 
     pub async fn scan(&mut self) -> anyhow::Result<()> {
-        use std::ffi::OsStr;
-        use tokio::fs;
-
-        let mut dir_entries = fs::read_dir(&self.root_directory)
+        let mut dir_entries = tokio::fs::read_dir(&self.root_directory)
             .await
             .with_context(|| format!("Failed to read directory: {}", self.root_directory.display()))?;
 
