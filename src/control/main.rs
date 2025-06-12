@@ -21,7 +21,6 @@ use tokio::{
 
 pub async fn run_main_controller(request_rx: mpsc::Receiver<Request>, response_tx: broadcast::Sender<Response>) {
     let mut main_controller = MainController::new(request_rx, response_tx.clone());
-    main_controller.load_last_project().await;
     main_controller.run().await;
 }
 
@@ -83,7 +82,7 @@ impl MainController {
         }
     }
 
-    pub async fn load_last_project(&mut self) {
+    async fn load_last_project(&mut self) {
         match self.project_store.load_last_project(&mut self.samples_cache).await {
             Ok((project_info, project)) => {
                 self.set_project(project);
@@ -330,6 +329,12 @@ impl MainController {
     }
 
     pub async fn run(&mut self) {
+        if let Err(error) = self.samples_cache.scan().await {
+            warn!("Error scanning samples cache: {error}");
+        }
+
+        self.load_last_project().await;
+
         let switch_preferences = self.preferences.clone().switch.unwrap_or_default();
         let switch_task = switch::run(self.action_tx.clone(), switch_preferences);
 

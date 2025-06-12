@@ -2,7 +2,7 @@ use super::sample::Sample;
 use crate::bloop::AudioFileFormat;
 use crate::{model::ID, types::extension_for_format};
 use anyhow::{anyhow, Context};
-use log::{debug, error};
+use log::debug;
 use std::fs;
 use std::{
     collections::HashMap,
@@ -135,8 +135,33 @@ impl SamplesCache {
         Ok(())
     }
 
-    pub fn clear(&mut self) {
-        self.samples.clear();
+    pub async fn scan(&mut self) -> anyhow::Result<()> {
+        use std::ffi::OsStr;
+        use tokio::fs;
+
+        let mut dir_entries = fs::read_dir(&self.root_directory)
+            .await
+            .with_context(|| format!("Failed to read directory: {}", self.root_directory.display()))?;
+
+        while let Some(entry) = dir_entries.next_entry().await? {
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+
+            if let Some(filename) = path.file_name().and_then(OsStr::to_str) {
+                if let Some((id_str, _ext)) = filename.split_once('.') {
+                    if let Ok(id) = id_str.parse::<ID>() {
+                        debug!("Scan found sample: {}", id);
+                        let mut sample = Sample::new(filename);
+                        sample.set_cache_location(&path);
+                        sample.set_cached(true);
+                        self.samples.insert(id, sample);
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 
     pub fn get_sample(&self, id: ID) -> Option<&Sample> {
@@ -170,17 +195,5 @@ impl SamplesCache {
         }
 
         Ok(())
-    }
-}
-
-impl Drop for SamplesCache {
-    fn drop(&mut self) {
-        if let Err(error) = fs::remove_dir_all(&self.root_directory) {
-            error!(
-                "Failed to remove directory ({}): {}",
-                self.root_directory.display(),
-                error
-            );
-        }
     }
 }
