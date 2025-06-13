@@ -253,8 +253,6 @@ impl ProjectStore {
         project_id: &str,
         samples_cache: &mut SamplesCache,
     ) -> anyhow::Result<()> {
-        samples_cache.clear();
-
         let db_project = self.backend.get_project(project_id).await.context("Get project")?;
 
         for sample in db_project.samples.iter() {
@@ -274,6 +272,13 @@ impl ProjectStore {
                 }
             };
 
+            if samples_cache.get_sample(sample_id).is_some() {
+                debug!("Sample already in cache: {}", sample_id);
+                continue;
+            }
+
+            debug!("Fetching sample: {}", sample);
+
             let sample_bytes = self
                 .backend
                 .get_project_file(project_id, sample)
@@ -285,6 +290,8 @@ impl ProjectStore {
             tokio::fs::write(&sample_path, &sample_bytes)
                 .await
                 .context(format!("Error writing sample file: {}", sample_path.display()))?;
+
+            debug!("Adding sample to cache: {}", sample_id);
 
             samples_cache
                 .add_sample_from_file(sample_id, AudioFileFormat::WAV, &sample_path)

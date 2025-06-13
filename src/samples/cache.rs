@@ -2,10 +2,10 @@ use super::sample::Sample;
 use crate::bloop::AudioFileFormat;
 use crate::{model::ID, types::extension_for_format};
 use anyhow::{anyhow, Context};
-use log::{debug, error};
-use std::fs;
+use log::debug;
 use std::{
     collections::HashMap,
+    ffi::OsStr,
     path::{Path, PathBuf},
 };
 use tokio::{fs::OpenOptions, io::AsyncWriteExt};
@@ -26,7 +26,7 @@ pub struct SampleMetadata {
 impl SamplesCache {
     pub fn new(root_directory: &Path) -> Self {
         if !root_directory.exists() {
-            fs::create_dir_all(root_directory)
+            std::fs::create_dir_all(root_directory)
                 .unwrap_or_else(|_| panic!("Couldn't create directory: {}", root_directory.to_str().unwrap()));
         }
 
@@ -135,8 +135,30 @@ impl SamplesCache {
         Ok(())
     }
 
-    pub fn clear(&mut self) {
-        self.samples.clear();
+    pub async fn scan(&mut self) -> anyhow::Result<()> {
+        let mut dir_entries = tokio::fs::read_dir(&self.root_directory)
+            .await
+            .with_context(|| format!("Failed to read directory: {}", self.root_directory.display()))?;
+
+        while let Some(entry) = dir_entries.next_entry().await? {
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+
+            if let Some(filename) = path.file_name().and_then(OsStr::to_str) {
+                if let Some((id_str, _ext)) = filename.split_once('.') {
+                    if let Ok(id) = id_str.parse::<ID>() {
+                        debug!("Scan found sample: {}", id);
+                        let mut sample = Sample::new(filename);
+                        sample.set_cache_location(&path);
+                        sample.set_cached(true);
+                        self.samples.insert(id, sample);
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 
     pub fn get_sample(&self, id: ID) -> Option<&Sample> {
@@ -170,17 +192,5 @@ impl SamplesCache {
         }
 
         Ok(())
-    }
-}
-
-impl Drop for SamplesCache {
-    fn drop(&mut self) {
-        if let Err(error) = fs::remove_dir_all(&self.root_directory) {
-            error!(
-                "Failed to remove directory ({}): {}",
-                self.root_directory.display(),
-                error
-            );
-        }
     }
 }
