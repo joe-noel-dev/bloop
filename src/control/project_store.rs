@@ -1,6 +1,6 @@
 use crate::{
     backend::Backend,
-    bloop::{AudioFileFormat, User},
+    bloop::AudioFileFormat,
     model::{Project, ProjectInfo, ID},
     samples::SamplesCache,
 };
@@ -31,46 +31,6 @@ impl ProjectStore {
             temporary_directory: tempfile::TempDir::new().expect("Unable to create temporary directory"),
             backend,
         }
-    }
-
-    pub async fn refresh_auth(&mut self) -> anyhow::Result<User> {
-        let db_user = self
-            .backend
-            .refresh_auth()
-            .await
-            .context("Error refreshing authentication")?;
-
-        info!("Authentication refreshed successfully");
-
-        Ok(User {
-            id: db_user.id,
-            name: db_user.name,
-            email: db_user.email,
-            ..Default::default()
-        })
-    }
-
-    pub async fn log_in(&mut self, username: String, password: String) -> anyhow::Result<User> {
-        let db_user = self
-            .backend
-            .log_in(username, password)
-            .await
-            .context("Error logging in")?;
-
-        info!("Logged in successfully");
-
-        Ok(User {
-            id: db_user.id,
-            name: db_user.name,
-            email: db_user.email,
-            ..Default::default()
-        })
-    }
-
-    pub async fn log_out(&mut self) -> anyhow::Result<()> {
-        self.backend.log_out().await.context("Error logging out")?;
-        info!("Logged out successfully");
-        Ok(())
     }
 
     pub async fn save(

@@ -27,7 +27,7 @@ async fn test_successful_log_in() {
 
 #[tokio::test]
 async fn test_unsuccessful_log_in() {
-    let mut fixture = BackendFixture::new();
+    let fixture = BackendFixture::new();
 
     let email = "user@abc.com";
     let password = "wrong_password";
@@ -39,7 +39,12 @@ async fn test_unsuccessful_log_in() {
             .body(r#"{"message": "Invalid credentials"}"#);
     });
 
-    let result = fixture.backend.log_in(email.to_string(), password.to_string()).await;
+    let result = fixture
+        .auth
+        .lock()
+        .await
+        .log_in(email.to_string(), password.to_string())
+        .await;
 
     assert!(result.is_err());
     login_mock.assert();
@@ -62,7 +67,7 @@ async fn test_get_user_successful() {
             .json_body(user_json);
     });
 
-    let result = fixture.backend.get_user(&id).await;
+    let result = fixture.auth.lock().await.get_user(&id).await;
     assert!(result.is_ok());
 
     let user = result.unwrap();
@@ -88,7 +93,7 @@ async fn test_get_user_unsuccessful() {
             .body(r#"{"status": 404,"message": "The requested resource wasn't found.","data": {}}"#);
     });
 
-    let result = fixture.backend.get_user(&id).await;
+    let result = fixture.auth.lock().await.get_user(&id).await;
     assert!(result.is_err());
 
     mock.assert();

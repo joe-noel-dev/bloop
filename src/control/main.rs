@@ -2,8 +2,9 @@ use super::{directories::Directories, project_store::ProjectStore, waveform_stor
 
 use crate::{
     audio::AudioController,
-    backend::create_pocketbase_backend,
+    backend::{create_pocketbase_auth, create_pocketbase_backend},
     bloop::*,
+    control::user_store::UserStore,
     midi::MidiController,
     model::{Action, Project, Sample, Section, Tempo, INVALID_ID},
     preferences::{read_preferences, Preferences},
@@ -27,6 +28,7 @@ pub async fn run_main_controller(request_rx: mpsc::Receiver<Request>, response_t
 struct MainController {
     samples_cache: SamplesCache,
     project_store: ProjectStore,
+    user_store: UserStore,
     request_rx: mpsc::Receiver<Request>,
     response_tx: broadcast::Sender<Response>,
     project: Project,
@@ -62,11 +64,13 @@ impl MainController {
         let midi_preferences = preferences.clone().midi.unwrap_or_default();
 
         let host = std::env::var("BACKEND_HOST").ok();
-        let backend = create_pocketbase_backend(host, &directories.backend);
+        let auth = create_pocketbase_auth(host.clone(), &directories.backend);
+        let backend = create_pocketbase_backend(host, auth.clone());
 
         Self {
             samples_cache: SamplesCache::new(&directories.samples),
             project_store: ProjectStore::new(&directories.projects, backend),
+            user_store: UserStore::new(auth.clone()),
             request_rx,
             response_tx: response_tx.clone(),
             project: Project::empty().with_songs(1, 1),
@@ -191,7 +195,7 @@ impl MainController {
         if let Some(login_request) = request.login.as_ref() {
             let username = login_request.username.clone();
             let password = login_request.password.clone();
-            let user = self.project_store.log_in(username, password).await;
+            let user = self.user_store.log_in(username, password).await;
             match user {
                 Ok(user) => {
                     info!("Logged in successfully: {}", user.name);
@@ -205,7 +209,7 @@ impl MainController {
         }
 
         if request.logout.as_ref().is_some() {
-            if let Err(error) = self.project_store.log_out().await {
+            if let Err(error) = self.user_store.log_out().await {
                 error!("Error logging out: {}", error);
             }
             self.set_user(None);
@@ -276,7 +280,7 @@ impl MainController {
 
         match entity {
             Entity::ALL => {
-                let user = self.project_store.refresh_auth().await;
+                let user = self.user_store.refresh_auth().await;
                 match user {
                     Ok(user) => {
                         info!("Successfully refreshed auth: {}", user.name);

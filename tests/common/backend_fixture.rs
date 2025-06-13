@@ -1,8 +1,9 @@
-use std::sync::Once;
+use std::sync::{Arc, Once};
 
-use bloop::backend::{create_pocketbase_backend, Backend, DbUser};
+use bloop::backend::{create_pocketbase_auth, create_pocketbase_backend, Auth, Backend, DbUser};
 use httpmock::MockServer;
 use serde_json::json;
+use tokio::sync::Mutex;
 
 static INIT: Once = Once::new();
 
@@ -20,6 +21,7 @@ pub struct BackendFixture {
     pub temporary_directory: tempfile::TempDir,
     pub mock_server: MockServer,
     pub backend: Box<dyn Backend>,
+    pub auth: Arc<Mutex<dyn Auth + Send + Sync>>,
 }
 
 impl BackendFixture {
@@ -28,12 +30,14 @@ impl BackendFixture {
         let temporary_directory = tempfile::TempDir::new().expect("Unable to create temporary directory");
         let mock_server = MockServer::start();
         let base_url = mock_server.base_url();
-        let backend = create_pocketbase_backend(Some(base_url), temporary_directory.path());
+        let auth = create_pocketbase_auth(Some(base_url.clone()), temporary_directory.path());
+        let backend = create_pocketbase_backend(Some(base_url), auth.clone());
         add_login_mock(&mock_server);
         Self {
             temporary_directory,
             mock_server,
             backend,
+            auth,
         }
     }
 
@@ -41,7 +45,9 @@ impl BackendFixture {
         let email = user_email();
         let password = user_password();
 
-        self.backend
+        self.auth
+            .lock()
+            .await
             .log_in(email.to_string(), password.to_string())
             .await
             .expect("Failed to log in")
