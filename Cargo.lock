@@ -4284,7 +4284,7 @@ checksum = "20675572f6f24e9e76ef639bc5552774ed45f1c30e2951e1e99c59888861c539"
 [[package]]
 name = "rawdio"
 version = "0.15.0"
-source = "git+https://github.com/joe-noel-dev/rawdio.git#88179bf3840278472fd1371f40f3e1a390f0b16a"
+source = "git+https://github.com/joe-noel-dev/rawdio.git#bc8c401695335484aea749f28c8c4b26d9b24f69"
 dependencies = [
  "approx",
  "atomic_float",
