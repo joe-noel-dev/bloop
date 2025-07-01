@@ -5,6 +5,7 @@ struct ProjectView: View {
     var dispatch: Dispatch
 
     @State private var newProjectName = ""
+    @State private var showingLoginSheet = false
 
     init(state: AppState, dispatch: @escaping Dispatch) {
         self.state = state
@@ -41,6 +42,29 @@ struct ProjectView: View {
                     project: state.project,
                     dispatch: dispatch
                 )
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        if let user = state.user {
+                            Text(user.name)
+                                .foregroundColor(.primary)
+                            
+                            Button("Sign Out") {
+                                dispatch(logOutAction())
+                            }
+                        } else {
+                            Button("Sign In") {
+                                showingLoginSheet = true
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "person.circle")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingLoginSheet) {
+                LoginView(state: state, dispatch: dispatch)
             }
         }
     }
