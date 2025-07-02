@@ -141,8 +141,34 @@ impl Backend for FilesystemBackend {
     }
 
     async fn update_project_name(&self, project_id: &str, name: &str) -> Result<DbProject> {
-        // Implementation for updating a project's name in the filesystem
-        unimplemented!()
+        let project_dir = self.directory_for_project(project_id);
+
+        // Check if the project directory exists
+        if !project_dir.exists() {
+            return Err(anyhow::anyhow!("Project {} does not exist", project_id));
+        }
+
+        // Read the current project metadata
+        let metadata_file_path = project_dir.join("project.json");
+        let metadata_bytes = tokio::fs::read(&metadata_file_path)
+            .await
+            .context(format!("Failed to read project metadata for {}", project_id))?;
+
+        let mut db_project: DbProject =
+            serde_json::from_slice(&metadata_bytes).context("Failed to deserialize project metadata")?;
+
+        // Update the name and updated timestamp
+        db_project.name = name.to_string();
+        db_project.updated = chrono::Utc::now();
+
+        // Write the updated metadata back to the file
+        let updated_metadata_bytes =
+            serde_json::to_vec(&db_project).context("Failed to serialize updated project metadata")?;
+        tokio::fs::write(&metadata_file_path, updated_metadata_bytes)
+            .await
+            .context(format!("Failed to write updated project metadata for {}", project_id))?;
+
+        Ok(db_project)
     }
 
     async fn update_project_file(&self, project_id: &str, project_bytes: &[u8]) -> Result<DbProject> {
@@ -403,6 +429,97 @@ mod tests {
         assert!(error
             .to_string()
             .contains("Project nonexistent_project_id does not exist"));
+    }
+
+    #[tokio::test]
+    async fn test_update_project_name() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        let original_name = created_project.name.clone();
+        let original_updated = created_project.updated;
+        let new_name = "Updated Project Name";
+
+        // Test updating the project name
+        let result = fixture.backend.update_project_name(&created_project.id, new_name).await;
+        assert!(result.is_ok(), "Failed to update project name: {:?}", result.err());
+
+        let updated_project = result.unwrap();
+
+        // Verify the project name was updated
+        assert_eq!(updated_project.name, new_name);
+        assert_ne!(updated_project.name, original_name);
+
+        // Verify the updated timestamp was changed
+        assert!(
+            updated_project.updated > original_updated,
+            "Updated timestamp should be newer"
+        );
+
+        // Verify the changes were persisted to the filesystem
+        let retrieved_project = fixture
+            .backend
+            .get_project(&created_project.id)
+            .await
+            .expect("Failed to retrieve updated project");
+
+        assert_eq!(retrieved_project.name, new_name);
+    }
+
+    #[tokio::test]
+    async fn test_update_project_name_not_found() {
+        let fixture = Fixture::new();
+
+        // Test updating a project that doesn't exist
+        let result = fixture
+            .backend
+            .update_project_name("nonexistent_project_id", "New Name")
+            .await;
+        assert!(result.is_err(), "Should fail when project doesn't exist");
+
+        let error = result.unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("Project nonexistent_project_id does not exist"));
+    }
+
+    #[tokio::test]
+    async fn test_update_project_name_special_characters() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Test updating with special characters
+        let special_name = "My Project! @#$%^&*() - 测试 🎵";
+        let result = fixture
+            .backend
+            .update_project_name(&created_project.id, special_name)
+            .await;
+        assert!(result.is_ok(), "Should handle special characters in project names");
+
+        let updated_project = result.unwrap();
+        assert_eq!(updated_project.name, special_name);
+
+        // Verify it persists correctly
+        let retrieved_project = fixture
+            .backend
+            .get_project(&created_project.id)
+            .await
+            .expect("Failed to retrieve project with special characters");
+        assert_eq!(retrieved_project.name, special_name);
     }
 
     #[test]
