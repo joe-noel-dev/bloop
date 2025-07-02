@@ -257,8 +257,17 @@ impl Backend for FilesystemBackend {
     }
 
     async fn remove_project(&self, project_id: &str) -> Result<()> {
-        // Implementation for removing a project from the filesystem
-        unimplemented!()
+        let project_dir = self.directory_for_project(project_id);
+
+        // Only attempt to remove if the directory exists
+        // Not existing is not considered an error
+        if project_dir.exists() {
+            tokio::fs::remove_dir_all(&project_dir)
+                .await
+                .context(format!("Failed to remove project directory for {}", project_id))?;
+        }
+
+        Ok(())
     }
 
     async fn get_project_file(&self, project_id: &str, project_filename: &str) -> Result<Vec<u8>> {
@@ -1335,5 +1344,278 @@ mod tests {
         let id1 = FilesystemBackend::generate_project_id();
         let id2 = FilesystemBackend::generate_project_id();
         assert_ne!(id1, id2, "Generated IDs should be unique");
+    }
+
+    #[tokio::test]
+    async fn test_remove_project() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Add some content to make the project more realistic
+        fixture
+            .backend
+            .update_project_name(&created_project.id, "Test Project")
+            .await
+            .expect("Failed to update project name");
+
+        fixture
+            .backend
+            .update_project_file(&created_project.id, b"test project content")
+            .await
+            .expect("Failed to update project file");
+
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, b"sample content", "test_sample")
+            .await
+            .expect("Failed to add sample");
+
+        // Verify the project and its files exist
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        assert!(project_dir.exists(), "Project directory should exist");
+
+        let metadata_file = fixture.backend.get_metadata_file(&created_project.id);
+        assert!(metadata_file.exists(), "Metadata file should exist");
+
+        let project_file = project_dir.join("project.bin");
+        assert!(project_file.exists(), "Project file should exist");
+
+        let sample_file = project_dir.join("samples").join("test_sample.wav");
+        assert!(sample_file.exists(), "Sample file should exist");
+
+        // Verify the project is accessible
+        let retrieved_project = fixture
+            .backend
+            .get_project(&created_project.id)
+            .await
+            .expect("Project should be retrievable");
+        assert_eq!(retrieved_project.name, "Test Project");
+
+        // Test removing the project
+        let result = fixture.backend.remove_project(&created_project.id).await;
+        assert!(result.is_ok(), "Failed to remove project: {:?}", result.err());
+
+        // Verify the entire project directory was removed
+        assert!(!project_dir.exists(), "Project directory should be removed");
+        assert!(!metadata_file.exists(), "Metadata file should be removed");
+        assert!(!project_file.exists(), "Project file should be removed");
+        assert!(!sample_file.exists(), "Sample file should be removed");
+
+        // Verify the project is no longer accessible
+        let result = fixture.backend.get_project(&created_project.id).await;
+        assert!(result.is_err(), "Project should no longer be accessible");
+    }
+
+    #[tokio::test]
+    async fn test_remove_project_not_found() {
+        let fixture = Fixture::new();
+
+        // Test removing a project that doesn't exist - should not be an error
+        let result = fixture.backend.remove_project("nonexistent_project_id").await;
+        assert!(result.is_ok(), "Removing non-existent project should not be an error");
+    }
+
+    #[tokio::test]
+    async fn test_remove_project_empty_project() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a minimal project with no additional content
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Verify the project exists
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        assert!(project_dir.exists(), "Project directory should exist");
+
+        // Test removing the empty project
+        let result = fixture.backend.remove_project(&created_project.id).await;
+        assert!(result.is_ok(), "Failed to remove empty project: {:?}", result.err());
+
+        // Verify the project directory was removed
+        assert!(!project_dir.exists(), "Project directory should be removed");
+    }
+
+    #[tokio::test]
+    async fn test_remove_project_multiple_projects() {
+        let fixture = Fixture::new();
+
+        // Create multiple projects
+        let project1 = fixture
+            .backend
+            .create_project("user1")
+            .await
+            .expect("Failed to create project 1");
+        let project2 = fixture
+            .backend
+            .create_project("user2")
+            .await
+            .expect("Failed to create project 2");
+        let project3 = fixture
+            .backend
+            .create_project("user3")
+            .await
+            .expect("Failed to create project 3");
+
+        // Verify all projects exist
+        let all_projects = fixture.backend.get_projects().await.expect("Failed to get projects");
+        assert_eq!(all_projects.len(), 3, "Should have three projects");
+
+        // Remove the middle project
+        let result = fixture.backend.remove_project(&project2.id).await;
+        assert!(result.is_ok(), "Failed to remove project 2");
+
+        // Verify only project 2 was removed
+        let project1_dir = fixture.backend.directory_for_project(&project1.id);
+        let project2_dir = fixture.backend.directory_for_project(&project2.id);
+        let project3_dir = fixture.backend.directory_for_project(&project3.id);
+
+        assert!(project1_dir.exists(), "Project 1 should still exist");
+        assert!(!project2_dir.exists(), "Project 2 should be removed");
+        assert!(project3_dir.exists(), "Project 3 should still exist");
+
+        // Verify remaining projects are still accessible
+        let remaining_projects = fixture
+            .backend
+            .get_projects()
+            .await
+            .expect("Failed to get remaining projects");
+        assert_eq!(remaining_projects.len(), 2, "Should have two remaining projects");
+
+        let remaining_ids: Vec<String> = remaining_projects.iter().map(|p| p.id.clone()).collect();
+        assert!(remaining_ids.contains(&project1.id), "Should still contain project 1");
+        assert!(!remaining_ids.contains(&project2.id), "Should not contain project 2");
+        assert!(remaining_ids.contains(&project3.id), "Should still contain project 3");
+    }
+
+    #[tokio::test]
+    async fn test_remove_project_with_nested_content() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project with various content
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Add multiple samples to create nested directory structure
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, b"kick content", "kick")
+            .await
+            .expect("Failed to add kick sample");
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, b"snare content", "snare")
+            .await
+            .expect("Failed to add snare sample");
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, b"hihat content", "hihat")
+            .await
+            .expect("Failed to add hihat sample");
+
+        // Add project file
+        fixture
+            .backend
+            .update_project_file(&created_project.id, b"complex project content")
+            .await
+            .expect("Failed to update project file");
+
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        let samples_dir = project_dir.join("samples");
+
+        // Verify complex structure exists
+        assert!(project_dir.exists(), "Project directory should exist");
+        assert!(samples_dir.exists(), "Samples directory should exist");
+        assert!(samples_dir.join("kick.wav").exists(), "Kick sample should exist");
+        assert!(samples_dir.join("snare.wav").exists(), "Snare sample should exist");
+        assert!(samples_dir.join("hihat.wav").exists(), "Hihat sample should exist");
+        assert!(project_dir.join("project.bin").exists(), "Project file should exist");
+        assert!(project_dir.join("project.json").exists(), "Metadata file should exist");
+
+        // Remove the project
+        let result = fixture.backend.remove_project(&created_project.id).await;
+        assert!(result.is_ok(), "Failed to remove project with nested content");
+
+        // Verify everything was removed recursively
+        assert!(!project_dir.exists(), "Project directory should be completely removed");
+        assert!(!samples_dir.exists(), "Samples directory should be removed");
+    }
+
+    #[tokio::test]
+    async fn test_remove_project_special_characters() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Add content with special characters
+        fixture
+            .backend
+            .update_project_name(&created_project.id, "Project with 特殊字符 and émojis 🎵!")
+            .await
+            .expect("Failed to update project name");
+
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, b"special content", "sample-with_特殊🎵")
+            .await
+            .expect("Failed to add sample with special characters");
+
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        assert!(project_dir.exists(), "Project directory should exist");
+
+        // Remove the project
+        let result = fixture.backend.remove_project(&created_project.id).await;
+        assert!(result.is_ok(), "Should handle special characters in project removal");
+
+        // Verify removal was successful
+        assert!(
+            !project_dir.exists(),
+            "Project directory with special content should be removed"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_remove_project_twice() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        assert!(project_dir.exists(), "Project directory should exist");
+
+        // Remove the project first time
+        let result1 = fixture.backend.remove_project(&created_project.id).await;
+        assert!(result1.is_ok(), "First removal should succeed");
+        assert!(!project_dir.exists(), "Project directory should be removed");
+
+        // Remove the project second time (should not be an error)
+        let result2 = fixture.backend.remove_project(&created_project.id).await;
+        assert!(result2.is_ok(), "Second removal should not be an error");
     }
 }
