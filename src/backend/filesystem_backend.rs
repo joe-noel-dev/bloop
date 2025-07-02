@@ -12,11 +12,10 @@ use rand::Rng;
  * - projects/{project_id}/
  *   - project.json (the project metadata file)
  *   - project.bin (the binary project file)
- *   - samples/ (directory containing sample files)
- *     - sample_name (sample file)
+ *   - samples/
+ *     - sample_1.wav    
+ *     - ...
  *
- * There is a special anonymous user with ID "anonymous" that can be used for
- * projects that do not yet have an associated user.
  */
 struct FilesystemBackend {
     root_directory: PathBuf,
@@ -183,8 +182,42 @@ impl Backend for FilesystemBackend {
     }
 
     async fn add_project_sample(&self, project_id: &str, sample_bytes: &[u8], sample_name: &str) -> Result<DbProject> {
-        // Implementation for adding a sample to a project in the filesystem
-        unimplemented!()
+        // Get the project directory and check if it exists
+        let project_dir = self.directory_for_project(project_id);
+        if !project_dir.exists() {
+            return Err(anyhow::anyhow!("Project {} does not exist", project_id));
+        }
+
+        // Read the current project metadata
+        let mut project = self.read_metadata(project_id).await?;
+
+        // Create samples directory if it doesn't exist
+        let samples_dir = project_dir.join("samples");
+        if !samples_dir.exists() {
+            tokio::fs::create_dir_all(&samples_dir)
+                .await
+                .map_err(|e| anyhow::anyhow!("Failed to create samples directory: {}", e))?;
+        }
+
+        // Write the sample file
+        let sample_file_path = samples_dir.join(format!("{}.wav", sample_name));
+        tokio::fs::write(&sample_file_path, sample_bytes)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to write sample file: {}", e))?;
+
+        // Add sample path to metadata (avoid duplicates)
+        let sample_path = format!("samples/{}.wav", sample_name);
+        if !project.samples.contains(&sample_path) {
+            project.samples.push(sample_path);
+        }
+
+        // Update timestamp
+        project.updated = chrono::Utc::now();
+
+        // Write updated metadata
+        self.write_metadata(project_id, &project).await?;
+
+        Ok(project)
     }
 
     async fn remove_project_sample(&self, project_id: &str, sample_name: &str) -> Result<DbProject> {
@@ -681,6 +714,249 @@ mod tests {
         assert_eq!(
             written_bytes, second_content,
             "Project file should contain the latest content"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_add_project_sample() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Verify initial state - no samples
+        assert!(
+            created_project.samples.is_empty(),
+            "Project should start with no samples"
+        );
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        let samples_dir = project_dir.join("samples");
+        assert!(!samples_dir.exists(), "Samples directory should not exist initially");
+
+        // Create some test sample bytes
+        let test_sample_bytes = b"fake WAV file content for testing";
+        let sample_name = "kick_drum";
+        let original_updated = created_project.updated;
+
+        // Test adding a project sample
+        let result = fixture
+            .backend
+            .add_project_sample(&created_project.id, test_sample_bytes, sample_name)
+            .await;
+        assert!(result.is_ok(), "Failed to add project sample: {:?}", result.err());
+
+        let updated_project = result.unwrap();
+
+        // Verify the sample was added to the metadata
+        assert_eq!(updated_project.samples.len(), 1, "Project should have one sample");
+        let expected_sample_path = format!("samples/{}.wav", sample_name);
+        assert!(
+            updated_project.samples.contains(&expected_sample_path),
+            "Project samples should contain '{}'",
+            expected_sample_path
+        );
+
+        // Verify the updated timestamp was changed
+        assert!(
+            updated_project.updated > original_updated,
+            "Updated timestamp should be newer"
+        );
+
+        // Verify the samples directory was created
+        assert!(samples_dir.exists(), "Samples directory should be created");
+
+        // Verify the sample file was created with the correct content
+        let sample_file_path = samples_dir.join(format!("{}.wav", sample_name));
+        assert!(sample_file_path.exists(), "Sample file should be created");
+        let written_bytes = tokio::fs::read(&sample_file_path)
+            .await
+            .expect("Failed to read sample file");
+        assert_eq!(written_bytes, test_sample_bytes, "Sample file content should match");
+
+        // Verify the changes were persisted to the metadata file
+        let retrieved_project = fixture
+            .backend
+            .get_project(&created_project.id)
+            .await
+            .expect("Failed to retrieve updated project");
+
+        assert_eq!(retrieved_project.samples.len(), 1);
+        assert!(retrieved_project.samples.contains(&expected_sample_path));
+        assert!(retrieved_project.updated > original_updated);
+    }
+
+    #[tokio::test]
+    async fn test_add_project_sample_multiple() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Add first sample
+        let sample1_bytes = b"first sample content";
+        let sample1_name = "kick";
+        let result1 = fixture
+            .backend
+            .add_project_sample(&created_project.id, sample1_bytes, sample1_name)
+            .await;
+        assert!(result1.is_ok(), "Failed to add first sample");
+
+        // Add second sample
+        let sample2_bytes = b"second sample content - different";
+        let sample2_name = "snare";
+        let result2 = fixture
+            .backend
+            .add_project_sample(&created_project.id, sample2_bytes, sample2_name)
+            .await;
+        assert!(result2.is_ok(), "Failed to add second sample");
+
+        let updated_project = result2.unwrap();
+
+        // Verify both samples are in the metadata
+        assert_eq!(updated_project.samples.len(), 2, "Project should have two samples");
+        assert!(
+            updated_project.samples.contains(&"samples/kick.wav".to_string()),
+            "Should contain first sample"
+        );
+        assert!(
+            updated_project.samples.contains(&"samples/snare.wav".to_string()),
+            "Should contain second sample"
+        );
+
+        // Verify both files exist
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        let samples_dir = project_dir.join("samples");
+
+        let sample1_file = samples_dir.join("kick.wav");
+        let sample2_file = samples_dir.join("snare.wav");
+
+        assert!(sample1_file.exists(), "First sample file should exist");
+        assert!(sample2_file.exists(), "Second sample file should exist");
+
+        // Verify file contents
+        let sample1_content = tokio::fs::read(&sample1_file)
+            .await
+            .expect("Failed to read first sample");
+        let sample2_content = tokio::fs::read(&sample2_file)
+            .await
+            .expect("Failed to read second sample");
+
+        assert_eq!(sample1_content, sample1_bytes);
+        assert_eq!(sample2_content, sample2_bytes);
+    }
+
+    #[tokio::test]
+    async fn test_add_project_sample_not_found() {
+        let fixture = Fixture::new();
+
+        // Test adding a sample to a project that doesn't exist
+        let test_sample_bytes = b"test sample content";
+        let result = fixture
+            .backend
+            .add_project_sample("nonexistent_project_id", test_sample_bytes, "test_sample")
+            .await;
+        assert!(result.is_err(), "Should fail when project doesn't exist");
+
+        let error = result.unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("Project nonexistent_project_id does not exist"));
+    }
+
+    #[tokio::test]
+    async fn test_add_project_sample_special_characters() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Test adding a sample with special characters in name
+        let test_sample_bytes = b"sample with special chars";
+        let sample_name = "drum_loop-01_🥁";
+        let result = fixture
+            .backend
+            .add_project_sample(&created_project.id, test_sample_bytes, sample_name)
+            .await;
+        assert!(result.is_ok(), "Should handle special characters in sample names");
+
+        let updated_project = result.unwrap();
+        let expected_sample_path = format!("samples/{}.wav", sample_name);
+        assert!(
+            updated_project.samples.contains(&expected_sample_path),
+            "Should contain sample with special characters"
+        );
+
+        // Verify the file was created correctly
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        let sample_file_path = project_dir.join("samples").join(format!("{}.wav", sample_name));
+        assert!(
+            sample_file_path.exists(),
+            "Sample file with special characters should exist"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_add_project_sample_overwrite_existing() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        let sample_name = "test_sample";
+
+        // Add first version of sample
+        let first_content = b"first version of sample";
+        let result1 = fixture
+            .backend
+            .add_project_sample(&created_project.id, first_content, sample_name)
+            .await;
+        assert!(result1.is_ok(), "First sample add should succeed");
+
+        // Add same sample name again (should overwrite file but not duplicate in metadata)
+        let second_content = b"second version - much longer content";
+        let result2 = fixture
+            .backend
+            .add_project_sample(&created_project.id, second_content, sample_name)
+            .await;
+        assert!(result2.is_ok(), "Second sample add should succeed");
+
+        let updated_project = result2.unwrap();
+
+        // Should still only have one entry in samples list (no duplicates)
+        assert_eq!(updated_project.samples.len(), 1, "Should not duplicate sample entries");
+
+        let expected_sample_path = format!("samples/{}.wav", sample_name);
+        assert!(updated_project.samples.contains(&expected_sample_path));
+
+        // Verify the file contains the second content (overwritten)
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        let sample_file_path = project_dir.join("samples").join(format!("{}.wav", sample_name));
+        let written_bytes = tokio::fs::read(&sample_file_path)
+            .await
+            .expect("Failed to read overwritten sample file");
+        assert_eq!(
+            written_bytes, second_content,
+            "Sample file should contain the latest content"
         );
     }
 
