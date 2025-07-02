@@ -23,7 +23,7 @@ struct MainToolbar: ToolbarContent {
             Button {
                 editingEntity = .projects
             } label: {
-                Image(systemName: "externaldrive")
+                Image(systemName: "folder")
             }
 
             Button {
