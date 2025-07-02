@@ -1,11 +1,7 @@
 use std::path::PathBuf;
 
-use crate::{
-    backend::{Backend, DbProject},
-    bloop::Project,
-};
+use crate::backend::{Backend, DbProject};
 use anyhow::{Context, Result};
-use protobuf::Message;
 use rand::Rng;
 
 /**
@@ -35,6 +31,10 @@ impl FilesystemBackend {
         self.root_directory.join("projects").join(project_id)
     }
 
+    fn get_metadata_file(&self, project_id: &str) -> PathBuf {
+        self.directory_for_project(project_id).join("project.json")
+    }
+
     fn generate_project_id() -> String {
         const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyz0123456789";
         const ID_LENGTH: usize = 15;
@@ -46,6 +46,25 @@ impl FilesystemBackend {
                 CHARSET[idx] as char
             })
             .collect()
+    }
+
+    async fn write_metadata(&self, project_id: &str, db_project: &DbProject) -> Result<()> {
+        let metadata_file_path = self.get_metadata_file(project_id);
+        let metadata_bytes = serde_json::to_vec(db_project).context("Failed to serialize project metadata")?;
+        tokio::fs::write(&metadata_file_path, metadata_bytes)
+            .await
+            .context(format!("Failed to write project metadata file for {}", project_id))?;
+        Ok(())
+    }
+
+    async fn read_metadata(&self, project_id: &str) -> Result<DbProject> {
+        let metadata_file_path = self.get_metadata_file(project_id);
+        let metadata_bytes = tokio::fs::read(&metadata_file_path)
+            .await
+            .context(format!("Failed to read project metadata for {}", project_id))?;
+        let db_project: DbProject =
+            serde_json::from_slice(&metadata_bytes).context("Failed to deserialize project metadata")?;
+        Ok(db_project)
     }
 }
 
@@ -84,14 +103,7 @@ impl Backend for FilesystemBackend {
         }
 
         // Read the project metadata file
-        let metadata_file_path = project_dir.join("project.json");
-        let metadata_bytes = tokio::fs::read(&metadata_file_path)
-            .await
-            .context(format!("Failed to read project metadata for {}", project_id))?;
-
-        let db_project: DbProject =
-            serde_json::from_slice(&metadata_bytes).context("Failed to deserialize project metadata")?;
-
+        let db_project = self.read_metadata(project_id).await?;
         Ok(db_project)
     }
 
@@ -117,14 +129,7 @@ impl Backend for FilesystemBackend {
         ))?;
 
         // Write the project metadata file
-        let metadata_file_path = project_dir.join("project.json");
-        let metadata_bytes = serde_json::to_vec(&db_project).context("Failed to serialize project metadata")?;
-        tokio::fs::write(&metadata_file_path, metadata_bytes)
-            .await
-            .context(format!(
-                "Failed to write project metadata file for user {} and project {}",
-                user_id, project_id
-            ))?;
+        self.write_metadata(&project_id, &db_project).await?;
 
         Ok(db_project)
     }
@@ -138,31 +143,43 @@ impl Backend for FilesystemBackend {
         }
 
         // Read the current project metadata
-        let metadata_file_path = project_dir.join("project.json");
-        let metadata_bytes = tokio::fs::read(&metadata_file_path)
-            .await
-            .context(format!("Failed to read project metadata for {}", project_id))?;
-
-        let mut db_project: DbProject =
-            serde_json::from_slice(&metadata_bytes).context("Failed to deserialize project metadata")?;
+        let mut db_project = self.get_project(project_id).await?;
 
         // Update the name and updated timestamp
         db_project.name = name.to_string();
         db_project.updated = chrono::Utc::now();
 
         // Write the updated metadata back to the file
-        let updated_metadata_bytes =
-            serde_json::to_vec(&db_project).context("Failed to serialize updated project metadata")?;
-        tokio::fs::write(&metadata_file_path, updated_metadata_bytes)
-            .await
-            .context(format!("Failed to write updated project metadata for {}", project_id))?;
+        self.write_metadata(project_id, &db_project).await?;
 
         Ok(db_project)
     }
 
     async fn update_project_file(&self, project_id: &str, project_bytes: &[u8]) -> Result<DbProject> {
-        // Implementation for updating a project's file in the filesystem
-        unimplemented!()
+        let project_dir = self.directory_for_project(project_id);
+
+        // Check if the project directory exists
+        if !project_dir.exists() {
+            return Err(anyhow::anyhow!("Project {} does not exist", project_id));
+        }
+
+        // Read the current project metadata
+        let mut db_project = self.read_metadata(project_id).await?;
+
+        // Write the project bytes to project.bin
+        let project_file_path = project_dir.join("project.bin");
+        tokio::fs::write(&project_file_path, project_bytes)
+            .await
+            .context(format!("Failed to write project file for {}", project_id))?;
+
+        // Update the project field and updated timestamp
+        db_project.project = "project.bin".to_string();
+        db_project.updated = chrono::Utc::now();
+
+        // Write the updated metadata back to the file
+        self.write_metadata(project_id, &db_project).await?;
+
+        Ok(db_project)
     }
 
     async fn add_project_sample(&self, project_id: &str, sample_bytes: &[u8], sample_name: &str) -> Result<DbProject> {
@@ -241,7 +258,7 @@ mod tests {
         assert!(!project_file.exists(), "Project bin file should not be created");
 
         // Verify the project.json metadata file was created
-        let metadata_file = project_dir.join("project.json");
+        let metadata_file = fixture.backend.get_metadata_file(&db_project.id);
         assert!(metadata_file.exists(), "Project metadata file was not created");
 
         // Read and verify the metadata file contains correct data
@@ -501,6 +518,170 @@ mod tests {
             .await
             .expect("Failed to retrieve project with special characters");
         assert_eq!(retrieved_project.name, special_name);
+    }
+
+    #[tokio::test]
+    async fn test_update_project_file() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Verify initial state - project field should be empty and no project.bin file
+        assert_eq!(created_project.project, "");
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        let project_file_path = project_dir.join("project.bin");
+        assert!(
+            !project_file_path.exists(),
+            "Project bin file should not exist initially"
+        );
+
+        // Create some test project bytes
+        let test_project_bytes = b"test project file content";
+        let original_updated = created_project.updated;
+
+        // Test updating the project file
+        let result = fixture
+            .backend
+            .update_project_file(&created_project.id, test_project_bytes)
+            .await;
+        assert!(result.is_ok(), "Failed to update project file: {:?}", result.err());
+
+        let updated_project = result.unwrap();
+
+        // Verify the project field was updated to point to project.bin
+        assert_eq!(updated_project.project, "project.bin");
+        assert_ne!(updated_project.project, created_project.project);
+
+        // Verify other fields remain unchanged except updated timestamp
+        assert_eq!(updated_project.id, created_project.id);
+        assert_eq!(updated_project.name, created_project.name);
+        assert_eq!(updated_project.user_id, created_project.user_id);
+        assert_eq!(updated_project.samples, created_project.samples);
+        assert_eq!(updated_project.created, created_project.created);
+
+        // Verify the updated timestamp was changed
+        assert!(
+            updated_project.updated > original_updated,
+            "Updated timestamp should be newer"
+        );
+
+        // Verify the project.bin file was created with the correct content
+        assert!(project_file_path.exists(), "Project bin file should be created");
+        let written_bytes = tokio::fs::read(&project_file_path)
+            .await
+            .expect("Failed to read project bin file");
+        assert_eq!(written_bytes, test_project_bytes, "Project file content should match");
+
+        // Verify the changes were persisted to the metadata file
+        let retrieved_project = fixture
+            .backend
+            .get_project(&created_project.id)
+            .await
+            .expect("Failed to retrieve updated project");
+
+        assert_eq!(retrieved_project.project, "project.bin");
+        assert!(retrieved_project.updated > original_updated);
+    }
+
+    #[tokio::test]
+    async fn test_update_project_file_not_found() {
+        let fixture = Fixture::new();
+
+        // Test updating a project file for a project that doesn't exist
+        let test_project_bytes = b"test project file content";
+        let result = fixture
+            .backend
+            .update_project_file("nonexistent_project_id", test_project_bytes)
+            .await;
+        assert!(result.is_err(), "Should fail when project doesn't exist");
+
+        let error = result.unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("Project nonexistent_project_id does not exist"));
+    }
+
+    #[tokio::test]
+    async fn test_update_project_file_empty_bytes() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Test updating with empty bytes
+        let empty_bytes = b"";
+        let result = fixture
+            .backend
+            .update_project_file(&created_project.id, empty_bytes)
+            .await;
+        assert!(result.is_ok(), "Should handle empty project files");
+
+        let updated_project = result.unwrap();
+        assert_eq!(updated_project.project, "project.bin");
+
+        // Verify the empty file was created
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        let project_file_path = project_dir.join("project.bin");
+        assert!(project_file_path.exists(), "Empty project bin file should be created");
+
+        let written_bytes = tokio::fs::read(&project_file_path)
+            .await
+            .expect("Failed to read empty project bin file");
+        assert_eq!(written_bytes, empty_bytes, "Empty project file should be empty");
+    }
+
+    #[tokio::test]
+    async fn test_update_project_file_overwrite_existing() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // First update with some content
+        let first_content = b"first version of project";
+        let result1 = fixture
+            .backend
+            .update_project_file(&created_project.id, first_content)
+            .await;
+        assert!(result1.is_ok(), "First update should succeed");
+
+        // Now update with different content (should overwrite)
+        let second_content = b"second version of project - much longer content";
+        let result2 = fixture
+            .backend
+            .update_project_file(&created_project.id, second_content)
+            .await;
+        assert!(result2.is_ok(), "Second update should succeed");
+
+        let updated_project = result2.unwrap();
+        assert_eq!(updated_project.project, "project.bin");
+
+        // Verify the file contains the second content (not the first)
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        let project_file_path = project_dir.join("project.bin");
+        let written_bytes = tokio::fs::read(&project_file_path)
+            .await
+            .expect("Failed to read overwritten project bin file");
+        assert_eq!(
+            written_bytes, second_content,
+            "Project file should contain the latest content"
+        );
     }
 
     #[test]
