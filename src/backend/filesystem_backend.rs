@@ -271,8 +271,36 @@ impl Backend for FilesystemBackend {
     }
 
     async fn get_project_file(&self, project_id: &str, project_filename: &str) -> Result<Vec<u8>> {
-        // Implementation for retrieving a project's file from the filesystem
-        unimplemented!()
+        let project_dir = self.directory_for_project(project_id);
+
+        // Check if project directory exists
+        if !project_dir.exists() {
+            return Err(anyhow::anyhow!("Project {} does not exist", project_id));
+        }
+
+        // Validate project_filename to prevent path traversal
+        // Block relative traversal (..), Windows separators (\), and absolute paths
+        if project_filename.contains("..")
+            || project_filename.contains("\\")
+            || project_filename.starts_with("/")
+            || (project_filename.len() >= 3 && project_filename.chars().nth(1) == Some(':'))
+        // Windows C:\ style
+        {
+            return Err(anyhow::anyhow!("Invalid filename: '{}'", project_filename));
+        }
+
+        let file_path = project_dir.join(project_filename);
+
+        // Check if file exists
+        if !file_path.exists() {
+            return Err(anyhow::anyhow!("File {} does not exist", project_filename));
+        }
+
+        // Read and return file contents
+        match tokio::fs::read(&file_path).await {
+            Ok(contents) => Ok(contents),
+            Err(e) => Err(anyhow::anyhow!("Failed to read file '{}': {}", project_filename, e)),
+        }
     }
 }
 
@@ -1617,5 +1645,408 @@ mod tests {
         // Remove the project second time (should not be an error)
         let result2 = fixture.backend.remove_project(&created_project.id).await;
         assert!(result2.is_ok(), "Second removal should not be an error");
+    }
+
+    #[tokio::test]
+    async fn test_get_project_file_project_bin() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Add project file content
+        let project_content = b"test project binary content";
+        fixture
+            .backend
+            .update_project_file(&created_project.id, project_content)
+            .await
+            .expect("Failed to update project file");
+
+        // Test retrieving the project.bin file
+        let result = fixture
+            .backend
+            .get_project_file(&created_project.id, "project.bin")
+            .await;
+        assert!(result.is_ok(), "Failed to get project file: {:?}", result.err());
+
+        let retrieved_content = result.unwrap();
+        assert_eq!(retrieved_content, project_content, "Retrieved content should match");
+    }
+
+    #[tokio::test]
+    async fn test_get_project_file_sample() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Add a sample
+        let sample_content = b"fake WAV file content for testing";
+        let sample_name = "kick_drum";
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, sample_content, sample_name)
+            .await
+            .expect("Failed to add sample");
+
+        // Test retrieving the sample file
+        let sample_filename = format!("samples/{}.wav", sample_name);
+        let result = fixture
+            .backend
+            .get_project_file(&created_project.id, &sample_filename)
+            .await;
+        assert!(result.is_ok(), "Failed to get sample file: {:?}", result.err());
+
+        let retrieved_content = result.unwrap();
+        assert_eq!(
+            retrieved_content, sample_content,
+            "Retrieved sample content should match"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_get_project_file_metadata() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Test retrieving the project.json metadata file
+        let result = fixture
+            .backend
+            .get_project_file(&created_project.id, "project.json")
+            .await;
+        assert!(result.is_ok(), "Failed to get metadata file: {:?}", result.err());
+
+        let retrieved_content = result.unwrap();
+
+        // Verify it's valid JSON and contains expected project data
+        let parsed_project: DbProject =
+            serde_json::from_slice(&retrieved_content).expect("Retrieved metadata should be valid JSON");
+        assert_eq!(parsed_project.id, created_project.id);
+        assert_eq!(parsed_project.name, created_project.name);
+        assert_eq!(parsed_project.user_id, created_project.user_id);
+    }
+
+    #[tokio::test]
+    async fn test_get_project_file_multiple_samples() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Add multiple samples with different content
+        let kick_content = b"kick drum sample content";
+        let snare_content = b"snare drum sample content - different";
+        let hihat_content = b"hihat sample with unique content";
+
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, kick_content, "kick")
+            .await
+            .expect("Failed to add kick sample");
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, snare_content, "snare")
+            .await
+            .expect("Failed to add snare sample");
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, hihat_content, "hihat")
+            .await
+            .expect("Failed to add hihat sample");
+
+        // Test retrieving each sample file individually
+        let kick_result = fixture
+            .backend
+            .get_project_file(&created_project.id, "samples/kick.wav")
+            .await;
+        assert!(kick_result.is_ok(), "Failed to get kick sample");
+        assert_eq!(kick_result.unwrap(), kick_content);
+
+        let snare_result = fixture
+            .backend
+            .get_project_file(&created_project.id, "samples/snare.wav")
+            .await;
+        assert!(snare_result.is_ok(), "Failed to get snare sample");
+        assert_eq!(snare_result.unwrap(), snare_content);
+
+        let hihat_result = fixture
+            .backend
+            .get_project_file(&created_project.id, "samples/hihat.wav")
+            .await;
+        assert!(hihat_result.is_ok(), "Failed to get hihat sample");
+        assert_eq!(hihat_result.unwrap(), hihat_content);
+    }
+
+    #[tokio::test]
+    async fn test_get_project_file_project_not_found() {
+        let fixture = Fixture::new();
+
+        // Test getting a file from a project that doesn't exist
+        let result = fixture
+            .backend
+            .get_project_file("nonexistent_project_id", "project.bin")
+            .await;
+        assert!(result.is_err(), "Should fail when project doesn't exist");
+
+        let error = result.unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("Project nonexistent_project_id does not exist"));
+    }
+
+    #[tokio::test]
+    async fn test_get_project_file_file_not_found() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Test getting a file that doesn't exist
+        let result = fixture
+            .backend
+            .get_project_file(&created_project.id, "nonexistent_file.bin")
+            .await;
+        assert!(result.is_err(), "Should fail when file doesn't exist");
+
+        let error = result.unwrap_err();
+        assert!(
+            error.to_string().contains("File nonexistent_file.bin does not exist")
+                || error.to_string().contains("Failed to read file")
+                || error.to_string().contains("No such file or directory")
+        );
+    }
+
+    #[tokio::test]
+    async fn test_get_project_file_sample_not_found() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Add one sample
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, b"sample content", "existing_sample")
+            .await
+            .expect("Failed to add sample");
+
+        // Test getting a sample that doesn't exist
+        let result = fixture
+            .backend
+            .get_project_file(&created_project.id, "samples/nonexistent_sample.wav")
+            .await;
+        assert!(result.is_err(), "Should fail when sample file doesn't exist");
+
+        let error = result.unwrap_err();
+        assert!(
+            error.to_string().contains("samples/nonexistent_sample.wav")
+                || error.to_string().contains("No such file or directory")
+        );
+    }
+
+    #[tokio::test]
+    async fn test_get_project_file_empty_file() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Add project file with empty content
+        let empty_content = b"";
+        fixture
+            .backend
+            .update_project_file(&created_project.id, empty_content)
+            .await
+            .expect("Failed to update project file with empty content");
+
+        // Test retrieving the empty project.bin file
+        let result = fixture
+            .backend
+            .get_project_file(&created_project.id, "project.bin")
+            .await;
+        assert!(result.is_ok(), "Should handle empty files");
+
+        let retrieved_content = result.unwrap();
+        assert_eq!(
+            retrieved_content, empty_content,
+            "Should retrieve empty content correctly"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_get_project_file_large_file() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Create a large file content (10KB)
+        let large_content = vec![0xAB; 10 * 1024];
+        fixture
+            .backend
+            .update_project_file(&created_project.id, &large_content)
+            .await
+            .expect("Failed to update project file with large content");
+
+        // Test retrieving the large project.bin file
+        let result = fixture
+            .backend
+            .get_project_file(&created_project.id, "project.bin")
+            .await;
+        assert!(result.is_ok(), "Should handle large files");
+
+        let retrieved_content = result.unwrap();
+        assert_eq!(
+            retrieved_content, large_content,
+            "Should retrieve large content correctly"
+        );
+        assert_eq!(retrieved_content.len(), 10 * 1024, "Content size should match");
+    }
+
+    #[tokio::test]
+    async fn test_get_project_file_special_characters() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Add a sample with special characters in the name
+        let sample_content = b"sample with special chars in filename";
+        let sample_name = "drum_loop-01_🥁";
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, sample_content, sample_name)
+            .await
+            .expect("Failed to add sample with special characters");
+
+        // Test retrieving the sample with special characters
+        let sample_filename = format!("samples/{}.wav", sample_name);
+        let result = fixture
+            .backend
+            .get_project_file(&created_project.id, &sample_filename)
+            .await;
+        assert!(result.is_ok(), "Should handle special characters in filenames");
+
+        let retrieved_content = result.unwrap();
+        assert_eq!(
+            retrieved_content, sample_content,
+            "Should retrieve special character filename content correctly"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_get_project_file_path_traversal_security() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Test various path traversal attempts - these should all fail
+        let malicious_paths = vec![
+            "../../../etc/passwd",
+            "..\\..\\..\\windows\\system32\\config\\sam",
+            "samples/../../../sensitive_file.txt",
+            "samples/..\\..\\..\\sensitive_file.txt",
+            "/etc/passwd",
+            "C:\\windows\\system32\\config\\sam",
+        ];
+
+        for malicious_path in malicious_paths {
+            let result = fixture
+                .backend
+                .get_project_file(&created_project.id, malicious_path)
+                .await;
+            assert!(
+                result.is_err(),
+                "Path traversal attempt should fail for path: {}",
+                malicious_path
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_project_file_binary_content() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Create binary content with various byte values
+        let binary_content: Vec<u8> = (0..=255).cycle().take(1000).collect();
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, &binary_content, "binary_sample")
+            .await
+            .expect("Failed to add binary sample");
+
+        // Test retrieving the binary content
+        let result = fixture
+            .backend
+            .get_project_file(&created_project.id, "samples/binary_sample.wav")
+            .await;
+        assert!(result.is_ok(), "Should handle binary content");
+
+        let retrieved_content = result.unwrap();
+        assert_eq!(
+            retrieved_content, binary_content,
+            "Binary content should be preserved exactly"
+        );
     }
 }
