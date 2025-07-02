@@ -52,13 +52,47 @@ impl FilesystemBackend {
 #[async_trait::async_trait]
 impl Backend for FilesystemBackend {
     async fn get_projects(&self) -> Result<Vec<DbProject>> {
-        // Implementation for getting projects from the filesystem
-        unimplemented!()
+        let mut projects = Vec::new();
+
+        // Read the projects directory
+        let projects_dir = self.root_directory.join("projects");
+        if !projects_dir.exists() {
+            return Ok(projects);
+        }
+
+        let mut entries = tokio::fs::read_dir(&projects_dir)
+            .await
+            .context("Failed to read projects directory")?;
+
+        while let Some(entry) = entries.next_entry().await.context("Failed to read project entry")? {
+            if entry.file_type().await?.is_dir() {
+                let project_id = entry.file_name().to_string_lossy().to_string();
+                let project = self.get_project(&project_id).await?;
+                projects.push(project);
+            }
+        }
+
+        Ok(projects)
     }
 
     async fn get_project(&self, project_id: &str) -> Result<DbProject> {
-        // Implementation for getting a specific project from the filesystem
-        unimplemented!()
+        let project_dir = self.directory_for_project(project_id);
+
+        // Check if the project directory exists
+        if !project_dir.exists() {
+            return Err(anyhow::anyhow!("Project {} does not exist", project_id));
+        }
+
+        // Read the project metadata file
+        let metadata_file_path = project_dir.join("project.json");
+        let metadata_bytes = tokio::fs::read(&metadata_file_path)
+            .await
+            .context(format!("Failed to read project metadata for {}", project_id))?;
+
+        let db_project: DbProject =
+            serde_json::from_slice(&metadata_bytes).context("Failed to deserialize project metadata")?;
+
+        Ok(db_project)
     }
 
     async fn create_project(&self, user_id: &str) -> Result<DbProject> {
@@ -213,6 +247,162 @@ mod tests {
         assert_eq!(loaded_project.id, db_project.id);
         assert_eq!(loaded_project.name, db_project.name);
         assert_eq!(loaded_project.user_id, db_project.user_id);
+    }
+
+    #[tokio::test]
+    async fn test_get_projects_empty_directory() {
+        let fixture = Fixture::new();
+
+        // Test getting projects when no projects exist
+        let result = fixture.backend.get_projects().await;
+        assert!(result.is_ok(), "Failed to get projects: {:?}", result.err());
+
+        let projects = result.unwrap();
+        assert!(projects.is_empty(), "Should return empty vector when no projects exist");
+    }
+
+    #[tokio::test]
+    async fn test_get_projects_single_project() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Test getting all projects
+        let result = fixture.backend.get_projects().await;
+        assert!(result.is_ok(), "Failed to get projects: {:?}", result.err());
+
+        let projects = result.unwrap();
+        assert_eq!(projects.len(), 1, "Should return one project");
+
+        let project = &projects[0];
+        assert_eq!(project.id, created_project.id);
+        assert_eq!(project.name, created_project.name);
+        assert_eq!(project.user_id, created_project.user_id);
+        assert_eq!(project.project, created_project.project);
+    }
+
+    #[tokio::test]
+    async fn test_get_projects_multiple_projects() {
+        let fixture = Fixture::new();
+
+        // Create multiple projects
+        let project1 = fixture
+            .backend
+            .create_project("user1")
+            .await
+            .expect("Failed to create project 1");
+        let project2 = fixture
+            .backend
+            .create_project("user2")
+            .await
+            .expect("Failed to create project 2");
+        let project3 = fixture
+            .backend
+            .create_project("")
+            .await // anonymous user
+            .expect("Failed to create project 3");
+
+        // Test getting all projects
+        let result = fixture.backend.get_projects().await;
+        assert!(result.is_ok(), "Failed to get projects: {:?}", result.err());
+
+        let projects = result.unwrap();
+        assert_eq!(projects.len(), 3, "Should return three projects");
+
+        // Verify all projects are returned (order may vary)
+        let project_ids: Vec<String> = projects.iter().map(|p| p.id.clone()).collect();
+        assert!(project_ids.contains(&project1.id), "Should contain project 1");
+        assert!(project_ids.contains(&project2.id), "Should contain project 2");
+        assert!(project_ids.contains(&project3.id), "Should contain project 3");
+
+        // Verify project details for each
+        for project in &projects {
+            match project.id.as_str() {
+                id if id == project1.id => {
+                    assert_eq!(project.user_id, "user1");
+                    assert_eq!(project.name, "New Project");
+                }
+                id if id == project2.id => {
+                    assert_eq!(project.user_id, "user2");
+                    assert_eq!(project.name, "New Project");
+                }
+                id if id == project3.id => {
+                    assert_eq!(project.user_id, "");
+                    assert_eq!(project.name, "New Project");
+                }
+                _ => panic!("Unexpected project ID: {}", project.id),
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_get_projects_with_invalid_directory() {
+        let fixture = Fixture::new();
+
+        // Create a project first
+        let _project = fixture
+            .backend
+            .create_project("test_user")
+            .await
+            .expect("Failed to create project");
+
+        // Create an invalid entry (file instead of directory) in the projects directory
+        let projects_dir = fixture.temp_dir.path().join("projects");
+        let invalid_file = projects_dir.join("not_a_directory.txt");
+        tokio::fs::write(&invalid_file, "this is not a project directory")
+            .await
+            .expect("Failed to create invalid file");
+
+        // Test getting projects - should ignore the invalid file and return only valid projects
+        let result = fixture.backend.get_projects().await;
+        assert!(result.is_ok(), "Failed to get projects: {:?}", result.err());
+
+        let projects = result.unwrap();
+        assert_eq!(projects.len(), 1, "Should return only valid project directories");
+    }
+
+    #[tokio::test]
+    async fn test_get_project() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Test getting the specific project
+        let result = fixture.backend.get_project(&created_project.id).await;
+        assert!(result.is_ok(), "Failed to get project: {:?}", result.err());
+
+        let project = result.unwrap();
+        assert_eq!(project.id, created_project.id);
+        assert_eq!(project.name, created_project.name);
+        assert_eq!(project.user_id, created_project.user_id);
+        assert_eq!(project.project, created_project.project);
+        assert_eq!(project.samples, created_project.samples);
+    }
+
+    #[tokio::test]
+    async fn test_get_project_not_found() {
+        let fixture = Fixture::new();
+
+        // Test getting a project that doesn't exist
+        let result = fixture.backend.get_project("nonexistent_project_id").await;
+        assert!(result.is_err(), "Should fail when project doesn't exist");
+
+        let error = result.unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("Project nonexistent_project_id does not exist"));
     }
 
     #[test]
