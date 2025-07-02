@@ -13,7 +13,7 @@ use rand::Rng;
  * to manage projects and their associated files.
  *
  * The directory structure is:
- * - users/{user_id}/projects/{project_id}/
+ * - projects/{project_id}/
  *   - project.json (the project metadata file)
  *   - project.bin (the binary project file)
  *   - samples/ (directory containing sample files)
@@ -31,12 +31,8 @@ impl FilesystemBackend {
         Self { root_directory }
     }
 
-    fn directory_for_project(&self, user_id: &str, project_id: &str) -> PathBuf {
-        self.root_directory
-            .join("users")
-            .join(if user_id.is_empty() { "anonymous" } else { user_id })
-            .join("projects")
-            .join(project_id)
+    fn directory_for_project(&self, project_id: &str) -> PathBuf {
+        self.root_directory.join("projects").join(project_id)
     }
 
     fn generate_project_id() -> String {
@@ -78,7 +74,7 @@ impl Backend for FilesystemBackend {
             updated: chrono::Utc::now(),
         };
 
-        let project_dir = self.directory_for_project(user_id, &project_id);
+        let project_dir = self.directory_for_project(&project_id);
 
         // Create the project directory
         tokio::fs::create_dir_all(&project_dir).await.context(format!(
@@ -188,7 +184,7 @@ mod tests {
         }
 
         // Verify the directory structure was created
-        let project_dir = fixture.backend.directory_for_project(user_id, &db_project.id);
+        let project_dir = fixture.backend.directory_for_project(&db_project.id);
         assert!(project_dir.exists(), "Project directory was not created");
 
         // Verify the project.bin file was created
@@ -217,31 +213,6 @@ mod tests {
         assert_eq!(loaded_project.id, db_project.id);
         assert_eq!(loaded_project.name, db_project.name);
         assert_eq!(loaded_project.user_id, db_project.user_id);
-    }
-
-    #[tokio::test]
-    async fn test_create_project_anonymous_user() {
-        // Test creating a project for an anonymous user (empty user_id)
-        let fixture = Fixture::new();
-
-        let result = fixture.backend.create_project("").await;
-        assert!(result.is_ok(), "Failed to create project for anonymous user");
-
-        let db_project = result.unwrap();
-        assert_eq!(db_project.user_id, "");
-
-        // Verify the directory uses "anonymous" for empty user_id
-        let project_dir = fixture.backend.directory_for_project("", &db_project.id);
-        let expected_path = fixture
-            .temp_dir
-            .path()
-            .join("users")
-            .join("anonymous")
-            .join("projects")
-            .join(&db_project.id);
-
-        assert_eq!(project_dir, expected_path);
-        assert!(project_dir.exists(), "Anonymous user project directory was not created");
     }
 
     #[test]
