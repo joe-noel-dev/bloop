@@ -58,7 +58,43 @@ impl Backend for HybridBackend {
     }
 
     async fn read_project(&self, project_id: &str) -> Result<DbProject> {
-        unimplemented!()
+        // Smart ordering: Check local first (faster), then remote if needed
+        let local_result = self.local.read_project(project_id).await;
+
+        match local_result {
+            Ok(local_project) => {
+                // We have local version, but check if remote has newer version
+                match self.remote.read_project(project_id).await {
+                    Ok(remote_project) => {
+                        // Both succeeded, prefer the latest one
+                        if remote_project.updated > local_project.updated {
+                            Ok(remote_project)
+                        } else {
+                            Ok(local_project)
+                        }
+                    }
+                    Err(_) => {
+                        // Remote failed, but we have local - use local
+                        Ok(local_project)
+                    }
+                }
+            }
+            Err(local_err) => {
+                // No local version, try remote
+                match self.remote.read_project(project_id).await {
+                    Ok(remote_project) => Ok(remote_project),
+                    Err(remote_err) => {
+                        // Both failed, return a combined error
+                        Err(anyhow::anyhow!(
+                            "Failed to read project '{}' from both local and remote backends. Local error: {}. Remote error: {}",
+                            project_id,
+                            local_err,
+                            remote_err
+                        ))
+                    }
+                }
+            }
+        }
     }
 
     async fn create_project(&self, user_id: &str) -> Result<DbProject> {
@@ -127,8 +163,17 @@ mod tests {
             Ok(self.projects.clone())
         }
 
-        async fn read_project(&self, _project_id: &str) -> Result<DbProject> {
-            unimplemented!()
+        async fn read_project(&self, project_id: &str) -> Result<DbProject> {
+            if self.should_fail {
+                return Err(anyhow::anyhow!("Backend unavailable"));
+            }
+
+            // Find the project by ID
+            self.projects
+                .iter()
+                .find(|p| p.id == project_id)
+                .cloned()
+                .ok_or_else(|| anyhow::anyhow!("Project '{}' not found", project_id))
         }
 
         async fn create_project(&self, _user_id: &str) -> Result<DbProject> {
@@ -374,5 +419,95 @@ mod tests {
         assert!(result[0].updated >= result[1].updated);
         assert!(result[1].updated >= result[2].updated);
         assert!(result[2].updated >= result[3].updated);
+    }
+
+    #[tokio::test]
+    async fn test_read_project_prefer_newer_remote() {
+        let base_time = Utc::now();
+        let older_time = base_time - chrono::Duration::seconds(3600);
+        let newer_time = base_time;
+
+        let local_project = create_test_project("proj1", "Local Project (older)", older_time);
+        let remote_project = create_test_project("proj1", "Remote Project (newer)", newer_time);
+
+        let local_backend = Arc::new(MockBackend::new(vec![local_project.clone()]));
+        let remote_backend = Arc::new(MockBackend::new(vec![remote_project.clone()]));
+
+        let hybrid = HybridBackend::new(local_backend, remote_backend);
+        let result = hybrid.read_project("proj1").await.unwrap();
+
+        assert_eq!(result.name, "Remote Project (newer)");
+        assert_eq!(result.updated, newer_time);
+    }
+
+    #[tokio::test]
+    async fn test_read_project_prefer_newer_local() {
+        let base_time = Utc::now();
+        let older_time = base_time - chrono::Duration::seconds(3600);
+        let newer_time = base_time;
+
+        let local_project = create_test_project("proj1", "Local Project (newer)", newer_time);
+        let remote_project = create_test_project("proj1", "Remote Project (older)", older_time);
+
+        let local_backend = Arc::new(MockBackend::new(vec![local_project.clone()]));
+        let remote_backend = Arc::new(MockBackend::new(vec![remote_project.clone()]));
+
+        let hybrid = HybridBackend::new(local_backend, remote_backend);
+        let result = hybrid.read_project("proj1").await.unwrap();
+
+        assert_eq!(result.name, "Local Project (newer)");
+        assert_eq!(result.updated, newer_time);
+    }
+
+    #[tokio::test]
+    async fn test_read_project_only_local_available() {
+        let now = Utc::now();
+        let local_project = create_test_project("proj1", "Local Project", now);
+
+        let local_backend = Arc::new(MockBackend::new(vec![local_project.clone()]));
+        let remote_backend = Arc::new(MockBackend::new_failing());
+
+        let hybrid = HybridBackend::new(local_backend, remote_backend);
+        let result = hybrid.read_project("proj1").await.unwrap();
+
+        assert_eq!(result.name, "Local Project");
+    }
+
+    #[tokio::test]
+    async fn test_read_project_only_remote_available() {
+        let now = Utc::now();
+        let remote_project = create_test_project("proj1", "Remote Project", now);
+
+        let local_backend = Arc::new(MockBackend::new_failing());
+        let remote_backend = Arc::new(MockBackend::new(vec![remote_project.clone()]));
+
+        let hybrid = HybridBackend::new(local_backend, remote_backend);
+        let result = hybrid.read_project("proj1").await.unwrap();
+
+        assert_eq!(result.name, "Remote Project");
+    }
+
+    #[tokio::test]
+    async fn test_read_project_both_fail() {
+        let local_backend = Arc::new(MockBackend::new_failing());
+        let remote_backend = Arc::new(MockBackend::new_failing());
+
+        let hybrid = HybridBackend::new(local_backend, remote_backend);
+        let result = hybrid.read_project("proj1").await;
+
+        assert!(result.is_err());
+        let error_msg = result.unwrap_err().to_string();
+        assert!(error_msg.contains("Failed to read project 'proj1' from both local and remote backends"));
+    }
+
+    #[tokio::test]
+    async fn test_read_project_not_found_in_either() {
+        let local_backend = Arc::new(MockBackend::new(Vec::new()));
+        let remote_backend = Arc::new(MockBackend::new(Vec::new()));
+
+        let hybrid = HybridBackend::new(local_backend, remote_backend);
+        let result = hybrid.read_project("nonexistent").await;
+
+        assert!(result.is_err());
     }
 }
