@@ -139,7 +139,7 @@ impl ProjectStore {
     }
 
     async fn read_project_file(&self, project_id: &str) -> anyhow::Result<(Project, ProjectInfo)> {
-        let project = self.backend.get_project(project_id).await.context("Get project")?;
+        let project = self.backend.read_project(project_id).await.context("Get project")?;
 
         let project_info = ProjectInfo {
             id: project.id.clone(),
@@ -150,7 +150,7 @@ impl ProjectStore {
 
         let project_data = self
             .backend
-            .get_project_file(project_id, &project.project)
+            .read_project_file(project_id, &project.project)
             .await
             .context("Get project file")?;
         let project = Project::parse_from_bytes(&project_data).context("Parse project data")?;
@@ -164,7 +164,7 @@ impl ProjectStore {
         project: &Project,
         samples_cache: &SamplesCache,
     ) -> anyhow::Result<()> {
-        let db_project = self.backend.get_project(project_id).await.context("Get project")?;
+        let db_project = self.backend.read_project(project_id).await.context("Get project")?;
 
         for song in project.songs.iter() {
             let sample = match song.sample.as_ref() {
@@ -213,7 +213,7 @@ impl ProjectStore {
         project_id: &str,
         samples_cache: &mut SamplesCache,
     ) -> anyhow::Result<()> {
-        let db_project = self.backend.get_project(project_id).await.context("Get project")?;
+        let db_project = self.backend.read_project(project_id).await.context("Get project")?;
 
         for sample in db_project.samples.iter() {
             let sample_id = match sample.split_once('_') {
@@ -241,7 +241,7 @@ impl ProjectStore {
 
             let sample_bytes = self
                 .backend
-                .get_project_file(project_id, sample)
+                .read_project_file(project_id, sample)
                 .await
                 .context(format!("Error getting project file: {sample}"))?;
 

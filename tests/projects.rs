@@ -117,7 +117,7 @@ async fn get_project_successful() {
             .body(get_project_response);
     });
 
-    let project = fixture.backend.get_project("test").await.unwrap();
+    let project = fixture.backend.read_project("test").await.unwrap();
 
     assert_eq!(project.id, "test");
     assert_eq!(project.name, "Test Project");
@@ -377,7 +377,7 @@ async fn get_project_file() {
 
     let bytes = fixture
         .backend
-        .get_project_file("project_id", "project.bin")
+        .read_project_file("project_id", "project.bin")
         .await
         .unwrap();
     assert_eq!(bytes, file_bytes);

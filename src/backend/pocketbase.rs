@@ -91,7 +91,7 @@ impl Backend for PocketbaseBackend {
         Ok(projects)
     }
 
-    async fn get_project(&self, project_id: &str) -> Result<DbProject> {
+    async fn read_project(&self, project_id: &str) -> Result<DbProject> {
         let token = self.get_token().await?;
 
         let url = format!("{}/api/collections/projects/records/{}", self.host, project_id);
@@ -186,7 +186,7 @@ impl Backend for PocketbaseBackend {
         Ok(())
     }
 
-    async fn get_project_file(&self, project_id: &str, project_filename: &str) -> Result<Vec<u8>> {
+    async fn read_project_file(&self, project_id: &str, project_filename: &str) -> Result<Vec<u8>> {
         let token = self.get_token().await?;
         let url = format!("{}/api/files/projects/{}/{}", self.host, project_id, project_filename);
         let client = reqwest::Client::new();

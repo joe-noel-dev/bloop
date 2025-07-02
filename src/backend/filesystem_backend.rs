@@ -85,7 +85,7 @@ impl Backend for FilesystemBackend {
         while let Some(entry) = entries.next_entry().await.context("Failed to read project entry")? {
             if entry.file_type().await?.is_dir() {
                 let project_id = entry.file_name().to_string_lossy().to_string();
-                let project = self.get_project(&project_id).await?;
+                let project = self.read_project(&project_id).await?;
                 projects.push(project);
             }
         }
@@ -93,7 +93,7 @@ impl Backend for FilesystemBackend {
         Ok(projects)
     }
 
-    async fn get_project(&self, project_id: &str) -> Result<DbProject> {
+    async fn read_project(&self, project_id: &str) -> Result<DbProject> {
         let project_dir = self.directory_for_project(project_id);
 
         // Check if the project directory exists
@@ -142,7 +142,7 @@ impl Backend for FilesystemBackend {
         }
 
         // Read the current project metadata
-        let mut db_project = self.get_project(project_id).await?;
+        let mut db_project = self.read_project(project_id).await?;
 
         // Update the name and updated timestamp
         db_project.name = name.to_string();
@@ -270,7 +270,7 @@ impl Backend for FilesystemBackend {
         Ok(())
     }
 
-    async fn get_project_file(&self, project_id: &str, project_filename: &str) -> Result<Vec<u8>> {
+    async fn read_project_file(&self, project_id: &str, project_filename: &str) -> Result<Vec<u8>> {
         let project_dir = self.directory_for_project(project_id);
 
         // Check if project directory exists
@@ -505,7 +505,7 @@ mod tests {
             .expect("Failed to create project");
 
         // Test getting the specific project
-        let result = fixture.backend.get_project(&created_project.id).await;
+        let result = fixture.backend.read_project(&created_project.id).await;
         assert!(result.is_ok(), "Failed to get project: {:?}", result.err());
 
         let project = result.unwrap();
@@ -521,7 +521,7 @@ mod tests {
         let fixture = Fixture::new();
 
         // Test getting a project that doesn't exist
-        let result = fixture.backend.get_project("nonexistent_project_id").await;
+        let result = fixture.backend.read_project("nonexistent_project_id").await;
         assert!(result.is_err(), "Should fail when project doesn't exist");
 
         let error = result.unwrap_err();
@@ -565,7 +565,7 @@ mod tests {
         // Verify the changes were persisted to the filesystem
         let retrieved_project = fixture
             .backend
-            .get_project(&created_project.id)
+            .read_project(&created_project.id)
             .await
             .expect("Failed to retrieve updated project");
 
@@ -615,7 +615,7 @@ mod tests {
         // Verify it persists correctly
         let retrieved_project = fixture
             .backend
-            .get_project(&created_project.id)
+            .read_project(&created_project.id)
             .await
             .expect("Failed to retrieve project with special characters");
         assert_eq!(retrieved_project.name, special_name);
@@ -682,7 +682,7 @@ mod tests {
         // Verify the changes were persisted to the metadata file
         let retrieved_project = fixture
             .backend
-            .get_project(&created_project.id)
+            .read_project(&created_project.id)
             .await
             .expect("Failed to retrieve updated project");
 
@@ -849,7 +849,7 @@ mod tests {
         // Verify the changes were persisted to the metadata file
         let retrieved_project = fixture
             .backend
-            .get_project(&created_project.id)
+            .read_project(&created_project.id)
             .await
             .expect("Failed to retrieve updated project");
 
@@ -1093,7 +1093,7 @@ mod tests {
         // Verify the changes were persisted to the metadata file
         let retrieved_project = fixture
             .backend
-            .get_project(&created_project.id)
+            .read_project(&created_project.id)
             .await
             .expect("Failed to retrieve updated project");
 
@@ -1141,7 +1141,7 @@ mod tests {
         // Verify all samples exist
         let project_with_samples = fixture
             .backend
-            .get_project(&created_project.id)
+            .read_project(&created_project.id)
             .await
             .expect("Failed to get project");
         assert_eq!(
@@ -1421,7 +1421,7 @@ mod tests {
         // Verify the project is accessible
         let retrieved_project = fixture
             .backend
-            .get_project(&created_project.id)
+            .read_project(&created_project.id)
             .await
             .expect("Project should be retrievable");
         assert_eq!(retrieved_project.name, "Test Project");
@@ -1437,7 +1437,7 @@ mod tests {
         assert!(!sample_file.exists(), "Sample file should be removed");
 
         // Verify the project is no longer accessible
-        let result = fixture.backend.get_project(&created_project.id).await;
+        let result = fixture.backend.read_project(&created_project.id).await;
         assert!(result.is_err(), "Project should no longer be accessible");
     }
 
@@ -1670,7 +1670,7 @@ mod tests {
         // Test retrieving the project.bin file
         let result = fixture
             .backend
-            .get_project_file(&created_project.id, "project.bin")
+            .read_project_file(&created_project.id, "project.bin")
             .await;
         assert!(result.is_ok(), "Failed to get project file: {:?}", result.err());
 
@@ -1703,7 +1703,7 @@ mod tests {
         let sample_filename = format!("samples/{}.wav", sample_name);
         let result = fixture
             .backend
-            .get_project_file(&created_project.id, &sample_filename)
+            .read_project_file(&created_project.id, &sample_filename)
             .await;
         assert!(result.is_ok(), "Failed to get sample file: {:?}", result.err());
 
@@ -1729,7 +1729,7 @@ mod tests {
         // Test retrieving the project.json metadata file
         let result = fixture
             .backend
-            .get_project_file(&created_project.id, "project.json")
+            .read_project_file(&created_project.id, "project.json")
             .await;
         assert!(result.is_ok(), "Failed to get metadata file: {:?}", result.err());
 
@@ -1779,21 +1779,21 @@ mod tests {
         // Test retrieving each sample file individually
         let kick_result = fixture
             .backend
-            .get_project_file(&created_project.id, "samples/kick.wav")
+            .read_project_file(&created_project.id, "samples/kick.wav")
             .await;
         assert!(kick_result.is_ok(), "Failed to get kick sample");
         assert_eq!(kick_result.unwrap(), kick_content);
 
         let snare_result = fixture
             .backend
-            .get_project_file(&created_project.id, "samples/snare.wav")
+            .read_project_file(&created_project.id, "samples/snare.wav")
             .await;
         assert!(snare_result.is_ok(), "Failed to get snare sample");
         assert_eq!(snare_result.unwrap(), snare_content);
 
         let hihat_result = fixture
             .backend
-            .get_project_file(&created_project.id, "samples/hihat.wav")
+            .read_project_file(&created_project.id, "samples/hihat.wav")
             .await;
         assert!(hihat_result.is_ok(), "Failed to get hihat sample");
         assert_eq!(hihat_result.unwrap(), hihat_content);
@@ -1806,7 +1806,7 @@ mod tests {
         // Test getting a file from a project that doesn't exist
         let result = fixture
             .backend
-            .get_project_file("nonexistent_project_id", "project.bin")
+            .read_project_file("nonexistent_project_id", "project.bin")
             .await;
         assert!(result.is_err(), "Should fail when project doesn't exist");
 
@@ -1831,7 +1831,7 @@ mod tests {
         // Test getting a file that doesn't exist
         let result = fixture
             .backend
-            .get_project_file(&created_project.id, "nonexistent_file.bin")
+            .read_project_file(&created_project.id, "nonexistent_file.bin")
             .await;
         assert!(result.is_err(), "Should fail when file doesn't exist");
 
@@ -1865,7 +1865,7 @@ mod tests {
         // Test getting a sample that doesn't exist
         let result = fixture
             .backend
-            .get_project_file(&created_project.id, "samples/nonexistent_sample.wav")
+            .read_project_file(&created_project.id, "samples/nonexistent_sample.wav")
             .await;
         assert!(result.is_err(), "Should fail when sample file doesn't exist");
 
@@ -1899,7 +1899,7 @@ mod tests {
         // Test retrieving the empty project.bin file
         let result = fixture
             .backend
-            .get_project_file(&created_project.id, "project.bin")
+            .read_project_file(&created_project.id, "project.bin")
             .await;
         assert!(result.is_ok(), "Should handle empty files");
 
@@ -1933,7 +1933,7 @@ mod tests {
         // Test retrieving the large project.bin file
         let result = fixture
             .backend
-            .get_project_file(&created_project.id, "project.bin")
+            .read_project_file(&created_project.id, "project.bin")
             .await;
         assert!(result.is_ok(), "Should handle large files");
 
@@ -1970,7 +1970,7 @@ mod tests {
         let sample_filename = format!("samples/{}.wav", sample_name);
         let result = fixture
             .backend
-            .get_project_file(&created_project.id, &sample_filename)
+            .read_project_file(&created_project.id, &sample_filename)
             .await;
         assert!(result.is_ok(), "Should handle special characters in filenames");
 
@@ -2006,7 +2006,7 @@ mod tests {
         for malicious_path in malicious_paths {
             let result = fixture
                 .backend
-                .get_project_file(&created_project.id, malicious_path)
+                .read_project_file(&created_project.id, malicious_path)
                 .await;
             assert!(
                 result.is_err(),
@@ -2039,7 +2039,7 @@ mod tests {
         // Test retrieving the binary content
         let result = fixture
             .backend
-            .get_project_file(&created_project.id, "samples/binary_sample.wav")
+            .read_project_file(&created_project.id, "samples/binary_sample.wav")
             .await;
         assert!(result.is_ok(), "Should handle binary content");
 
