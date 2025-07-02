@@ -102,7 +102,7 @@ impl Backend for FilesystemBackend {
             id: project_id.clone(),
             name: "New Project".to_string(),
             user_id: user_id.to_string(),
-            project: "project.bin".to_string(),
+            project: "".to_string(),
             samples: Vec::new(),
             created: chrono::Utc::now(),
             updated: chrono::Utc::now(),
@@ -115,17 +115,6 @@ impl Backend for FilesystemBackend {
             "Failed to create project directory for user {} and project {}",
             user_id, project_id
         ))?;
-
-        // Write an empty project file
-        let project_file_path = project_dir.join("project.bin");
-        let project = Project::empty().with_songs(1, 1);
-        let project_bytes = project.write_to_bytes().context("Failed to serialize project")?;
-        tokio::fs::write(&project_file_path, project_bytes)
-            .await
-            .context(format!(
-                "Failed to write project file for user {} and project {}",
-                user_id, project_id
-            ))?;
 
         // Write the project metadata file
         let metadata_file_path = project_dir.join("project.json");
@@ -230,7 +219,7 @@ mod tests {
         // Verify the project properties
         assert_eq!(db_project.name, "New Project");
         assert_eq!(db_project.user_id, user_id);
-        assert_eq!(db_project.project, "project.bin");
+        assert_eq!(db_project.project, "");
         assert!(db_project.samples.is_empty());
         assert_eq!(db_project.id.len(), 15); // ID should be 15 characters
 
@@ -247,17 +236,9 @@ mod tests {
         let project_dir = fixture.backend.directory_for_project(&db_project.id);
         assert!(project_dir.exists(), "Project directory was not created");
 
-        // Verify the project.bin file was created
+        // Verify the project.bin file was NOT created (since we don't create it anymore)
         let project_file = project_dir.join("project.bin");
-        assert!(project_file.exists(), "Project bin file was not created");
-
-        // Verify the project has some default content
-        let project_bytes = tokio::fs::read(&project_file)
-            .await
-            .expect("Failed to read project file");
-
-        let project = Project::parse_from_bytes(&project_bytes).expect("Failed to parse project file");
-        assert_eq!(project.songs.len(), 1, "Project should have 1 song");
+        assert!(!project_file.exists(), "Project bin file should not be created");
 
         // Verify the project.json metadata file was created
         let metadata_file = project_dir.join("project.json");
