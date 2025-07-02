@@ -221,8 +221,39 @@ impl Backend for FilesystemBackend {
     }
 
     async fn remove_project_sample(&self, project_id: &str, sample_name: &str) -> Result<DbProject> {
-        // Implementation for removing a sample from a project in the filesystem
-        unimplemented!()
+        // Get the project directory and check if it exists
+        let project_dir = self.directory_for_project(project_id);
+        if !project_dir.exists() {
+            return Err(anyhow::anyhow!("Project {} does not exist", project_id));
+        }
+
+        // Read the current project metadata
+        let mut project = self.read_metadata(project_id).await?;
+
+        // Check if the sample exists in the metadata
+        let sample_path = format!("samples/{}.wav", sample_name);
+        if !project.samples.contains(&sample_path) {
+            return Err(anyhow::anyhow!("Sample {} does not exist", sample_name));
+        }
+
+        // Remove the sample file from the filesystem
+        let sample_file_path = project_dir.join("samples").join(format!("{}.wav", sample_name));
+        if sample_file_path.exists() {
+            tokio::fs::remove_file(&sample_file_path)
+                .await
+                .map_err(|e| anyhow::anyhow!("Failed to remove sample file: {}", e))?;
+        }
+
+        // Remove the sample path from the metadata
+        project.samples.retain(|sample| sample != &sample_path);
+
+        // Update timestamp
+        project.updated = chrono::Utc::now();
+
+        // Write updated metadata
+        self.write_metadata(project_id, &project).await?;
+
+        Ok(project)
     }
 
     async fn remove_project(&self, project_id: &str) -> Result<()> {
@@ -957,6 +988,326 @@ mod tests {
         assert_eq!(
             written_bytes, second_content,
             "Sample file should contain the latest content"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_remove_project_sample() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Add a sample first
+        let test_sample_bytes = b"fake WAV file content for testing";
+        let sample_name = "kick_drum";
+        let add_result = fixture
+            .backend
+            .add_project_sample(&created_project.id, test_sample_bytes, sample_name)
+            .await;
+        assert!(add_result.is_ok(), "Failed to add project sample");
+
+        let project_with_sample = add_result.unwrap();
+        let original_updated = project_with_sample.updated;
+
+        // Verify the sample exists
+        assert_eq!(project_with_sample.samples.len(), 1, "Project should have one sample");
+        let expected_sample_path = format!("samples/{}.wav", sample_name);
+        assert!(
+            project_with_sample.samples.contains(&expected_sample_path),
+            "Project should contain the sample"
+        );
+
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        let sample_file_path = project_dir.join("samples").join(format!("{}.wav", sample_name));
+        assert!(sample_file_path.exists(), "Sample file should exist");
+
+        // Test removing the project sample
+        let result = fixture
+            .backend
+            .remove_project_sample(&created_project.id, sample_name)
+            .await;
+        assert!(result.is_ok(), "Failed to remove project sample: {:?}", result.err());
+
+        let updated_project = result.unwrap();
+
+        // Verify the sample was removed from the metadata
+        assert_eq!(updated_project.samples.len(), 0, "Project should have no samples");
+        assert!(
+            !updated_project.samples.contains(&expected_sample_path),
+            "Project samples should not contain '{}'",
+            expected_sample_path
+        );
+
+        // Verify the updated timestamp was changed
+        assert!(
+            updated_project.updated > original_updated,
+            "Updated timestamp should be newer"
+        );
+
+        // Verify the sample file was removed from the filesystem
+        assert!(!sample_file_path.exists(), "Sample file should be removed");
+
+        // Verify the changes were persisted to the metadata file
+        let retrieved_project = fixture
+            .backend
+            .get_project(&created_project.id)
+            .await
+            .expect("Failed to retrieve updated project");
+
+        assert_eq!(retrieved_project.samples.len(), 0);
+        assert!(!retrieved_project.samples.contains(&expected_sample_path));
+        assert!(retrieved_project.updated > original_updated);
+    }
+
+    #[tokio::test]
+    async fn test_remove_project_sample_multiple() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Add multiple samples
+        let sample1_bytes = b"first sample content";
+        let sample1_name = "kick";
+        let sample2_bytes = b"second sample content";
+        let sample2_name = "snare";
+        let sample3_bytes = b"third sample content";
+        let sample3_name = "hihat";
+
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, sample1_bytes, sample1_name)
+            .await
+            .expect("Failed to add first sample");
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, sample2_bytes, sample2_name)
+            .await
+            .expect("Failed to add second sample");
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, sample3_bytes, sample3_name)
+            .await
+            .expect("Failed to add third sample");
+
+        // Verify all samples exist
+        let project_with_samples = fixture
+            .backend
+            .get_project(&created_project.id)
+            .await
+            .expect("Failed to get project");
+        assert_eq!(
+            project_with_samples.samples.len(),
+            3,
+            "Project should have three samples"
+        );
+
+        // Remove the middle sample
+        let result = fixture
+            .backend
+            .remove_project_sample(&created_project.id, sample2_name)
+            .await;
+        assert!(result.is_ok(), "Failed to remove sample");
+
+        let updated_project = result.unwrap();
+
+        // Verify only the middle sample was removed
+        assert_eq!(updated_project.samples.len(), 2, "Project should have two samples");
+        assert!(
+            updated_project.samples.contains(&"samples/kick.wav".to_string()),
+            "Should still contain first sample"
+        );
+        assert!(
+            !updated_project.samples.contains(&"samples/snare.wav".to_string()),
+            "Should not contain removed sample"
+        );
+        assert!(
+            updated_project.samples.contains(&"samples/hihat.wav".to_string()),
+            "Should still contain third sample"
+        );
+
+        // Verify the files on filesystem
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        let samples_dir = project_dir.join("samples");
+
+        let sample1_file = samples_dir.join("kick.wav");
+        let sample2_file = samples_dir.join("snare.wav");
+        let sample3_file = samples_dir.join("hihat.wav");
+
+        assert!(sample1_file.exists(), "First sample file should still exist");
+        assert!(!sample2_file.exists(), "Second sample file should be removed");
+        assert!(sample3_file.exists(), "Third sample file should still exist");
+    }
+
+    #[tokio::test]
+    async fn test_remove_project_sample_not_found() {
+        let fixture = Fixture::new();
+
+        // Test removing a sample from a project that doesn't exist
+        let result = fixture
+            .backend
+            .remove_project_sample("nonexistent_project_id", "test_sample")
+            .await;
+        assert!(result.is_err(), "Should fail when project doesn't exist");
+
+        let error = result.unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("Project nonexistent_project_id does not exist"));
+    }
+
+    #[tokio::test]
+    async fn test_remove_project_sample_sample_not_found() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Add one sample
+        let test_sample_bytes = b"sample content";
+        let sample_name = "existing_sample";
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, test_sample_bytes, sample_name)
+            .await
+            .expect("Failed to add sample");
+
+        // Try to remove a different sample that doesn't exist
+        let result = fixture
+            .backend
+            .remove_project_sample(&created_project.id, "nonexistent_sample")
+            .await;
+        assert!(result.is_err(), "Should fail when sample doesn't exist");
+
+        let error = result.unwrap_err();
+        assert!(
+            error.to_string().contains("Sample nonexistent_sample does not exist")
+                || error.to_string().contains("Sample not found")
+        );
+    }
+
+    #[tokio::test]
+    async fn test_remove_project_sample_empty_project() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project with no samples
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Try to remove a sample from an empty project
+        let result = fixture
+            .backend
+            .remove_project_sample(&created_project.id, "nonexistent_sample")
+            .await;
+        assert!(result.is_err(), "Should fail when trying to remove from empty project");
+
+        let error = result.unwrap_err();
+        assert!(
+            error.to_string().contains("Sample nonexistent_sample does not exist")
+                || error.to_string().contains("Sample not found")
+        );
+    }
+
+    #[tokio::test]
+    async fn test_remove_project_sample_special_characters() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Add a sample with special characters in name
+        let test_sample_bytes = b"sample with special chars";
+        let sample_name = "drum_loop-01_🥁";
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, test_sample_bytes, sample_name)
+            .await
+            .expect("Failed to add sample with special characters");
+
+        // Remove the sample with special characters
+        let result = fixture
+            .backend
+            .remove_project_sample(&created_project.id, sample_name)
+            .await;
+        assert!(result.is_ok(), "Should handle special characters in sample names");
+
+        let updated_project = result.unwrap();
+        let expected_sample_path = format!("samples/{}.wav", sample_name);
+        assert!(
+            !updated_project.samples.contains(&expected_sample_path),
+            "Should not contain sample with special characters"
+        );
+
+        // Verify the file was removed correctly
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        let sample_file_path = project_dir.join("samples").join(format!("{}.wav", sample_name));
+        assert!(
+            !sample_file_path.exists(),
+            "Sample file with special characters should be removed"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_remove_project_sample_leaves_samples_directory() {
+        let fixture = Fixture::new();
+        let user_id = "test_user";
+
+        // Create a project first
+        let created_project = fixture
+            .backend
+            .create_project(user_id)
+            .await
+            .expect("Failed to create project");
+
+        // Add a sample
+        let test_sample_bytes = b"sample content";
+        let sample_name = "test_sample";
+        fixture
+            .backend
+            .add_project_sample(&created_project.id, test_sample_bytes, sample_name)
+            .await
+            .expect("Failed to add sample");
+
+        let project_dir = fixture.backend.directory_for_project(&created_project.id);
+        let samples_dir = project_dir.join("samples");
+        assert!(samples_dir.exists(), "Samples directory should exist");
+
+        // Remove the sample
+        let result = fixture
+            .backend
+            .remove_project_sample(&created_project.id, sample_name)
+            .await;
+        assert!(result.is_ok(), "Failed to remove sample");
+
+        // Verify the samples directory still exists (even if empty)
+        assert!(
+            samples_dir.exists(),
+            "Samples directory should still exist after removing last sample"
         );
     }
 
