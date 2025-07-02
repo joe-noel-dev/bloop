@@ -1,6 +1,7 @@
 mod auth;
 #[allow(clippy::module_inception)]
 mod backend;
+mod filesystem_backend;
 mod pocketbase;
 
 use std::{path::Path, sync::Arc};
