@@ -12,7 +12,7 @@ use tokio::sync::Mutex;
 pub use anyhow::Result;
 pub use auth::Auth;
 pub use backend::Backend;
-pub use backend_sync::BackendSync;
+pub use backend_sync::sync_project;
 use chrono::{DateTime, Utc};
 pub use filesystem_backend::FilesystemBackend;
 use serde::{Deserialize, Serialize};

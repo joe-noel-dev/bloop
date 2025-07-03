@@ -1,8 +1,7 @@
 use anyhow::Result;
-use bloop::backend::{Backend, BackendSync, DbProject};
+use bloop::backend::{sync_project, Backend, DbProject};
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::Mutex;
 
 #[derive(Debug, Clone)]
@@ -167,15 +166,15 @@ impl Backend for MockBackend {
 
 #[tokio::test]
 async fn test_sync_backend_push_project_happy_path() -> Result<()> {
-    let local_backend = Arc::new(MockBackend {
+    let local_backend = MockBackend {
         projects: Mutex::new(HashMap::new()),
         next_id: Mutex::new(1),
-    });
+    };
 
-    let remote_backend = Arc::new(MockBackend {
+    let remote_backend = MockBackend {
         projects: Mutex::new(HashMap::new()),
         next_id: Mutex::new(1),
-    });
+    };
 
     let user_id = "test_user";
 
@@ -200,11 +199,8 @@ async fn test_sync_backend_push_project_happy_path() -> Result<()> {
         .add_project_sample(project_id, sample2_data, "sample2")
         .await?;
 
-    // Create SyncBackend
-    let sync_backend = BackendSync::new(local_backend.clone(), remote_backend.clone());
-
-    // Push the project to remote
-    sync_backend.push_project(user_id, project_id).await?;
+    // Sync the project to the remote backend
+    sync_project(user_id, project_id, &local_backend, &remote_backend).await?;
 
     // Verify the project exists in remote backend
     let remote_project = remote_backend.read_project(project_id).await?;
