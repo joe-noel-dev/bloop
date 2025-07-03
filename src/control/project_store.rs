@@ -150,7 +150,7 @@ impl ProjectStore {
 
         let project_data = self
             .backend
-            .read_project_file(project_id, &project.project)
+            .read_project_file(project_id)
             .await
             .context("Get project file")?;
         let project = Project::parse_from_bytes(&project_data).context("Parse project data")?;
@@ -164,7 +164,7 @@ impl ProjectStore {
         project: &Project,
         samples_cache: &SamplesCache,
     ) -> anyhow::Result<()> {
-        let db_project = self.backend.read_project(project_id).await.context("Get project")?;
+        let samples = self.backend.get_samples(project_id).await.context("Get samples")?;
 
         for song in project.songs.iter() {
             let sample = match song.sample.as_ref() {
@@ -172,12 +172,11 @@ impl ProjectStore {
                 None => continue,
             };
 
-            let db_filename = db_project
-                .samples
+            let sample_id = samples
                 .iter()
                 .find(|sample_name| sample_name.contains(&sample.id.to_string()));
 
-            if db_filename.is_some() {
+            if sample_id.is_some() {
                 continue;
             }
 
@@ -213,21 +212,13 @@ impl ProjectStore {
         project_id: &str,
         samples_cache: &mut SamplesCache,
     ) -> anyhow::Result<()> {
-        let db_project = self.backend.read_project(project_id).await.context("Get project")?;
+        let samples = self.backend.get_samples(project_id).await.context("Get samples")?;
 
-        for sample in db_project.samples.iter() {
-            let sample_id = match sample.split_once('_') {
-                Some((first_part, _)) => first_part,
-                None => {
-                    error!("Invalid sample format: {}", sample);
-                    continue;
-                }
-            };
-
-            let sample_id = match ID::from_str(sample_id) {
+        for sample_id_str in samples.iter() {
+            let sample_id = match ID::from_str(sample_id_str) {
                 std::result::Result::Ok(id) => id,
                 Err(error) => {
-                    error!("Invalid sample ID ({}): {}", sample, error);
+                    error!("Invalid sample ID ({}): {}", sample_id_str, error);
                     continue;
                 }
             };
@@ -237,15 +228,15 @@ impl ProjectStore {
                 continue;
             }
 
-            debug!("Fetching sample: {}", sample);
+            debug!("Fetching sample: {}", sample_id);
 
             let sample_bytes = self
                 .backend
-                .read_project_file(project_id, sample)
+                .read_sample(project_id, sample_id_str)
                 .await
-                .context(format!("Error getting project file: {sample}"))?;
+                .context(format!("Error getting project file: {sample_id_str}"))?;
 
-            let sample_path = self.temporary_directory.path().join(sample.to_string() + ".wav");
+            let sample_path = self.temporary_directory.path().join(format!("{sample_id}.wav"));
 
             tokio::fs::write(&sample_path, &sample_bytes)
                 .await

@@ -12,5 +12,7 @@ pub trait Backend {
     async fn add_project_sample(&self, project_id: &str, sample_bytes: &[u8], sample_name: &str) -> Result<DbProject>;
     async fn remove_project_sample(&self, project_id: &str, sample_name: &str) -> Result<DbProject>;
     async fn remove_project(&self, project_id: &str) -> Result<()>;
-    async fn read_project_file(&self, project_id: &str, project_filename: &str) -> Result<Vec<u8>>;
+    async fn get_samples(&self, project_id: &str) -> Result<Vec<String>>;
+    async fn read_sample(&self, project_id: &str, sample_name: &str) -> Result<Vec<u8>>;
+    async fn read_project_file(&self, project_id: &str) -> Result<Vec<u8>>;
 }

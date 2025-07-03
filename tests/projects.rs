@@ -60,8 +60,6 @@ async fn list_projects_successful() {
     assert_eq!(projects[0].id, "test");
     assert_eq!(projects[0].name, "test");
     assert_eq!(projects[0].user_id, "RELATION_RECORD_ID");
-    assert_eq!(projects[0].project, "filename.jpg");
-    assert_eq!(projects[0].samples, vec!["filename.jpg"]);
     assert_eq!(
         projects[0].created,
         DateTime::parse_from_rfc3339("2022-01-01 10:00:00.123Z").unwrap()
@@ -74,8 +72,6 @@ async fn list_projects_successful() {
     assert_eq!(projects[1].id, "[object Object]2");
     assert_eq!(projects[1].name, "test");
     assert_eq!(projects[1].user_id, "RELATION_RECORD_ID");
-    assert_eq!(projects[1].project, "filename.jpg");
-    assert_eq!(projects[1].samples, vec!["filename.jpg"]);
     assert_eq!(
         projects[1].created,
         DateTime::parse_from_rfc3339("2022-01-01 10:00:00.123Z").unwrap()
@@ -122,8 +118,6 @@ async fn get_project_successful() {
     assert_eq!(project.id, "test");
     assert_eq!(project.name, "Test Project");
     assert_eq!(project.user_id, "user_id");
-    assert_eq!(project.project, "project.bin");
-    assert_eq!(project.samples, vec!["sample.wav"]);
     assert_eq!(
         project.created,
         DateTime::parse_from_rfc3339("2022-01-02 10:00:00.123Z").unwrap()
@@ -170,8 +164,6 @@ async fn create_project() {
     assert_eq!(created_project.id, "test");
     assert_eq!(created_project.name, "Project Name");
     assert_eq!(created_project.user_id, "user_id");
-    assert_eq!(created_project.project, "project.bin");
-    assert_eq!(created_project.samples, vec!["sample.wav"]);
     assert_eq!(
         created_project.created,
         DateTime::parse_from_rfc3339("2022-01-02 10:00:00.123Z").unwrap()
@@ -255,13 +247,12 @@ async fn update_project_file() {
             .body(response_body);
     });
 
-    let updated_project = fixture
+    fixture
         .backend
         .update_project_file("project_id", b"updated project bytes")
         .await
         .unwrap();
 
-    assert_eq!(updated_project.project, "updated_project.bin");
     mock.assert();
 }
 
@@ -295,13 +286,12 @@ async fn add_project_sample() {
             .body(response_body);
     });
 
-    let updated_project = fixture
+    fixture
         .backend
         .add_project_sample("project_id", b"sample-bytes", "added_sample.wav")
         .await
         .unwrap();
 
-    assert!(updated_project.samples.contains(&"added_sample.wav".to_string()));
     mock.assert();
 }
 
@@ -335,13 +325,12 @@ async fn remove_project_sample() {
             .body(response_body);
     });
 
-    let updated_project = fixture
+    fixture
         .backend
         .remove_project_sample("project_id", "removed_sample.wav")
         .await
         .unwrap();
 
-    assert!(!updated_project.samples.contains(&"removed_sample.wav".to_string()));
     mock.assert();
 }
 
@@ -367,20 +356,41 @@ async fn get_project_file() {
     let mut fixture = BackendFixture::new();
     fixture.log_in().await;
 
+    let get_project_response = r#"
+    {
+        "collectionId": "pbc_484305853",
+        "collectionName": "projects",
+        "id": "test",
+        "name": "Test Project",
+        "userId": "user_id",
+        "project": "project_file.bin",
+        "samples": [],
+        "created": "2022-01-02 10:00:00.123Z",
+        "updated": "2022-03-04 10:00:00.123Z"
+    }
+    "#;
+
     let file_bytes = b"project file bytes";
-    let mock = fixture.mock_server.mock(|when, then| {
-        when.method("GET").path("/api/files/projects/project_id/project.bin");
+
+    let get_project_mock = fixture.mock_server.mock(|when, then| {
+        when.method("GET").path("/api/collections/projects/records/project_id");
+        then.status(200)
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .body(get_project_response);
+    });
+
+    let get_project_bin_mock = fixture.mock_server.mock(|when, then| {
+        when.method("GET")
+            .path("/api/files/projects/project_id/project_file.bin");
         then.status(200)
             .header("Content-Type", "application/octet-stream")
             .body(file_bytes);
     });
 
-    let bytes = fixture
-        .backend
-        .read_project_file("project_id", "project.bin")
-        .await
-        .unwrap();
+    let bytes = fixture.backend.read_project_file("project_id").await.unwrap();
     assert_eq!(bytes, file_bytes);
 
-    mock.assert();
+    get_project_mock.assert();
+    get_project_bin_mock.assert();
 }
