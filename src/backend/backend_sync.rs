@@ -4,21 +4,19 @@ use crate::backend::Backend;
 use anyhow::Result;
 
 #[allow(dead_code)]
-struct SyncBackend {
+pub struct BackendSync {
     local: Arc<dyn Backend + Send + Sync>,
     remote: Arc<dyn Backend + Send + Sync>,
 }
 
-impl SyncBackend {
+impl BackendSync {
     pub fn new(local: Arc<dyn Backend + Send + Sync>, remote: Arc<dyn Backend + Send + Sync>) -> Self {
-        SyncBackend { local, remote }
+        BackendSync { local, remote }
     }
 
     pub async fn push_project(&self, user_id: &str, project_id: &str) -> Result<()> {
-        // Get the local project
         let local_project = self.local.read_project(project_id).await?;
 
-        // Try to get the remote project to see if it exists
         let remote_project = match self.remote.read_project(project_id).await {
             Ok(project) => Some(project),
             Err(_) => None,
@@ -35,7 +33,6 @@ impl SyncBackend {
         let remote_project = if let Some(remote) = remote_project {
             remote
         } else {
-            // Create new project on remote
             self.remote.create_project(user_id).await?
         };
 

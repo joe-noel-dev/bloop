@@ -1,10 +1,10 @@
 mod auth;
 #[allow(clippy::module_inception)]
 mod backend;
+mod backend_sync;
 mod filesystem_backend;
 mod pocketbase;
 mod pocketbase_auth;
-mod sync_backend;
 
 use std::{path::Path, sync::Arc};
 use tokio::sync::Mutex;
@@ -12,7 +12,9 @@ use tokio::sync::Mutex;
 pub use anyhow::Result;
 pub use auth::Auth;
 pub use backend::Backend;
+pub use backend_sync::BackendSync;
 use chrono::{DateTime, Utc};
+pub use filesystem_backend::FilesystemBackend;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
