@@ -434,11 +434,16 @@ impl MainController {
         }
     }
 
-    fn handle_add(&self, project: Project, request: &AddRequest) -> anyhow::Result<Project> {
+    fn handle_add(&mut self, project: Project, request: &AddRequest) -> anyhow::Result<Project> {
         match request.entity.enum_value_or_default() {
             Entity::SECTION => self.handle_add_section(project, request),
             Entity::SONG => Ok(project.add_song(1)),
-            Entity::PROJECT => Ok(Project::empty().with_songs(1, 1)),
+            Entity::PROJECT => {
+                let project_info = ProjectInfo::empty();
+                self.set_project_info(project_info);
+
+                Ok(Project::empty().with_songs(1, 1))
+            }
             _ => Ok(project),
         }
     }
