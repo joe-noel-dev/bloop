@@ -14,14 +14,18 @@ use crate::{
 
 use anyhow::anyhow;
 use log::{error, info, warn};
-use std::{sync::Arc, time::Duration};
+use std::{path::PathBuf, sync::Arc, time::Duration};
 use tokio::{
     sync::{broadcast, mpsc},
     time,
 };
 
-pub async fn run_main_controller(request_rx: mpsc::Receiver<Request>, response_tx: broadcast::Sender<Response>) {
-    let mut main_controller = MainController::new(request_rx, response_tx.clone());
+pub async fn run_main_controller(
+    root_directory: PathBuf,
+    request_rx: mpsc::Receiver<Request>,
+    response_tx: broadcast::Sender<Response>,
+) {
+    let mut main_controller = MainController::new(root_directory, request_rx, response_tx.clone());
     main_controller.run().await;
 }
 
@@ -46,8 +50,12 @@ struct MainController {
 }
 
 impl MainController {
-    pub fn new(request_rx: mpsc::Receiver<Request>, response_tx: broadcast::Sender<Response>) -> Self {
-        let directories = Directories::new();
+    pub fn new(
+        root_directory: PathBuf,
+        request_rx: mpsc::Receiver<Request>,
+        response_tx: broadcast::Sender<Response>,
+    ) -> Self {
+        let directories = Directories::new(root_directory);
 
         let (action_tx, action_rx) = mpsc::channel(128);
 
@@ -85,7 +93,7 @@ impl MainController {
             action_tx,
             should_save: false,
             preferences,
-            project_info: ProjectInfo::default(),
+            project_info: ProjectInfo::empty(),
             user: None,
             local_backend,
             remote_backend,

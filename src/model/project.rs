@@ -2,18 +2,24 @@ use super::id::ID;
 use super::Song;
 use super::INVALID_ID;
 use crate::bloop::*;
+use crate::model::random_project_id;
 use anyhow::anyhow;
 use anyhow::Context;
 
 impl ProjectInfo {
     pub fn empty() -> Self {
         Self {
-            id: "".to_string(),
+            id: String::new(),
             name: "Project".to_string(),
             version: "1".to_string(),
             last_saved: "".to_string(),
             ..Default::default()
         }
+    }
+
+    pub fn with_random_id(mut self) -> Self {
+        self.id = random_project_id();
+        self
     }
 }
 

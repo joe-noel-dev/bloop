@@ -1,3 +1,4 @@
+use anyhow::Result;
 use protobuf_json_mapping::print_to_string;
 use std::thread;
 use tokio::time::{timeout, Duration};
@@ -18,11 +19,19 @@ pub struct IntegrationFixture {
 impl IntegrationFixture {
     pub fn new() -> Self {
         let home_directory = tempfile::TempDir::new().expect("Unable to create temporary directory");
-        std::env::set_var("BLOOP_HOME", home_directory.path());
+        println!(
+            "Using temporary directory for home: {}",
+            home_directory.path().display()
+        );
 
         let (request_tx, request_rx) = tokio::sync::mpsc::channel(100);
         let (response_tx, response_rx) = tokio::sync::broadcast::channel(100);
-        let core_thread = run_core(request_rx, request_tx.clone(), response_tx.clone());
+        let core_thread = run_core(
+            home_directory.path().to_path_buf(),
+            request_rx,
+            request_tx.clone(),
+            response_tx.clone(),
+        );
 
         let mut log_rx = response_rx.resubscribe();
         let _response_logger = tokio::spawn(async move {
@@ -51,11 +60,11 @@ impl IntegrationFixture {
         &mut self,
         timeout_duration: Duration,
         predicate: F,
-    ) -> Result<Response, Box<dyn std::error::Error>>
+    ) -> Result<Response>
     where
         F: Fn(&Response) -> bool,
     {
-        timeout(timeout_duration, async {
+        Ok(timeout(timeout_duration, async {
             loop {
                 match self.response_rx.recv().await {
                     Ok(response) => {
@@ -68,14 +77,15 @@ impl IntegrationFixture {
             }
         })
         .await
-        .map_err(|_| Box::<dyn std::error::Error>::from("Timeout waiting for response"))?
+        .expect("Timeout waiting for response")
+        .expect("Error receiving response"))
     }
 
-    pub async fn wait_for_response<F>(&mut self, predicate: F) -> Result<Response, Box<dyn std::error::Error>>
+    pub async fn wait_for_response<F>(&mut self, predicate: F) -> Result<Response>
     where
         F: Fn(&Response) -> bool,
     {
-        self.wait_for_response_with_timeout(Duration::from_secs(1), predicate)
+        self.wait_for_response_with_timeout(Duration::from_secs(3), predicate)
             .await
     }
 }

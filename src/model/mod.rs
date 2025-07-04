@@ -10,4 +10,4 @@ mod tempo;
 
 pub use crate::bloop::*;
 pub(crate) use action::Action;
-pub use id::{random_id, ID, INVALID_ID};
+pub use id::{random_id, random_project_id, ID, INVALID_ID};

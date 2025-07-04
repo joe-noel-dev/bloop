@@ -23,6 +23,7 @@ pub use core::run_core;
 use git_version::git_version;
 use log::info;
 use logger::{set_up_logger, LogOptions};
+use std::path::PathBuf;
 use tokio::sync::{broadcast, mpsc};
 
 #[cfg(feature = "ui")]
@@ -45,7 +46,12 @@ pub fn run_main() {
     let (request_tx, request_rx) = mpsc::channel(128);
     let (response_tx, _) = broadcast::channel(128);
 
-    let core_thread = run_core(request_rx, request_tx.clone(), response_tx.clone());
+    let core_thread = run_core(
+        get_root_directory(),
+        request_rx,
+        request_tx.clone(),
+        response_tx.clone(),
+    );
 
     #[cfg(feature = "ui")]
     if !std::env::args().any(|arg| arg == "--headless") {
@@ -53,4 +59,20 @@ pub fn run_main() {
     }
 
     core_thread.join().expect("Failed to join core thread");
+}
+
+fn get_root_directory() -> PathBuf {
+    if let Ok(bloop_home) = std::env::var("BLOOP_HOME") {
+        PathBuf::from(bloop_home)
+    } else {
+        let mut home = home::home_dir().unwrap();
+
+        if cfg!(target_os = "ios") {
+            home.push("Documents");
+        }
+
+        home.push("bloop");
+
+        home
+    }
 }

@@ -1,8 +1,10 @@
 use std::path::{Path, PathBuf};
 
-use crate::backend::{Backend, DbProject};
+use crate::{
+    backend::{Backend, DbProject},
+    model::random_project_id,
+};
 use anyhow::{Context, Result};
-use rand::Rng;
 
 /**
  * FilesystemBackend is a backend implementation that interacts with the filesystem
@@ -34,19 +36,6 @@ impl FilesystemBackend {
 
     fn get_metadata_file(&self, project_id: &str) -> PathBuf {
         self.directory_for_project(project_id).join("project.json")
-    }
-
-    fn generate_project_id() -> String {
-        const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyz0123456789";
-        const ID_LENGTH: usize = 15;
-
-        let mut rng = rand::rng();
-        (0..ID_LENGTH)
-            .map(|_| {
-                let idx = rng.random_range(0..CHARSET.len());
-                CHARSET[idx] as char
-            })
-            .collect()
     }
 
     async fn write_metadata(&self, project_id: &str, db_project: &DbProject) -> Result<()> {
@@ -108,7 +97,7 @@ impl Backend for FilesystemBackend {
     }
 
     async fn create_project(&self, user_id: &str) -> Result<DbProject> {
-        let project_id = Self::generate_project_id();
+        let project_id = random_project_id();
 
         let db_project = DbProject {
             id: project_id.clone(),

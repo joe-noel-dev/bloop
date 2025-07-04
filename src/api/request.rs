@@ -42,4 +42,15 @@ impl Request {
             ..Default::default()
         }
     }
+
+    pub fn add_song_request() -> Self {
+        Self {
+            add: Some(AddRequest {
+                entity: Entity::SONG.into(),
+                ..Default::default()
+            })
+            .into(),
+            ..Default::default()
+        }
+    }
 }

@@ -164,7 +164,11 @@ impl ProjectStore {
         project: &Project,
         samples_cache: &SamplesCache,
     ) -> anyhow::Result<()> {
-        let samples = self.backend.get_samples(project_id).await.context("Get samples")?;
+        let samples = self
+            .backend
+            .get_samples(project_id)
+            .await
+            .context("Failed to get samples from cache")?;
 
         for song in project.songs.iter() {
             let sample = match song.sample.as_ref() {
@@ -212,7 +216,11 @@ impl ProjectStore {
         project_id: &str,
         samples_cache: &mut SamplesCache,
     ) -> anyhow::Result<()> {
-        let samples = self.backend.get_samples(project_id).await.context("Get samples")?;
+        let samples = self
+            .backend
+            .get_samples(project_id)
+            .await
+            .context("Failed to get samples from cache")?;
 
         for sample_id_str in samples.iter() {
             let sample_id = match ID::from_str(sample_id_str) {

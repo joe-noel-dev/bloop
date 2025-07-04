@@ -1,4 +1,4 @@
-use std::ffi::c_void;
+use std::{ffi::c_void, path::PathBuf};
 
 use log::error;
 use protobuf::Message;
@@ -39,7 +39,7 @@ extern "C" fn bloop_init(
     let (request_tx, request_rx) = mpsc::channel(128);
     let (response_tx, response_rx) = broadcast::channel(128);
 
-    let core_thread = run_core(request_rx, request_tx.clone(), response_tx);
+    let core_thread = run_core(get_root_directory(), request_rx, request_tx.clone(), response_tx);
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
 
@@ -72,6 +72,22 @@ extern "C" fn bloop_init(
     });
 
     Box::into_raw(ctx)
+}
+
+fn get_root_directory() -> PathBuf {
+    if let Ok(bloop_home) = std::env::var("BLOOP_HOME") {
+        PathBuf::from(bloop_home)
+    } else {
+        let mut home = home::home_dir().unwrap();
+
+        if cfg!(target_os = "ios") {
+            home.push("Documents");
+        }
+
+        home.push("bloop");
+
+        home
+    }
 }
 
 #[no_mangle]
