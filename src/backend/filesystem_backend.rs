@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::backend::{Backend, DbProject};
 use anyhow::{Context, Result};
@@ -22,12 +22,14 @@ pub struct FilesystemBackend {
 }
 
 impl FilesystemBackend {
-    pub fn new(root_directory: PathBuf) -> Self {
-        Self { root_directory }
+    pub fn new(root_directory: &Path) -> Self {
+        Self {
+            root_directory: PathBuf::from(root_directory),
+        }
     }
 
     fn directory_for_project(&self, project_id: &str) -> PathBuf {
-        self.root_directory.join("projects").join(project_id)
+        self.root_directory.join(project_id)
     }
 
     fn get_metadata_file(&self, project_id: &str) -> PathBuf {
@@ -70,15 +72,14 @@ impl FilesystemBackend {
 #[async_trait::async_trait]
 impl Backend for FilesystemBackend {
     async fn get_projects(&self) -> Result<Vec<DbProject>> {
-        let mut projects = Vec::new();
-
         // Read the projects directory
-        let projects_dir = self.root_directory.join("projects");
-        if !projects_dir.exists() {
-            return Ok(projects);
+        if !self.root_directory.exists() {
+            return Ok(Vec::new());
         }
 
-        let mut entries = tokio::fs::read_dir(&projects_dir)
+        let mut projects = Vec::new();
+
+        let mut entries = tokio::fs::read_dir(&self.root_directory)
             .await
             .context("Failed to read projects directory")?;
 

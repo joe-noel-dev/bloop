@@ -11,12 +11,12 @@ struct Fixture {
 impl Fixture {
     fn new() -> Self {
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
-        let backend = FilesystemBackend::new(temp_dir.path().to_path_buf());
+        let backend = FilesystemBackend::new(temp_dir.path());
         Self { temp_dir, backend }
     }
 
     fn expected_project_dir(&self, project_id: &str) -> std::path::PathBuf {
-        self.temp_dir.path().join("projects").join(project_id)
+        self.temp_dir.path().join(project_id)
     }
 }
 
@@ -171,8 +171,7 @@ async fn test_get_projects_with_invalid_directory() {
         .expect("Failed to create project");
 
     // Create an invalid entry (file instead of directory) in the projects directory
-    let projects_dir = fixture.temp_dir.path().join("projects");
-    let invalid_file = projects_dir.join("not_a_directory.txt");
+    let invalid_file = fixture.temp_dir.path().join("not_a_directory.txt");
     tokio::fs::write(&invalid_file, "this is not a project directory")
         .await
         .expect("Failed to create invalid file");
@@ -325,7 +324,7 @@ async fn test_update_project_file() {
         .expect("Failed to create project");
 
     // Verify initial state - project field should be empty and no project.bin file
-    let project_dir = fixture.temp_dir.path().join("projects").join(&created_project.id);
+    let project_dir = fixture.expected_project_dir(&created_project.id);
     let project_file_path = project_dir.join("project.bin");
     assert!(
         !project_file_path.exists(),
