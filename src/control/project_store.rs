@@ -108,7 +108,7 @@ impl ProjectStore {
             .await
             .context(format!("Removing project: {project_id}"))?;
 
-        info!("Project removed: id = {}", project_id);
+        info!("Project removed: id = {project_id}");
         Ok(())
     }
 
@@ -118,7 +118,7 @@ impl ProjectStore {
             .await
             .context(format!("Renaming project: {project_id}"))?;
 
-        info!("Project renamed: id = {}", project_id);
+        info!("Project renamed: id = {project_id}");
         Ok(())
     }
 
@@ -220,17 +220,17 @@ impl ProjectStore {
             let sample_id = match ID::from_str(sample_id_str) {
                 std::result::Result::Ok(id) => id,
                 Err(error) => {
-                    error!("Invalid sample ID ({}): {}", sample_id_str, error);
+                    error!("Invalid sample ID ({sample_id_str}): {error}");
                     continue;
                 }
             };
 
             if samples_cache.get_sample(sample_id).is_some() {
-                debug!("Sample already in cache: {}", sample_id);
+                debug!("Sample already in cache: {sample_id}");
                 continue;
             }
 
-            debug!("Fetching sample: {}", sample_id);
+            debug!("Fetching sample: {sample_id}");
 
             let sample_bytes = self
                 .backend
@@ -244,7 +244,7 @@ impl ProjectStore {
                 .await
                 .context(format!("Error writing sample file: {}", sample_path.display()))?;
 
-            debug!("Adding sample to cache: {}", sample_id);
+            debug!("Adding sample to cache: {sample_id}");
 
             samples_cache
                 .add_sample_from_file(sample_id, AudioFileFormat::WAV, &sample_path)

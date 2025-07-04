@@ -58,8 +58,8 @@ impl IntegrationFixture {
         let _response_logger = tokio::spawn(async move {
             while let Ok(response) = log_rx.recv().await {
                 match print_to_string(&response) {
-                    Ok(message) => info!("API response: {}", message),
-                    Err(error) => error!("Error logging response: {}", error),
+                    Ok(message) => info!("API response: {message}"),
+                    Err(error) => error!("Error logging response: {error}"),
                 }
             }
         });

@@ -8,7 +8,7 @@ use super::project::project_view;
 use super::state::State;
 use super::transport::transport_view;
 
-pub fn render(state: &State) -> Element<Message> {
+pub fn render(state: &State) -> Element<'_, Message> {
     column![
         project_view(state),
         transport_view(&state.playback_state, &state.progress)

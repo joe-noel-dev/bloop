@@ -1,3 +1,5 @@
+mod common;
+
 use anyhow::Result;
 use bloop::backend::{sync_project, Backend, DbProject};
 use chrono::{DateTime, Utc};

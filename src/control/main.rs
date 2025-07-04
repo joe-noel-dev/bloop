@@ -210,8 +210,8 @@ impl MainController {
                     self.set_user(Some(user));
                 }
                 Err(error) => {
-                    error!("Unable to log in: {}", error);
-                    self.send_error_response(&format!("Login failed: {}", error));
+                    error!("Unable to log in: {error}");
+                    self.send_error_response(&format!("Login failed: {error}"));
                     self.set_user(None);
                 }
             }
@@ -219,7 +219,7 @@ impl MainController {
 
         if request.logout.as_ref().is_some() {
             if let Err(error) = self.user_store.log_out().await {
-                error!("Error logging out: {}", error);
+                error!("Error logging out: {error}");
             }
             self.set_user(None);
         }
@@ -300,7 +300,7 @@ impl MainController {
                         self.set_user(Some(user));
                     }
                     Err(error) => {
-                        info!("Unable to refresh auth: {}", error);
+                        info!("Unable to refresh auth: {error}");
                         self.set_user(None);
                     }
                 }
@@ -344,7 +344,7 @@ impl MainController {
     }
 
     fn send_error_response(&self, message: &str) {
-        error!("{}", message);
+        error!("{message}");
         self.send_response(Response::default().with_error(message));
     }
 

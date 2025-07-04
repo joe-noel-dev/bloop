@@ -43,7 +43,7 @@ impl FilesystemBackend {
         let metadata_bytes = serde_json::to_vec(db_project).context("Failed to serialize project metadata")?;
         tokio::fs::write(&metadata_file_path, metadata_bytes)
             .await
-            .context(format!("Failed to write project metadata file for {}", project_id))?;
+            .context(format!("Failed to write project metadata file for {project_id}"))?;
         Ok(())
     }
 
@@ -51,7 +51,7 @@ impl FilesystemBackend {
         let metadata_file_path = self.get_metadata_file(project_id);
         let metadata_bytes = tokio::fs::read(&metadata_file_path)
             .await
-            .context(format!("Failed to read project metadata for {}", project_id))?;
+            .context(format!("Failed to read project metadata for {project_id}"))?;
         let db_project: DbProject =
             serde_json::from_slice(&metadata_bytes).context("Failed to deserialize project metadata")?;
         Ok(db_project)
@@ -111,8 +111,7 @@ impl Backend for FilesystemBackend {
 
         // Create the project directory
         tokio::fs::create_dir_all(&project_dir).await.context(format!(
-            "Failed to create project directory for user {} and project {}",
-            user_id, project_id
+            "Failed to create project directory for user {user_id} and project {project_id}"
         ))?;
 
         // Write the project metadata file
@@ -157,7 +156,7 @@ impl Backend for FilesystemBackend {
         let project_file_path = project_dir.join("project.bin");
         tokio::fs::write(&project_file_path, project_bytes)
             .await
-            .context(format!("Failed to write project file for {}", project_id))?;
+            .context(format!("Failed to write project file for {project_id}"))?;
 
         // Update the project field and updated timestamp
         db_project.updated = chrono::Utc::now();
@@ -187,7 +186,7 @@ impl Backend for FilesystemBackend {
         }
 
         // Write the sample file
-        let sample_file_path = samples_dir.join(format!("{}.wav", sample_name));
+        let sample_file_path = samples_dir.join(format!("{sample_name}.wav"));
         tokio::fs::write(&sample_file_path, sample_bytes)
             .await
             .map_err(|e| anyhow::anyhow!("Failed to write sample file: {}", e))?;
@@ -212,7 +211,7 @@ impl Backend for FilesystemBackend {
         let mut project = self.read_metadata(project_id).await?;
 
         // Remove the sample file from the filesystem
-        let sample_file_path = project_dir.join("samples").join(format!("{}.wav", sample_name));
+        let sample_file_path = project_dir.join("samples").join(format!("{sample_name}.wav"));
         if !sample_file_path.exists() {
             return Err(anyhow::anyhow!("Sample {} does not exist", sample_name));
         }
@@ -238,7 +237,7 @@ impl Backend for FilesystemBackend {
         if project_dir.exists() {
             tokio::fs::remove_dir_all(&project_dir)
                 .await
-                .context(format!("Failed to remove project directory for {}", project_id))?;
+                .context(format!("Failed to remove project directory for {project_id}"))?;
         }
 
         Ok(())
@@ -262,7 +261,7 @@ impl Backend for FilesystemBackend {
         let mut sample_names = Vec::new();
         let mut entries = tokio::fs::read_dir(&samples_dir)
             .await
-            .context(format!("Failed to read samples directory for project {}", project_id))?;
+            .context(format!("Failed to read samples directory for project {project_id}"))?;
 
         while let Some(entry) = entries.next_entry().await.context("Failed to read sample entry")? {
             if entry.file_type().await?.is_file() {
@@ -299,7 +298,7 @@ impl Backend for FilesystemBackend {
             return Err(anyhow::anyhow!("Invalid sample name: '{}'", sample_name));
         }
 
-        let sample_file_path = project_dir.join("samples").join(format!("{}.wav", sample_name));
+        let sample_file_path = project_dir.join("samples").join(format!("{sample_name}.wav"));
 
         // Check if sample file exists
         if !sample_file_path.exists() {
@@ -309,7 +308,7 @@ impl Backend for FilesystemBackend {
         // Read and return sample contents
         tokio::fs::read(&sample_file_path)
             .await
-            .context(format!("Failed to read sample file for sample '{}'", sample_name))
+            .context(format!("Failed to read sample file for sample '{sample_name}'"))
     }
 
     async fn read_project_file(&self, project_id: &str) -> Result<Vec<u8>> {
@@ -333,6 +332,6 @@ impl Backend for FilesystemBackend {
         // Read and return project file contents
         tokio::fs::read(&project_file_path)
             .await
-            .context(format!("Failed to read project file for project '{}'", project_id))
+            .context(format!("Failed to read project file for project '{project_id}'"))
     }
 }

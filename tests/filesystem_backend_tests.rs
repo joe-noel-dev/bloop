@@ -503,7 +503,7 @@ async fn test_add_project_sample() {
     assert!(samples_dir.exists(), "Samples directory should be created");
 
     // Verify the sample file was created with the correct content
-    let sample_file_path = samples_dir.join(format!("{}.wav", sample_name));
+    let sample_file_path = samples_dir.join(format!("{sample_name}.wav"));
     assert!(sample_file_path.exists(), "Sample file should be created");
     let written_bytes = tokio::fs::read(&sample_file_path)
         .await
@@ -613,7 +613,7 @@ async fn test_add_project_sample_special_characters() {
 
     // Verify the file was created correctly
     let project_dir = fixture.expected_project_dir(&created_project.id);
-    let sample_file_path = project_dir.join("samples").join(format!("{}.wav", sample_name));
+    let sample_file_path = project_dir.join("samples").join(format!("{sample_name}.wav"));
     assert!(
         sample_file_path.exists(),
         "Sample file with special characters should exist"
@@ -652,7 +652,7 @@ async fn test_add_project_sample_overwrite_existing() {
 
     // Verify the file contains the second content (overwritten)
     let project_dir = fixture.expected_project_dir(&created_project.id);
-    let sample_file_path = project_dir.join("samples").join(format!("{}.wav", sample_name));
+    let sample_file_path = project_dir.join("samples").join(format!("{sample_name}.wav"));
     let written_bytes = tokio::fs::read(&sample_file_path)
         .await
         .expect("Failed to read overwritten sample file");
@@ -688,7 +688,7 @@ async fn test_remove_project_sample() {
 
     // Verify the sample exists
     let project_dir = fixture.expected_project_dir(&created_project.id);
-    let sample_file_path = project_dir.join("samples").join(format!("{}.wav", sample_name));
+    let sample_file_path = project_dir.join("samples").join(format!("{sample_name}.wav"));
     assert!(sample_file_path.exists(), "Sample file should exist");
 
     // Test removing the project sample
@@ -871,7 +871,7 @@ async fn test_remove_project_sample_special_characters() {
 
     // Verify the file was removed correctly
     let project_dir = fixture.expected_project_dir(&created_project.id);
-    let sample_file_path = project_dir.join("samples").join(format!("{}.wav", sample_name));
+    let sample_file_path = project_dir.join("samples").join(format!("{sample_name}.wav"));
     assert!(
         !sample_file_path.exists(),
         "Sample file with special characters should be removed"

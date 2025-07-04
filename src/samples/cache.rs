@@ -149,7 +149,7 @@ impl SamplesCache {
             if let Some(filename) = path.file_name().and_then(OsStr::to_str) {
                 if let Some((id_str, _ext)) = filename.split_once('.') {
                     if let Ok(id) = id_str.parse::<ID>() {
-                        debug!("Scan found sample: {}", id);
+                        debug!("Scan found sample: {id}");
                         let mut sample = Sample::new(filename);
                         sample.set_cache_location(&path);
                         sample.set_cached(true);

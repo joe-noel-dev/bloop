@@ -10,7 +10,7 @@ use crate::model::{Section, ID, INVALID_ID};
 
 use super::{constants::display_units, message::Message, state::State};
 
-pub fn sections_view(song_id: ID, state: &State) -> Element<Message> {
+pub fn sections_view(song_id: ID, state: &State) -> Element<'_, Message> {
     let song = match state.project.song_with_id(song_id) {
         Some(song) => song,
         None => return column![].into(),

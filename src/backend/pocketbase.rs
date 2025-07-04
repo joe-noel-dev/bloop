@@ -105,7 +105,7 @@ impl Backend for PocketbaseBackend {
                 match project {
                     Ok(project) => Some(project),
                     Err(error) => {
-                        warn!("Failed to parse project (item = {:?}, error = {})", item, error);
+                        warn!("Failed to parse project (item = {item:?}, error = {error})");
                         None
                     }
                 }

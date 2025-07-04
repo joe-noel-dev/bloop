@@ -9,10 +9,7 @@ pub async fn sync_project(
 ) -> Result<()> {
     let source_project = source.read_project(project_id).await?;
 
-    let destination_project = match destination.read_project(project_id).await {
-        Ok(project) => Some(project),
-        Err(_) => None,
-    };
+    let destination_project = (destination.read_project(project_id).await).ok();
 
     if let Some(destination_project) = &destination_project {
         if destination_project.updated == source_project.updated {

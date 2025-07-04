@@ -78,7 +78,7 @@ impl Auth for PocketbaseAuth {
 
         let token_path = self.root_directory.join("token");
         if let Err(e) = std::fs::remove_file(&token_path) {
-            warn!("Failed to remove token file: {}", e);
+            warn!("Failed to remove token file: {e}");
         } else {
             info!("Token file removed successfully");
         }
@@ -128,14 +128,14 @@ impl Auth for PocketbaseAuth {
 fn write_token(root_directory: &Path, token: &str) {
     if !root_directory.exists() {
         if let Err(e) = std::fs::create_dir_all(root_directory) {
-            warn!("Failed to create directory: {}", e);
+            warn!("Failed to create directory: {e}");
             return;
         }
     }
 
     let token_path = root_directory.join("token");
     if let Err(e) = std::fs::write(&token_path, token) {
-        warn!("Failed to write token to disk: {}", e);
+        warn!("Failed to write token to disk: {e}");
     }
 }
 
