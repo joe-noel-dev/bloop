@@ -20,7 +20,7 @@ fn init_logger() {
 pub struct BackendFixture {
     pub temporary_directory: tempfile::TempDir,
     pub mock_server: MockServer,
-    pub backend: Box<dyn Backend>,
+    pub backend: Arc<dyn Backend>,
     pub auth: Arc<Mutex<dyn Auth + Send + Sync>>,
 }
 

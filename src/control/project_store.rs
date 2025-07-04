@@ -7,20 +7,20 @@ use crate::{
 use anyhow::{anyhow, Context, Ok};
 use log::{debug, error, info};
 use protobuf::Message;
-use std::str::FromStr;
 use std::{
     fs,
     path::{Path, PathBuf},
 };
+use std::{str::FromStr, sync::Arc};
 
 pub struct ProjectStore {
     root_directory: PathBuf,
     temporary_directory: tempfile::TempDir,
-    backend: Box<dyn Backend>,
+    backend: Arc<dyn Backend>,
 }
 
 impl ProjectStore {
-    pub fn new(root_directory: &Path, backend: Box<dyn Backend>) -> Self {
+    pub fn new(root_directory: &Path, backend: Arc<dyn Backend>) -> Self {
         if !root_directory.exists() {
             fs::create_dir_all(root_directory)
                 .unwrap_or_else(|_| panic!("Couldn't create directory: {}", root_directory.to_str().unwrap()));

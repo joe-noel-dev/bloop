@@ -43,10 +43,10 @@ pub fn create_pocketbase_auth(host: Option<String>, root_directory: &Path) -> Ar
     Arc::new(Mutex::new(pocketbase_auth::PocketbaseAuth::new(host, root_directory)))
 }
 
-pub fn create_pocketbase_backend(host: Option<String>, auth: Arc<Mutex<dyn Auth + Send + Sync>>) -> Box<impl Backend> {
-    Box::new(pocketbase::PocketbaseBackend::new(host, auth))
+pub fn create_pocketbase_backend(host: Option<String>, auth: Arc<Mutex<dyn Auth + Send + Sync>>) -> Arc<impl Backend> {
+    Arc::new(pocketbase::PocketbaseBackend::new(host, auth))
 }
 
-pub fn create_filesystem_backend(root_directory: &Path) -> Box<dyn Backend> {
-    Box::new(FilesystemBackend::new(root_directory))
+pub fn create_filesystem_backend(root_directory: &Path) -> Arc<dyn Backend> {
+    Arc::new(FilesystemBackend::new(root_directory))
 }
