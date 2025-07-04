@@ -19,7 +19,7 @@ mod types;
 mod ui;
 mod waveform;
 
-use core::run_core;
+pub use core::run_core;
 use git_version::git_version;
 use log::info;
 use logger::{set_up_logger, LogOptions};

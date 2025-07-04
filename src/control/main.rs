@@ -2,7 +2,7 @@ use super::{directories::Directories, project_store::ProjectStore, waveform_stor
 
 use crate::{
     audio::AudioController,
-    backend::{create_pocketbase_auth, create_pocketbase_backend},
+    backend::{create_filesystem_backend, create_pocketbase_auth, create_pocketbase_backend, sync_project, Backend},
     bloop::*,
     control::user_store::UserStore,
     midi::MidiController,
@@ -14,7 +14,7 @@ use crate::{
 
 use anyhow::anyhow;
 use log::{error, info, warn};
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 use tokio::{
     sync::{broadcast, mpsc},
     time,
@@ -41,6 +41,8 @@ struct MainController {
     preferences: Preferences,
     project_info: ProjectInfo,
     user: Option<User>,
+    local_backend: Arc<dyn Backend>,
+    remote_backend: Arc<dyn Backend>,
 }
 
 impl MainController {
@@ -65,11 +67,13 @@ impl MainController {
 
         let host = std::env::var("BACKEND_HOST").ok();
         let auth = create_pocketbase_auth(host.clone(), &directories.backend);
-        let backend = create_pocketbase_backend(host, auth.clone());
+        let remote_backend = create_pocketbase_backend(host.clone(), auth.clone());
+
+        let local_backend = create_filesystem_backend(&directories.projects);
 
         Self {
             samples_cache: SamplesCache::new(&directories.samples),
-            project_store: ProjectStore::new(&directories.projects, backend),
+            project_store: ProjectStore::new(&directories.projects, local_backend.clone()),
             user_store: UserStore::new(auth.clone()),
             request_rx,
             response_tx: response_tx.clone(),
@@ -83,6 +87,8 @@ impl MainController {
             preferences,
             project_info: ProjectInfo::default(),
             user: None,
+            local_backend,
+            remote_backend,
         }
     }
 
@@ -164,25 +170,18 @@ impl MainController {
         }
 
         if let Some(duplicate_project_request) = request.duplicate_project.as_ref() {
-            let (old_project, old_project_info) = self
+            let (source_project, source_project_info) = self
                 .project_store
                 .load(&duplicate_project_request.project_id, &mut self.samples_cache)
                 .await?;
 
-            let user_id = match &self.user {
-                Some(user) => user.id.clone(),
-                None => {
-                    return Err(anyhow!("User not logged in, cannot duplicate project"));
-                }
-            };
-
-            let project_id = self
+            let dest_project_id = self
                 .project_store
-                .save(None, old_project, &self.samples_cache, &user_id)
+                .save(None, source_project, &self.samples_cache, &self.get_user_id())
                 .await?;
 
-            let mut project_info = old_project_info.clone();
-            project_info.id = project_id.clone();
+            let mut project_info = source_project_info.clone();
+            project_info.id = dest_project_id.clone();
             self.set_project_info(project_info);
         }
 
@@ -215,8 +214,19 @@ impl MainController {
             self.set_user(None);
         }
 
+        if let Some(project_sync) = request.project_sync.as_ref() {
+            self.handle_project_sync(project_sync).await?;
+        }
+
         self.set_project(project);
         Ok(())
+    }
+
+    fn get_user_id(&self) -> String {
+        match &self.user {
+            Some(user) => user.id.clone(),
+            None => String::new(),
+        }
     }
 
     async fn save_project(&mut self, project: Project) -> anyhow::Result<Project> {
@@ -226,16 +236,9 @@ impl MainController {
             Some(self.project_info.id.clone())
         };
 
-        let user_id = match &self.user {
-            Some(user) => user.id.clone(),
-            None => {
-                return Err(anyhow!("User not logged in, cannot save project"));
-            }
-        };
-
         let project_id = self
             .project_store
-            .save(project_id, project.clone(), &self.samples_cache, &user_id)
+            .save(project_id, project.clone(), &self.samples_cache, &self.get_user_id())
             .await?;
 
         let mut project_info = self.project_info.clone();
@@ -348,6 +351,7 @@ impl MainController {
             tokio::select! {
                 Some(request) = self.request_rx.recv() => {
                     if let Err(error) = self.handle_request(request).await {
+                        warn!("Error handling request: {error}");
                         self.send_error_response(&error.to_string());
                     }
                 }
@@ -563,6 +567,62 @@ impl MainController {
                 return Err(anyhow!("Invalid transport method: {error}"));
             }
         }
+
+        Ok(())
+    }
+
+    async fn handle_project_sync(&mut self, project_sync: &ProjectSyncRequest) -> anyhow::Result<()> {
+        let user_id = match &self.user {
+            Some(user) => user.id.clone(),
+            None => {
+                return Err(anyhow!("User not logged in, cannot sync project"));
+            }
+        };
+
+        self.send_response(Response::default().with_project_sync(&ProjectSyncResponse {
+            project_id: project_sync.project_id.clone(),
+            status: SyncStatus::SYNC_STATUS_IN_PROGRESS.into(),
+            ..Default::default()
+        }));
+
+        let result = match project_sync.method.enum_value_or_default() {
+            SyncMethod::SYNC_METHOD_UNDEFINED => {
+                return Err(anyhow!("Undefined sync method"));
+            }
+            SyncMethod::SYNC_METHOD_PUSH => {
+                sync_project(
+                    &user_id,
+                    &project_sync.project_id,
+                    self.local_backend.as_ref(),
+                    self.remote_backend.as_ref(),
+                )
+                .await
+            }
+            SyncMethod::SYNC_METHOD_PULL => {
+                sync_project(
+                    &user_id,
+                    &project_sync.project_id,
+                    self.remote_backend.as_ref(),
+                    self.local_backend.as_ref(),
+                )
+                .await
+            }
+        };
+
+        let response = Response::default().with_project_sync(&ProjectSyncResponse {
+            project_id: project_sync.project_id.clone(),
+            status: if result.is_err() {
+                SyncStatus::SYNC_STATUS_ERROR
+            } else {
+                SyncStatus::SYNC_STATUS_COMPLETE
+            }
+            .into(),
+            ..Default::default()
+        });
+
+        // TODO: Include projects in response
+
+        self.send_response(response);
 
         Ok(())
     }

@@ -1,6 +1,25 @@
 use crate::{bloop::*, model::ID};
 
 impl Request {
+    pub fn get_request(entity: Entity, id: ID) -> Self {
+        Self {
+            get: Some(GetRequest {
+                entity: entity.into(),
+                id,
+                ..Default::default()
+            })
+            .into(),
+            ..Default::default()
+        }
+    }
+
+    pub fn save_project_request() -> Self {
+        Self {
+            save: Some(SaveProjectRequest { ..Default::default() }).into(),
+            ..Default::default()
+        }
+    }
+
     pub fn select_request(entity: Entity, id: ID) -> Self {
         Self {
             select: Some(SelectRequest {

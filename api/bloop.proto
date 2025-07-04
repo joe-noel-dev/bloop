@@ -269,10 +269,10 @@ message User {
 }
 
 enum UserState {
-    UNDEFINED = 0;
-    SIGNED_OUT = 1;
-    SIGNING_IN = 2;
-    SIGNED_IN = 3;
+    USER_STATE_UNDEFINED = 0;
+    USER_STATE_SIGNED_OUT = 1;
+    USER_STATE_SIGNING_IN = 2;
+    USER_STATE_SIGNED_IN = 3;
 }
 
 message UserStatusResponse {
@@ -281,8 +281,9 @@ message UserStatusResponse {
 }
 
 enum SyncMethod {
-    PUSH = 0;
-    PULL = 1;
+    SYNC_METHOD_UNDEFINED = 0;
+    SYNC_METHOD_PUSH = 1;
+    SYNC_METHOD_PULL = 2;
 }
 
 message ProjectSyncRequest {
@@ -291,10 +292,10 @@ message ProjectSyncRequest {
 }
 
 enum SyncStatus {
-    NO_STATUS = 0;
-    IN_PROGRESS = 1;
-    COMPLETE = 2;
-    ERROR = 3;
+    SYNC_STATUS_UNDEFINED = 0;
+    SYNC_STATUS_IN_PROGRESS = 1;
+    SYNC_STATUS_COMPLETE = 2;
+    SYNC_STATUS_ERROR = 3;
 }
 
 message ProjectSyncResponse {
