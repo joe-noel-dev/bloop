@@ -45,9 +45,9 @@ tokio-tungstenite = "0.27.0"
 tokio-util = "0.7.15"
 
 [dev-dependencies]
-httpmock = "0.7.0"
 env_logger = "0.11.8"
 protobuf-json-mapping = "3.7.2"
+wiremock = "0.6.4"
 
 [build-dependencies]
 cbindgen = "0.29.0"

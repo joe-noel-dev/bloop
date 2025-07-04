@@ -5,7 +5,7 @@ use common::IntegrationFixture;
 
 #[tokio::test]
 async fn add_song_request() {
-    let mut fixture = IntegrationFixture::new();
+    let mut fixture = IntegrationFixture::new().await;
 
     let request = Request::get_request(Entity::ALL, 0);
     fixture.send_request(request).await;

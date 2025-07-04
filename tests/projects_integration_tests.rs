@@ -5,7 +5,7 @@ use common::IntegrationFixture;
 
 #[tokio::test]
 async fn get_projects_request() {
-    let mut fixture = IntegrationFixture::new();
+    let mut fixture = IntegrationFixture::new().await;
 
     let request = Request::get_request(Entity::ALL, 0);
     fixture.send_request(request).await;
@@ -17,7 +17,7 @@ async fn get_projects_request() {
 
 #[tokio::test]
 async fn get_projects_request_with_saved_project() {
-    let mut fixture = IntegrationFixture::new();
+    let mut fixture = IntegrationFixture::new().await;
 
     // First, save a project to ensure we have something to retrieve
     let save_request = Request::save_project_request();

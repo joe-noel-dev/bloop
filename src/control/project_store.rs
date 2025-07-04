@@ -17,10 +17,11 @@ pub struct ProjectStore {
     root_directory: PathBuf,
     temporary_directory: tempfile::TempDir,
     backend: Arc<dyn Backend>,
+    remote_backend: Arc<dyn Backend>,
 }
 
 impl ProjectStore {
-    pub fn new(root_directory: &Path, backend: Arc<dyn Backend>) -> Self {
+    pub fn new(root_directory: &Path, backend: Arc<dyn Backend>, remote_backend: Arc<dyn Backend>) -> Self {
         if !root_directory.exists() {
             fs::create_dir_all(root_directory)
                 .unwrap_or_else(|_| panic!("Couldn't create directory: {}", root_directory.to_str().unwrap()));
@@ -30,6 +31,7 @@ impl ProjectStore {
             root_directory: PathBuf::from(root_directory),
             temporary_directory: tempfile::TempDir::new().expect("Unable to create temporary directory"),
             backend,
+            remote_backend,
         }
     }
 
@@ -93,19 +95,11 @@ impl ProjectStore {
     }
 
     pub async fn projects(&self) -> anyhow::Result<Vec<ProjectInfo>> {
-        let projects = self.backend.get_projects().await.context("Error getting projects")?;
+        projects_from_backend(self.backend.clone()).await
+    }
 
-        let projects_info = projects
-            .iter()
-            .map(|db_project| ProjectInfo {
-                id: db_project.id.clone(),
-                name: db_project.name.clone(),
-                last_saved: db_project.updated.to_rfc3339(),
-                ..Default::default()
-            })
-            .collect();
-
-        Ok(projects_info)
+    pub async fn cloud_projects(&self) -> anyhow::Result<Vec<ProjectInfo>> {
+        projects_from_backend(self.remote_backend.clone()).await
     }
 
     pub async fn remove_project(&self, project_id: &str) -> anyhow::Result<()> {
@@ -259,4 +253,20 @@ impl ProjectStore {
 
         Ok(())
     }
+}
+
+async fn projects_from_backend(backend: Arc<dyn Backend>) -> anyhow::Result<Vec<ProjectInfo>> {
+    let projects = backend.get_projects().await?;
+
+    let projects_info = projects
+        .iter()
+        .map(|db_project| ProjectInfo {
+            id: db_project.id.clone(),
+            name: db_project.name.clone(),
+            last_saved: db_project.updated.to_rfc3339(),
+            ..Default::default()
+        })
+        .collect();
+
+    Ok(projects_info)
 }

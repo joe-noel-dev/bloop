@@ -1,6 +1,7 @@
 use anyhow::Result;
+use log::{error, info};
 use protobuf_json_mapping::print_to_string;
-use std::thread;
+use std::{sync::Once, thread};
 use tokio::time::{timeout, Duration};
 
 use bloop::{
@@ -8,7 +9,7 @@ use bloop::{
     run_core,
 };
 
-use crate::common::BackendFixture;
+use crate::common::Mocketbase;
 
 pub struct IntegrationFixture {
     _home_directory: tempfile::TempDir,
@@ -16,24 +17,38 @@ pub struct IntegrationFixture {
     request_tx: tokio::sync::mpsc::Sender<Request>,
     response_rx: tokio::sync::broadcast::Receiver<bloop::bloop::Response>,
     _response_logger: tokio::task::JoinHandle<()>,
-    backend_fixture: BackendFixture,
+    mocketbase: Mocketbase,
+}
+
+static INIT: Once = Once::new();
+
+fn init_logger() {
+    INIT.call_once(|| {
+        env_logger::builder()
+            .is_test(true)
+            .filter_level(log::LevelFilter::Debug)
+            .try_init()
+            .ok();
+    });
 }
 
 impl IntegrationFixture {
-    pub fn new() -> Self {
+    pub async fn new() -> Self {
+        init_logger();
+
         let home_directory = tempfile::TempDir::new().expect("Unable to create temporary directory");
         println!(
             "Using temporary directory for home: {}",
             home_directory.path().display()
         );
 
-        let backend_fixture = BackendFixture::new();
+        let mocketbase = Mocketbase::new().await;
 
         let (request_tx, request_rx) = tokio::sync::mpsc::channel(100);
         let (response_tx, response_rx) = tokio::sync::broadcast::channel(100);
         let core_thread = run_core(
             home_directory.path().to_path_buf(),
-            backend_fixture.mock_server.base_url(),
+            mocketbase.uri(),
             request_rx,
             request_tx.clone(),
             response_tx.clone(),
@@ -43,8 +58,8 @@ impl IntegrationFixture {
         let _response_logger = tokio::spawn(async move {
             while let Ok(response) = log_rx.recv().await {
                 match print_to_string(&response) {
-                    Ok(message) => println!("{}", message),
-                    Err(error) => eprintln!("Error logging response: {}", error),
+                    Ok(message) => info!("API response: {}", message),
+                    Err(error) => error!("Error logging response: {}", error),
                 }
             }
         });
@@ -55,8 +70,12 @@ impl IntegrationFixture {
             request_tx,
             response_rx,
             _response_logger,
-            backend_fixture,
+            mocketbase,
         }
+    }
+
+    pub fn mocketbase(&mut self) -> &mut Mocketbase {
+        &mut self.mocketbase
     }
 
     pub async fn send_request(&self, request: Request) {

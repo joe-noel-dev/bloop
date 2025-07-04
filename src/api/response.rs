@@ -21,6 +21,11 @@ impl crate::bloop::Response {
         self
     }
 
+    pub fn with_cloud_projects(mut self, projects: &[ProjectInfo]) -> Self {
+        self.cloud_projects = projects.to_vec();
+        self
+    }
+
     pub fn with_playback_state(mut self, playback_state: &PlaybackState) -> Self {
         self.playback_state = Some(playback_state.clone()).into();
         self

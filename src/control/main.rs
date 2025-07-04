@@ -82,7 +82,7 @@ impl MainController {
 
         Self {
             samples_cache: SamplesCache::new(&directories.samples),
-            project_store: ProjectStore::new(&directories.projects, local_backend.clone()),
+            project_store: ProjectStore::new(&directories.projects, local_backend.clone(), remote_backend.clone()),
             user_store: UserStore::new(auth.clone()),
             request_rx,
             response_tx: response_tx.clone(),
@@ -315,7 +315,20 @@ impl MainController {
             }
             Entity::PROJECTS => {
                 let projects = self.project_store.projects().await?;
-                self.send_response(Response::default().with_projects(&projects));
+
+                let cloud_projects = match self.project_store.cloud_projects().await {
+                    Ok(cloud_projects) => cloud_projects,
+                    Err(error) => {
+                        warn!("Error getting cloud projects: {error}");
+                        vec![]
+                    }
+                };
+
+                self.send_response(
+                    Response::default()
+                        .with_projects(&projects)
+                        .with_cloud_projects(&cloud_projects),
+                );
             }
             Entity::WAVEFORM => {
                 self.waveform_store.get_waveform(get_request.id, &self.samples_cache)?;
