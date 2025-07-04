@@ -31,13 +31,39 @@ struct ProjectPreview: View {
     }
 }
 
+enum ProjectLocation: Hashable {
+    case local(String)
+    case cloud(String)
+    
+    var id: String {
+        switch self {
+        case .local(let id), .cloud(let id):
+            return id
+        }
+    }
+    
+    var isLocal: Bool {
+        switch self {
+        case .local: return true
+        case .cloud: return false
+        }
+    }
+    
+    var isCloud: Bool {
+        switch self {
+        case .local: return false
+        case .cloud: return true
+        }
+    }
+}
+
 struct ProjectsView: View {
     var projects: [Bloop_ProjectInfo]
     var cloudProjects: [Bloop_ProjectInfo]
     var dispatch: Dispatch
-    var dismiss: () -> Void 
+    var dismiss: () -> Void
 
-    @State private var selected: String?
+    @State private var selected: ProjectLocation?
     @State private var selectedFileURL: URL?
 
     private var sortedProjects: [Bloop_ProjectInfo] {
@@ -51,16 +77,6 @@ struct ProjectsView: View {
             a.lastSaved > b.lastSaved
         }
     }
-    
-    private var isSelectedProjectCloud: Bool {
-        guard let selected = selected else { return false }
-        return sortedCloudProjects.contains { $0.id == selected }
-    }
-    
-    private var isSelectedProjectLocal: Bool {
-        guard let selected = selected else { return false }
-        return sortedProjects.contains { $0.id == selected }
-    }
 
     var body: some View {
 
@@ -70,7 +86,11 @@ struct ProjectsView: View {
                 if !sortedProjects.isEmpty {
                     Section("Local Projects") {
                         ForEach(sortedProjects) { project in
-                            ProjectPreview(project: project, selected: selected == project.id)
+                            ProjectPreview(project: project, selected: selected?.id == project.id && selected?.isLocal == true)
+                                .tag(ProjectLocation.local(project.id))
+                                .onTapGesture {
+                                    selected = .local(project.id)
+                                }
                         }
                         .onDelete { offsets in
                             let projectIds = offsets.map { offset in
@@ -88,7 +108,11 @@ struct ProjectsView: View {
                 if !sortedCloudProjects.isEmpty {
                     Section("Cloud Projects") {
                         ForEach(sortedCloudProjects) { project in
-                            ProjectPreview(project: project, selected: selected == project.id)
+                            ProjectPreview(project: project, selected: selected?.id == project.id && selected?.isCloud == true)
+                                .tag(ProjectLocation.cloud(project.id))
+                                .onTapGesture {
+                                    selected = .cloud(project.id)
+                                }
                         }
                     }
                 }
@@ -100,18 +124,18 @@ struct ProjectsView: View {
                 if let selected = selected {
 
                     
-                    if isSelectedProjectCloud {
+                    if selected.isCloud {
                         Button {
-                            dispatch(pullProjectAction(selected))
+                            dispatch(pullProjectAction(selected.id))
                         } label: {
                             Label("Pull", systemImage: "arrow.down.circle")
                                 .labelStyle(.titleOnly)
                         }
                     }
                     
-                    if isSelectedProjectLocal {
+                    if selected.isLocal {
                         Button {
-                            let action = loadProjectAction(selected)
+                            let action = loadProjectAction(selected.id)
                             dispatch(action)
                             dismiss()
                         } label: {
@@ -120,7 +144,7 @@ struct ProjectsView: View {
                         }
 
                         Button {
-                            let action = duplicateProjectAction(selected)
+                            let action = duplicateProjectAction(selected.id)
                             dispatch(action)
                             dismiss()
                         } label: {
@@ -129,7 +153,7 @@ struct ProjectsView: View {
                         }
                         
                         Button {
-                            dispatch(pushProjectAction(selected))
+                            dispatch(pushProjectAction(selected.id))
                         } label: {
                             Label("Push", systemImage: "arrow.up.circle")
                                 .labelStyle(.titleOnly)

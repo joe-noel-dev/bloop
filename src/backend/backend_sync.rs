@@ -1,5 +1,6 @@
 use crate::backend::Backend;
 use anyhow::Result;
+use log::info;
 
 pub async fn sync_project(
     user_id: &str,
@@ -7,6 +8,8 @@ pub async fn sync_project(
     source: &dyn Backend,
     destination: &dyn Backend,
 ) -> Result<()> {
+    info!("Syncing project {source_project_id}");
+
     let source_project = source.read_project(source_project_id).await?;
 
     let destination_project = (destination.read_project(source_project_id).await).ok();
@@ -31,6 +34,7 @@ pub async fn sync_project(
 
     // Update metadata (name, updated timestamp)
     if destination_project.name != source_project.name {
+        info!("Updating project name");
         destination
             .update_project_name(destination_project_id, &source_project.name)
             .await?;
@@ -41,10 +45,14 @@ pub async fn sync_project(
 
     // Update the project file
     if let Ok(project_bytes) = source.read_project_file(source_project_id).await {
+        info!("Updating project file");
+
         destination
             .update_project_file(destination_project_id, &project_bytes)
             .await?;
     }
+
+    info!("Project sync complete");
 
     Ok(())
 }
@@ -60,6 +68,7 @@ async fn push_samples(
 
     for sample in source_samples.iter() {
         if !destination_samples.contains(sample) {
+            info!("Adding sample {sample} to destination project {destination_project_id}");
             let sample_bytes = source.read_sample(source_project_id, sample).await?;
             destination
                 .add_project_sample(destination_project_id, &sample_bytes, sample)
@@ -69,6 +78,7 @@ async fn push_samples(
 
     for sample in destination_samples.iter() {
         if !source_samples.contains(sample) {
+            info!("Removing sample {sample} from destination project {destination_project_id}");
             destination
                 .remove_project_sample(destination_project_id, sample)
                 .await?;
