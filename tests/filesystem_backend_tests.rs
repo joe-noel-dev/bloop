@@ -26,7 +26,7 @@ async fn test_create_project() {
     let user_id = "test_user";
 
     // Test creating a project
-    let result = fixture.backend.create_project(user_id).await;
+    let result = fixture.backend.create_project(user_id, None).await;
     assert!(result.is_ok(), "Failed to create project: {:?}", result.err());
 
     let db_project = result.unwrap();
@@ -88,7 +88,7 @@ async fn test_get_projects_single_project() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -112,17 +112,17 @@ async fn test_get_projects_multiple_projects() {
     // Create multiple projects
     let project1 = fixture
         .backend
-        .create_project("user1")
+        .create_project("user1", None)
         .await
         .expect("Failed to create project 1");
     let project2 = fixture
         .backend
-        .create_project("user2")
+        .create_project("user2", None)
         .await
         .expect("Failed to create project 2");
     let project3 = fixture
         .backend
-        .create_project("")
+        .create_project("", None)
         .await // anonymous user
         .expect("Failed to create project 3");
 
@@ -166,7 +166,7 @@ async fn test_get_projects_with_invalid_directory() {
     // Create a project first
     let _project = fixture
         .backend
-        .create_project("test_user")
+        .create_project("test_user", None)
         .await
         .expect("Failed to create project");
 
@@ -192,7 +192,7 @@ async fn test_get_project() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -228,7 +228,7 @@ async fn test_update_project_name() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -287,7 +287,7 @@ async fn test_update_project_name_special_characters() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -319,7 +319,7 @@ async fn test_update_project_file() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -399,7 +399,7 @@ async fn test_update_project_file_empty_bytes() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -430,7 +430,7 @@ async fn test_update_project_file_overwrite_existing() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -470,7 +470,7 @@ async fn test_add_project_sample() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -528,7 +528,7 @@ async fn test_add_project_sample_multiple() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -598,7 +598,7 @@ async fn test_add_project_sample_special_characters() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -628,7 +628,7 @@ async fn test_add_project_sample_overwrite_existing() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -670,7 +670,7 @@ async fn test_remove_project_sample() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -727,7 +727,7 @@ async fn test_remove_project_sample_multiple() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -800,7 +800,7 @@ async fn test_remove_project_sample_sample_not_found() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -829,7 +829,7 @@ async fn test_remove_project_sample_empty_project() {
     // Create a project with no samples
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -849,7 +849,7 @@ async fn test_remove_project_sample_special_characters() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -886,7 +886,7 @@ async fn test_remove_project_sample_leaves_samples_directory() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -925,7 +925,7 @@ async fn test_remove_project() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1001,7 +1001,7 @@ async fn test_remove_project_empty_project() {
     // Create a minimal project with no additional content
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1024,17 +1024,17 @@ async fn test_remove_project_multiple_projects() {
     // Create multiple projects
     let project1 = fixture
         .backend
-        .create_project("user1")
+        .create_project("user1", None)
         .await
         .expect("Failed to create project 1");
     let project2 = fixture
         .backend
-        .create_project("user2")
+        .create_project("user2", None)
         .await
         .expect("Failed to create project 2");
     let project3 = fixture
         .backend
-        .create_project("user3")
+        .create_project("user3", None)
         .await
         .expect("Failed to create project 3");
 
@@ -1077,7 +1077,7 @@ async fn test_remove_project_with_nested_content() {
     // Create a project with various content
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1134,7 +1134,7 @@ async fn test_remove_project_special_characters() {
     // Create a project
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1173,7 +1173,7 @@ async fn test_remove_project_twice() {
     // Create a project
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1198,7 +1198,7 @@ async fn test_get_project_file_project_bin() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1226,7 +1226,7 @@ async fn test_get_project_file_sample() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1258,7 +1258,7 @@ async fn test_get_project_file_metadata() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1281,7 +1281,7 @@ async fn test_get_project_file_multiple_samples() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1342,7 +1342,7 @@ async fn test_get_project_file_sample_not_found() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1369,7 +1369,7 @@ async fn test_get_project_file_empty_file() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1400,7 +1400,7 @@ async fn test_get_project_file_large_file() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1432,7 +1432,7 @@ async fn test_get_project_file_special_characters() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1464,7 +1464,7 @@ async fn test_get_project_file_path_traversal_security() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1496,7 +1496,7 @@ async fn test_get_project_file_binary_content() {
     // Create a project first
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1527,7 +1527,7 @@ async fn test_get_samples_empty_project() {
     // Create a project with no samples
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1550,7 +1550,7 @@ async fn test_get_samples_single_sample() {
     // Create a project
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1580,7 +1580,7 @@ async fn test_get_samples_multiple_samples() {
     // Create a project
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1629,7 +1629,7 @@ async fn test_get_samples_special_characters() {
     // Create a project
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1658,7 +1658,7 @@ async fn test_read_sample() {
     // Create a project
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1707,7 +1707,7 @@ async fn test_read_sample_not_found() {
     // Create a project
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1727,7 +1727,7 @@ async fn test_read_sample_path_traversal_protection() {
     // Create a project
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1760,7 +1760,7 @@ async fn test_read_sample_binary_content() {
     // Create a project
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1791,7 +1791,7 @@ async fn test_read_project_file() {
     // Create a project
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1836,7 +1836,7 @@ async fn test_read_project_file_not_found() {
     // Create a project without updating project file
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1853,7 +1853,7 @@ async fn test_read_project_file_binary_content() {
     // Create a project
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 
@@ -1884,7 +1884,7 @@ async fn test_read_project_file_empty_content() {
     // Create a project
     let created_project = fixture
         .backend
-        .create_project(user_id)
+        .create_project(user_id, None)
         .await
         .expect("Failed to create project");
 

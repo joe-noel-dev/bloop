@@ -61,8 +61,9 @@ impl Backend for MockBackend {
         }
     }
 
-    async fn create_project(&self, user_id: &str) -> Result<DbProject> {
-        let project_id = self.next_id().await;
+    async fn create_project(&self, user_id: &str, project_id: Option<String>) -> Result<DbProject> {
+        let generated_id = self.next_id().await;
+        let project_id = project_id.unwrap_or(generated_id);
         let now = Utc::now();
         let project = MockBackendProject {
             name: "New Project".to_string(),
@@ -181,7 +182,7 @@ async fn test_sync_backend_push_project_happy_path() -> Result<()> {
     let user_id = "test_user";
 
     // Create a project in the local backend
-    let local_project = local_backend.create_project(user_id).await?;
+    let local_project = local_backend.create_project(user_id, None).await?;
     let project_id = &local_project.id;
 
     // Update the project name
