@@ -96,8 +96,8 @@ impl Backend for FilesystemBackend {
         Ok(db_project)
     }
 
-    async fn create_project(&self, user_id: &str) -> Result<DbProject> {
-        let project_id = random_project_id();
+    async fn create_project(&self, user_id: &str, project_id: Option<String>) -> Result<DbProject> {
+        let project_id = project_id.unwrap_or_else(random_project_id);
 
         let db_project = DbProject {
             id: project_id.clone(),

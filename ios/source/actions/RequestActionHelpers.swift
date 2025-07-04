@@ -196,6 +196,28 @@ func duplicateProjectAction(_ projectId: String) -> Action {
     )
 }
 
+func pushProjectAction(_ projectId: String) -> Action {
+    .sendRequest(
+        .with {
+            $0.projectSync = .with {
+                $0.projectID = projectId
+                $0.method = .push
+            }
+        }
+    )
+}
+
+func pullProjectAction(_ projectId: String) -> Action {
+    .sendRequest(
+        .with {
+            $0.projectSync = .with {
+                $0.projectID = projectId
+                $0.method = .pull
+            }
+        }
+    )
+}
+
 func getWaveformAction(_ sampleId: Id) -> Action {
     .sendRequest(
         .with {
@@ -225,3 +247,4 @@ func logOutAction() -> Action {
         }
     )
 }
+

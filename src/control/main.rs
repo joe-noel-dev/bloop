@@ -637,18 +637,22 @@ impl MainController {
             }
         };
 
-        let response = Response::default().with_project_sync(&ProjectSyncResponse {
-            project_id: project_sync.project_id.clone(),
-            status: if result.is_err() {
-                SyncStatus::SYNC_STATUS_ERROR
-            } else {
-                SyncStatus::SYNC_STATUS_COMPLETE
-            }
-            .into(),
-            ..Default::default()
-        });
+        let projects = self.project_store.projects().await?;
+        let cloud_projects = self.project_store.cloud_projects().await.unwrap_or_default();
 
-        // TODO: Include projects in response
+        let response = Response::default()
+            .with_project_sync(&ProjectSyncResponse {
+                project_id: project_sync.project_id.clone(),
+                status: if result.is_err() {
+                    SyncStatus::SYNC_STATUS_ERROR
+                } else {
+                    SyncStatus::SYNC_STATUS_COMPLETE
+                }
+                .into(),
+                ..Default::default()
+            })
+            .with_projects(&projects)
+            .with_cloud_projects(&cloud_projects);
 
         self.send_response(response);
 

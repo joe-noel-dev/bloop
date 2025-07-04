@@ -33,8 +33,9 @@ struct ProjectPreview: View {
 
 struct ProjectsView: View {
     var projects: [Bloop_ProjectInfo]
+    var cloudProjects: [Bloop_ProjectInfo]
     var dispatch: Dispatch
-    var dismiss: () -> Void
+    var dismiss: () -> Void 
 
     @State private var selected: String?
     @State private var selectedFileURL: URL?
@@ -45,24 +46,51 @@ struct ProjectsView: View {
         }
     }
 
+    private var sortedCloudProjects: [Bloop_ProjectInfo] {
+        cloudProjects.sorted { a, b in
+            a.lastSaved > b.lastSaved
+        }
+    }
+    
+    private var isSelectedProjectCloud: Bool {
+        guard let selected = selected else { return false }
+        return sortedCloudProjects.contains { $0.id == selected }
+    }
+    
+    private var isSelectedProjectLocal: Bool {
+        guard let selected = selected else { return false }
+        return sortedProjects.contains { $0.id == selected }
+    }
+
     var body: some View {
 
         NavigationStack {
 
             List(selection: $selected) {
-                ForEach(sortedProjects) { project in
-                    ProjectPreview(project: project, selected: selected == project.id)
+                if !sortedProjects.isEmpty {
+                    Section("Local Projects") {
+                        ForEach(sortedProjects) { project in
+                            ProjectPreview(project: project, selected: selected == project.id)
+                        }
+                        .onDelete { offsets in
+                            let projectIds = offsets.map { offset in
+                                sortedProjects[offset].id
+                            }
+
+                            for projectId in projectIds {
+                                let action = removeProjectAction(projectId)
+                                dispatch(action)
+                            }
+                        }
+                    }
                 }
-                .onDelete { offsets in
-                    let projectIds = offsets.map { offset in
-                        sortedProjects[offset].id
+                
+                if !sortedCloudProjects.isEmpty {
+                    Section("Cloud Projects") {
+                        ForEach(sortedCloudProjects) { project in
+                            ProjectPreview(project: project, selected: selected == project.id)
+                        }
                     }
-
-                    for projectId in projectIds {
-                        let action = removeProjectAction(projectId)
-                        dispatch(action)
-                    }
-
                 }
             }
             .listStyle(.plain)
@@ -70,22 +98,42 @@ struct ProjectsView: View {
             .toolbar {
 
                 if let selected = selected {
-                    Button {
-                        let action = loadProjectAction(selected)
-                        dispatch(action)
-                        dismiss()
-                    } label: {
-                        Label("Open", systemImage: "folder")
-                            .labelStyle(.titleOnly)
-                    }
 
-                    Button {
-                        let action = duplicateProjectAction(selected)
-                        dispatch(action)
-                        dismiss()
-                    } label: {
-                        Label("Duplicate", systemImage: "doc.on.doc")
-                            .labelStyle(.titleOnly)
+                    
+                    if isSelectedProjectCloud {
+                        Button {
+                            dispatch(pullProjectAction(selected))
+                        } label: {
+                            Label("Pull", systemImage: "arrow.down.circle")
+                                .labelStyle(.titleOnly)
+                        }
+                    }
+                    
+                    if isSelectedProjectLocal {
+                        Button {
+                            let action = loadProjectAction(selected)
+                            dispatch(action)
+                            dismiss()
+                        } label: {
+                            Label("Open", systemImage: "folder")
+                                .labelStyle(.titleOnly)
+                        }
+
+                        Button {
+                            let action = duplicateProjectAction(selected)
+                            dispatch(action)
+                            dismiss()
+                        } label: {
+                            Label("Duplicate", systemImage: "doc.on.doc")
+                                .labelStyle(.titleOnly)
+                        }
+                        
+                        Button {
+                            dispatch(pushProjectAction(selected))
+                        } label: {
+                            Label("Push", systemImage: "arrow.up.circle")
+                                .labelStyle(.titleOnly)
+                        }
                     }
                 }
 
@@ -125,7 +173,7 @@ struct ProjectsView_Previews: PreviewProvider {
     ]
 
     static var previews: some View {
-        ProjectsView(projects: projects, dispatch: loggingDispatch) {
+        ProjectsView(projects: projects, cloudProjects: [], dispatch: loggingDispatch) {
             print("Dismiss sheet")
         }
     }

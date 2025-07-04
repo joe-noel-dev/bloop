@@ -134,15 +134,19 @@ impl Backend for PocketbaseBackend {
         Ok(response.json::<DbProject>().await?)
     }
 
-    async fn create_project(&self, user_id: &str) -> Result<DbProject> {
+    async fn create_project(&self, user_id: &str, project_id: Option<String>) -> Result<DbProject> {
         let token = self.get_token().await?;
 
         let url = format!("{}/api/collections/projects/records", self.host);
         let client = reqwest::Client::new();
 
-        let project_json = serde_json::json!({
+        let mut project_json = serde_json::json!({
             "userId": user_id
         });
+
+        if let Some(id) = project_id {
+            project_json["id"] = serde_json::Value::String(id);
+        }
 
         let response = client
             .post(&url)

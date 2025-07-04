@@ -45,7 +45,7 @@ impl ProjectStore {
         let project_id = match project_id {
             Some(id) => id,
             None => {
-                let new_project = self.backend.create_project(user_id).await?;
+                let new_project = self.backend.create_project(user_id, None).await?;
                 new_project.id
             }
         };

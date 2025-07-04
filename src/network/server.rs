@@ -7,7 +7,7 @@ use std::net::IpAddr;
 use tokio::net::TcpListener;
 use tokio::sync::{broadcast, mpsc};
 
-const PORT: u16 = 0;
+const PORT: u16 = 14072;
 
 pub async fn run(request_tx: mpsc::Sender<Request>, response_tx: broadcast::Sender<Response>) {
     let ips = get_ips_for_responder();
