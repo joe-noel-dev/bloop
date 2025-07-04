@@ -3,6 +3,7 @@ include!(concat!(env!("OUT_DIR"), "/protos/mod.rs"));
 mod api;
 mod audio;
 pub mod backend;
+mod config;
 mod control;
 mod core;
 mod ffi;
@@ -23,11 +24,12 @@ pub use core::run_core;
 use git_version::git_version;
 use log::info;
 use logger::{set_up_logger, LogOptions};
-use std::path::PathBuf;
 use tokio::sync::{broadcast, mpsc};
 
 #[cfg(feature = "ui")]
 use ui::run_ui;
+
+use crate::config::{get_api_url, get_root_directory};
 
 const GIT_SHA: &str = git_version!();
 
@@ -48,6 +50,7 @@ pub fn run_main() {
 
     let core_thread = run_core(
         get_root_directory(),
+        get_api_url(),
         request_rx,
         request_tx.clone(),
         response_tx.clone(),
@@ -59,20 +62,4 @@ pub fn run_main() {
     }
 
     core_thread.join().expect("Failed to join core thread");
-}
-
-fn get_root_directory() -> PathBuf {
-    if let Ok(bloop_home) = std::env::var("BLOOP_HOME") {
-        PathBuf::from(bloop_home)
-    } else {
-        let mut home = home::home_dir().unwrap();
-
-        if cfg!(target_os = "ios") {
-            home.push("Documents");
-        }
-
-        home.push("bloop");
-
-        home
-    }
 }

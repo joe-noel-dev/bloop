@@ -53,4 +53,16 @@ impl Request {
             ..Default::default()
         }
     }
+
+    pub fn log_in_request(username: String, password: String) -> Self {
+        Self {
+            login: Some(LoginRequest {
+                username,
+                password,
+                ..Default::default()
+            })
+            .into(),
+            ..Default::default()
+        }
+    }
 }

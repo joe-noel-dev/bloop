@@ -5,7 +5,7 @@ mod backend_fixture;
 mod integration_fixture;
 
 #[allow(unused_imports)]
-pub use backend_fixture::{user_json, BackendFixture};
+pub use backend_fixture::*;
 
 #[allow(unused_imports)]
-pub use integration_fixture::IntegrationFixture;
+pub use integration_fixture::*;

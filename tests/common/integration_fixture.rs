@@ -8,12 +8,15 @@ use bloop::{
     run_core,
 };
 
+use crate::common::BackendFixture;
+
 pub struct IntegrationFixture {
     _home_directory: tempfile::TempDir,
     core_thread: Option<thread::JoinHandle<()>>,
     request_tx: tokio::sync::mpsc::Sender<Request>,
     response_rx: tokio::sync::broadcast::Receiver<bloop::bloop::Response>,
     _response_logger: tokio::task::JoinHandle<()>,
+    backend_fixture: BackendFixture,
 }
 
 impl IntegrationFixture {
@@ -24,10 +27,13 @@ impl IntegrationFixture {
             home_directory.path().display()
         );
 
+        let backend_fixture = BackendFixture::new();
+
         let (request_tx, request_rx) = tokio::sync::mpsc::channel(100);
         let (response_tx, response_rx) = tokio::sync::broadcast::channel(100);
         let core_thread = run_core(
             home_directory.path().to_path_buf(),
+            backend_fixture.mock_server.base_url(),
             request_rx,
             request_tx.clone(),
             response_tx.clone(),
@@ -49,6 +55,7 @@ impl IntegrationFixture {
             request_tx,
             response_rx,
             _response_logger,
+            backend_fixture,
         }
     }
 

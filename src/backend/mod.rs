@@ -39,11 +39,11 @@ pub struct DbProject {
     pub updated: DateTime<Utc>,
 }
 
-pub fn create_pocketbase_auth(host: Option<String>, root_directory: &Path) -> Arc<Mutex<dyn Auth + Send + Sync>> {
+pub fn create_pocketbase_auth(host: String, root_directory: &Path) -> Arc<Mutex<dyn Auth + Send + Sync>> {
     Arc::new(Mutex::new(pocketbase_auth::PocketbaseAuth::new(host, root_directory)))
 }
 
-pub fn create_pocketbase_backend(host: Option<String>, auth: Arc<Mutex<dyn Auth + Send + Sync>>) -> Arc<impl Backend> {
+pub fn create_pocketbase_backend(host: String, auth: Arc<Mutex<dyn Auth + Send + Sync>>) -> Arc<impl Backend> {
     Arc::new(pocketbase::PocketbaseBackend::new(host, auth))
 }
 

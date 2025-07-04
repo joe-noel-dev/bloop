@@ -3,7 +3,6 @@ use std::path::{Path, PathBuf};
 use crate::backend::{pocketbase::handle_error_response, Auth};
 
 use super::DbUser;
-use crate::backend::pocketbase::DEFAULT_POCKETBASE_HOST;
 use anyhow::{Context, Result};
 use log::{info, warn};
 use reqwest::Response;
@@ -15,8 +14,7 @@ pub struct PocketbaseAuth {
 }
 
 impl PocketbaseAuth {
-    pub fn new(host: Option<String>, root_directory: &Path) -> Self {
-        let host = host.unwrap_or_else(|| String::from(DEFAULT_POCKETBASE_HOST));
+    pub fn new(host: String, root_directory: &Path) -> Self {
         let token = read_token(root_directory);
         Self {
             host,

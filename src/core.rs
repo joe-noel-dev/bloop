@@ -13,6 +13,7 @@ use crate::{
 
 pub fn run_core(
     home_directory: PathBuf,
+    api_url: String,
     request_rx: mpsc::Receiver<Request>,
     request_tx: mpsc::Sender<Request>,
     response_tx: broadcast::Sender<Response>,
@@ -20,7 +21,7 @@ pub fn run_core(
     thread::spawn(move || {
         let runtime = tokio::runtime::Runtime::new().expect("Failed to create runtime");
         runtime.block_on(async {
-            let control = run_main_controller(home_directory, request_rx, response_tx.clone());
+            let control = run_main_controller(home_directory, api_url, request_rx, response_tx.clone());
             let network = run_server(request_tx, response_tx.clone());
             join!(control, network);
         });

@@ -9,8 +9,6 @@ use log::warn;
 use reqwest::Response;
 use serde::{Deserialize, Serialize};
 
-pub(crate) const DEFAULT_POCKETBASE_HOST: &str = "https://joe-noel-dev-bloop.fly.dev";
-
 pub struct PocketbaseBackend {
     host: String,
     auth: Arc<Mutex<dyn Auth + Send + Sync>>,
@@ -29,11 +27,8 @@ struct PocketbaseProject {
 }
 
 impl PocketbaseBackend {
-    pub fn new(host: Option<String>, auth: Arc<Mutex<dyn Auth + Send + Sync>>) -> Self {
-        Self {
-            host: host.unwrap_or(String::from(DEFAULT_POCKETBASE_HOST)),
-            auth,
-        }
+    pub fn new(host: String, auth: Arc<Mutex<dyn Auth + Send + Sync>>) -> Self {
+        Self { host, auth }
     }
 
     async fn get_token(&self) -> Result<String> {

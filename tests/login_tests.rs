@@ -1,14 +1,16 @@
 mod common;
 
-use bloop::backend::DbUser;
+use bloop::{backend::DbUser, bloop::Request};
 use chrono::DateTime;
 use common::{user_json, BackendFixture};
 
+use crate::common::{user_email, user_id, user_name, user_password, IntegrationFixture};
+
 fn verify_user(user: &DbUser, id: &str) {
     assert_eq!(user.id, id);
-    assert_eq!(user.email, "user@abc.com");
+    assert_eq!(user.email, user_email());
     assert!(user.email_visibility);
-    assert_eq!(user.name, "test");
+    assert_eq!(user.name, user_name());
 
     let expected_created_date = DateTime::parse_from_rfc3339("2022-01-01 10:00:00.123Z").unwrap();
     assert_eq!(user.created, expected_created_date);
@@ -19,35 +21,42 @@ fn verify_user(user: &DbUser, id: &str) {
 
 #[tokio::test]
 async fn test_successful_log_in() {
-    let mut fixture = BackendFixture::new();
-    let (id, _) = user_json();
-    let user = fixture.log_in().await;
-    verify_user(&user, &id);
+    let mut fixture = IntegrationFixture::new();
+
+    let request = Request::log_in_request(user_email(), user_password());
+    fixture.send_request(request).await;
+
+    let response = fixture
+        .wait_for_response(|response| {
+            if let Some(user_state) = response.user_status.as_ref() {
+                if user_state.user.is_some() {
+                    return true;
+                }
+            }
+
+            false
+        })
+        .await
+        .expect("Didn't receive user state");
+
+    let user = response.user_status.unwrap().user.unwrap();
+
+    assert_eq!(user.name, user_name());
+    assert_eq!(user.email, user_email());
+    assert_eq!(user.id, user_id());
 }
 
 #[tokio::test]
-async fn test_unsuccessful_log_in() {
-    let fixture = BackendFixture::new();
+async fn test_unsuccessful_login() {
+    let mut fixture = IntegrationFixture::new();
 
-    let email = "user@abc.com";
-    let password = "wrong_password";
+    let request = Request::log_in_request("user@abc.com".to_string(), "wrong_password".to_string());
+    fixture.send_request(request).await;
 
-    let login_mock = fixture.mock_server.mock(|when, then| {
-        when.method("POST").path("/api/collections/users/auth-with-password");
-        then.status(401)
-            .header("Content-Type", "application/json")
-            .body(r#"{"message": "Invalid credentials"}"#);
-    });
-
-    let result = fixture
-        .auth
-        .lock()
+    fixture
+        .wait_for_response(|response| !response.error.is_empty())
         .await
-        .log_in(email.to_string(), password.to_string())
-        .await;
-
-    assert!(result.is_err());
-    login_mock.assert();
+        .expect("Didn't receive error response");
 }
 
 #[tokio::test]
