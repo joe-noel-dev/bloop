@@ -4,6 +4,7 @@ pub struct AppConfig {
     pub root_directory: PathBuf,
     pub api_url: String,
     pub use_dummy_audio: bool,
+    pub use_midi: bool,
 }
 
 impl Default for AppConfig {
@@ -12,6 +13,7 @@ impl Default for AppConfig {
             root_directory: get_root_directory(),
             api_url: get_api_url(),
             use_dummy_audio: false,
+            use_midi: true,
         }
     }
 }
@@ -29,6 +31,11 @@ impl AppConfig {
 
     pub fn with_use_dummy_audio(mut self, use_dummy_audio: bool) -> Self {
         self.use_dummy_audio = use_dummy_audio;
+        self
+    }
+
+    pub fn with_use_midi(mut self, use_midi: bool) -> Self {
+        self.use_midi = use_midi;
         self
     }
 }

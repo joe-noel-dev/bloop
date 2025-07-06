@@ -4,8 +4,8 @@ use crate::{
     model::{Project, ProjectInfo, ID},
     samples::SamplesCache,
 };
-use anyhow::{anyhow, Context, Ok};
-use log::{debug, error, info};
+use anyhow::{anyhow, Context};
+use log::{debug, error, info, warn};
 use protobuf::Message;
 use std::{
     fs,
@@ -107,6 +107,13 @@ impl ProjectStore {
             .remove_project(project_id)
             .await
             .context(format!("Removing project: {project_id}"))?;
+
+        match self.remote_backend.remove_project(project_id).await {
+            Ok(_) => info!("Project removed from remote backend: id = {project_id}"),
+            Err(e) => {
+                warn!("Failed to remove project from remote backend: {e}");
+            }
+        }
 
         info!("Project removed: id = {project_id}");
         Ok(())

@@ -39,7 +39,7 @@ struct MainController {
     project: Project,
     audio_controller: AudioController,
     waveform_store: WaveformStore,
-    _midi_controller: MidiController,
+    _midi_controller: Option<MidiController>,
     action_rx: mpsc::Receiver<Action>,
     action_tx: mpsc::Sender<Action>,
     should_save: bool,
@@ -79,6 +79,12 @@ impl MainController {
 
         let local_backend = create_filesystem_backend(&directories.projects);
 
+        let midi_controller = if app_config.use_midi {
+            Some(MidiController::new(action_tx.clone(), midi_preferences))
+        } else {
+            None
+        };
+
         Self {
             samples_cache: SamplesCache::new(&directories.samples),
             project_store: ProjectStore::new(&directories.projects, local_backend.clone(), remote_backend.clone()),
@@ -88,7 +94,7 @@ impl MainController {
             project: Project::empty().with_songs(1, 1),
             audio_controller: AudioController::new(response_tx.clone(), audio_preferences, app_config.use_dummy_audio),
             waveform_store: WaveformStore::new(response_tx),
-            _midi_controller: MidiController::new(action_tx.clone(), midi_preferences),
+            _midi_controller: midi_controller,
             action_rx,
             action_tx,
             should_save: false,
