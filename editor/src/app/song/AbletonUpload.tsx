@@ -4,7 +4,10 @@ import {useRef} from 'react';
 import pako from 'pako';
 import {ID} from '../../api/helpers';
 import {Dispatcher, useDispatcher} from '../../dispatcher/dispatcher';
-import {addSectionAction} from '../../dispatcher/action';
+import {
+  addSectionAction,
+  removeAllSectionsAction,
+} from '../../dispatcher/action';
 
 interface Props {
   songId: ID;
@@ -59,6 +62,13 @@ const uploadFromAls = async (
   const document = toXmlDocument(xml);
   const locators = getLocators(document);
   console.log('Found locators in Ableton Project:', locators);
+
+  if (locators.length === 0) {
+    console.warn('No locators found in Ableton project');
+    return;
+  }
+
+  dispatch(removeAllSectionsAction(songId));
 
   locators.forEach((locator) =>
     dispatch(
@@ -119,5 +129,5 @@ const getLocators = (document: Document) => {
     });
   });
 
-  return locators;
+  return locators.sort((a, b) => a.start - b.start);
 };

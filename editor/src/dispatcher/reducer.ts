@@ -13,10 +13,12 @@ import {
   MOVE_SONG,
   MoveSectionAction,
   MoveSongAction,
+  REMOVE_ALL_SECTIONS,
   REMOVE_PROJECT,
   REMOVE_SAMPLE,
   REMOVE_SECTION,
   REMOVE_SONG,
+  RemoveAllSectionsAction,
   RemoveProjectAction,
   RemoveSampleAction,
   RemoveSectionAction,
@@ -27,6 +29,8 @@ import {
   SelectSongAction,
   SIGN_IN,
   SignInAction,
+  SPLIT_SECTION,
+  SplitSectionAction,
   UPDATE_SECTION,
   UPDATE_SONG,
   UpdateSectionAction,
@@ -41,6 +45,7 @@ import {
   removeSection,
   removeSong,
   selectSong,
+  splitSection,
   updateSection,
   updateSong,
 } from '../api/project-helpers';
@@ -171,6 +176,12 @@ export const reducer = async (
       break;
     }
 
+    case SPLIT_SECTION: {
+      const {songId, sectionId} = action as SplitSectionAction;
+      splitSection(newState.project, songId, sectionId);
+      break;
+    }
+
     case UPDATE_SECTION: {
       const {songId, newSection} = action as UpdateSectionAction;
       updateSection(newState.project, songId, newSection);
@@ -185,6 +196,21 @@ export const reducer = async (
 
     case LOAD_PROJECTS: {
       newState.projects = await backend.fetchProjects();
+      break;
+    }
+
+    case REMOVE_ALL_SECTIONS: {
+      const {songId} = action as RemoveAllSectionsAction;
+      const song = newState.project.songs.find((s) => s.id.equals(songId));
+      if (!song) {
+        console.error(`Song with ID ${songId} not found`);
+        break;
+      }
+
+      song.sections = [];
+      if (newState.project.selections?.section.equals(songId)) {
+        newState.project.selections.section = Long.ZERO;
+      }
       break;
     }
 
