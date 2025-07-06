@@ -21,6 +21,7 @@ import {
   loadProjectAction,
   removeProjectAction,
   renameProjectAction,
+  loadProjectsAction,
 } from '../../dispatcher/action';
 
 export const ProjectInfo = () => {
@@ -29,7 +30,10 @@ export const ProjectInfo = () => {
   const dispatch = useDispatcher();
 
   const create = async () => dispatch(createProjectAction());
-  const openProjects = () => setProjectsModalOpen(true);
+  const openProjects = () => {
+    dispatch(loadProjectsAction());
+    setProjectsModalOpen(true);
+  };
   const renameProject = (name: string) => dispatch(renameProjectAction(name));
 
   return (
