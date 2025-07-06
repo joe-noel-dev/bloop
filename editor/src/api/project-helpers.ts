@@ -211,6 +211,44 @@ export const updateSong = (project: Project, newSong: Song) => {
   Object.assign(song, newSong);
 };
 
+export const splitSection = (project: Project, songId: ID, sectionId: ID) => {
+  const song = project.songs.find((song) => song.id.equals(songId));
+  if (!song) {
+    console.error(`Song with ID ${songId} not found`);
+    return;
+  }
+
+  const sectionIndex = song.sections.findIndex((section) =>
+    section.id.equals(sectionId)
+  );
+  if (sectionIndex === -1) {
+    console.error(`Section with ID ${sectionId} not found`);
+    return;
+  }
+
+  const originalSection = song.sections[sectionIndex];
+  const nextSection = song.sections[sectionIndex + 1];
+
+  // Calculate the duration of the original section
+  const sectionEnd = nextSection
+    ? nextSection.start
+    : originalSection.start + 16.0; // Default to 16 beats if it's the last section
+  const sectionDuration = sectionEnd - originalSection.start;
+  const splitPoint = originalSection.start + sectionDuration / 2;
+
+  // Create a new section that starts at the split point
+  const newSection: Section = {
+    id: randomId(),
+    name: `${originalSection.name}`,
+    start: splitPoint,
+    loop: originalSection.loop,
+    metronome: originalSection.metronome,
+  };
+
+  // Insert the new section after the original section
+  song.sections.splice(sectionIndex + 1, 0, newSection);
+};
+
 export const emptyProject = (): Project => {
   const song = defaultSong();
   return {

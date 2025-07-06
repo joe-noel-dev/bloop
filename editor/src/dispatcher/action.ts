@@ -16,9 +16,11 @@ export const REMOVE_SONG = 'REMOVE_SONG';
 export const RENAME_PROJECT = 'RENAME_PROJECT';
 export const SELECT_SONG = 'SELECT_SONG';
 export const SIGN_IN = 'SIGN_IN';
+export const SPLIT_SECTION = 'SPLIT_SECTION';
 export const UPDATE_SECTION = 'UPDATE_SECTION';
 export const UPDATE_SONG = 'UPDATE_SONG';
 export const LOAD_PROJECTS = 'LOAD_PROJECTS';
+export const REMOVE_ALL_SECTIONS = 'REMOVE_ALL_SECTIONS';
 
 // 2:
 
@@ -109,6 +111,12 @@ export const updateSectionAction = (songId: ID, newSection: Section) => {
   };
 };
 
+export const splitSectionAction = (songId: ID, sectionId: ID) => ({
+  type: SPLIT_SECTION,
+  songId,
+  sectionId,
+});
+
 export const updateSongAction = (newSong: Song) => ({
   type: UPDATE_SONG,
   newSong,
@@ -116,6 +124,11 @@ export const updateSongAction = (newSong: Song) => ({
 
 export const loadProjectsAction = () => ({
   type: LOAD_PROJECTS,
+});
+
+export const removeAllSectionsAction = (songId: ID) => ({
+  type: REMOVE_ALL_SECTIONS,
+  songId,
 });
 
 // 3:
@@ -133,9 +146,13 @@ export type RemoveSongAction = ReturnType<typeof removeSongAction>;
 export type RenameProjectAction = ReturnType<typeof renameProjectAction>;
 export type SelectSongAction = ReturnType<typeof selectSongAction>;
 export type SignInAction = ReturnType<typeof signInAction>;
+export type SplitSectionAction = ReturnType<typeof splitSectionAction>;
 export type UpdateSectionAction = ReturnType<typeof updateSectionAction>;
 export type UpdateSongAction = ReturnType<typeof updateSongAction>;
 export type LoadProjectsAction = ReturnType<typeof loadProjectsAction>;
+export type RemoveAllSectionsAction = ReturnType<
+  typeof removeAllSectionsAction
+>;
 
 // 4:
 export type Action =
@@ -153,6 +170,8 @@ export type Action =
   | RenameProjectAction
   | SelectSongAction
   | SignInAction
+  | SplitSectionAction
   | UpdateSectionAction
   | UpdateSongAction
-  | LoadProjectsAction;
+  | LoadProjectsAction
+  | RemoveAllSectionsAction;
