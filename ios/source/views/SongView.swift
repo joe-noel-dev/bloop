@@ -115,11 +115,19 @@ struct SongView: View {
 
             MainToolbar(
                 currentSong: song,
+                servers: state.servers,
+                scanning: state.scanning,
                 editingEntity: $editingEntity
             ) { action in
                 switch action {
                 case .disconnect:
                     dispatch(.disconnect)
+                case .connectToServer(let server):
+                    dispatch(.disconnect)
+                    dispatch(.connect(server))
+                case .connectLocal:
+                    dispatch(.disconnect)
+                    dispatch(.connectLocal)
                 }
             }
         }

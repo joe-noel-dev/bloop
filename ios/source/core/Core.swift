@@ -24,9 +24,7 @@ class Core: CoreConnectionDelegate {
     }
 
     func connect(_ server: Server) {
-//        if self.connection.state == .disconnected {
-            self.connection.connect(server)
-//        }
+        self.connection.connect(server)
     }
 
     func disconnect() {

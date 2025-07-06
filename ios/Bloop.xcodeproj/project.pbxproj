@@ -19,7 +19,7 @@
 		740E75322D8F5478006F62C8 /* ApiHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75312D8F5474006F62C8 /* ApiHelpers.swift */; };
 		740E75462D917998006F62C8 /* MainToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75452D917995006F62C8 /* MainToolbar.swift */; };
 		743FF9212DE7AFE4004375D5 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 743FF9202DE7AFE0004375D5 /* LoginView.swift */; };
-		C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DB2A4F123400F8138D /* DisconnectedView.swift */; };
+		7473163A2E1B104900BD602A /* ServerSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 747316392E1B104900BD602A /* ServerSelectionView.swift */; };
 		C20240E02A4F255B00F8138D /* SongView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20240DF2A4F255B00F8138D /* SongView.swift */; };
 		C20F17CF2AB07C2B00ECF2EB /* Discovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20F17CE2AB07C2B00ECF2EB /* Discovery.swift */; };
 		C222A9542A588ACB00418CBB /* WaveformMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */; };
@@ -88,8 +88,8 @@
 		740E75312D8F5474006F62C8 /* ApiHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiHelpers.swift; sourceTree = "<group>"; };
 		740E75452D917995006F62C8 /* MainToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainToolbar.swift; sourceTree = "<group>"; };
 		743FF9202DE7AFE0004375D5 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		747316392E1B104900BD602A /* ServerSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerSelectionView.swift; sourceTree = "<group>"; };
 		74C682E32DB1A25800A0F2F7 /* BloopDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BloopDebug.entitlements; sourceTree = "<group>"; };
-		C20240DB2A4F123400F8138D /* DisconnectedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisconnectedView.swift; sourceTree = "<group>"; };
 		C20240DF2A4F255B00F8138D /* SongView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongView.swift; sourceTree = "<group>"; };
 		C20F17CE2AB07C2B00ECF2EB /* Discovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Discovery.swift; sourceTree = "<group>"; };
 		C222A9532A588ACB00418CBB /* WaveformMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformMiddleware.swift; sourceTree = "<group>"; };
@@ -177,7 +177,6 @@
 			children = (
 				743FF9202DE7AFE0004375D5 /* LoginView.swift */,
 				C247A6E52A4D949A00001DB2 /* ContentView.swift */,
-				C20240DB2A4F123400F8138D /* DisconnectedView.swift */,
 				740E75452D917995006F62C8 /* MainToolbar.swift */,
 				C257F0262A8F806E00E2E77C /* MetronomeView.swift */,
 				C25FA0CA2A54610C0066C539 /* ProgressBar.swift */,
@@ -188,6 +187,7 @@
 				C20240DF2A4F255B00F8138D /* SongView.swift */,
 				C2D82D462A5311EB00DAEA7E /* TransportBar.swift */,
 				C2D82D412A52D7F600DAEA7E /* WaveformView.swift */,
+				747316392E1B104900BD602A /* ServerSelectionView.swift */,
 			);
 			path = views;
 			sourceTree = "<group>";
@@ -491,7 +491,6 @@
 				C229B99B2A4DD55D0044F2C6 /* Core.swift in Sources */,
 				C20F17CF2AB07C2B00ECF2EB /* Discovery.swift in Sources */,
 				C229B9872A4DA0B40044F2C6 /* RootReducer.swift in Sources */,
-				C20240DC2A4F123400F8138D /* DisconnectedView.swift in Sources */,
 				743FF9212DE7AFE4004375D5 /* LoginView.swift in Sources */,
 				C229B9752A4D9DA30044F2C6 /* ProjectView.swift in Sources */,
 				C222A95B2A59D21400418CBB /* UploadMiddleware.swift in Sources */,
@@ -505,6 +504,7 @@
 				C229B9822A4D9FD30044F2C6 /* Action.swift in Sources */,
 				C2D82D472A5311EB00DAEA7E /* TransportBar.swift in Sources */,
 				740E75322D8F5478006F62C8 /* ApiHelpers.swift in Sources */,
+				7473163A2E1B104900BD602A /* ServerSelectionView.swift in Sources */,
 				C222A9542A588ACB00418CBB /* WaveformMiddleware.swift in Sources */,
 				C257C1772A4E003F0080ECC2 /* ApiMiddleware.swift in Sources */,
 				C247A6E42A4D949A00001DB2 /* BloopApp.swift in Sources */,

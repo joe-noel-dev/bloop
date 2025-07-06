@@ -40,7 +40,7 @@ impl AppConfig {
     }
 }
 
-pub fn get_api_url() -> String {
+fn get_api_url() -> String {
     if let Ok(api_url) = std::env::var("BLOOP_API_URL") {
         api_url
     } else {
@@ -48,7 +48,7 @@ pub fn get_api_url() -> String {
     }
 }
 
-pub fn get_root_directory() -> PathBuf {
+fn get_root_directory() -> PathBuf {
     if let Ok(bloop_home) = std::env::var("BLOOP_HOME") {
         PathBuf::from(bloop_home)
     } else {
