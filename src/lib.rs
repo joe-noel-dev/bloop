@@ -29,7 +29,7 @@ use tokio::sync::{broadcast, mpsc};
 #[cfg(feature = "ui")]
 use ui::run_ui;
 
-use crate::config::{get_api_url, get_root_directory};
+pub use crate::config::AppConfig;
 
 const GIT_SHA: &str = git_version!();
 
@@ -48,13 +48,8 @@ pub fn run_main() {
     let (request_tx, request_rx) = mpsc::channel(128);
     let (response_tx, _) = broadcast::channel(128);
 
-    let core_thread = run_core(
-        get_root_directory(),
-        get_api_url(),
-        request_rx,
-        request_tx.clone(),
-        response_tx.clone(),
-    );
+    let app_config = AppConfig::default();
+    let core_thread = run_core(request_rx, request_tx.clone(), response_tx.clone(), app_config);
 
     #[cfg(feature = "ui")]
     if !std::env::args().any(|arg| arg == "--headless") {

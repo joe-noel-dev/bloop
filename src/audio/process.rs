@@ -211,18 +211,14 @@ impl AudioProcessRunner for DummyProcess {
     // Implementation for dummy process
 }
 
-/// Creates a dummy process for testing
-#[cfg(test)]
-pub fn create_process(
+pub fn create_dummy_process(
     audio_process: Box<dyn AudioProcess + Send>,
     preferences: AudioPreferences,
 ) -> Box<dyn AudioProcessRunner> {
     Box::new(DummyProcess::new(audio_process, preferences))
 }
 
-/// Creates a real process for production
-#[cfg(not(test))]
-pub fn create_process(
+pub fn create_audio_process(
     audio_process: Box<dyn AudioProcess + Send>,
     preferences: AudioPreferences,
 ) -> Box<dyn AudioProcessRunner> {

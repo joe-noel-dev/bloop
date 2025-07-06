@@ -1,10 +1,13 @@
 use super::{
     metronome::Metronome,
-    process::{create_process, AudioProcessRunner},
+    process::AudioProcessRunner,
     sampler_converter::{SampleConversionResult, SampleConverter},
     sequencer::Sequencer,
 };
-use crate::bloop::Response;
+use crate::{
+    audio::process::{create_audio_process, create_dummy_process},
+    bloop::Response,
+};
 use crate::{
     model::{PlaybackState, PlayingState, Progress, Project, ID},
     preferences::AudioPreferences,
@@ -41,7 +44,7 @@ pub struct AudioController {
 }
 
 impl AudioController {
-    pub fn new(response_tx: broadcast::Sender<Response>, preferences: AudioPreferences) -> Self {
+    pub fn new(response_tx: broadcast::Sender<Response>, preferences: AudioPreferences, use_dummy_audio: bool) -> Self {
         let (mut context, process) = create_engine_with_options(
             EngineOptions::default()
                 .with_sample_rate(preferences.sample_rate)
@@ -62,7 +65,11 @@ impl AudioController {
 
         let (conversion_tx, conversion_rx) = mpsc::channel(64);
 
-        let realtime_process = create_process(process, preferences.clone());
+        let realtime_process = if use_dummy_audio {
+            create_dummy_process(process, preferences.clone())
+        } else {
+            create_audio_process(process, preferences.clone())
+        };
 
         Self {
             context,

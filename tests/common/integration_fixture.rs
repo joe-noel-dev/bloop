@@ -6,7 +6,7 @@ use tokio::time::{timeout, Duration};
 
 use bloop::{
     bloop::{Request, Response},
-    run_core,
+    run_core, AppConfig,
 };
 
 use crate::common::Mocketbase;
@@ -35,7 +35,7 @@ fn init_logger() {
 impl IntegrationFixture {
     pub async fn new() -> Self {
         init_logger();
-        
+
         // Set environment variable to use dummy audio for tests
         std::env::set_var("BLOOP_DUMMY_AUDIO", "1");
 
@@ -47,15 +47,14 @@ impl IntegrationFixture {
 
         let mocketbase = Mocketbase::new().await;
 
+        let app_config = AppConfig::default()
+            .with_api_url(mocketbase.uri())
+            .with_root_directory(home_directory.path().to_path_buf())
+            .with_use_dummy_audio(true);
+
         let (request_tx, request_rx) = tokio::sync::mpsc::channel(100);
         let (response_tx, response_rx) = tokio::sync::broadcast::channel(100);
-        let core_thread = run_core(
-            home_directory.path().to_path_buf(),
-            mocketbase.uri(),
-            request_rx,
-            request_tx.clone(),
-            response_tx.clone(),
-        );
+        let core_thread = run_core(request_rx, request_tx.clone(), response_tx.clone(), app_config);
 
         let mut log_rx = response_rx.resubscribe();
         let _response_logger = tokio::spawn(async move {

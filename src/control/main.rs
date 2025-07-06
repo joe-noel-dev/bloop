@@ -4,6 +4,7 @@ use crate::{
     audio::AudioController,
     backend::{create_filesystem_backend, create_pocketbase_auth, create_pocketbase_backend, sync_project, Backend},
     bloop::*,
+    config::AppConfig,
     control::user_store::UserStore,
     midi::MidiController,
     model::{Action, Project, Sample, Section, Tempo, INVALID_ID},
@@ -14,19 +15,18 @@ use crate::{
 
 use anyhow::anyhow;
 use log::{error, info, warn};
-use std::{path::PathBuf, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 use tokio::{
     sync::{broadcast, mpsc},
     time,
 };
 
 pub async fn run_main_controller(
-    root_directory: PathBuf,
-    api_url: String,
     request_rx: mpsc::Receiver<Request>,
     response_tx: broadcast::Sender<Response>,
+    app_config: AppConfig,
 ) {
-    let mut main_controller = MainController::new(root_directory, api_url, request_rx, response_tx.clone());
+    let mut main_controller = MainController::new(request_rx, response_tx, app_config);
     main_controller.run().await;
 }
 
@@ -52,12 +52,11 @@ struct MainController {
 
 impl MainController {
     pub fn new(
-        root_directory: PathBuf,
-        api_url: String,
         request_rx: mpsc::Receiver<Request>,
         response_tx: broadcast::Sender<Response>,
+        app_config: AppConfig,
     ) -> Self {
-        let directories = Directories::new(root_directory);
+        let directories = Directories::new(app_config.root_directory);
 
         let (action_tx, action_rx) = mpsc::channel(128);
 
@@ -75,8 +74,8 @@ impl MainController {
         let audio_preferences = preferences.clone().audio.unwrap_or_default();
         let midi_preferences = preferences.clone().midi.unwrap_or_default();
 
-        let auth = create_pocketbase_auth(api_url.clone(), &directories.backend);
-        let remote_backend = create_pocketbase_backend(api_url, auth.clone());
+        let auth = create_pocketbase_auth(app_config.api_url.clone(), &directories.backend);
+        let remote_backend = create_pocketbase_backend(app_config.api_url, auth.clone());
 
         let local_backend = create_filesystem_backend(&directories.projects);
 
@@ -87,7 +86,7 @@ impl MainController {
             request_rx,
             response_tx: response_tx.clone(),
             project: Project::empty().with_songs(1, 1),
-            audio_controller: AudioController::new(response_tx.clone(), audio_preferences),
+            audio_controller: AudioController::new(response_tx.clone(), audio_preferences, app_config.use_dummy_audio),
             waveform_store: WaveformStore::new(response_tx),
             _midi_controller: MidiController::new(action_tx.clone(), midi_preferences),
             action_rx,
