@@ -1,6 +1,12 @@
-import {Button, Grid, Stack, Typography} from '@mui/joy';
+import {Button, Grid, Stack, Typography, Box} from '@mui/joy';
 import {useSong} from '../../model-hooks/song-hooks';
-import {Add, ArrowDownward, ArrowUpward, Delete} from '@mui/icons-material';
+import {
+  Add,
+  ArrowDownward,
+  ArrowUpward,
+  Delete,
+  DragIndicator,
+} from '@mui/icons-material';
 import {Sample} from '../sample/Sample';
 import {Section} from '../section/Section';
 import {columnSize, columns} from '../section/TableInfo';
@@ -12,8 +18,28 @@ import {
   addSectionAction,
   removeSongAction,
   updateSongAction,
+  moveSectionAction,
 } from '../../dispatcher/action';
 import {useDispatcher} from '../../dispatcher/dispatcher';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  useDroppable,
+  DragOverlay,
+  DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {useSortable} from '@dnd-kit/sortable';
+import {CSS} from '@dnd-kit/utilities';
 
 interface SongProps {
   songId: ID;
@@ -161,6 +187,125 @@ const TableFooter = ({onRequestAdd}: {onRequestAdd: () => void}) => (
   </Stack>
 );
 
+const DropZone = ({index}: {index: number}) => {
+  const {isOver, setNodeRef} = useDroppable({
+    id: `dropzone-${index}`,
+  });
+
+  return (
+    <Box
+      ref={setNodeRef}
+      sx={{
+        height: isOver ? 8 : 1,
+        backgroundColor: isOver ? 'primary.500' : 'neutral.200',
+        borderRadius: 'sm',
+        transition: 'all 0.2s ease',
+        marginY: isOver ? 1 : 0.25,
+        opacity: isOver ? 1 : 0.3,
+        position: 'relative',
+        ...(isOver && {
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: -2,
+            left: -4,
+            right: -4,
+            bottom: -2,
+            backgroundColor: 'primary.100',
+            borderRadius: 'md',
+            zIndex: -1,
+          },
+        }),
+      }}
+    />
+  );
+};
+
+const SortableSection = ({
+  sectionId,
+  songId,
+  requestUpdateDuration,
+}: {
+  sectionId: ID;
+  songId: ID;
+  requestUpdateDuration: (sectionId: ID, duration: number) => void;
+}) => {
+  const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
+    useSortable({id: sectionId.toString()});
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.8 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
+  };
+
+  return (
+    <Box
+      ref={setNodeRef}
+      style={style}
+      sx={{
+        'position': 'relative',
+        'borderRadius': 'sm',
+        'transition': 'all 0.2s ease',
+        '&:hover': {
+          'backgroundColor': 'background.level1',
+          '& .drag-handle': {
+            opacity: 1,
+          },
+        },
+        ...(isDragging && {
+          backgroundColor: 'background.level2',
+          boxShadow: 'lg',
+        }),
+      }}
+    >
+      <Box
+        className="drag-handle"
+        {...attributes}
+        {...listeners}
+        sx={{
+          'position': 'absolute',
+          'left': -35,
+          'top': '50%',
+          'transform': 'translateY(-50%)',
+          'zIndex': 10,
+          'cursor': 'grab',
+          'opacity': 0,
+          'transition': 'all 0.2s ease',
+          'backgroundColor': 'background.surface',
+          'borderRadius': 'sm',
+          'padding': 0.5,
+          'border': '1px solid',
+          'borderColor': 'neutral.300',
+          'display': 'flex',
+          'alignItems': 'center',
+          'justifyContent': 'center',
+          'width': 28,
+          'height': 28,
+          '&:active': {
+            cursor: 'grabbing',
+            transform: 'translateY(-50%) scale(1.1)',
+          },
+          '&:hover': {
+            borderColor: 'primary.500',
+            backgroundColor: 'primary.50',
+          },
+        }}
+      >
+        <DragIndicator fontSize="small" sx={{color: 'neutral.600'}} />
+      </Box>
+      <Box sx={{marginY: 0.5}}>
+        <Section
+          songId={songId}
+          sectionId={sectionId}
+          requestUpdateDuration={requestUpdateDuration}
+        />
+      </Box>
+    </Box>
+  );
+};
+
 const SectionsTable = ({
   song,
   requestAdd,
@@ -169,19 +314,81 @@ const SectionsTable = ({
   song: ModelSong;
   requestAdd: () => void;
   requestUpdateSectionDuration: (sectionId: ID, duration: number) => void;
-}) => (
-  <Stack spacing={1}>
-    <TableHeader />
+}) => {
+  const dispatch = useDispatcher();
 
-    {song.sections.map((section) => (
-      <Section
-        key={section.id.toString()}
-        songId={song.id}
-        sectionId={section.id}
-        requestUpdateDuration={requestUpdateSectionDuration}
-      />
-    ))}
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-    <TableFooter onRequestAdd={requestAdd} />
-  </Stack>
-);
+  const handleDragEnd = ({active, over}: DragEndEvent) => {
+    if (!active.id || !over?.id) {
+      return;
+    }
+
+    // Handle drop zones
+    if (over.id.toString().startsWith('dropzone-')) {
+      const dropIndex = parseInt(over.id.toString().replace('dropzone-', ''));
+      const activeIndex = song.sections.findIndex(
+        (section) => section.id.toString() === active.id
+      );
+
+      if (activeIndex !== -1) {
+        const newIndex = dropIndex > activeIndex ? dropIndex - 1 : dropIndex;
+        if (activeIndex !== newIndex) {
+          dispatch(moveSectionAction(song.id, activeIndex, newIndex));
+        }
+      }
+      return;
+    }
+
+    // Handle section-to-section drops
+    const oldIndex = song.sections.findIndex(
+      (section) => section.id.toString() === active.id
+    );
+    const newIndex = song.sections.findIndex(
+      (section) => section.id.toString() === over.id
+    );
+
+    if (oldIndex !== newIndex) {
+      dispatch(moveSectionAction(song.id, oldIndex, newIndex));
+    }
+  };
+
+  return (
+    <DndContext
+      sensors={sensors}
+      onDragEnd={handleDragEnd}
+      collisionDetection={closestCenter}
+    >
+      <SortableContext
+        items={song.sections.map((section) => section.id.toString())}
+        strategy={verticalListSortingStrategy}
+      >
+        <Box sx={{paddingLeft: 5, position: 'relative'}}>
+          <Stack spacing={0}>
+            <TableHeader />
+
+            <DropZone index={0} />
+
+            {song.sections.map((section, index) => (
+              <Box key={section.id.toString()}>
+                <SortableSection
+                  songId={song.id}
+                  sectionId={section.id}
+                  requestUpdateDuration={requestUpdateSectionDuration}
+                />
+                <DropZone index={index + 1} />
+              </Box>
+            ))}
+
+            <TableFooter onRequestAdd={requestAdd} />
+          </Stack>
+        </Box>
+      </SortableContext>
+    </DndContext>
+  );
+};
