@@ -1,6 +1,6 @@
 use super::{
     metronome::Metronome,
-    process::Process,
+    process::{create_process, AudioProcessRunner},
     sampler_converter::{SampleConversionResult, SampleConverter},
     sequencer::Sequencer,
 };
@@ -24,7 +24,7 @@ use tokio::sync::broadcast;
 #[allow(dead_code)]
 pub struct AudioController {
     context: Box<dyn Context>,
-    realtime_process: Process,
+    realtime_process: Box<dyn AudioProcessRunner>,
 
     sample_converter: SampleConverter,
     conversion_rx: mpsc::Receiver<SampleConversionResult>,
@@ -62,7 +62,7 @@ impl AudioController {
 
         let (conversion_tx, conversion_rx) = mpsc::channel(64);
 
-        let realtime_process = Process::new(process, preferences.clone());
+        let realtime_process = create_process(process, preferences.clone());
 
         Self {
             context,

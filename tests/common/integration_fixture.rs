@@ -35,6 +35,9 @@ fn init_logger() {
 impl IntegrationFixture {
     pub async fn new() -> Self {
         init_logger();
+        
+        // Set environment variable to use dummy audio for tests
+        std::env::set_var("BLOOP_DUMMY_AUDIO", "1");
 
         let home_directory = tempfile::TempDir::new().expect("Unable to create temporary directory");
         println!(
