@@ -18,6 +18,7 @@ export const SELECT_SONG = 'SELECT_SONG';
 export const SIGN_IN = 'SIGN_IN';
 export const UPDATE_SECTION = 'UPDATE_SECTION';
 export const UPDATE_SONG = 'UPDATE_SONG';
+export const LOAD_PROJECTS = 'LOAD_PROJECTS';
 
 // 2:
 
@@ -113,6 +114,10 @@ export const updateSongAction = (newSong: Song) => ({
   newSong,
 });
 
+export const loadProjectsAction = () => ({
+  type: LOAD_PROJECTS,
+});
+
 // 3:
 export type AddSampleAction = ReturnType<typeof addSampleAction>;
 export type AddSectionAction = ReturnType<typeof addSectionAction>;
@@ -130,6 +135,7 @@ export type SelectSongAction = ReturnType<typeof selectSongAction>;
 export type SignInAction = ReturnType<typeof signInAction>;
 export type UpdateSectionAction = ReturnType<typeof updateSectionAction>;
 export type UpdateSongAction = ReturnType<typeof updateSongAction>;
+export type LoadProjectsAction = ReturnType<typeof loadProjectsAction>;
 
 // 4:
 export type Action =
@@ -148,4 +154,5 @@ export type Action =
   | SelectSongAction
   | SignInAction
   | UpdateSectionAction
-  | UpdateSongAction;
+  | UpdateSongAction
+  | LoadProjectsAction;

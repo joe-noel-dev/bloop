@@ -7,6 +7,7 @@ import {
   AddSectionAction,
   CREATE_PROJECT,
   LOAD_PROJECT,
+  LOAD_PROJECTS,
   LoadProjectAction,
   MOVE_SECTION,
   MOVE_SONG,
@@ -179,6 +180,11 @@ export const reducer = async (
     case UPDATE_SONG: {
       const {newSong} = action as UpdateSongAction;
       updateSong(newState.project, newSong);
+      break;
+    }
+
+    case LOAD_PROJECTS: {
+      newState.projects = await backend.fetchProjects();
       break;
     }
 
