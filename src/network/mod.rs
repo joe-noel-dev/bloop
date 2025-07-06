@@ -1,5 +1,4 @@
 mod client;
-mod error;
 mod manager;
 mod server;
 

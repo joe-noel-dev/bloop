@@ -9,7 +9,7 @@ use crate::model::Song;
 
 use super::{constants::display_units, icons::Icon, message::Message, sections::sections_view, state::State};
 
-pub fn project_view(state: &State) -> Element<Message> {
+pub fn project_view(state: &State) -> Element<'_, Message> {
     let song = match state.project.selected_song() {
         Some(song) => song,
         None => return row![].height(Fill).width(Fill).into(),
@@ -23,7 +23,7 @@ pub fn project_view(state: &State) -> Element<Message> {
         .into()
 }
 
-fn header(song: &Song) -> Element<Message> {
+fn header(song: &Song) -> Element<'_, Message> {
     let icon_dimension = display_units(8.0);
     let left_icon = Icon::ArrowLeft.to_svg_with_size(icon_dimension);
     let right_icon = Icon::ArrowRight.to_svg_with_size(icon_dimension);

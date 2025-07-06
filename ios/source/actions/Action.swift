@@ -16,6 +16,7 @@ enum Action {
     case setPlaybackState(Bloop_PlaybackState)
     case setProgress(Bloop_Progress)
     case setProjects([Bloop_ProjectInfo])
+    case setCloudProjects([Bloop_ProjectInfo])
     case setProjectInfo(Bloop_ProjectInfo)
     case addWaveform((Id, Bloop_WaveformData))
     case removeWaveform(Id)

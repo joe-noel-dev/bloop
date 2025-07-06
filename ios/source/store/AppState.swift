@@ -5,6 +5,7 @@ struct AppState {
     var scanning = false
     var servers: [Server] = []
     var projects: [Bloop_ProjectInfo] = []
+    var cloudProjects: [Bloop_ProjectInfo] = []
     var project = emptyProject()
     var projectInfo: Bloop_ProjectInfo? = .none
     var playbackState = Bloop_PlaybackState()

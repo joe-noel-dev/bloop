@@ -124,7 +124,7 @@ struct SongView: View {
             }
         }
         .sheet(isPresented: editingEntityBinding(.projects)) {
-            ProjectsView(projects: state.projects, dispatch: dispatch) {
+            ProjectsView(projects: state.projects, cloudProjects: state.cloudProjects, dispatch: dispatch) {
                 editingEntity = nil
             }
         }

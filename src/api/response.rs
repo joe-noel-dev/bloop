@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 
 use crate::bloop::{
-    PlaybackState, Progress, Project, ProjectInfo, UploadAck, User, UserStatusResponse, WaveformResponse,
+    PlaybackState, Progress, Project, ProjectInfo, ProjectSyncResponse, UploadAck, User, UserStatusResponse,
+    WaveformResponse,
 };
 
 impl crate::bloop::Response {
@@ -17,6 +18,11 @@ impl crate::bloop::Response {
 
     pub fn with_projects(mut self, projects: &[ProjectInfo]) -> Self {
         self.projects = projects.to_vec();
+        self
+    }
+
+    pub fn with_cloud_projects(mut self, projects: &[ProjectInfo]) -> Self {
+        self.cloud_projects = projects.to_vec();
         self
     }
 
@@ -58,6 +64,11 @@ impl crate::bloop::Response {
             }
         })
         .into();
+        self
+    }
+
+    pub fn with_project_sync(mut self, project_sync: &ProjectSyncResponse) -> Self {
+        self.project_sync = Some(project_sync.clone()).into();
         self
     }
 }

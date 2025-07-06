@@ -23,8 +23,9 @@ class Discovery: NSObject {
 
         serviceBrowser.browseResultsChangedHandler = { [weak self] results, changes in
             DispatchQueue.main.async {
-                self?.services = Set(results.map { $0.endpoint })
-                self?.onKnownServersChanged?(results.map { $0.endpoint })
+                let endpoints = results.map { $0.endpoint }
+                self?.services = Set(endpoints)
+                self?.onKnownServersChanged?(endpoints)
             }
         }
 

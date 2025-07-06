@@ -26,6 +26,10 @@ class ResponseMiddleware: Middleware {
             self.dispatch?(.setProjects(response.projects))
         }
 
+        if !response.cloudProjects.isEmpty {
+            self.dispatch?(.setCloudProjects(response.cloudProjects))
+        }
+
         if !response.error.isEmpty {
             self.dispatch?(.addError(response.error))
         }

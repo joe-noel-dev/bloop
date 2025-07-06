@@ -7,6 +7,8 @@ use rawdio::{AudioBuffer, AudioProcess, BorrowedAudioBuffer, MutableBorrowedAudi
 
 use crate::preferences::AudioPreferences;
 
+pub trait AudioProcessRunner {}
+
 #[allow(dead_code)]
 pub struct Process {
     output_stream: Stream,
@@ -72,6 +74,7 @@ fn get_stream_config(preferences: &AudioPreferences, device: &Device) -> StreamC
 }
 
 impl Process {
+    #[allow(dead_code)]
     pub fn new(mut audio_process: Box<dyn AudioProcess + Send>, preferences: AudioPreferences) -> Self {
         #[cfg(target_os = "linux")]
         let host = cpal::host_from_id(cpal::HostId::Jack).unwrap_or_else(|_| cpal::default_host());
@@ -167,4 +170,57 @@ impl Process {
             output_channel_count: preferences.output_channel_count,
         }
     }
+}
+impl AudioProcessRunner for Process {
+    // Implementation for real process
+}
+
+/// Dummy audio process for testing - runs audio processing without actual hardware
+pub struct DummyProcess {
+    #[allow(dead_code)]
+    audio_thread: std::thread::JoinHandle<()>,
+}
+
+impl DummyProcess {
+    #[allow(dead_code)]
+    pub fn new(mut audio_process: Box<dyn AudioProcess + Send>, preferences: AudioPreferences) -> DummyProcess {
+        let input_buffer = OwnedAudioBuffer::new(
+            preferences.buffer_size,
+            preferences.output_channel_count,
+            preferences.sample_rate,
+        );
+
+        let mut output_buffer = OwnedAudioBuffer::new(
+            preferences.buffer_size,
+            preferences.output_channel_count,
+            preferences.sample_rate,
+        );
+
+        let audio_thread = std::thread::spawn(move || loop {
+            let interval = std::time::Duration::from_millis(1);
+            std::thread::sleep(interval);
+            output_buffer.clear();
+            audio_process.process(&input_buffer, &mut output_buffer);
+        });
+
+        DummyProcess { audio_thread }
+    }
+}
+
+impl AudioProcessRunner for DummyProcess {
+    // Implementation for dummy process
+}
+
+pub fn create_dummy_process(
+    audio_process: Box<dyn AudioProcess + Send>,
+    preferences: AudioPreferences,
+) -> Box<dyn AudioProcessRunner> {
+    Box::new(DummyProcess::new(audio_process, preferences))
+}
+
+pub fn create_audio_process(
+    audio_process: Box<dyn AudioProcess + Send>,
+    preferences: AudioPreferences,
+) -> Box<dyn AudioProcessRunner> {
+    Box::new(Process::new(audio_process, preferences))
 }

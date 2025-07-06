@@ -69,7 +69,7 @@ fn set_up_file_logger(path: &Path) -> Result<fern::Dispatch> {
         .write(true)
         .truncate(true)
         .open(path)
-        .context(format!("Opening log file {:#?}", path))?;
+        .context(format!("Opening log file {path:#?}"))?;
 
     Ok(fern::Dispatch::new()
         .format(|out, message, record| {
@@ -92,7 +92,7 @@ fn set_up_dependencies_logger(path: &Path) -> Result<fern::Dispatch> {
         .write(true)
         .truncate(true)
         .open(path)
-        .context(format!("Opening log file {:#?}", path))?;
+        .context(format!("Opening log file {path:#?}"))?;
 
     Ok(fern::Dispatch::new()
         .format(|out, message, record| {

@@ -87,6 +87,7 @@ message Request {
     RenameProjectRequest rename_project = 21;
     LoginRequest login = 22;
     LogoutRequest logout = 23;
+    ProjectSyncRequest project_sync = 24;
 }
 
 message GetRequest {
@@ -200,6 +201,8 @@ message Response {
     string error = 9;
     UserStatusResponse user_status = 10;
     ProjectInfo project_info = 11;
+    ProjectSyncResponse project_sync = 12;
+    repeated ProjectInfo cloud_projects = 13;
 } 
 
 message WaveformResponse {
@@ -265,6 +268,38 @@ message User {
     string name = 3;
 }
 
+enum UserState {
+    USER_STATE_UNDEFINED = 0;
+    USER_STATE_SIGNED_OUT = 1;
+    USER_STATE_SIGNING_IN = 2;
+    USER_STATE_SIGNED_IN = 3;
+}
+
 message UserStatusResponse {
     User user = 1;
+    UserState state = 2;
 }
+
+enum SyncMethod {
+    SYNC_METHOD_UNDEFINED = 0;
+    SYNC_METHOD_PUSH = 1;
+    SYNC_METHOD_PULL = 2;
+}
+
+message ProjectSyncRequest {
+    SyncMethod method = 1;
+    string project_id = 2;
+}
+
+enum SyncStatus {
+    SYNC_STATUS_UNDEFINED = 0;
+    SYNC_STATUS_IN_PROGRESS = 1;
+    SYNC_STATUS_COMPLETE = 2;
+    SYNC_STATUS_ERROR = 3;
+}
+
+message ProjectSyncResponse {
+    string project_id = 1;
+    SyncStatus status = 2;
+}
+

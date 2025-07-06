@@ -1,30 +1,34 @@
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::backend::Auth;
 
-use super::{Backend, DbProject, DbUser};
+use super::{Backend, DbProject};
 use anyhow::{Context, Result};
-use log::{info, warn};
+use log::warn;
 use reqwest::Response;
 use serde::{Deserialize, Serialize};
-
-const DEFAULT_HOST: &str = "https://joe-noel-dev-bloop.fly.dev";
 
 pub struct PocketbaseBackend {
     host: String,
     auth: Arc<Mutex<dyn Auth + Send + Sync>>,
 }
 
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PocketbaseProject {
+    id: String,
+    name: String,
+    user_id: String,
+    project: String,
+    samples: Vec<String>,
+    created: chrono::DateTime<chrono::Utc>,
+    updated: chrono::DateTime<chrono::Utc>,
+}
+
 impl PocketbaseBackend {
-    pub fn new(host: Option<String>, auth: Arc<Mutex<dyn Auth + Send + Sync>>) -> Self {
-        Self {
-            host: host.unwrap_or(String::from(DEFAULT_HOST)),
-            auth,
-        }
+    pub fn new(host: String, auth: Arc<Mutex<dyn Auth + Send + Sync>>) -> Self {
+        Self { host, auth }
     }
 
     async fn get_token(&self) -> Result<String> {
@@ -48,6 +52,25 @@ impl PocketbaseBackend {
         }
 
         Ok(response.json::<DbProject>().await?)
+    }
+
+    async fn read_project_file(&self, project_id: &str, project_filename: &str) -> Result<Vec<u8>> {
+        let token = self.get_token().await?;
+        let url = format!("{}/api/files/projects/{}/{}", self.host, project_id, project_filename);
+        let client = reqwest::Client::new();
+
+        let response = client
+            .get(&url)
+            .header("Accept", "application/json")
+            .bearer_auth(token)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(handle_error_response(response, "Get Project File").await);
+        }
+
+        Ok(response.bytes().await?.to_vec())
     }
 }
 
@@ -82,7 +105,7 @@ impl Backend for PocketbaseBackend {
                 match project {
                     Ok(project) => Some(project),
                     Err(error) => {
-                        warn!("Failed to parse project (item = {:?}, error = {})", item, error);
+                        warn!("Failed to parse project (item = {item:?}, error = {error})");
                         None
                     }
                 }
@@ -91,7 +114,7 @@ impl Backend for PocketbaseBackend {
         Ok(projects)
     }
 
-    async fn get_project(&self, project_id: &str) -> Result<DbProject> {
+    async fn read_project(&self, project_id: &str) -> Result<DbProject> {
         let token = self.get_token().await?;
 
         let url = format!("{}/api/collections/projects/records/{}", self.host, project_id);
@@ -111,15 +134,19 @@ impl Backend for PocketbaseBackend {
         Ok(response.json::<DbProject>().await?)
     }
 
-    async fn create_project(&self, user_id: &str) -> Result<DbProject> {
+    async fn create_project(&self, user_id: &str, project_id: Option<String>) -> Result<DbProject> {
         let token = self.get_token().await?;
 
         let url = format!("{}/api/collections/projects/records", self.host);
         let client = reqwest::Client::new();
 
-        let project_json = serde_json::json!({
+        let mut project_json = serde_json::json!({
             "userId": user_id
         });
+
+        if let Some(id) = project_id {
+            project_json["id"] = serde_json::Value::String(id);
+        }
 
         let response = client
             .post(&url)
@@ -186,9 +213,10 @@ impl Backend for PocketbaseBackend {
         Ok(())
     }
 
-    async fn get_project_file(&self, project_id: &str, project_filename: &str) -> Result<Vec<u8>> {
+    async fn get_samples(&self, project_id: &str) -> Result<Vec<String>> {
         let token = self.get_token().await?;
-        let url = format!("{}/api/files/projects/{}/{}", self.host, project_id, project_filename);
+
+        let url = format!("{}/api/collections/projects/records/{}", self.host, project_id);
         let client = reqwest::Client::new();
 
         let response = client
@@ -199,10 +227,82 @@ impl Backend for PocketbaseBackend {
             .await?;
 
         if !response.status().is_success() {
-            return Err(handle_error_response(response, "Get Project File").await);
+            return Err(handle_error_response(response, "Get Project").await);
         }
 
-        Ok(response.bytes().await?.to_vec())
+        let project = response.json::<PocketbaseProject>().await?;
+
+        Ok(project
+            .samples
+            .iter()
+            .filter_map(|sample| {
+                sample.strip_suffix(".wav").map(|s| {
+                    // Remove PocketBase ID suffix (e.g. "kick_52iwbgds7l" -> "kick")
+                    // PocketBase adds IDs that are usually 10 characters at the end
+                    if let Some(underscore_pos) = s.rfind('_') {
+                        // Check if what follows the underscore looks like a PocketBase ID
+                        let potential_id = &s[underscore_pos + 1..];
+                        if potential_id.len() == 10 && potential_id.chars().all(|c| c.is_alphanumeric()) {
+                            s[..underscore_pos].to_string()
+                        } else {
+                            s.to_string()
+                        }
+                    } else {
+                        s.to_string()
+                    }
+                })
+            })
+            .collect())
+    }
+
+    async fn read_sample(&self, project_id: &str, sample_name: &str) -> Result<Vec<u8>> {
+        let token = self.get_token().await?;
+
+        let url = format!("{}/api/collections/projects/records/{}", self.host, project_id);
+        let client = reqwest::Client::new();
+
+        let response = client
+            .get(&url)
+            .header("Accept", "application/json")
+            .bearer_auth(token)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(handle_error_response(response, "Get Project").await);
+        }
+
+        let project = response.json::<PocketbaseProject>().await?;
+
+        let sample_path = project
+            .samples
+            .iter()
+            .find(|s| s.starts_with(sample_name) && s.ends_with(".wav"))
+            .ok_or_else(|| anyhow::anyhow!("Sample not found: {}", sample_name))?;
+
+        self.read_project_file(project_id, sample_path).await
+    }
+
+    async fn read_project_file(&self, project_id: &str) -> Result<Vec<u8>> {
+        let token = self.get_token().await?;
+
+        let url = format!("{}/api/collections/projects/records/{}", self.host, project_id);
+        let client = reqwest::Client::new();
+
+        let response = client
+            .get(&url)
+            .header("Accept", "application/json")
+            .bearer_auth(token)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(handle_error_response(response, "Get Project").await);
+        }
+
+        let project = response.json::<PocketbaseProject>().await?;
+
+        self.read_project_file(project_id, &project.project).await
     }
 }
 
@@ -221,7 +321,7 @@ impl Default for ErrorResponse {
     }
 }
 
-async fn handle_error_response(response: Response, request_name: &str) -> anyhow::Error {
+pub(crate) async fn handle_error_response(response: Response, request_name: &str) -> anyhow::Error {
     assert!(!response.status().is_success());
 
     let response = response.json::<ErrorResponse>().await.unwrap_or_default();
@@ -233,142 +333,4 @@ async fn handle_error_response(response: Response, request_name: &str) -> anyhow
 
     warn!("{}", &error_message);
     anyhow::anyhow!("{}", &error_message)
-}
-
-pub struct PocketbaseAuth {
-    host: String,
-    token: Option<String>,
-    root_directory: PathBuf,
-}
-
-impl PocketbaseAuth {
-    pub fn new(host: Option<String>, root_directory: &Path) -> Self {
-        let host = host.unwrap_or_else(|| String::from(DEFAULT_HOST));
-        let token = read_token(root_directory);
-        Self {
-            host,
-            token,
-            root_directory: root_directory.to_path_buf(),
-        }
-    }
-
-    async fn handle_login(&mut self, response: Response, request_name: &str) -> Result<DbUser> {
-        if !response.status().is_success() {
-            return Err(handle_error_response(response, request_name).await);
-        }
-
-        let json: serde_json::Value = response.json().await?;
-        self.token = json["token"].as_str().map(|s| s.to_string());
-
-        if let Some(token) = &self.token {
-            write_token(&self.root_directory, token);
-        }
-
-        let user = json
-            .get("record")
-            .ok_or(anyhow::anyhow!("Missing record in response"))?;
-        let user: DbUser =
-            serde_json::from_value(user.clone()).context(anyhow::anyhow!("Unable to parse user in response"))?;
-        info!("Logged in a user: {}", user.name);
-        Ok(user)
-    }
-}
-
-#[async_trait::async_trait]
-impl Auth for PocketbaseAuth {
-    fn token(&self) -> Option<String> {
-        self.token.clone()
-    }
-
-    async fn log_in(&mut self, username: String, password: String) -> Result<DbUser> {
-        let client = reqwest::Client::new();
-        let url = format!("{}/api/collections/users/auth-with-password", self.host);
-
-        let response = client
-            .post(&url)
-            .json(&serde_json::json!({
-                "identity": username,
-                "password": password,
-            }))
-            .send()
-            .await?;
-
-        self.handle_login(response, "Log in").await
-    }
-
-    async fn log_out(&mut self) -> anyhow::Result<()> {
-        if self.token.is_none() {
-            warn!("No user is logged in");
-            return Ok(());
-        }
-
-        info!("Logging out");
-        self.token = None;
-
-        let token_path = self.root_directory.join("token");
-        if let Err(e) = std::fs::remove_file(&token_path) {
-            warn!("Failed to remove token file: {}", e);
-        } else {
-            info!("Token file removed successfully");
-        }
-
-        Ok(())
-    }
-
-    async fn refresh_auth(&mut self) -> Result<DbUser> {
-        if self.token.is_none() {
-            return Err(anyhow::anyhow!("Not logged in"));
-        }
-
-        let client = reqwest::Client::new();
-        let url = format!("{}/api/collections/users/auth-refresh", self.host);
-
-        let response = client
-            .post(&url)
-            .header("Accept", "application/json")
-            .bearer_auth(self.token.as_ref().unwrap())
-            .send()
-            .await?;
-
-        self.handle_login(response, "Auth refresh").await
-    }
-
-    async fn get_user(&self, user_id: &str) -> Result<DbUser> {
-        let token = self.token.as_ref().ok_or(anyhow::anyhow!("Not logged in"))?;
-
-        let url = format!("{}/api/collections/users/records/{}", self.host, user_id);
-        let client = reqwest::Client::new();
-
-        let response = client
-            .get(&url)
-            .header("Accept", "application/json")
-            .bearer_auth(token)
-            .send()
-            .await?;
-
-        if !response.status().is_success() {
-            return Err(handle_error_response(response, "Get User").await);
-        }
-
-        Ok(response.json::<DbUser>().await?)
-    }
-}
-
-fn write_token(root_directory: &Path, token: &str) {
-    if !root_directory.exists() {
-        if let Err(e) = std::fs::create_dir_all(root_directory) {
-            warn!("Failed to create directory: {}", e);
-            return;
-        }
-    }
-
-    let token_path = root_directory.join("token");
-    if let Err(e) = std::fs::write(&token_path, token) {
-        warn!("Failed to write token to disk: {}", e);
-    }
-}
-
-fn read_token(root_directory: &Path) -> Option<String> {
-    let token_path = root_directory.join("token");
-    std::fs::read_to_string(&token_path).ok().map(|s| s.trim().to_string())
 }

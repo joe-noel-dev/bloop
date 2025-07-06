@@ -3,6 +3,7 @@ include!(concat!(env!("OUT_DIR"), "/protos/mod.rs"));
 mod api;
 mod audio;
 pub mod backend;
+mod config;
 mod control;
 mod core;
 mod ffi;
@@ -19,7 +20,7 @@ mod types;
 mod ui;
 mod waveform;
 
-use core::run_core;
+pub use core::run_core;
 use git_version::git_version;
 use log::info;
 use logger::{set_up_logger, LogOptions};
@@ -27,6 +28,8 @@ use tokio::sync::{broadcast, mpsc};
 
 #[cfg(feature = "ui")]
 use ui::run_ui;
+
+pub use crate::config::AppConfig;
 
 const GIT_SHA: &str = git_version!();
 
@@ -45,7 +48,8 @@ pub fn run_main() {
     let (request_tx, request_rx) = mpsc::channel(128);
     let (response_tx, _) = broadcast::channel(128);
 
-    let core_thread = run_core(request_rx, request_tx.clone(), response_tx.clone());
+    let app_config = AppConfig::default();
+    let core_thread = run_core(request_rx, request_tx.clone(), response_tx.clone(), app_config);
 
     #[cfg(feature = "ui")]
     if !std::env::args().any(|arg| arg == "--headless") {

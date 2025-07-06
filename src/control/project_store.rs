@@ -4,23 +4,24 @@ use crate::{
     model::{Project, ProjectInfo, ID},
     samples::SamplesCache,
 };
-use anyhow::{anyhow, Context, Ok};
-use log::{debug, error, info};
+use anyhow::{anyhow, Context};
+use log::{debug, error, info, warn};
 use protobuf::Message;
-use std::str::FromStr;
 use std::{
     fs,
     path::{Path, PathBuf},
 };
+use std::{str::FromStr, sync::Arc};
 
 pub struct ProjectStore {
     root_directory: PathBuf,
     temporary_directory: tempfile::TempDir,
-    backend: Box<dyn Backend>,
+    backend: Arc<dyn Backend>,
+    remote_backend: Arc<dyn Backend>,
 }
 
 impl ProjectStore {
-    pub fn new(root_directory: &Path, backend: Box<dyn Backend>) -> Self {
+    pub fn new(root_directory: &Path, backend: Arc<dyn Backend>, remote_backend: Arc<dyn Backend>) -> Self {
         if !root_directory.exists() {
             fs::create_dir_all(root_directory)
                 .unwrap_or_else(|_| panic!("Couldn't create directory: {}", root_directory.to_str().unwrap()));
@@ -30,6 +31,7 @@ impl ProjectStore {
             root_directory: PathBuf::from(root_directory),
             temporary_directory: tempfile::TempDir::new().expect("Unable to create temporary directory"),
             backend,
+            remote_backend,
         }
     }
 
@@ -43,7 +45,7 @@ impl ProjectStore {
         let project_id = match project_id {
             Some(id) => id,
             None => {
-                let new_project = self.backend.create_project(user_id).await?;
+                let new_project = self.backend.create_project(user_id, None).await?;
                 new_project.id
             }
         };
@@ -93,19 +95,11 @@ impl ProjectStore {
     }
 
     pub async fn projects(&self) -> anyhow::Result<Vec<ProjectInfo>> {
-        let projects = self.backend.get_projects().await.context("Error getting projects")?;
+        projects_from_backend(self.backend.clone()).await
+    }
 
-        let projects_info = projects
-            .iter()
-            .map(|db_project| ProjectInfo {
-                id: db_project.id.clone(),
-                name: db_project.name.clone(),
-                last_saved: db_project.updated.to_rfc3339(),
-                ..Default::default()
-            })
-            .collect();
-
-        Ok(projects_info)
+    pub async fn cloud_projects(&self) -> anyhow::Result<Vec<ProjectInfo>> {
+        projects_from_backend(self.remote_backend.clone()).await
     }
 
     pub async fn remove_project(&self, project_id: &str) -> anyhow::Result<()> {
@@ -114,7 +108,14 @@ impl ProjectStore {
             .await
             .context(format!("Removing project: {project_id}"))?;
 
-        info!("Project removed: id = {}", project_id);
+        match self.remote_backend.remove_project(project_id).await {
+            Ok(_) => info!("Project removed from remote backend: id = {project_id}"),
+            Err(e) => {
+                warn!("Failed to remove project from remote backend: {e}");
+            }
+        }
+
+        info!("Project removed: id = {project_id}");
         Ok(())
     }
 
@@ -124,7 +125,7 @@ impl ProjectStore {
             .await
             .context(format!("Renaming project: {project_id}"))?;
 
-        info!("Project renamed: id = {}", project_id);
+        info!("Project renamed: id = {project_id}");
         Ok(())
     }
 
@@ -139,7 +140,7 @@ impl ProjectStore {
     }
 
     async fn read_project_file(&self, project_id: &str) -> anyhow::Result<(Project, ProjectInfo)> {
-        let project = self.backend.get_project(project_id).await.context("Get project")?;
+        let project = self.backend.read_project(project_id).await.context("Get project")?;
 
         let project_info = ProjectInfo {
             id: project.id.clone(),
@@ -150,7 +151,7 @@ impl ProjectStore {
 
         let project_data = self
             .backend
-            .get_project_file(project_id, &project.project)
+            .read_project_file(project_id)
             .await
             .context("Get project file")?;
         let project = Project::parse_from_bytes(&project_data).context("Parse project data")?;
@@ -164,7 +165,11 @@ impl ProjectStore {
         project: &Project,
         samples_cache: &SamplesCache,
     ) -> anyhow::Result<()> {
-        let db_project = self.backend.get_project(project_id).await.context("Get project")?;
+        let samples = self
+            .backend
+            .get_samples(project_id)
+            .await
+            .context("Failed to get samples from cache")?;
 
         for song in project.songs.iter() {
             let sample = match song.sample.as_ref() {
@@ -172,12 +177,11 @@ impl ProjectStore {
                 None => continue,
             };
 
-            let db_filename = db_project
-                .samples
+            let sample_id = samples
                 .iter()
                 .find(|sample_name| sample_name.contains(&sample.id.to_string()));
 
-            if db_filename.is_some() {
+            if sample_id.is_some() {
                 continue;
             }
 
@@ -213,45 +217,41 @@ impl ProjectStore {
         project_id: &str,
         samples_cache: &mut SamplesCache,
     ) -> anyhow::Result<()> {
-        let db_project = self.backend.get_project(project_id).await.context("Get project")?;
+        let samples = self
+            .backend
+            .get_samples(project_id)
+            .await
+            .context("Failed to get samples from cache")?;
 
-        for sample in db_project.samples.iter() {
-            let sample_id = match sample.split_once('_') {
-                Some((first_part, _)) => first_part,
-                None => {
-                    error!("Invalid sample format: {}", sample);
-                    continue;
-                }
-            };
-
-            let sample_id = match ID::from_str(sample_id) {
+        for sample_id_str in samples.iter() {
+            let sample_id = match ID::from_str(sample_id_str) {
                 std::result::Result::Ok(id) => id,
                 Err(error) => {
-                    error!("Invalid sample ID ({}): {}", sample, error);
+                    error!("Invalid sample ID ({sample_id_str}): {error}");
                     continue;
                 }
             };
 
             if samples_cache.get_sample(sample_id).is_some() {
-                debug!("Sample already in cache: {}", sample_id);
+                debug!("Sample already in cache: {sample_id}");
                 continue;
             }
 
-            debug!("Fetching sample: {}", sample);
+            debug!("Fetching sample: {sample_id}");
 
             let sample_bytes = self
                 .backend
-                .get_project_file(project_id, sample)
+                .read_sample(project_id, sample_id_str)
                 .await
-                .context(format!("Error getting project file: {sample}"))?;
+                .context(format!("Error getting project file: {sample_id_str}"))?;
 
-            let sample_path = self.temporary_directory.path().join(sample.to_string() + ".wav");
+            let sample_path = self.temporary_directory.path().join(format!("{sample_id}.wav"));
 
             tokio::fs::write(&sample_path, &sample_bytes)
                 .await
                 .context(format!("Error writing sample file: {}", sample_path.display()))?;
 
-            debug!("Adding sample to cache: {}", sample_id);
+            debug!("Adding sample to cache: {sample_id}");
 
             samples_cache
                 .add_sample_from_file(sample_id, AudioFileFormat::WAV, &sample_path)
@@ -260,4 +260,20 @@ impl ProjectStore {
 
         Ok(())
     }
+}
+
+async fn projects_from_backend(backend: Arc<dyn Backend>) -> anyhow::Result<Vec<ProjectInfo>> {
+    let projects = backend.get_projects().await?;
+
+    let projects_info = projects
+        .iter()
+        .map(|db_project| ProjectInfo {
+            id: db_project.id.clone(),
+            name: db_project.name.clone(),
+            last_saved: db_project.updated.to_rfc3339(),
+            ..Default::default()
+        })
+        .collect();
+
+    Ok(projects_info)
 }

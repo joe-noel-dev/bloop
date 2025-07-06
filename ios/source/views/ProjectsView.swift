@@ -31,16 +31,49 @@ struct ProjectPreview: View {
     }
 }
 
+enum ProjectLocation: Hashable {
+    case local(String)
+    case cloud(String)
+    
+    var id: String {
+        switch self {
+        case .local(let id), .cloud(let id):
+            return id
+        }
+    }
+    
+    var isLocal: Bool {
+        switch self {
+        case .local: return true
+        case .cloud: return false
+        }
+    }
+    
+    var isCloud: Bool {
+        switch self {
+        case .local: return false
+        case .cloud: return true
+        }
+    }
+}
+
 struct ProjectsView: View {
     var projects: [Bloop_ProjectInfo]
+    var cloudProjects: [Bloop_ProjectInfo]
     var dispatch: Dispatch
     var dismiss: () -> Void
 
-    @State private var selected: String?
+    @State private var selected: ProjectLocation?
     @State private var selectedFileURL: URL?
 
     private var sortedProjects: [Bloop_ProjectInfo] {
         projects.sorted { a, b in
+            a.lastSaved > b.lastSaved
+        }
+    }
+
+    private var sortedCloudProjects: [Bloop_ProjectInfo] {
+        cloudProjects.sorted { a, b in
             a.lastSaved > b.lastSaved
         }
     }
@@ -50,19 +83,38 @@ struct ProjectsView: View {
         NavigationStack {
 
             List(selection: $selected) {
-                ForEach(sortedProjects) { project in
-                    ProjectPreview(project: project, selected: selected == project.id)
+                if !sortedProjects.isEmpty {
+                    Section("Local Projects") {
+                        ForEach(sortedProjects) { project in
+                            ProjectPreview(project: project, selected: selected?.id == project.id && selected?.isLocal == true)
+                                .tag(ProjectLocation.local(project.id))
+                                .onTapGesture {
+                                    selected = .local(project.id)
+                                }
+                        }
+                        .onDelete { offsets in
+                            let projectIds = offsets.map { offset in
+                                sortedProjects[offset].id
+                            }
+
+                            for projectId in projectIds {
+                                let action = removeProjectAction(projectId)
+                                dispatch(action)
+                            }
+                        }
+                    }
                 }
-                .onDelete { offsets in
-                    let projectIds = offsets.map { offset in
-                        sortedProjects[offset].id
+                
+                if !sortedCloudProjects.isEmpty {
+                    Section("Cloud Projects") {
+                        ForEach(sortedCloudProjects) { project in
+                            ProjectPreview(project: project, selected: selected?.id == project.id && selected?.isCloud == true)
+                                .tag(ProjectLocation.cloud(project.id))
+                                .onTapGesture {
+                                    selected = .cloud(project.id)
+                                }
+                        }
                     }
-
-                    for projectId in projectIds {
-                        let action = removeProjectAction(projectId)
-                        dispatch(action)
-                    }
-
                 }
             }
             .listStyle(.plain)
@@ -70,22 +122,42 @@ struct ProjectsView: View {
             .toolbar {
 
                 if let selected = selected {
-                    Button {
-                        let action = loadProjectAction(selected)
-                        dispatch(action)
-                        dismiss()
-                    } label: {
-                        Label("Open", systemImage: "folder")
-                            .labelStyle(.titleOnly)
-                    }
 
-                    Button {
-                        let action = duplicateProjectAction(selected)
-                        dispatch(action)
-                        dismiss()
-                    } label: {
-                        Label("Duplicate", systemImage: "doc.on.doc")
-                            .labelStyle(.titleOnly)
+                    
+                    if selected.isCloud {
+                        Button {
+                            dispatch(pullProjectAction(selected.id))
+                        } label: {
+                            Label("Pull", systemImage: "arrow.down.circle")
+                                .labelStyle(.titleOnly)
+                        }
+                    }
+                    
+                    if selected.isLocal {
+                        Button {
+                            let action = loadProjectAction(selected.id)
+                            dispatch(action)
+                            dismiss()
+                        } label: {
+                            Label("Open", systemImage: "folder")
+                                .labelStyle(.titleOnly)
+                        }
+
+                        Button {
+                            let action = duplicateProjectAction(selected.id)
+                            dispatch(action)
+                            dismiss()
+                        } label: {
+                            Label("Duplicate", systemImage: "doc.on.doc")
+                                .labelStyle(.titleOnly)
+                        }
+                        
+                        Button {
+                            dispatch(pushProjectAction(selected.id))
+                        } label: {
+                            Label("Push", systemImage: "arrow.up.circle")
+                                .labelStyle(.titleOnly)
+                        }
                     }
                 }
 
@@ -125,7 +197,7 @@ struct ProjectsView_Previews: PreviewProvider {
     ]
 
     static var previews: some View {
-        ProjectsView(projects: projects, dispatch: loggingDispatch) {
+        ProjectsView(projects: projects, cloudProjects: [], dispatch: loggingDispatch) {
             print("Dismiss sheet")
         }
     }

@@ -8,6 +8,7 @@ use crate::{
     bloop::{Request, Response},
     core::run_core,
     logger::{set_up_logger, LogOptions},
+    AppConfig,
 };
 
 use anyhow::Result;
@@ -39,7 +40,8 @@ extern "C" fn bloop_init(
     let (request_tx, request_rx) = mpsc::channel(128);
     let (response_tx, response_rx) = broadcast::channel(128);
 
-    let core_thread = run_core(request_rx, request_tx.clone(), response_tx);
+    let app_config = AppConfig::default();
+    let core_thread = run_core(request_rx, request_tx.clone(), response_tx, app_config);
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
 
