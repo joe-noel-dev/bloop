@@ -20,7 +20,16 @@ pub async fn run(request_tx: mpsc::Sender<Request>, response_tx: broadcast::Send
 pub async fn listen_on_ip(ip: IpAddr, request_tx: mpsc::Sender<Request>, response_tx: broadcast::Sender<Response>) {
     let address = format!("{ip}:{PORT}");
     info!("Binding to: {address}");
-    let listener = TcpListener::bind(address).await.expect("Failed to bind");
+    let listener = match TcpListener::bind(address.clone()).await {
+        Ok(listener) => listener,
+        Err(error) => {
+            warn!("Failed to bind to {address}: {error}");
+            warn!("Trying port 0 instead");
+            TcpListener::bind(format!("{ip}:0"))
+                .await
+                .expect("Failed to bind to any port")
+        }
+    };
 
     let local_address = listener.local_addr().expect("Unable to get address from port");
 

@@ -18,6 +18,7 @@ struct BloopApp: App {
                 .environmentObject(store)
                 .onAppear {
                     UIApplication.shared.isIdleTimerDisabled = true
+                    store.dispatch(.connectLocal)
                 }
         }
     }

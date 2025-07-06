@@ -8,14 +8,20 @@ enum EditingEntity {
 
 enum ToolbarAction {
     case disconnect
+    case connectToServer(Server)
+    case connectLocal
 }
 
 struct MainToolbar: ToolbarContent {
     var currentSong: Bloop_Song
+    var servers: [Server]
+    var scanning: Bool
 
     @Binding var editingEntity: EditingEntity?
     @Environment(\.editMode) var editMode
     var onAction: (ToolbarAction) -> Void
+    
+    @State private var showingServerSelection = false
 
     var body: some ToolbarContent {
 
@@ -46,9 +52,26 @@ struct MainToolbar: ToolbarContent {
             }
 
             Button(role: .destructive) {
-                onAction(.disconnect)
+                showingServerSelection = true
             } label: {
-                Image(systemName: "xmark")
+                Image(systemName: "network")
+            }
+            .sheet(isPresented: $showingServerSelection) {
+                ServerSelectionView(
+                    servers: servers,
+                    scanning: scanning,
+                    onServerSelected: { server in
+                        showingServerSelection = false
+                        onAction(.connectToServer(server))
+                    },
+                    onLocalSelected: {
+                        showingServerSelection = false
+                        onAction(.connectLocal)
+                    },
+                    onCancel: {
+                        showingServerSelection = false
+                    }
+                )
             }
         }
     }

@@ -13,10 +13,19 @@ struct ContentView: View {
             }
         }
         else {
-            DisconnectedView(servers: store.state.servers, scanning: store.state.scanning) {
-                action in
-                store.dispatch(action)
-            }
+            ServerSelectionView(
+                servers: store.state.servers, 
+                scanning: store.state.scanning,
+                onServerSelected: { server in
+                    store.dispatch(.connect(server))
+                },
+                onLocalSelected: {
+                    store.dispatch(.connectLocal)
+                },
+                onRestartScan: {
+                    store.dispatch(.restartScan)
+                }
+            )
         }
 
     }
