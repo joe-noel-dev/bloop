@@ -75,8 +75,12 @@ impl Backend for FilesystemBackend {
         while let Some(entry) = entries.next_entry().await.context("Failed to read project entry")? {
             if entry.file_type().await?.is_dir() {
                 let project_id = entry.file_name().to_string_lossy().to_string();
-                let project = self.read_project(&project_id).await?;
-                projects.push(project);
+                match self.read_project(&project_id).await {
+                    Ok(project) => projects.push(project),
+                    Err(err) => {
+                        log::warn!("Failed to read project '{project_id}': {err}");
+                    }
+                }
             }
         }
 
