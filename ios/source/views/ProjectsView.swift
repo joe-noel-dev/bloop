@@ -34,21 +34,21 @@ struct ProjectPreview: View {
 enum ProjectLocation: Hashable {
     case local(String)
     case cloud(String)
-    
+
     var id: String {
         switch self {
         case .local(let id), .cloud(let id):
             return id
         }
     }
-    
+
     var isLocal: Bool {
         switch self {
         case .local: return true
         case .cloud: return false
         }
     }
-    
+
     var isCloud: Bool {
         switch self {
         case .local: return false
@@ -86,11 +86,14 @@ struct ProjectsView: View {
                 if !sortedProjects.isEmpty {
                     Section("Local Projects") {
                         ForEach(sortedProjects) { project in
-                            ProjectPreview(project: project, selected: selected?.id == project.id && selected?.isLocal == true)
-                                .tag(ProjectLocation.local(project.id))
-                                .onTapGesture {
-                                    selected = .local(project.id)
-                                }
+                            ProjectPreview(
+                                project: project,
+                                selected: selected?.id == project.id && selected?.isLocal == true
+                            )
+                            .tag(ProjectLocation.local(project.id))
+                            .onTapGesture {
+                                selected = .local(project.id)
+                            }
                         }
                         .onDelete { offsets in
                             let projectIds = offsets.map { offset in
@@ -104,15 +107,18 @@ struct ProjectsView: View {
                         }
                     }
                 }
-                
+
                 if !sortedCloudProjects.isEmpty {
                     Section("Cloud Projects") {
                         ForEach(sortedCloudProjects) { project in
-                            ProjectPreview(project: project, selected: selected?.id == project.id && selected?.isCloud == true)
-                                .tag(ProjectLocation.cloud(project.id))
-                                .onTapGesture {
-                                    selected = .cloud(project.id)
-                                }
+                            ProjectPreview(
+                                project: project,
+                                selected: selected?.id == project.id && selected?.isCloud == true
+                            )
+                            .tag(ProjectLocation.cloud(project.id))
+                            .onTapGesture {
+                                selected = .cloud(project.id)
+                            }
                         }
                     }
                 }
@@ -123,7 +129,6 @@ struct ProjectsView: View {
 
                 if let selected = selected {
 
-                    
                     if selected.isCloud {
                         Button {
                             dispatch(pullProjectAction(selected.id))
@@ -132,7 +137,7 @@ struct ProjectsView: View {
                                 .labelStyle(.titleOnly)
                         }
                     }
-                    
+
                     if selected.isLocal {
                         Button {
                             let action = loadProjectAction(selected.id)
@@ -151,7 +156,7 @@ struct ProjectsView: View {
                             Label("Duplicate", systemImage: "doc.on.doc")
                                 .labelStyle(.titleOnly)
                         }
-                        
+
                         Button {
                             dispatch(pushProjectAction(selected.id))
                         } label: {

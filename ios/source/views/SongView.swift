@@ -24,6 +24,12 @@ struct SongView: View {
         @Environment(\.horizontalSizeClass) var horizontalSizeClass
     #endif
 
+    private var playingSection: Bloop_Section? {
+        song.sections.first {
+            $0.id == state.playbackState.sectionID
+        }
+    }
+
     private var selectedSection: Bloop_Section? {
         song.sections.first {
             $0.id == state.project.selections.section
@@ -70,25 +76,35 @@ struct SongView: View {
     }
 
     var body: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.vertical) {
+                VStack(alignment: .leading) {
+                    if editMode?.wrappedValue == .active {
+                        SongDetailsEditor(song: $editSong)
 
-        ScrollView(.vertical) {
-            VStack(alignment: .leading) {
-                if editMode?.wrappedValue == .active {
-                    SongDetailsEditor(song: $editSong)
+                        SampleDetailsEditor(song: editSong, dispatch: dispatch)
+                    }
 
-                    SampleDetailsEditor(song: editSong, dispatch: dispatch)
+                    SectionsList(editSong: $editSong, state: state, dispatch: dispatch)
+
+                    Spacer()
                 }
-
-                SectionsList(editSong: $editSong, state: state, dispatch: dispatch)
-
-                Spacer()
             }
-        }
-        .padding(Layout.units(2))
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .contentShape(Rectangle())
-        .onAppear {
-            selectSong()
+            .padding(Layout.units(2))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle())
+            .onAppear {
+                selectSong()
+                scrollToPlayingSection(proxy: proxy)
+            }
+            .onChange(of: state.playbackState.sectionID) { _, _ in
+                scrollToPlayingSection(proxy: proxy)
+            }
+            .onChange(of: state.playbackState.songID) { _, newSongID in
+                if newSongID == song.id {
+                    scrollToPlayingSection(proxy: proxy)
+                }
+            }
         }
         .onTapGesture {
             if !isSelected {
@@ -132,7 +148,11 @@ struct SongView: View {
             }
         }
         .sheet(isPresented: editingEntityBinding(.projects)) {
-            ProjectsView(projects: state.projects, cloudProjects: state.cloudProjects, dispatch: dispatch) {
+            ProjectsView(
+                projects: state.projects,
+                cloudProjects: state.cloudProjects,
+                dispatch: dispatch
+            ) {
                 editingEntity = nil
             }
         }
@@ -221,6 +241,14 @@ struct SongView: View {
         )
         dispatch(action)
         editingEntity = nil
+    }
+
+    private func scrollToPlayingSection(proxy: ScrollViewProxy) {
+        guard let playingSection = playingSection else { return }
+
+        withAnimation(.easeInOut(duration: 0.5)) {
+            proxy.scrollTo(playingSection.id, anchor: .center)
+        }
     }
 
     private func editingEntityBinding(_ entity: EditingEntity) -> Binding<Bool> {
@@ -388,8 +416,22 @@ struct SectionsList: View {
 
     @Environment(\.editMode) private var editMode
 
+    #if os(iOS)
+        @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    #endif
+
+    private var sectionColumns: [GridItem] {
+        #if os(iOS)
+            let columnCount = horizontalSizeClass == .compact ? 1 : 2
+        #else
+            let columnCount = 2
+        #endif
+
+        return Array(repeating: GridItem(.flexible()), count: columnCount)
+    }
+
     var body: some View {
-        LazyVStack(spacing: Layout.units(2)) {
+        LazyVGrid(columns: sectionColumns, spacing: Layout.units(2)) {
             ForEach($editSong.sections) { section in
                 SectionView(
                     section: section,
@@ -398,6 +440,7 @@ struct SectionsList: View {
                     progress: state.progress,
                     dispatch: dispatch
                 )
+                .id(section.id)
             }
 
             if editMode?.wrappedValue == .active {
@@ -410,6 +453,7 @@ struct SectionsList: View {
 
                     editSong.sections.append(section)
                 }
+                .frame(minHeight: 64)
             }
         }
     }
