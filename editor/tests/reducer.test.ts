@@ -91,11 +91,14 @@ const createMockFile = (name: string = 'test.wav') => {
 };
 
 // Helper functions to create states with multiple songs/sections
-const createStateWithMultipleSections = (baseState: AppState, songIndex = 0) => ({
+const createStateWithMultipleSections = (
+  baseState: AppState,
+  songIndex = 0
+) => ({
   ...baseState,
   project: {
     ...baseState.project,
-    songs: baseState.project.songs.map((song, index) => 
+    songs: baseState.project.songs.map((song, index) =>
       index === songIndex
         ? {
             ...song,
@@ -253,7 +256,8 @@ describe('reducer', () => {
 
   describe('MOVE_SECTION', () => {
     it('should move a section within a song', async () => {
-      const stateWithMultipleSections = createStateWithMultipleSections(initialState);
+      const stateWithMultipleSections =
+        createStateWithMultipleSections(initialState);
 
       const action = {
         type: MOVE_SECTION,
@@ -351,7 +355,8 @@ describe('reducer', () => {
       const songId = initialState.project.songs[0].id;
       const sectionId = initialState.project.songs[0].sections[0].id;
 
-      const stateWithMultipleSections = createStateWithMultipleSections(initialState);
+      const stateWithMultipleSections =
+        createStateWithMultipleSections(initialState);
 
       const action = {
         type: REMOVE_SECTION,
@@ -418,7 +423,8 @@ describe('reducer', () => {
     it('should select a song', async () => {
       const songId = Long.fromNumber(2);
 
-      const stateWithMultipleSongs = createStateWithMultipleSongsAndSections(initialState);
+      const stateWithMultipleSongs =
+        createStateWithMultipleSongsAndSections(initialState);
 
       const action = {
         type: SELECT_SONG,
