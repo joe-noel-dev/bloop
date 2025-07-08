@@ -29,7 +29,7 @@ export const ProjectInfo = () => {
   const [projectsModalOpen, setProjectsModalOpen] = useState(false);
   const dispatch = useDispatcher();
 
-  const create = async () => dispatch(createProjectAction());
+  const create = () => dispatch(createProjectAction());
   const openProjects = () => {
     dispatch(loadProjectsAction());
     setProjectsModalOpen(true);
@@ -72,12 +72,12 @@ const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
   const projects = useProjects();
   const dispatch = useDispatcher();
 
-  const loadProject = async (projectId: string) => {
+  const loadProject = (projectId: string) => {
     dispatch(loadProjectAction(projectId));
     onRequestClose();
   };
 
-  const removeProject = async (projectId: string) => {
+  const removeProject = (projectId: string) => {
     if (!window.confirm('Are you sure you want to delete this project?')) {
       return;
     }

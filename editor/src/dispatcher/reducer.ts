@@ -62,6 +62,10 @@ export const reducer = async (
   const newState = {...state};
   const previousSamplesInUse = getSamplesInProject(newState.project);
 
+  if (process.env.NODE_ENV === 'development') {
+    console.debug('Reducer action:', action);
+  }
+
   switch (action.type) {
     case ADD_SAMPLE: {
       const {sample, songId} = action as AddSampleAction;
@@ -228,7 +232,20 @@ export const reducer = async (
     currentSamplesInUse
   );
 
-  await backend.updateProject(newState.projectInfo?.id ?? '', newState.project);
+  const shouldSave = ![LOAD_PROJECT, LOAD_PROJECTS, SELECT_SONG].includes(
+    action.type
+  );
+
+  if (shouldSave) {
+    try {
+      await backend.updateProject(
+        newState.projectInfo?.id ?? '',
+        newState.project
+      );
+    } catch (error) {
+      console.error(`Failed to update project on backend: ${error}`);
+    }
+  }
 
   return newState;
 };

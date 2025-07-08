@@ -29,7 +29,7 @@ export const Sample = ({sampleId, songId}: Props) => {
     return <></>;
   }
 
-  const remove = async () =>
+  const remove = () =>
     dispatch(
       updateSongAction({
         ...song,
@@ -37,7 +37,7 @@ export const Sample = ({sampleId, songId}: Props) => {
       })
     );
 
-  const onFileSelected = async () => {
+  const onFileSelected = () => {
     if (fileInputRef.current?.files?.length) {
       const file = fileInputRef.current.files[0];
       setUploading(true);
