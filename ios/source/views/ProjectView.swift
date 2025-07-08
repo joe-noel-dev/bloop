@@ -49,11 +49,12 @@ struct ProjectView: View {
                         if let user = state.user {
                             Text(user.name)
                                 .foregroundColor(.primary)
-                            
+
                             Button("Sign Out") {
                                 dispatch(logOutAction())
                             }
-                        } else {
+                        }
+                        else {
                             Button("Sign In") {
                                 showingLoginSheet = true
                             }

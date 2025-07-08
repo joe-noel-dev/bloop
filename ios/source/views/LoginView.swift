@@ -15,12 +15,12 @@ struct LoginView: View {
                 .autocapitalization(.none)
                 .padding(.horizontal)
                 .disabled(isLoggingIn)
-            
+
             SecureField("Password", text: $password)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
                 .disabled(isLoggingIn)
-            
+
             Button(action: {
                 isLoggingIn = true
                 let action = logInAction(email: username, password: password)
@@ -32,7 +32,8 @@ struct LoginView: View {
                             .scaleEffect(0.8)
                             .tint(.white)
                         Text("Logging in...")
-                    } else {
+                    }
+                    else {
                         Text("Submit")
                     }
                 }

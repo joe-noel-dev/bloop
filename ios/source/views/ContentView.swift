@@ -14,7 +14,7 @@ struct ContentView: View {
         }
         else {
             ServerSelectionView(
-                servers: store.state.servers, 
+                servers: store.state.servers,
                 scanning: store.state.scanning,
                 onServerSelected: { server in
                     store.dispatch(.connect(server))

@@ -46,8 +46,12 @@ struct SectionView: View {
         VStack(spacing: Layout.units(0.5)) {
             HStack {
                 TextField("Name", text: $section.name)
-                    .frame(maxWidth: .infinity)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .disabled(editMode?.wrappedValue != .active)
+                    .textFieldStyle(.plain)
+                    .foregroundColor(isPlaying ? Colours.playing : .primary)
 
                 Spacer()
 

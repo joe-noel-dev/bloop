@@ -7,20 +7,21 @@ struct ServerSelectionView: View {
     var onLocalSelected: () -> Void
     var onCancel: (() -> Void)? = nil
     var onRestartScan: (() -> Void)? = nil
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: Layout.units(4)) {
-                
+
                 if onCancel != nil {
                     Text("Select Server")
                         .font(.title2)
                         .fontWeight(.semibold)
                         .padding(.top, Layout.units(2))
-                } else {
+                }
+                else {
                     Spacer()
                 }
-                
+
                 VStack(spacing: Layout.units(2)) {
                     Button(
                         action: {
@@ -40,7 +41,7 @@ struct ServerSelectionView: View {
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
                     .padding(.horizontal, Layout.units(4))
-                    
+
                     if onCancel != nil {
                         Text("Run Bloop locally on this device")
                             .font(.subheadline)
@@ -48,50 +49,52 @@ struct ServerSelectionView: View {
                             .padding(.horizontal, Layout.units(4))
                     }
                 }
-                
+
                 if servers.isEmpty && scanning {
                     VStack(spacing: Layout.units(2)) {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle())
                             .scaleEffect(1.5)
-                        
+
                         Text("Scanning for servers...")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
                     .padding(.top, Layout.units(4))
                 }
-                
+
                 if servers.isEmpty && !scanning {
                     VStack(spacing: Layout.units(2)) {
                         Image(systemName: "wifi.slash")
                             .font(.system(size: 48))
                             .foregroundColor(.secondary)
-                        
+
                         Text("No servers found")
                             .font(.headline)
-                        
-                        Text("Make sure your device is connected to the same network as the Bloop server.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
+
+                        Text(
+                            "Make sure your device is connected to the same network as the Bloop server."
+                        )
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
                     }
                     .padding(.horizontal, Layout.units(4))
                     .padding(.top, Layout.units(4))
                 }
-                
+
                 if !servers.isEmpty {
                     VStack(alignment: .leading, spacing: Layout.units(2)) {
                         Text("Available Servers")
                             .font(.headline)
                             .padding(.horizontal, Layout.units(2))
-                        
+
                         ForEach(servers, id: \.self) { server in
                             HStack {
                                 Text(displayName(server))
                                     .font(.body)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                
+
                                 Button(
                                     action: {
                                         onServerSelected(server)
@@ -110,9 +113,9 @@ struct ServerSelectionView: View {
                         }
                     }
                 }
-                
+
                 Spacer()
-                
+
                 if let onRestartScan = onRestartScan {
                     Button(
                         action: {
@@ -127,7 +130,7 @@ struct ServerSelectionView: View {
                     .foregroundColor(.secondary)
                     .padding(.bottom, Layout.units(2))
                 }
-                
+
                 Text(version)
                     .font(.caption2)
                     .foregroundColor(.gray)
@@ -145,7 +148,7 @@ struct ServerSelectionView: View {
             }
         }
     }
-    
+
     private var version: String {
         guard
             let versionString = Bundle.main.object(
@@ -185,10 +188,10 @@ struct ServerSelectionView_Previews: PreviewProvider {
                 servers: [],
                 scanning: true,
                 onServerSelected: { _ in },
-                onLocalSelected: { },
-                onCancel: { }
+                onLocalSelected: {},
+                onCancel: {}
             )
-            
+
             // Full screen mode (without cancel, with restart scan)
             ServerSelectionView(
                 servers: [
@@ -202,8 +205,8 @@ struct ServerSelectionView_Previews: PreviewProvider {
                 ],
                 scanning: false,
                 onServerSelected: { _ in },
-                onLocalSelected: { },
-                onRestartScan: { }
+                onLocalSelected: {},
+                onRestartScan: {}
             )
         }
     }

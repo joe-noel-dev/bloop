@@ -20,11 +20,11 @@ struct MainToolbar: ToolbarContent {
     @Binding var editingEntity: EditingEntity?
     @Environment(\.editMode) var editMode
     var onAction: (ToolbarAction) -> Void
-    
+
     @State private var showingServerSelection = false
 
     var body: some ToolbarContent {
-        
+
         ToolbarItem(placement: .navigationBarLeading) {
             Button("Songs", systemImage: "music.note.list") {
                 editingEntity = .songs
@@ -36,25 +36,25 @@ struct MainToolbar: ToolbarContent {
                 Button("Projects", systemImage: "folder") {
                     editingEntity = .projects
                 }
-                
+
                 if editMode?.wrappedValue == .active {
                     Button("Rename Project", systemImage: "pencil") {
                         editingEntity = .projectName
                     }
                 }
-                
+
                 Divider()
-                
+
                 Button("Connect to Server", systemImage: "network") {
                     showingServerSelection = true
                 }
-                
+
                 Button("Connect Local", systemImage: "desktopcomputer") {
                     onAction(.connectLocal)
                 }
-                
+
                 Divider()
-                
+
                 Button("Disconnect", systemImage: "xmark.circle", role: .destructive) {
                     onAction(.disconnect)
                 }

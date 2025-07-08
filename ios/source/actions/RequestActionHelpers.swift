@@ -247,4 +247,3 @@ func logOutAction() -> Action {
         }
     )
 }
-
