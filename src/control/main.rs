@@ -264,7 +264,7 @@ impl MainController {
     }
 
     fn set_project(&mut self, project: Project) {
-        if self.project != project {
+        if self.project.songs != project.songs {
             self.should_save = true; // FIXME: don't save if the project has changed
             self.project = project;
             self.send_project_response(&self.project);

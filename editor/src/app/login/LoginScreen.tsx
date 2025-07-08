@@ -17,7 +17,7 @@ export const LoginScreen = () => {
   const [error, setError] = useState('');
   const dispatch = useDispatcher();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) {
       setError('Please enter both username and password.');
@@ -48,7 +48,7 @@ export const LoginScreen = () => {
       <Typography level="h4" textAlign="center" mb={2}>
         Login
       </Typography>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} id="login-form" name="login-form">
         <FormControl sx={{mb: 2}}>
           <FormLabel>Username</FormLabel>
           <Input

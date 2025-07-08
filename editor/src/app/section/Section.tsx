@@ -133,6 +133,7 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
                 sx={{display: 'flex', alignItems: 'center'}}
               >
                 <Switch
+                  id={`loop-${sectionId}`}
                   checked={section.loop}
                   onChange={(event) => enableLoop(event.target.checked)}
                 />
@@ -146,6 +147,7 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
                 sx={{display: 'flex', alignItems: 'center'}}
               >
                 <Switch
+                  id={`metronome-${sectionId}`}
                   checked={section.metronome}
                   onChange={(event) => enableMetronome(event.target.checked)}
                 />
