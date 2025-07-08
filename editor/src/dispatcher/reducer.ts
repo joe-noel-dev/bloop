@@ -62,7 +62,9 @@ export const reducer = async (
   const newState = {...state};
   const previousSamplesInUse = getSamplesInProject(newState.project);
 
-  console.debug('Reducer action:', action);
+  if (process.env.NODE_ENV === 'development') {
+    console.debug('Reducer action:', action);
+  }
 
   switch (action.type) {
     case ADD_SAMPLE: {
