@@ -24,37 +24,42 @@ struct MainToolbar: ToolbarContent {
     @State private var showingServerSelection = false
 
     var body: some ToolbarContent {
-
-        ToolbarItemGroup(placement: .navigationBarLeading) {
-            Button {
-                editingEntity = .projects
-            } label: {
-                Image(systemName: "folder")
-            }
-
-            Button {
+        
+        ToolbarItem(placement: .navigationBarLeading) {
+            Button("Songs", systemImage: "music.note.list") {
                 editingEntity = .songs
-            } label: {
-                Image(systemName: "music.note.list")
             }
         }
 
         ToolbarItemGroup(placement: .navigationBarTrailing) {
-            if editMode?.wrappedValue == .active {
-                Menu {
+            Menu {
+                Button("Projects", systemImage: "folder") {
+                    editingEntity = .projects
+                }
+                
+                if editMode?.wrappedValue == .active {
                     Button("Rename Project", systemImage: "pencil") {
                         editingEntity = .projectName
                     }
-
-                } label: {
-                    Image(systemName: "ellipsis.circle")
                 }
-            }
-
-            Button(role: .destructive) {
-                showingServerSelection = true
+                
+                Divider()
+                
+                Button("Connect to Server", systemImage: "network") {
+                    showingServerSelection = true
+                }
+                
+                Button("Connect Local", systemImage: "desktopcomputer") {
+                    onAction(.connectLocal)
+                }
+                
+                Divider()
+                
+                Button("Disconnect", systemImage: "xmark.circle", role: .destructive) {
+                    onAction(.disconnect)
+                }
             } label: {
-                Image(systemName: "network")
+                Image(systemName: "ellipsis.circle")
             }
             .sheet(isPresented: $showingServerSelection) {
                 ServerSelectionView(
