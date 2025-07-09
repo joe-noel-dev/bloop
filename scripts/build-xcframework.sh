@@ -21,9 +21,9 @@ build_target() {
   export RUSTFLAGS="-C link-arg=${sdk_version_flag}=${DEPLOYMENT_TARGET} ${extra_flags}"
 
   if [ "$build_type" = "release" ]; then
-    cargo build --release --no-default-features --target ${target}
+    cargo build --release --no-default-features --features midi --target ${target}
   else
-    cargo build --no-default-features --target ${target}
+    cargo build --no-default-features --features midi --target ${target}
   fi
 }
 

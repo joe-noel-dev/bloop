@@ -83,16 +83,13 @@ impl MidiController {
     pub fn new(action_tx: mpsc::Sender<Action>, preferences: MidiPreferences) -> Self {
         let midi_input = MidiInput::new("Bloop").expect("Unable to connect to MIDI backend");
 
-        let desired_input_device_name = match &preferences.input_device {
-            Some(input_device) => input_device,
-            None => return Self::default(),
-        };
+        let desired_input_device_name = preferences.input_device.unwrap_or("iCON G_Boar V1.03".to_string());
 
         print_midi_inputs(&midi_input);
 
         let ports = midi_input.ports();
         let port = ports.iter().find(|port| match midi_input.port_name(port) {
-            Ok(name) => name.contains(desired_input_device_name),
+            Ok(name) => name.contains(&desired_input_device_name),
             Err(_) => false,
         });
 
