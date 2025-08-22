@@ -2,13 +2,16 @@
 
 set -ex
 
-ARCH=${1:-arm64v8} # Options include: amd64, arm64v8
+ARCH=${1:-arm64} # Options include: amd64, arm64
 CONTAINER_TAG="cross/bloop_${ARCH}:v1"
 CONTAINER_SRC_DIR=/usr/src/bloop
-DOCKERFILE="Dockerfile.${ARCH}"
+DOCKERFILE="Dockerfile"
 PLATFORM="linux/${ARCH}"
 
-docker build --file ${DOCKERFILE} --tag ${CONTAINER_TAG} --platform ${PLATFORM} .
+# Use the official multi-arch rust image for all architectures
+BASE_IMAGE="rust:1.88.0"
+
+docker build --file ${DOCKERFILE} --build-arg BASE_IMAGE=${BASE_IMAGE} --tag ${CONTAINER_TAG} --platform ${PLATFORM} .
 
 docker run \
     --rm \
