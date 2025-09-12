@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@bufbuild/protobuf": "^2.8.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -39,7 +40,7 @@
     "build": "yarn run generate-api && tsc && vite build",
     "serve": "vite preview",
     "discovery": "node ./src/server.js",
-    "generate-api": "protoc --proto_path=../api --plugin=protoc-gen-ts_proto=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=src/api --ts_proto_opt=esModuleInterop=true,forceLong=long,useOptionals=messages,env=browser ../api/bloop.proto",
+    "generate-api": "buf generate",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui"
@@ -48,6 +49,8 @@
     "extends": "react-app"
   },
   "devDependencies": {
+    "@bufbuild/buf": "^1.57.0",
+    "@bufbuild/protoc-gen-es": "^2.8.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
