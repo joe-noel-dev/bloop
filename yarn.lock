@@ -233,10 +233,80 @@
     "@babel/helper-string-parser" "^7.27.1"
     "@babel/helper-validator-identifier" "^7.27.1"
 
+"@bufbuild/buf-darwin-arm64@1.57.0":
+  version "1.57.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-darwin-arm64/-/buf-darwin-arm64-1.57.0.tgz#5f24122c28b1f001a1196c1491c77332710524a5"
+  integrity sha512-XKmb6cb1n23+5cgiwHqNRuGnrDv4yTBAsakjw3b/wP5WahIdloS/6ixoC1FdxuLt79fDqdhXbvCCeM0QOBAmRg==
+
+"@bufbuild/buf-darwin-x64@1.57.0":
+  version "1.57.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-darwin-x64/-/buf-darwin-x64-1.57.0.tgz#ccbe9e7c3fb345d2578093c96fa3ee377e7205d9"
+  integrity sha512-lCu5DJ63VfzTsoKz8iA8ZJMUTECaJABHEoQdlWnhh9MpoPr5Sd1l+uZvh0m1eBO9sVrKPAZFmYsjLGc/tpmbPA==
+
+"@bufbuild/buf-linux-aarch64@1.57.0":
+  version "1.57.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-linux-aarch64/-/buf-linux-aarch64-1.57.0.tgz#b8d57bdce357eacdb9e00a8668f60523a6110c2d"
+  integrity sha512-LjFsPinUzvJ7BiHzlzQm1Dv5EQLUCFPtsxROVgluhX9iQOxxDtwbjsv0E/toKsJk35PQXwAsVKJlswR1CZ9bFQ==
+
+"@bufbuild/buf-linux-armv7@1.57.0":
+  version "1.57.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-linux-armv7/-/buf-linux-armv7-1.57.0.tgz#caf86a8133e444ef5eb2b337a2adc436822f1845"
+  integrity sha512-sHThZvZgXiyQtAZEviZG4EDuc4MhZhrBrRmGR3uLRWiZ1BTVr6LCtOto3AWoXvcyORTfmEpAMLSFb/XfoO7NIg==
+
+"@bufbuild/buf-linux-x64@1.57.0":
+  version "1.57.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-linux-x64/-/buf-linux-x64-1.57.0.tgz#4b2985cd04646b60d42793939e7ab261acce8069"
+  integrity sha512-QdrvXX2JNMf0385egPSsOJZkOsOBca7LDFll1doC7Fo2W8cP//KXvVqPIMNA1Blq/sHyx7J8sbbf0w/iQo7kVw==
+
+"@bufbuild/buf-win32-arm64@1.57.0":
+  version "1.57.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-win32-arm64/-/buf-win32-arm64-1.57.0.tgz#8f77196c3005a264c83ed65a4ebff6158236404d"
+  integrity sha512-TRPzAiSwlQHwJmb3BD1Yzn7dREjbkebnMJ9R/AAn8uB4dE4eJqo8vG4L5t5laARkaCvt7EwlUghwXLdJvXHoQQ==
+
+"@bufbuild/buf-win32-x64@1.57.0":
+  version "1.57.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf-win32-x64/-/buf-win32-x64-1.57.0.tgz#d52d1d67d127d564e38d544db2be4713018b0545"
+  integrity sha512-2yGkSo4ei/IIeh1wkzJo0JIoZhn0KdrhlTUlcJbqgvaJ5UXZsGQFE3pZ2zh2gmcx2qSRUthzrBs2c5PL8lvl7g==
+
+"@bufbuild/buf@^1.57.0":
+  version "1.57.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/buf/-/buf-1.57.0.tgz#79598238541123e5e70897fe4d59c9ddf71ec983"
+  integrity sha512-dQgrxSh+3gilB3fJam+Dn39ve/3YU8IPt03WvKqQdldwC5GhGHRHgl7tivVLOP+RyBHs1jnDK7lknXFGLGV65g==
+  optionalDependencies:
+    "@bufbuild/buf-darwin-arm64" "1.57.0"
+    "@bufbuild/buf-darwin-x64" "1.57.0"
+    "@bufbuild/buf-linux-aarch64" "1.57.0"
+    "@bufbuild/buf-linux-armv7" "1.57.0"
+    "@bufbuild/buf-linux-x64" "1.57.0"
+    "@bufbuild/buf-win32-arm64" "1.57.0"
+    "@bufbuild/buf-win32-x64" "1.57.0"
+
+"@bufbuild/protobuf@2.8.0", "@bufbuild/protobuf@^2.8.0":
+  version "2.8.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-2.8.0.tgz#88fcbcfa4735b88d882c7a3218c4403cf7ce3eee"
+  integrity sha512-r1/0w5C9dkbcdjyxY8ZHsC5AOWg4Pnzhm2zu7LO4UHSounp2tMm6Y+oioV9zlGbLveE7YaWRDUk48WLxRDgoqg==
+
 "@bufbuild/protobuf@^2.0.0":
   version "2.5.0"
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-2.5.0.tgz#3e38eb5742f186472e4196fc51b058392eab4abc"
   integrity sha512-nniMblXT+dNyubek2OLKAYJnG/in4tmfS2c5CDnIvqfF9kFlERSG3FCBvmdqerpkWuPv0qhdGKReQ2OqKPG20w==
+
+"@bufbuild/protoc-gen-es@^2.8.0":
+  version "2.8.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-2.8.0.tgz#c75f2a4ef27153bc454ee9f6abb7bd89a79f101b"
+  integrity sha512-wyCXK7/FOgcHdqP6dWnGNZBJyXcYYUcvZBMBQVgeYjbF5u0OgVsInEYnr2Gu4E2HC7HoxcQZcVlVbwyxeiebDA==
+  dependencies:
+    "@bufbuild/protobuf" "2.8.0"
+    "@bufbuild/protoplugin" "2.8.0"
+
+"@bufbuild/protoplugin@2.8.0":
+  version "2.8.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-2.8.0.tgz#60a64a278b5117214ca74a71b090ebbb8ccccf14"
+  integrity sha512-kwZeZAz6jmDC571Wf/f5cDX02IjvPmtdspdxW/hbLS+bnZHkXMW4StaW+irGd4TkykvHD4fFgBnPG/O1x8OgXw==
+  dependencies:
+    "@bufbuild/protobuf" "2.8.0"
+    "@typescript/vfs" "^1.5.2"
+    typescript "5.4.5"
 
 "@csstools/color-helpers@^5.0.2":
   version "5.0.2"
@@ -1205,6 +1275,13 @@
   version "10.0.0"
   resolved "https://registry.yarnpkg.com/@types/uuid/-/uuid-10.0.0.tgz#e9c07fe50da0f53dc24970cca94d619ff03f6f6d"
   integrity sha512-7gqG38EyHgyP1S+7+xomFtL+ZNHcKv6DwNaCZmJmo1vgMugyF3TCnXVg4t1uk89mLNwnLtnY3TpOpCOyp1/xHQ==
+
+"@typescript/vfs@^1.5.2":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@typescript/vfs/-/vfs-1.6.1.tgz#fe7087d5a43715754f7ea9bf6e0b905176c9eebd"
+  integrity sha512-JwoxboBh7Oz1v38tPbkrZ62ZXNHAk9bJ7c9x0eI5zBfBnBYGhURdbnh7Z4smN/MV48Y5OCcZb58n972UtbazsA==
+  dependencies:
+    debug "^4.1.1"
 
 "@vitejs/plugin-react@^4.5.0":
   version "4.6.0"
