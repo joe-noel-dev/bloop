@@ -145,7 +145,7 @@ const updateProject = async (
   await pocketbase.collection('projects').update(projectId, {project: []});
 
   const projectData = Project.encode(project).finish();
-  const projectFile = new File([projectData], 'project.bin');
+  const projectFile = new File([new Uint8Array(projectData)], 'project.bin');
 
   await pocketbase
     .collection('projects')
