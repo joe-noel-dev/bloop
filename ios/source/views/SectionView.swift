@@ -51,7 +51,7 @@ struct SectionView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .disabled(editMode?.wrappedValue != .active)
                     .textFieldStyle(.plain)
-                    .foregroundColor(isPlaying ? Colours.playing : .primary)
+                    .foregroundColor(.primary)
 
                 Spacer()
 
@@ -71,15 +71,19 @@ struct SectionView: View {
         .overlay(alignment: .leading) {
             border
         }
-        .overlay(alignment: .bottom) {
-            if isPlaying {
-                ProgressBar(progress: progress.sectionProgress)
-                    .frame(maxHeight: 2)
-                    .foregroundColor(Colours.playing)
-            }
+        
+        .background(alignment: .leading) {
 
+            // Progress overlay (only when playing)
+            if isPlaying {
+                GeometryReader { geometry in
+                    Rectangle()
+                        .fill(Colours.playing)
+                        .frame(width: progress.sectionProgress * geometry.size.width)
+                }
+            }
         }
-        .background(isQueued ? Material.thickMaterial : Material.thinMaterial)
+        .background(isQueued ? .thickMaterial : .thinMaterial)
         .onTapGesture {
             if !isSelected {
                 let action = selectSectionAction(section.id)
