@@ -117,16 +117,6 @@ struct SongView: View {
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarLeading) {
                 EditButton()
-
-                Button(action: selectPreviousSong) {
-                    Image(systemName: "chevron.backward")
-                }
-                .disabled(previousSongId(state.project) == nil)
-
-                Button(action: selectNextSong) {
-                    Image(systemName: "chevron.forward")
-                }
-                .disabled(nextSongId(state.project) == nil)
             }
 
             MainToolbar(
