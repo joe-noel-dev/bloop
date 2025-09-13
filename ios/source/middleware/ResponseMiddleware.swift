@@ -55,5 +55,11 @@ class ResponseMiddleware: Middleware {
         else if response.hasUserStatus {
             self.dispatch?(.clearUser)
         }
+
+        if response.hasProjectSync {
+            self.dispatch?(
+                .setProjectSync(response.projectSync.projectID, response.projectSync.status)
+            )
+        }
     }
 }

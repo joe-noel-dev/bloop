@@ -141,6 +141,7 @@ struct SongView: View {
             ProjectsView(
                 projects: state.projects,
                 cloudProjects: state.cloudProjects,
+                projectSyncStatuses: state.projectSyncStatuses,
                 dispatch: dispatch
             ) {
                 editingEntity = nil
