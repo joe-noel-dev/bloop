@@ -134,6 +134,15 @@ push_to_main() {
 
 # Main script execution
 main() {
+    # Check that we're on the main branch
+    local current_branch=$(git branch --show-current)
+    if [ "$current_branch" != "main" ]; then
+        echo "Error: This script must be run on the main branch"
+        echo "Current branch: $current_branch"
+        echo "Please switch to main branch first: git checkout main"
+        exit 1
+    fi
+    
     # Check arguments
     if [ $# -ne 1 ]; then
         usage
