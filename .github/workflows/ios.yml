@@ -71,7 +71,7 @@ jobs:
           protoc --version
 
       - name: Generate API
-        run: ./scripts/build-api.sh
+        run: ./scripts/build-api-ios.sh
 
       - name: Build core as XCFramework
         run: ./scripts/build-xcframework.sh
