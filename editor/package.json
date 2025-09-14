@@ -1,6 +1,6 @@
 {
   "name": "bloop-web",
-  "version": "0.1.0",
+  "version": "0.7.0",
   "private": true,
   "dependencies": {
     "@bufbuild/protobuf": "^2.8.0",
