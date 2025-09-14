@@ -45,6 +45,19 @@ update_cargo_toml() {
     echo "Updated version in $cargo_file to $version"
 }
 
+# Function to update Cargo.lock
+update_cargo_lock() {
+    local version=$1
+    
+    echo "Updating Cargo.lock to reflect version change..."
+    
+    # Use cargo update to refresh the lock file with the new version
+    # This will update the lock file to reflect the version change in Cargo.toml
+    cargo update --workspace
+    
+    echo "Cargo.lock updated successfully"
+}
+
 # Function to update package.json files
 update_package_json() {
     local version=$1
@@ -166,6 +179,9 @@ main() {
     
     # Update Cargo.toml
     update_cargo_toml "$version"
+    
+    # Update Cargo.lock
+    update_cargo_lock "$version"
     
     # Run iOS version script
     run_ios_version_script

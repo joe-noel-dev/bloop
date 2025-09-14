@@ -36,5 +36,5 @@ DISPLAY_VERSION="${VERSION} (${GIT_SHA})"
 # Use agvtool. This didn't work as it didn't update the MARKETING_VERSION
 
 XCODE_PROJECT="./Bloop.xcodeproj/project.pbxproj"
-sed -i '' "s/MARKETING_VERSION = .*;/MARKETING_VERSION = \"${DISPLAY_VERSION}\";/" "${XCODE_PROJECT}"
-sed -i '' "s/CURRENT_PROJECT_VERSION = .*;/CURRENT_PROJECT_VERSION = ${VERSION};/" "${XCODE_PROJECT}"
+sed -i '' "s/MARKETING_VERSION = .*;/MARKETING_VERSION = \"${VERSION}\";/" "${XCODE_PROJECT}"
+sed -i '' "s/CURRENT_PROJECT_VERSION = .*;/CURRENT_PROJECT_VERSION = \"${DISPLAY_VERSION}\";/" "${XCODE_PROJECT}"
