@@ -20,11 +20,6 @@ fi
 VERSION=$(grep -m 1 '^version = ' "${CARGO_TOML_PATH}" | sed 's/version = "\(.*\)"/\1/')
 
 GIT_SHA=$(git rev-parse --short HEAD)
-
-if [ -n "$(git status --porcelain)" ]; then
-    GIT_SHA="${GIT_SHA}-modified"
-fi
-
 DISPLAY_VERSION="${VERSION} (${GIT_SHA})"
 
 # Hack the project file. Other approaches didn't work:
