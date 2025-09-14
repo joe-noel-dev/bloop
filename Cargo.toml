@@ -1,6 +1,6 @@
 [package]
 name = "bloop-core"
-version = "0.7.0"
+version = "0.7.1"
 authors = ["Joe Noel <joe@joenoel.co.uk>"]
 edition = "2018"
 
