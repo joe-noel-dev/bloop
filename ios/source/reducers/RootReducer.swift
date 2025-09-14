@@ -25,6 +25,12 @@ func rootReducer(state: AppState, action: Action) -> AppState {
     case .setProjectInfo(let projectInfo):
         state.projectInfo = projectInfo
 
+    case .setProjectSync(let id, let syncState):
+        state.projectSyncStatuses[id] = syncState
+
+    case .dismissProjectSync(let id):
+        state.projectSyncStatuses.removeValue(forKey: id)
+
     case .addError(let error):
         print("Error from core: \(error)")
         state.errors.append(error)

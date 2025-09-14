@@ -8,6 +8,7 @@ struct AppState {
     var cloudProjects: [Bloop_ProjectInfo] = []
     var project = emptyProject()
     var projectInfo: Bloop_ProjectInfo? = .none
+    var projectSyncStatuses: [String: Bloop_SyncStatus] = [:]
     var playbackState = Bloop_PlaybackState()
     var progress = Bloop_Progress()
     var waveforms: [Id: Bloop_WaveformData] = [:]
