@@ -1,5 +1,6 @@
-import {Section, Song} from '../api/bloop';
+import {Project, Section, Song} from '../api/bloop';
 import {ID} from '../api/helpers';
+import {DbProject} from '../backend/Backend';
 
 // 1:
 export const ADD_SAMPLE = 'ADD_SAMPLE';
@@ -21,6 +22,9 @@ export const UPDATE_SECTION = 'UPDATE_SECTION';
 export const UPDATE_SONG = 'UPDATE_SONG';
 export const LOAD_PROJECTS = 'LOAD_PROJECTS';
 export const REMOVE_ALL_SECTIONS = 'REMOVE_ALL_SECTIONS';
+export const SET_PROJECT = 'SET_PROJECT';
+export const SET_PROJECTS = 'SET_PROJECTS';
+export const SET_PROJECT_INFO = 'SET_PROJECT_INFO';
 
 // 2:
 
@@ -131,6 +135,21 @@ export const removeAllSectionsAction = (songId: ID) => ({
   songId,
 });
 
+export const setProjectAction = (project: Project) => ({
+  type: SET_PROJECT,
+  project,
+});
+
+export const setProjectsAction = (projects: Array<DbProject>) => ({
+  type: SET_PROJECTS,
+  projects,
+});
+
+export const setProjectInfoAction = (projectInfo: DbProject) => ({
+  type: SET_PROJECT_INFO,
+  projectInfo,
+});
+
 // 3:
 export type AddSampleAction = ReturnType<typeof addSampleAction>;
 export type AddSectionAction = ReturnType<typeof addSectionAction>;
@@ -153,6 +172,9 @@ export type LoadProjectsAction = ReturnType<typeof loadProjectsAction>;
 export type RemoveAllSectionsAction = ReturnType<
   typeof removeAllSectionsAction
 >;
+export type SetProjectAction = ReturnType<typeof setProjectAction>;
+export type SetProjectsAction = ReturnType<typeof setProjectsAction>;
+export type SetProjectInfoAction = ReturnType<typeof setProjectInfoAction>;
 
 // 4:
 export type Action =
@@ -174,4 +196,7 @@ export type Action =
   | UpdateSectionAction
   | UpdateSongAction
   | LoadProjectsAction
-  | RemoveAllSectionsAction;
+  | RemoveAllSectionsAction
+  | SetProjectAction
+  | SetProjectsAction
+  | SetProjectInfoAction;

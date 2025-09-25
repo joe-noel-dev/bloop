@@ -83,6 +83,9 @@ export const createBackend = () => {
 
     removeSample: async (projectId: string, sampleId: ID) =>
       await removeSample(pocketbase, projectId, sampleId),
+
+    fetchSample: async (projectId: string, sampleId: ID) =>
+      await fetchSample(pocketbase, projectId, sampleId),
   };
 };
 
@@ -256,6 +259,40 @@ const addSample = async (
   });
 
   console.log(`Added sample with ID: ${sampleId} to project ${projectId}`);
+};
+
+const fetchSample = async (
+  pocketbase: PocketBase,
+  projectId: string,
+  sampleId: ID
+): Promise<Blob | null> => {
+  if (!pocketbase.authStore.isValid || !pocketbase.authStore.record) {
+    throw new Error('User is not authenticated');
+  }
+
+  if (!projectId) {
+    throw new Error('Project ID is required to fetch a sample');
+  }
+
+  const project = await pocketbase.collection('projects').getOne(projectId);
+  const samples = project.samples || [];
+
+  const sampleFile = samples.find((s: string) =>
+    s.includes(sampleId.toString())
+  );
+
+  if (!sampleFile) {
+    return null;
+  }
+
+  const sampleUrl = `${pocketbase.baseURL}/api/files/${project.collectionId}/${project.id}/${sampleFile}`;
+  const response = await fetch(sampleUrl);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch sample: ${response.statusText}`);
+  }
+
+  return await response.blob();
 };
 
 export type Backend = ReturnType<typeof createBackend>;
