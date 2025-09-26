@@ -1,4 +1,3 @@
-import {SET_PROJECT} from '../dispatcher/action';
 import {Middleware} from '../dispatcher/middleware';
 
 export const audioMiddleware: Middleware =
