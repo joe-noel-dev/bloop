@@ -10,6 +10,7 @@ import {
   LOAD_PROJECT,
   LOAD_PROJECTS,
   LoadProjectAction,
+  loadProjectsAction,
   REMOVE_PROJECT,
   RemoveProjectAction,
   RENAME_PROJECT,
@@ -55,26 +56,24 @@ export const backendMiddleware =
 
       case CREATE_PROJECT: {
         const [project, info] = await backend.createProject();
-        const projects = await backend.fetchProjects();
-        await api.dispatch(setProjectAction(project));
-        await api.dispatch(setProjectInfoAction(info));
-        await api.dispatch(setProjectsAction(projects));
+        api.dispatch(setProjectInfoAction(info));
+        api.dispatch(setProjectAction(project));
+        api.dispatch(loadProjectsAction());
         break;
       }
 
       case LOAD_PROJECT: {
         const {projectId} = action as LoadProjectAction;
         const [project, info] = await backend.loadProject(projectId);
-        await api.dispatch(setProjectAction(project));
-        await api.dispatch(setProjectInfoAction(info));
+        api.dispatch(setProjectInfoAction(info));
+        api.dispatch(setProjectAction(project));
         break;
       }
 
       case REMOVE_PROJECT: {
         const {projectId} = action as RemoveProjectAction;
         await backend.removeProject(projectId);
-        const projects = await backend.fetchProjects();
-        await api.dispatch(setProjectsAction(projects));
+        api.dispatch(loadProjectsAction());
         break;
       }
 
@@ -84,15 +83,14 @@ export const backendMiddleware =
           state.projectInfo?.id ?? '',
           newName
         );
-        await api.dispatch(setProjectInfoAction(projectInfo));
-        const projects = await backend.fetchProjects();
-        await api.dispatch(setProjectsAction(projects));
+        api.dispatch(setProjectInfoAction(projectInfo));
+        api.dispatch(loadProjectsAction());
         break;
       }
 
       case LOAD_PROJECTS: {
         const projects = await backend.fetchProjects();
-        await api.dispatch(setProjectsAction(projects));
+        api.dispatch(setProjectsAction(projects));
         break;
       }
     }

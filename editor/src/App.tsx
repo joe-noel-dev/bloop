@@ -19,13 +19,15 @@ import {audioMiddleware} from './audio/AudioMiddleware';
 import {backendMiddleware} from './backend/BackendMiddleware';
 
 const App = () => {
-  const [backend, setBackend] = useState<Backend | null>(null);
+  const [backend] = useState<Backend>(createBackend());
   const [state, setState] = useState<AppState>({
     project: emptyProject(),
     projects: [],
   });
   const stateRef = useRef<AppState>(state);
-  const [audioController] = useState<AudioController>(createAudioController());
+  const [audioController] = useState<AudioController>(
+    createAudioController(backend)
+  );
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -35,17 +37,8 @@ const App = () => {
   const user = backend?.getUser();
 
   useEffect(() => {
-    const newBackend = createBackend();
-    newBackend
-      .fetchProjects()
-      .then((projects) => setState({...state, projects}));
-
-    setBackend(newBackend);
+    backend.fetchProjects().then((projects) => setState({...state, projects}));
   }, []);
-
-  if (!backend) {
-    return;
-  }
 
   const baseDispatch = (action: Action) => {
     const newState = reducer(action, stateRef.current);

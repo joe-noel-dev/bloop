@@ -22,14 +22,6 @@ export interface DbProject {
 
 export const BackendContext = createContext<Backend | null>(null);
 
-// export const useBackend = () => {
-//   const context = useContext(BackendContext);
-//   if (!context) {
-//     throw new Error('useBackend should be called from within a CoreProvider');
-//   }
-//   return context;
-// };
-
 export const createBackend = () => {
   const pocketbase = new PocketBase('https://joe-noel-dev-bloop.fly.dev');
 
@@ -84,8 +76,8 @@ export const createBackend = () => {
     removeSample: async (projectId: string, sampleId: ID) =>
       await removeSample(pocketbase, projectId, sampleId),
 
-    fetchSample: async (projectId: string, sampleId: ID) =>
-      await fetchSample(pocketbase, projectId, sampleId),
+    fetchSample: async (project: DbProject, sampleId: ID) =>
+      await fetchSample(pocketbase, project, sampleId),
   };
 };
 
@@ -263,18 +255,13 @@ const addSample = async (
 
 const fetchSample = async (
   pocketbase: PocketBase,
-  projectId: string,
+  project: DbProject,
   sampleId: ID
 ): Promise<Blob | null> => {
   if (!pocketbase.authStore.isValid || !pocketbase.authStore.record) {
     throw new Error('User is not authenticated');
   }
 
-  if (!projectId) {
-    throw new Error('Project ID is required to fetch a sample');
-  }
-
-  const project = await pocketbase.collection('projects').getOne(projectId);
   const samples = project.samples || [];
 
   const sampleFile = samples.find((s: string) =>
