@@ -80,7 +80,7 @@ export const backendMiddleware =
               state.project
             );
             api.dispatch(setSaveStateAction('saved'));
-            
+
             // Auto-revert to idle after 2 seconds
             setTimeout(() => {
               api.dispatch(setSaveStateAction('idle'));

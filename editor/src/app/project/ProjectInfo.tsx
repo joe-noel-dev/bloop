@@ -12,8 +12,18 @@ import {
   Stack,
   Typography,
 } from '@mui/joy';
-import {useProjectInfo, useProjects, useSaveState} from '../../model-hooks/project-hooks';
-import {Create, Delete, FolderOpen, Save, CheckCircle} from '@mui/icons-material';
+import {
+  useProjectInfo,
+  useProjects,
+  useSaveState,
+} from '../../model-hooks/project-hooks';
+import {
+  Create,
+  Delete,
+  FolderOpen,
+  Save,
+  CheckCircle,
+} from '@mui/icons-material';
 import {useState} from 'react';
 import {ClickToEdit} from '../../components/ClickToEdit';
 import {useDispatcher} from '../../dispatcher/dispatcher';
@@ -53,7 +63,7 @@ export const ProjectInfo = () => {
         };
       case 'saved':
         return {
-          startDecorator: <CheckCircle sx={{ color: 'success.main' }} />,
+          startDecorator: <CheckCircle sx={{color: 'success.main'}} />,
           children: 'Saved!',
           disabled: false,
         };
