@@ -1,5 +1,6 @@
 import {
   Button,
+  CircularProgress,
   IconButton,
   List,
   ListItem,
@@ -11,8 +12,8 @@ import {
   Stack,
   Typography,
 } from '@mui/joy';
-import {useProjectInfo, useProjects} from '../../model-hooks/project-hooks';
-import {Create, Delete, FolderOpen} from '@mui/icons-material';
+import {useProjectInfo, useProjects, useSaveState} from '../../model-hooks/project-hooks';
+import {Create, Delete, FolderOpen, Save, CheckCircle} from '@mui/icons-material';
 import {useState} from 'react';
 import {ClickToEdit} from '../../components/ClickToEdit';
 import {useDispatcher} from '../../dispatcher/dispatcher';
@@ -22,19 +23,48 @@ import {
   removeProjectAction,
   renameProjectAction,
   loadProjectsAction,
+  saveProjectAction,
 } from '../../dispatcher/action';
 
 export const ProjectInfo = () => {
   const projectInfo = useProjectInfo();
+  const saveState = useSaveState();
   const [projectsModalOpen, setProjectsModalOpen] = useState(false);
   const dispatch = useDispatcher();
 
   const create = () => dispatch(createProjectAction());
+
   const openProjects = () => {
     dispatch(loadProjectsAction());
     setProjectsModalOpen(true);
   };
+
+  const save = () => dispatch(saveProjectAction());
+
   const renameProject = (name: string) => dispatch(renameProjectAction(name));
+
+  const getSaveButtonProps = () => {
+    switch (saveState) {
+      case 'saving':
+        return {
+          startDecorator: <CircularProgress size="sm" />,
+          children: 'Saving...',
+          disabled: true,
+        };
+      case 'saved':
+        return {
+          startDecorator: <CheckCircle sx={{ color: 'success.main' }} />,
+          children: 'Saved!',
+          disabled: false,
+        };
+      default:
+        return {
+          startDecorator: <Save />,
+          children: 'Save Project',
+          disabled: false,
+        };
+    }
+  };
 
   return (
     <Stack spacing={2}>
@@ -50,6 +80,7 @@ export const ProjectInfo = () => {
         <Button startDecorator={<Create />} onClick={create}>
           New Project
         </Button>
+        <Button onClick={save} {...getSaveButtonProps()} />
         <Modal
           open={projectsModalOpen}
           onClose={() => setProjectsModalOpen(false)}

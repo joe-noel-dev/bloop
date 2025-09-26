@@ -1,6 +1,7 @@
 import {Project, Section, Song} from '../api/bloop';
 import {ID} from '../api/helpers';
 import {DbProject} from '../backend/Backend';
+import {SaveState} from '../state/AppState';
 
 // 1:
 export const ADD_SAMPLE = 'ADD_SAMPLE';
@@ -8,6 +9,7 @@ export const ADD_SECTION = 'ADD_SECTION';
 export const ADD_SONG = 'ADD_SONG';
 export const CREATE_PROJECT = 'CREATE_PROJECT';
 export const LOAD_PROJECT = 'LOAD_PROJECT';
+export const SAVE_PROJECT = 'SAVE_PROJECT';
 export const MOVE_SECTION = 'MOVE_SECTION';
 export const MOVE_SONG = 'MOVE_SONG';
 export const REMOVE_PROJECT = 'REMOVE_PROJECT';
@@ -27,6 +29,8 @@ export const SET_PROJECTS = 'SET_PROJECTS';
 export const SET_PROJECT_INFO = 'SET_PROJECT_INFO';
 export const PLAY = 'PLAY';
 export const STOP = 'STOP';
+export const SET_PLAYBACK_STATE = 'SET_PLAYBACK_STATE';
+export const SET_SAVE_STATE = 'SET_SAVE_STATE';
 
 // 2:
 
@@ -53,6 +57,10 @@ export const createProjectAction = () => ({
 export const loadProjectAction = (projectId: string) => ({
   type: LOAD_PROJECT,
   projectId,
+});
+
+export const saveProjectAction = () => ({
+  type: SAVE_PROJECT,
 });
 
 export const moveSectionAction = (
@@ -163,12 +171,29 @@ export const stopAction = () => ({
   type: STOP,
 });
 
+export const setPlaybackStateAction = (
+  playing: boolean,
+  songId?: ID,
+  sectionId?: ID
+) => ({
+  type: SET_PLAYBACK_STATE,
+  playing,
+  songId,
+  sectionId,
+});
+
+export const setSaveStateAction = (saveState: SaveState) => ({
+  type: SET_SAVE_STATE,
+  saveState,
+});
+
 // 3:
 export type AddSampleAction = ReturnType<typeof addSampleAction>;
 export type AddSectionAction = ReturnType<typeof addSectionAction>;
 export type AddSongAction = ReturnType<typeof addSongAction>;
 export type CreateProjectAction = ReturnType<typeof createProjectAction>;
 export type LoadProjectAction = ReturnType<typeof loadProjectAction>;
+export type SaveProjectAction = ReturnType<typeof saveProjectAction>;
 export type MoveSectionAction = ReturnType<typeof moveSectionAction>;
 export type MoveSongAction = ReturnType<typeof moveSongAction>;
 export type RemoveProjectAction = ReturnType<typeof removeProjectAction>;
@@ -190,6 +215,8 @@ export type SetProjectsAction = ReturnType<typeof setProjectsAction>;
 export type SetProjectInfoAction = ReturnType<typeof setProjectInfoAction>;
 export type PlayAction = ReturnType<typeof playAction>;
 export type StopAction = ReturnType<typeof stopAction>;
+export type SetPlaybackStateAction = ReturnType<typeof setPlaybackStateAction>;
+export type SetSaveStateAction = ReturnType<typeof setSaveStateAction>;
 
 // 4:
 export type Action =
@@ -198,6 +225,7 @@ export type Action =
   | AddSongAction
   | CreateProjectAction
   | LoadProjectAction
+  | SaveProjectAction
   | MoveSectionAction
   | MoveSongAction
   | RemoveProjectAction
@@ -216,4 +244,6 @@ export type Action =
   | SetProjectsAction
   | SetProjectInfoAction
   | PlayAction
-  | StopAction;
+  | StopAction
+  | SetPlaybackStateAction
+  | SetSaveStateAction;

@@ -1,11 +1,18 @@
-import {PlayAction} from '../dispatcher/action';
+import {PlayAction, setPlaybackStateAction} from '../dispatcher/action';
 import {Middleware} from '../dispatcher/middleware';
 
-export const audioMiddleware: Middleware =
-  (api) => (next) => async (action) => {
+export const audioMiddleware: Middleware = (api) => {
+  // Set up the playback state change callback
+  const audioController = api.getAudioController();
+  audioController.setPlaybackStateChangeCallback(
+    (playing, songId, sectionId) => {
+      api.dispatch(setPlaybackStateAction(playing, songId, sectionId));
+    }
+  );
+
+  return (next) => async (action) => {
     if (action.type === 'PLAY') {
       const playAction = action as PlayAction;
-      const audioController = api.getAudioController();
       audioController.play(
         playAction.songId,
         playAction.sectionId,
@@ -14,14 +21,12 @@ export const audioMiddleware: Middleware =
     }
 
     if (action.type === 'STOP') {
-      const audioController = api.getAudioController();
       audioController.stop();
     }
 
     await next(action);
 
     const projectInfo = api.getState().projectInfo;
-    const audioController = api.getAudioController();
     if (projectInfo) {
       audioController.setProjectInfo(projectInfo);
     }
@@ -31,3 +36,4 @@ export const audioMiddleware: Middleware =
       audioController.setProject(project);
     }
   };
+};

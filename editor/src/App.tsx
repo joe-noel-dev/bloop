@@ -23,6 +23,8 @@ const App = () => {
   const [state, setState] = useState<AppState>({
     project: emptyProject(),
     projects: [],
+    playing: false,
+    saveState: 'idle',
   });
   const stateRef = useRef<AppState>(state);
   const [audioController] = useState<AudioController>(

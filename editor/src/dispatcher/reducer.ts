@@ -17,12 +17,16 @@ import {
   RemoveSongAction,
   SELECT_SONG,
   SelectSongAction,
+  SET_PLAYBACK_STATE,
   SET_PROJECT,
   SET_PROJECT_INFO,
   SET_PROJECTS,
+  SET_SAVE_STATE,
+  SetPlaybackStateAction,
   SetProjectAction,
   SetProjectInfoAction,
   SetProjectsAction,
+  SetSaveStateAction,
   SPLIT_SECTION,
   SplitSectionAction,
   UPDATE_SECTION,
@@ -155,6 +159,20 @@ export const reducer = (action: Action, state: AppState): AppState => {
     case SET_PROJECT_INFO: {
       const {projectInfo} = action as SetProjectInfoAction;
       newState.projectInfo = projectInfo;
+      break;
+    }
+
+    case SET_PLAYBACK_STATE: {
+      const {playing, songId, sectionId} = action as SetPlaybackStateAction;
+      newState.playing = playing;
+      newState.playingSongId = songId;
+      newState.playingSectionId = sectionId;
+      break;
+    }
+
+    case SET_SAVE_STATE: {
+      const {saveState} = action as SetSaveStateAction;
+      newState.saveState = saveState;
       break;
     }
   }

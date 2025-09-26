@@ -1,10 +1,13 @@
-import {PlaybackState, Project} from '../api/bloop';
+import {Project} from '../api/bloop';
 import {Backend, DbProject} from '../backend/Backend';
 import {createSampleManager, Samples} from './SampleManager';
+import {ID} from '../api/helpers';
 
-export type AudioControllerEvent = {
-  state: PlaybackState;
-};
+export type PlaybackStateChangeCallback = (
+  playing: boolean,
+  songId?: ID,
+  sectionId?: ID
+) => void;
 
 export const createAudioController = (backend: Backend) => {
   const audioContext = new AudioContext();
@@ -12,6 +15,7 @@ export const createAudioController = (backend: Backend) => {
   const sampleManager = createSampleManager(audioContext, samples, backend);
   let project: Project | null = null;
   let projectInfo: DbProject | null = null;
+  let playbackStateChangeCallback: PlaybackStateChangeCallback | null = null;
 
   let bufferNode: AudioBufferSourceNode | null = null;
 
@@ -106,6 +110,18 @@ export const createAudioController = (backend: Backend) => {
 
     bufferNode.connect(audioContext.destination);
     bufferNode.start(0, start, !loop && end ? end - start : undefined);
+
+    // Notify playback state: true, songId, sectionId
+    if (playbackStateChangeCallback) {
+      playbackStateChangeCallback(true, songId, sectionId);
+    }
+
+    bufferNode.onended = () => {
+      // Notify playback state: false
+      if (playbackStateChangeCallback) {
+        playbackStateChangeCallback(false);
+      }
+    };
   };
 
   const stop = () => {
@@ -114,6 +130,16 @@ export const createAudioController = (backend: Backend) => {
       bufferNode.disconnect();
       bufferNode = null;
     }
+    // Notify playback state: false
+    if (playbackStateChangeCallback) {
+      playbackStateChangeCallback(false);
+    }
+  };
+
+  const setPlaybackStateChangeCallback = (
+    callback: PlaybackStateChangeCallback
+  ) => {
+    playbackStateChangeCallback = callback;
   };
 
   return {
@@ -121,6 +147,7 @@ export const createAudioController = (backend: Backend) => {
     setProjectInfo,
     play,
     stop,
+    setPlaybackStateChangeCallback,
   };
 };
 

@@ -15,10 +15,11 @@ import {
   RemoveProjectAction,
   RENAME_PROJECT,
   RenameProjectAction,
-  SELECT_SONG,
+  SAVE_PROJECT,
   setProjectAction,
   setProjectInfoAction,
   setProjectsAction,
+  setSaveStateAction,
   SIGN_IN,
   SignInAction,
 } from '../dispatcher/action';
@@ -70,6 +71,27 @@ export const backendMiddleware =
         break;
       }
 
+      case SAVE_PROJECT:
+        {
+          api.dispatch(setSaveStateAction('saving'));
+          try {
+            await backend.updateProject(
+              state.projectInfo?.id ?? '',
+              state.project
+            );
+            api.dispatch(setSaveStateAction('saved'));
+            
+            // Auto-revert to idle after 2 seconds
+            setTimeout(() => {
+              api.dispatch(setSaveStateAction('idle'));
+            }, 2000);
+          } catch (error) {
+            console.error(`Failed to update project on backend: ${error}`);
+            api.dispatch(setSaveStateAction('idle'));
+          }
+        }
+        break;
+
       case REMOVE_PROJECT: {
         const {projectId} = action as RemoveProjectAction;
         await backend.removeProject(projectId);
@@ -107,21 +129,6 @@ export const backendMiddleware =
       previousSamplesInUse,
       currentSamplesInUse
     );
-
-    const shouldSave =
-      ![LOAD_PROJECT, LOAD_PROJECTS, SELECT_SONG].includes(action.type) &&
-      api.getState().projectInfo?.id !== undefined;
-
-    if (shouldSave) {
-      try {
-        await backend.updateProject(
-          api.getState().projectInfo?.id ?? '',
-          api.getState().project
-        );
-      } catch (error) {
-        console.error(`Failed to update project on backend: ${error}`);
-      }
-    }
   };
 
 const addSampleToSong = async (

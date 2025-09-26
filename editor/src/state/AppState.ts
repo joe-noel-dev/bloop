@@ -3,15 +3,23 @@ import {Project} from '../api/bloop';
 import {DbProject} from '../backend/Backend';
 import {emptyProject} from '../api/project-helpers';
 
+export type SaveState = 'idle' | 'saving' | 'saved';
+
 export interface AppState {
   project: Project;
   projectInfo?: DbProject;
   projects: DbProject[];
+  playing: boolean;
+  playingSongId?: Long;
+  playingSectionId?: Long;
+  saveState: SaveState;
 }
 
 export const AppStateContext = createContext<AppState>({
   project: emptyProject(),
   projects: [],
+  playing: false,
+  saveState: 'idle',
 });
 
 export const useAppState = () => useContext(AppStateContext);

@@ -21,6 +21,7 @@ import {
   stopAction,
   updateSectionAction,
 } from '../../dispatcher/action';
+import {useAppState} from '../../state/AppState';
 
 interface Props {
   songId: ID;
@@ -31,6 +32,7 @@ interface Props {
 export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
   const section = useSectionById(sectionId);
   const song = useSong(songId);
+  const state = useAppState();
   const dispatch = useDispatcher();
 
   const duration = song ? getSectionBeatLength(song, sectionId) : 0;
@@ -99,20 +101,32 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
     requestUpdateDuration(sectionId, newDuration);
   };
 
+  const isPlaying =
+    state.playing &&
+    state.playingSongId?.equals(songId) &&
+    state.playingSectionId?.equals(sectionId);
+
   return (
     <Grid container spacing={1}>
       {columns.map((name) => {
         switch (name) {
           case 'Transport': {
             return (
-              <Grid xs={1} sx={{display: 'flex', alignItems: 'center'}}>
+              <Grid
+                key={name}
+                xs={1}
+                sx={{display: 'flex', alignItems: 'center'}}
+              >
                 <Stack direction="row" spacing={0.5}>
-                  <EditButton onClick={handlePlay} color="success">
-                    <PlayArrow />
-                  </EditButton>
-                  <EditButton onClick={handleStop} color="neutral">
-                    <Stop />
-                  </EditButton>
+                  {isPlaying ? (
+                    <EditButton onClick={handleStop} color="neutral">
+                      <Stop />
+                    </EditButton>
+                  ) : (
+                    <EditButton onClick={handlePlay} color="success">
+                      <PlayArrow />
+                    </EditButton>
+                  )}
                 </Stack>
               </Grid>
             );
