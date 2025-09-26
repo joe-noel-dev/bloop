@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {Button, Grid, Stack, Typography, Box} from '@mui/joy';
+import {Button, Grid, Stack, Typography, Box, IconButton, Tooltip} from '@mui/joy';
 import {useSong} from '../../model-hooks/song-hooks';
 import {
   Add,
@@ -7,10 +7,13 @@ import {
   ArrowUpward,
   Delete,
   DragIndicator,
+  TableView,
+  Timeline,
 } from '@mui/icons-material';
 import {Sample} from '../sample/Sample';
 import {Section} from '../section/Section';
 import {columnSize, columns} from '../section/TableInfo';
+import {GanttView} from '../section/GanttView';
 import {ClickToEdit} from '../../components/ClickToEdit';
 import {AbletonUpload} from './AbletonUpload';
 import {ID, INVALID_ID, updateSectionBeatLength} from '../../api/helpers';
@@ -49,6 +52,7 @@ interface SongProps {
 export const Song = ({songId, moveSong}: SongProps) => {
   const song = useSong(songId);
   const dispatch = useDispatcher();
+  const [viewMode, setViewMode] = useState<'table' | 'gantt'>('table');
 
   if (!song) {
     return <></>;
@@ -62,6 +66,25 @@ export const Song = ({songId, moveSong}: SongProps) => {
   const updateSectionDuration = (sectionId: ID, duration: number) => {
     const newSong = {...song};
     updateSectionBeatLength(newSong, sectionId, duration);
+    dispatch(updateSongAction(newSong));
+  };
+
+  const handleSectionStartChange = (sectionId: ID, newStart: number) => {
+    const sectionIndex = song.sections.findIndex(s => s.id.equals(sectionId));
+    if (sectionIndex === -1) return;
+
+    const newSong = {...song};
+    const section = {...newSong.sections[sectionIndex]};
+    const oldStart = section.start;
+    section.start = newStart;
+    newSong.sections[sectionIndex] = section;
+
+    // Adjust subsequent sections if needed
+    const timeDelta = newStart - oldStart;
+    for (let i = sectionIndex + 1; i < newSong.sections.length; i++) {
+      newSong.sections[i] = {...newSong.sections[i], start: newSong.sections[i].start + timeDelta};
+    }
+
     dispatch(updateSongAction(newSong));
   };
 
@@ -81,11 +104,47 @@ export const Song = ({songId, moveSong}: SongProps) => {
         onMoveDown={moveDown}
         onRemove={remove}
       />
-      <SectionsTable
-        song={song}
-        requestAdd={addSection}
-        requestUpdateSectionDuration={updateSectionDuration}
-      />
+      
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Typography level="title-md">Sections</Typography>
+        <Stack direction="row" spacing={1}>
+          <Tooltip title="Table View">
+            <IconButton
+              variant={viewMode === 'table' ? 'solid' : 'soft'}
+              color="primary"
+              size="sm"
+              onClick={() => setViewMode('table')}
+            >
+              <TableView />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Timeline View">
+            <IconButton
+              variant={viewMode === 'gantt' ? 'solid' : 'soft'}
+              color="primary"
+              size="sm"
+              onClick={() => setViewMode('gantt')}
+            >
+              <Timeline />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      </Stack>
+
+      {viewMode === 'gantt' ? (
+        <GanttView
+          song={song}
+          requestAdd={addSection}
+          requestUpdateSectionDuration={updateSectionDuration}
+          onSectionStartChange={handleSectionStartChange}
+        />
+      ) : (
+        <SectionsTable
+          song={song}
+          requestAdd={addSection}
+          requestUpdateSectionDuration={updateSectionDuration}
+        />
+      )}
     </Stack>
   );
 };
