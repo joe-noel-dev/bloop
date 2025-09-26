@@ -146,7 +146,6 @@ export const reducer = (action: Action, state: AppState): AppState => {
     case SET_PROJECT: {
       const {project} = action as SetProjectAction;
       newState.project = project;
-      console.log('Project: ', newState.project);
       break;
     }
 

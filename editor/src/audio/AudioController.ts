@@ -108,7 +108,6 @@ export const createAudioController = (backend: Backend) => {
       bufferNode.loopEnd = end;
     }
 
-    bufferNode.connect(audioContext.destination);
     bufferNode.start(0, start, !loop && end ? end - start : undefined);
 
     // Notify playback state: true, songId, sectionId
