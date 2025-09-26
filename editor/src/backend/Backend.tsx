@@ -22,14 +22,6 @@ export interface DbProject {
 
 export const BackendContext = createContext<Backend | null>(null);
 
-// export const useBackend = () => {
-//   const context = useContext(BackendContext);
-//   if (!context) {
-//     throw new Error('useBackend should be called from within a CoreProvider');
-//   }
-//   return context;
-// };
-
 export const createBackend = () => {
   const pocketbase = new PocketBase('https://joe-noel-dev-bloop.fly.dev');
 
@@ -83,6 +75,9 @@ export const createBackend = () => {
 
     removeSample: async (projectId: string, sampleId: ID) =>
       await removeSample(pocketbase, projectId, sampleId),
+
+    fetchSample: async (project: DbProject, sampleId: ID) =>
+      await fetchSample(pocketbase, project, sampleId),
   };
 };
 
@@ -256,6 +251,35 @@ const addSample = async (
   });
 
   console.log(`Added sample with ID: ${sampleId} to project ${projectId}`);
+};
+
+const fetchSample = async (
+  pocketbase: PocketBase,
+  project: DbProject,
+  sampleId: ID
+): Promise<Blob | null> => {
+  if (!pocketbase.authStore.isValid || !pocketbase.authStore.record) {
+    throw new Error('User is not authenticated');
+  }
+
+  const samples = project.samples || [];
+
+  const sampleFile = samples.find((s: string) =>
+    s.includes(sampleId.toString())
+  );
+
+  if (!sampleFile) {
+    return null;
+  }
+
+  const sampleUrl = `${pocketbase.baseURL}/api/files/${project.collectionId}/${project.id}/${sampleFile}`;
+  const response = await fetch(sampleUrl);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch sample: ${response.statusText}`);
+  }
+
+  return await response.blob();
 };
 
 export type Backend = ReturnType<typeof createBackend>;

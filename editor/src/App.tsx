@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useRef} from 'react';
 import {AppState, AppStateContext} from './state/AppState';
 import CssBaseline from '@mui/joy/CssBaseline';
 import {CssVarsProvider} from '@mui/joy/styles';
@@ -11,53 +11,82 @@ import {DispatcherContext} from './dispatcher/dispatcher';
 import {Action} from './dispatcher/action';
 import {reducer} from './dispatcher/reducer';
 import {emptyProject} from './api/project-helpers';
+import {applyMiddleware, DispatchFunction} from './dispatcher/middleware';
+import {loggingMiddleware} from './dispatcher/loggingMiddleware';
+import {AudioControllerContext} from './audio/AudioControllerContext';
+import {AudioController, createAudioController} from './audio/AudioController';
+import {audioMiddleware} from './audio/AudioMiddleware';
+import {backendMiddleware} from './backend/BackendMiddleware';
 
 const App = () => {
-  const [backend, setBackend] = useState<Backend | null>(null);
+  const [backend] = useState<Backend>(createBackend());
   const [state, setState] = useState<AppState>({
     project: emptyProject(),
     projects: [],
+    playing: false,
+    saveState: 'idle',
   });
+  const stateRef = useRef<AppState>(state);
+  const [audioController] = useState<AudioController>(
+    createAudioController(backend)
+  );
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   const user = backend?.getUser();
 
   useEffect(() => {
-    const newBackend = createBackend();
-    newBackend
-      .fetchProjects()
-      .then((projects) => setState({...state, projects}));
-
-    setBackend(newBackend);
+    backend.fetchProjects().then((projects) => setState({...state, projects}));
   }, []);
 
-  if (!backend) {
-    return;
-  }
-
-  const dispatch = async (action: Action) => {
-    const newState = await reducer(action, state, backend);
+  const baseDispatch = (action: Action) => {
+    const newState = reducer(action, stateRef.current);
+    stateRef.current = newState;
     setState(newState);
   };
+
+  let middlewareDispatch: DispatchFunction;
+
+  // Create middleware API
+  const middlewareAPI = {
+    getState: () => stateRef.current,
+    getBackend: () => backend,
+    getAudioController: () => audioController,
+    dispatch: (action: Action) => middlewareDispatch(action),
+  };
+
+  const dispatch = applyMiddleware(
+    loggingMiddleware,
+    audioMiddleware,
+    backendMiddleware
+  )(middlewareAPI)(baseDispatch);
+
+  middlewareDispatch = dispatch;
 
   return (
     <CssVarsProvider>
       <CssBaseline />
-      <DispatcherContext.Provider value={dispatch}>
-        <BackendContext.Provider value={backend}>
-          <AppStateContext.Provider value={state}>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                minHeight: '100vh',
-              }}
-            >
-              {!user && <LoginScreen />}
-              {user && <Box sx={{flexGrow: 1}}>{<Project />}</Box>}
-            </Box>
-          </AppStateContext.Provider>
-        </BackendContext.Provider>
-      </DispatcherContext.Provider>
+      <AudioControllerContext.Provider value={audioController}>
+        <DispatcherContext.Provider value={dispatch}>
+          <BackendContext.Provider value={backend}>
+            <AppStateContext.Provider value={state}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  minHeight: '100vh',
+                }}
+              >
+                {!user && <LoginScreen />}
+                {user && <Box sx={{flexGrow: 1}}>{<Project />}</Box>}
+              </Box>
+            </AppStateContext.Provider>
+          </BackendContext.Provider>
+        </DispatcherContext.Provider>
+      </AudioControllerContext.Provider>
     </CssVarsProvider>
   );
 };

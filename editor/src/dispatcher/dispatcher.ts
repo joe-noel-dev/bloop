@@ -1,7 +1,7 @@
 import {createContext, useContext} from 'react';
 import {Action} from './action';
 
-export type Dispatcher = (action: Action) => void;
+export type Dispatcher = (action: Action) => Promise<void> | void;
 
 export const DispatcherContext = createContext<Dispatcher | null>(null);
 
