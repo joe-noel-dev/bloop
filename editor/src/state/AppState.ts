@@ -2,6 +2,7 @@ import {createContext, useContext} from 'react';
 import {Project} from '../api/bloop';
 import {DbProject} from '../backend/Backend';
 import {emptyProject} from '../api/project-helpers';
+import {SampleInCache} from '../audio/SampleManager';
 
 export type SaveState = 'idle' | 'saving' | 'saved';
 
@@ -13,6 +14,7 @@ export interface AppState {
   playingSongId?: Long;
   playingSectionId?: Long;
   saveState: SaveState;
+  sampleStates: Map<Long, SampleInCache>;
 }
 
 export const AppStateContext = createContext<AppState>({
@@ -20,6 +22,7 @@ export const AppStateContext = createContext<AppState>({
   projects: [],
   playing: false,
   saveState: 'idle',
+  sampleStates: new Map(),
 });
 
 export const useAppState = () => useContext(AppStateContext);

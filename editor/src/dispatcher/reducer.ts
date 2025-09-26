@@ -22,11 +22,13 @@ import {
   SET_PROJECT_INFO,
   SET_PROJECTS,
   SET_SAVE_STATE,
+  SET_SAMPLE_STATE,
   SetPlaybackStateAction,
   SetProjectAction,
   SetProjectInfoAction,
   SetProjectsAction,
   SetSaveStateAction,
+  SetSampleStateAction,
   SPLIT_SECTION,
   SplitSectionAction,
   UPDATE_SECTION,
@@ -172,6 +174,13 @@ export const reducer = (action: Action, state: AppState): AppState => {
     case SET_SAVE_STATE: {
       const {saveState} = action as SetSaveStateAction;
       newState.saveState = saveState;
+      break;
+    }
+
+    case SET_SAMPLE_STATE: {
+      const {sampleId, sampleState} = action as SetSampleStateAction;
+      newState.sampleStates = new Map(newState.sampleStates);
+      newState.sampleStates.set(sampleId, sampleState);
       break;
     }
   }

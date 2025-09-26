@@ -25,6 +25,7 @@ const App = () => {
     projects: [],
     playing: false,
     saveState: 'idle',
+    sampleStates: new Map(),
   });
   const stateRef = useRef<AppState>(state);
   const [audioController] = useState<AudioController>(

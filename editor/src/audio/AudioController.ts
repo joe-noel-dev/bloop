@@ -2,6 +2,8 @@ import {Project} from '../api/bloop';
 import {Backend, DbProject} from '../backend/Backend';
 import {createSampleManager, Samples} from './SampleManager';
 import {ID} from '../api/helpers';
+import Long from 'long';
+import {DispatchFunction} from '../dispatcher/middleware';
 
 export type PlaybackStateChangeCallback = (
   playing: boolean,
@@ -12,7 +14,13 @@ export type PlaybackStateChangeCallback = (
 export const createAudioController = (backend: Backend) => {
   const audioContext = new AudioContext();
   const samples: Samples = new Map();
-  const sampleManager = createSampleManager(audioContext, samples, backend);
+  let dispatch: DispatchFunction | null = null;
+  
+  const sampleManager = createSampleManager(audioContext, samples, backend, (action) => {
+    if (dispatch) {
+      dispatch(action);
+    }
+  });
   let project: Project | null = null;
   let projectInfo: DbProject | null = null;
   let playbackStateChangeCallback: PlaybackStateChangeCallback | null = null;
@@ -141,12 +149,23 @@ export const createAudioController = (backend: Backend) => {
     playbackStateChangeCallback = callback;
   };
 
+  const setDispatch = (dispatchFunction: DispatchFunction) => {
+    dispatch = dispatchFunction;
+  };
+
+  const getSampleState = (sampleId: Long) => {
+    const sampleInCache = samples.get(sampleId);
+    return sampleInCache?.state ?? null;
+  };
+
   return {
     setProject,
     setProjectInfo,
     play,
     stop,
     setPlaybackStateChangeCallback,
+    setDispatch,
+    getSampleState,
   };
 };
 

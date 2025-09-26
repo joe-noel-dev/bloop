@@ -2,6 +2,7 @@ import {Project, Section, Song} from '../api/bloop';
 import {ID} from '../api/helpers';
 import {DbProject} from '../backend/Backend';
 import {SaveState} from '../state/AppState';
+import {SampleInCache} from '../audio/SampleManager';
 
 // 1:
 export const ADD_SAMPLE = 'ADD_SAMPLE';
@@ -31,6 +32,7 @@ export const PLAY = 'PLAY';
 export const STOP = 'STOP';
 export const SET_PLAYBACK_STATE = 'SET_PLAYBACK_STATE';
 export const SET_SAVE_STATE = 'SET_SAVE_STATE';
+export const SET_SAMPLE_STATE = 'SET_SAMPLE_STATE';
 
 // 2:
 
@@ -187,6 +189,12 @@ export const setSaveStateAction = (saveState: SaveState) => ({
   saveState,
 });
 
+export const setSampleStateAction = (sampleId: ID, sampleState: SampleInCache) => ({
+  type: SET_SAMPLE_STATE,
+  sampleId,
+  sampleState,
+});
+
 // 3:
 export type AddSampleAction = ReturnType<typeof addSampleAction>;
 export type AddSectionAction = ReturnType<typeof addSectionAction>;
@@ -217,6 +225,7 @@ export type PlayAction = ReturnType<typeof playAction>;
 export type StopAction = ReturnType<typeof stopAction>;
 export type SetPlaybackStateAction = ReturnType<typeof setPlaybackStateAction>;
 export type SetSaveStateAction = ReturnType<typeof setSaveStateAction>;
+export type SetSampleStateAction = ReturnType<typeof setSampleStateAction>;
 
 // 4:
 export type Action =
@@ -246,4 +255,5 @@ export type Action =
   | PlayAction
   | StopAction
   | SetPlaybackStateAction
-  | SetSaveStateAction;
+  | SetSaveStateAction
+  | SetSampleStateAction;

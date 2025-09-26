@@ -4,6 +4,10 @@ import {Middleware} from '../dispatcher/middleware';
 export const audioMiddleware: Middleware = (api) => {
   // Set up the playback state change callback
   const audioController = api.getAudioController();
+  
+  // Set the dispatch function for sample state updates
+  audioController.setDispatch(api.dispatch);
+  
   audioController.setPlaybackStateChangeCallback(
     (playing, songId, sectionId) => {
       api.dispatch(setPlaybackStateAction(playing, songId, sectionId));
