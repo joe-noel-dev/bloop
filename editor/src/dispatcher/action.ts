@@ -2,7 +2,7 @@ import {Project, Section, Song} from '../api/bloop';
 import {ID} from '../api/helpers';
 import {DbProject} from '../backend/Backend';
 import {SaveState} from '../state/AppState';
-import {SampleInCache} from '../audio/SampleManager';
+import {SampleState} from '../audio/SampleManager';
 
 // 1:
 export const ADD_SAMPLE = 'ADD_SAMPLE';
@@ -189,7 +189,7 @@ export const setSaveStateAction = (saveState: SaveState) => ({
   saveState,
 });
 
-export const setSampleStateAction = (sampleId: ID, sampleState: SampleInCache) => ({
+export const setSampleStateAction = (sampleId: ID, sampleState: SampleState) => ({
   type: SET_SAMPLE_STATE,
   sampleId,
   sampleState,

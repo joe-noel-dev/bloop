@@ -180,7 +180,13 @@ export const reducer = (action: Action, state: AppState): AppState => {
     case SET_SAMPLE_STATE: {
       const {sampleId, sampleState} = action as SetSampleStateAction;
       newState.sampleStates = new Map(newState.sampleStates);
-      newState.sampleStates.set(sampleId, sampleState);
+      // Create a SampleInCache object from just the state
+      const currentSample = newState.sampleStates.get(sampleId);
+      const updatedSample = {
+        state: sampleState,
+        buffer: currentSample?.buffer, // Preserve existing buffer if any
+      };
+      newState.sampleStates.set(sampleId, updatedSample);
       break;
     }
   }

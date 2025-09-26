@@ -3,8 +3,10 @@ import {Backend, DbProject} from '../backend/Backend';
 import {setSampleStateAction} from '../dispatcher/action';
 import {DispatchFunction} from '../dispatcher/middleware';
 
+export type SampleState = 'loading' | 'converting' | 'loaded' | 'error';
+
 export interface SampleInCache {
-  state: 'loading' | 'converting' | 'loaded' | 'error';
+  state: SampleState;
   buffer?: AudioBuffer;
 }
 
@@ -18,6 +20,12 @@ export const createSampleManager = (
 ) => {
   let project: DbProject | null = null;
 
+  const setSampleState = (id: Long, state: SampleState, buffer?: AudioBuffer) => {
+    const sampleInCache: SampleInCache = { state, buffer };
+    samples.set(id, sampleInCache);
+    dispatch(setSampleStateAction(id, state));
+  };
+
   const addSample = async (id: Long) => {
     if (!project) {
       console.error('Project is not set. Cannot load sample.');
@@ -25,33 +33,23 @@ export const createSampleManager = (
     }
 
     console.log('Adding sample', id.toString());
-    const loadingState = {state: 'loading' as const};
-    samples.set(id, loadingState);
-    dispatch(setSampleStateAction(id, loadingState));
+    setSampleState(id, 'loading');
 
     const audioFileData = await backend.fetchSample(project, id);
     if (!audioFileData) {
       console.error(`Sample with ID ${id} not found in backend.`);
-      const errorState = {state: 'error' as const};
-      samples.set(id, errorState);
-      dispatch(setSampleStateAction(id, errorState));
+      setSampleState(id, 'error');
       return;
     }
 
-    const convertingState = {state: 'converting' as const};
-    samples.set(id, convertingState);
-    dispatch(setSampleStateAction(id, convertingState));
+    setSampleState(id, 'converting');
     try {
       const audioBuffer = await blobToAudioBuffer(context, audioFileData);
-      const loadedState = {state: 'loaded' as const, buffer: audioBuffer};
-      samples.set(id, loadedState);
-      dispatch(setSampleStateAction(id, loadedState));
+      setSampleState(id, 'loaded', audioBuffer);
       console.log(`Sample ${id} loaded and converted.`);
     } catch (error) {
       console.error(`Error converting audio file for sample ${id}:`, error);
-      const errorState = {state: 'error' as const};
-      samples.set(id, errorState);
-      dispatch(setSampleStateAction(id, errorState));
+      setSampleState(id, 'error');
       return;
     }
   };

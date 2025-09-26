@@ -17,65 +17,62 @@ describe('Reducer - Sample State', () => {
   const testSampleId = Long.fromNumber(12345);
 
   it('should set sample loading state', () => {
-    const action = setSampleStateAction(testSampleId, { state: 'loading' });
+    const action = setSampleStateAction(testSampleId, 'loading');
     const newState = reducer(action, initialState);
 
-    expect(newState.sampleStates.get(testSampleId)).toEqual({ state: 'loading' });
+    expect(newState.sampleStates.get(testSampleId)).toEqual({ state: 'loading', buffer: undefined });
     expect(newState.sampleStates.size).toBe(1);
   });
 
   it('should update sample state from loading to converting', () => {
-    const loadingAction = setSampleStateAction(testSampleId, { state: 'loading' });
+    const loadingAction = setSampleStateAction(testSampleId, 'loading');
     const loadingState = reducer(loadingAction, initialState);
 
-    const convertingAction = setSampleStateAction(testSampleId, { state: 'converting' });
+    const convertingAction = setSampleStateAction(testSampleId, 'converting');
     const convertingState = reducer(convertingAction, loadingState);
 
-    expect(convertingState.sampleStates.get(testSampleId)).toEqual({ state: 'converting' });
+    expect(convertingState.sampleStates.get(testSampleId)).toEqual({ state: 'converting', buffer: undefined });
     expect(convertingState.sampleStates.size).toBe(1);
   });
 
   it('should update sample state from converting to loaded', () => {
-    const convertingAction = setSampleStateAction(testSampleId, { state: 'converting' });
+    const convertingAction = setSampleStateAction(testSampleId, 'converting');
     const convertingState = reducer(convertingAction, initialState);
 
-    const mockAudioBuffer = {} as AudioBuffer; // Mock AudioBuffer
-    const loadedAction = setSampleStateAction(testSampleId, { 
-      state: 'loaded', 
-      buffer: mockAudioBuffer 
-    });
+    // Since we only pass the state now, the buffer would be managed separately
+    const loadedAction = setSampleStateAction(testSampleId, 'loaded');
     const loadedState = reducer(loadedAction, convertingState);
 
     expect(loadedState.sampleStates.get(testSampleId)).toEqual({ 
       state: 'loaded', 
-      buffer: mockAudioBuffer 
+      buffer: undefined // Buffer is not managed through this action anymore
     });
   });
 
   it('should set sample error state', () => {
-    const action = setSampleStateAction(testSampleId, { state: 'error' });
+    const action = setSampleStateAction(testSampleId, 'error');
     const newState = reducer(action, initialState);
 
-    expect(newState.sampleStates.get(testSampleId)).toEqual({ state: 'error' });
+    expect(newState.sampleStates.get(testSampleId)).toEqual({ state: 'error', buffer: undefined });
   });
 
   it('should handle multiple samples independently', () => {
     const sampleId1 = Long.fromNumber(123);
     const sampleId2 = Long.fromNumber(456);
 
-    const action1 = setSampleStateAction(sampleId1, { state: 'loading' });
+    const action1 = setSampleStateAction(sampleId1, 'loading');
     const state1 = reducer(action1, initialState);
 
-    const action2 = setSampleStateAction(sampleId2, { state: 'converting' });
+    const action2 = setSampleStateAction(sampleId2, 'converting');
     const state2 = reducer(action2, state1);
 
-    expect(state2.sampleStates.get(sampleId1)).toEqual({ state: 'loading' });
-    expect(state2.sampleStates.get(sampleId2)).toEqual({ state: 'converting' });
+    expect(state2.sampleStates.get(sampleId1)).toEqual({ state: 'loading', buffer: undefined });
+    expect(state2.sampleStates.get(sampleId2)).toEqual({ state: 'converting', buffer: undefined });
     expect(state2.sampleStates.size).toBe(2);
   });
 
   it('should not mutate the original state', () => {
-    const action = setSampleStateAction(testSampleId, { state: 'loading' });
+    const action = setSampleStateAction(testSampleId, 'loading');
     const newState = reducer(action, initialState);
 
     expect(newState).not.toBe(initialState);
