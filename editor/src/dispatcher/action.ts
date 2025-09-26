@@ -25,6 +25,8 @@ export const REMOVE_ALL_SECTIONS = 'REMOVE_ALL_SECTIONS';
 export const SET_PROJECT = 'SET_PROJECT';
 export const SET_PROJECTS = 'SET_PROJECTS';
 export const SET_PROJECT_INFO = 'SET_PROJECT_INFO';
+export const PLAY = 'PLAY';
+export const STOP = 'STOP';
 
 // 2:
 
@@ -150,6 +152,17 @@ export const setProjectInfoAction = (projectInfo: DbProject) => ({
   projectInfo,
 });
 
+export const playAction = (songId: ID, sectionId: ID, loop: boolean) => ({
+  type: PLAY,
+  songId,
+  sectionId,
+  loop,
+});
+
+export const stopAction = () => ({
+  type: STOP,
+});
+
 // 3:
 export type AddSampleAction = ReturnType<typeof addSampleAction>;
 export type AddSectionAction = ReturnType<typeof addSectionAction>;
@@ -175,6 +188,8 @@ export type RemoveAllSectionsAction = ReturnType<
 export type SetProjectAction = ReturnType<typeof setProjectAction>;
 export type SetProjectsAction = ReturnType<typeof setProjectsAction>;
 export type SetProjectInfoAction = ReturnType<typeof setProjectInfoAction>;
+export type PlayAction = ReturnType<typeof playAction>;
+export type StopAction = ReturnType<typeof stopAction>;
 
 // 4:
 export type Action =
@@ -199,4 +214,6 @@ export type Action =
   | RemoveAllSectionsAction
   | SetProjectAction
   | SetProjectsAction
-  | SetProjectInfoAction;
+  | SetProjectInfoAction
+  | PlayAction
+  | StopAction;

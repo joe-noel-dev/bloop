@@ -1,4 +1,5 @@
 export type ColumnName =
+  | 'Transport'
   | 'Name'
   | 'Start'
   | 'Duration'
@@ -7,6 +8,7 @@ export type ColumnName =
   | 'Edit';
 
 export const columns: ColumnName[] = [
+  'Transport',
   'Name',
   'Start',
   'Duration',
@@ -21,6 +23,7 @@ export const columnSize = (name: ColumnName): number => {
     case 'Metronome':
     case 'Edit':
       return 2;
+    case 'Transport':
     case 'Start':
     case 'Duration':
     case 'Loop':

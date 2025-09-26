@@ -1,6 +1,12 @@
 import {ColorPaletteProp, Grid, IconButton, Stack, Switch} from '@mui/joy';
 import {useSectionById} from '../../model-hooks/section-hooks';
-import {ArrowDownward, ArrowUpward, Delete} from '@mui/icons-material';
+import {
+  ArrowDownward,
+  ArrowUpward,
+  Delete,
+  PlayArrow,
+  Stop,
+} from '@mui/icons-material';
 import {columnSize, columns} from './TableInfo';
 import isEqual from 'lodash.isequal';
 import {useSong} from '../../model-hooks/song-hooks';
@@ -10,7 +16,9 @@ import {Section as ModelSection} from '../../api/bloop';
 import {useDispatcher} from '../../dispatcher/dispatcher';
 import {
   moveSectionAction,
+  playAction,
   removeSectionAction,
+  stopAction,
   updateSectionAction,
 } from '../../dispatcher/action';
 
@@ -52,6 +60,14 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
 
   const remove = () => dispatch(removeSectionAction(songId, sectionId));
 
+  const handlePlay = () => {
+    dispatch(playAction(songId, sectionId, section.loop));
+  };
+
+  const handleStop = () => {
+    dispatch(stopAction());
+  };
+
   const submitName = (name: string) => {
     const newSection = {...section, name};
 
@@ -87,6 +103,20 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
     <Grid container spacing={1}>
       {columns.map((name) => {
         switch (name) {
+          case 'Transport': {
+            return (
+              <Grid xs={1} sx={{display: 'flex', alignItems: 'center'}}>
+                <Stack direction="row" spacing={0.5}>
+                  <EditButton onClick={handlePlay} color="success">
+                    <PlayArrow />
+                  </EditButton>
+                  <EditButton onClick={handleStop} color="neutral">
+                    <Stop />
+                  </EditButton>
+                </Stack>
+              </Grid>
+            );
+          }
           case 'Name':
             return (
               <Grid
