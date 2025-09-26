@@ -15,7 +15,7 @@ global.AudioContext = class MockAudioContext {
 global.File = class MockFile {
   public name: string;
 
-  constructor(chunks: any[], name: string) {
+  constructor(_chunks: any[], name: string) {
     this.name = name;
   }
 

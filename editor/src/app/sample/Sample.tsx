@@ -1,6 +1,6 @@
 import {Button} from '@mui/joy';
-import {useSampleWithId} from '../../model-hooks/sample-hooks';
-import {Delete, FileUpload} from '@mui/icons-material';
+import {useSampleWithId, useSampleState} from '../../model-hooks/sample-hooks';
+import {Delete, FileUpload, Download, Sync} from '@mui/icons-material';
 import {useEffect, useRef, useState} from 'react';
 import {ID} from '../../api/helpers';
 import {useSong} from '../../model-hooks/song-hooks';
@@ -14,6 +14,7 @@ interface Props {
 
 export const Sample = ({sampleId, songId}: Props) => {
   const sample = useSampleWithId(sampleId);
+  const sampleState = useSampleState(sampleId);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const song = useSong(songId);
@@ -77,11 +78,62 @@ export const Sample = ({sampleId, songId}: Props) => {
     </Button>
   );
 
+  const LoadingButton = () => (
+    <Button
+      loading={true}
+      color="primary"
+      startDecorator={<Download />}
+      disabled
+    >
+      Downloading...
+    </Button>
+  );
+
+  const ConvertingButton = () => (
+    <Button
+      loading={true}
+      color="primary"
+      startDecorator={<Sync />}
+      disabled
+    >
+      Converting...
+    </Button>
+  );
+
+  const ErrorButton = () => (
+    <Button
+      color="danger"
+      variant="soft"
+      disabled
+    >
+      Error Loading Sample
+    </Button>
+  );
+
+  const getSampleButton = () => {
+    if (sample && sampleState === 'loaded') {
+      return <RemoveButton />;
+    }
+    
+    if (sampleState === 'loading') {
+      return <LoadingButton />;
+    }
+    
+    if (sampleState === 'converting') {
+      return <ConvertingButton />;
+    }
+    
+    if (sampleState === 'error') {
+      return <ErrorButton />;
+    }
+    
+    return <UploadButton />;
+  };
+
   return (
     <>
-      {sample && <RemoveButton />}
-      {!sample && <InvisibleFileInput />}
-      {!sample && <UploadButton />}
+      <InvisibleFileInput />
+      {getSampleButton()}
     </>
   );
 };
