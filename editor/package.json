@@ -32,14 +32,10 @@
     "react-modal": "^3.16.1",
     "ts-proto": "^2.7.5"
   },
-  "optionalDependencies": {
-    "mdns": "^2.7.2"
-  },
   "scripts": {
     "start": "yarn run generate-api && vite",
     "build": "yarn run generate-api && tsc && vite build",
     "serve": "vite preview",
-    "discovery": "node ./src/server.js",
     "generate-api": "buf generate",
     "test": "vitest",
     "test:watch": "vitest --watch",
