@@ -1,5 +1,6 @@
 import {Box, Input, Typography} from '@mui/joy';
 import {useState, useEffect} from 'react';
+import {transitions} from '../theme';
 
 interface Props {
   initialValue: string;
@@ -95,7 +96,7 @@ export const ClickToEdit = ({
     'borderRadius': 'sm',
     'border': '1px solid transparent',
     'padding': '6px 8px',
-    'transition': 'all 0.2s ease',
+    'transition': transitions.fast,
     '&:hover':
       !disabled && !editing
         ? {

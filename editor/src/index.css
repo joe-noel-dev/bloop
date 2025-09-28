@@ -4,6 +4,7 @@ body {
 }
 
 :root {
+  /* Spacing tokens (8px unit system) */
   --unit-space: 8px;
   --unit-space-x2: calc(2 * var(--unit-space));
   --unit-space-x3: calc(3 * var(--unit-space));
@@ -13,25 +14,17 @@ body {
   --unit-space-x7: calc(7 * var(--unit-space));
   --unit-space-x8: calc(8 * var(--unit-space));
 
-  --shadow-level-1: 0px 1px 3px rgba(0, 0, 0, 0.12),
-    0px 1px 2px rgba(0, 0, 0, 0.24);
-  --shadow-level-2: 0px 5px 10px rgba(0, 0, 0, 0.2),
-    0px 6px 6px rgba(0, 0, 0, 0.24);
-  --shadow-level-3: 0px 15px 30px rgba(0, 0, 0, 0.3),
-    0px 12px 12px rgba(0, 0, 0, 0.24);
-
-  --border-radius: 2px;
-
-  --background: white;
-
+  /* Primary color palette */
   --primary: #ffab91;
   --primary-light: #ffddc1;
   --primary-dark: #c97b63;
 
+  /* Secondary color palette */
   --secondary: #1a237e;
   --secondary-light: #534bae;
   --secondary-dark: #000051;
 
+  /* Neutral color palette */
   --neutral-0: white;
   --neutral-1: hsl(240, 5%, 88.5%);
   --neutral-2: hsl(240, 5%, 75%);
@@ -42,12 +35,17 @@ body {
   --neutral-7: hsl(240, 5%, 12.5%);
   --neutral-8: black;
 
+  /* Extended palette colors */
   --palette-1: #bcd8c1;
   --palette-2: #7f636e;
   --palette-3: #388697;
   --palette-4: #cc2936;
   --palette-5: #a93f55;
 
+  /* Background colors */
+  --background: white;
+
+  /* Text colors for different backgrounds */
   --text-on-background: black;
   --text-on-primary: black;
   --text-on-primary-light: black;
@@ -55,6 +53,29 @@ body {
   --text-on-secondary: white;
   --text-on-secondary-light: white;
   --text-on-secondary-dark: white;
+
+  /* Shadow tokens - consistent with theme/tokens.ts */
+  --shadow-level-1: 0px 1px 3px rgba(0, 0, 0, 0.12), 0px 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-level-2: 0px 5px 10px rgba(0, 0, 0, 0.2), 0px 6px 6px rgba(0, 0, 0, 0.24);
+  --shadow-level-3: 0px 15px 30px rgba(0, 0, 0, 0.3), 0px 12px 12px rgba(0, 0, 0, 0.24);
+  --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-focus: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-active: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+  /* Border radius tokens */
+  --border-radius: 2px;
+  --border-radius-sm: 2px;
+  --border-radius-md: 4px;
+  --border-radius-lg: 8px;
+
+  /* Transition tokens */
+  --transition-fast: all 0.2s ease;
+  --transition-normal: all 0.3s ease;
+  --transition-slow: all 0.5s ease;
+  --transition-ease-out: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 }
 
 html {
