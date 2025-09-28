@@ -194,7 +194,10 @@ export const setSaveStateAction = (saveState: SaveState) => ({
   saveState,
 });
 
-export const setSampleStateAction = (sampleId: ID, sampleState: SampleState) => ({
+export const setSampleStateAction = (
+  sampleId: ID,
+  sampleState: SampleState
+) => ({
   type: SET_SAMPLE_STATE,
   sampleId,
   sampleState,

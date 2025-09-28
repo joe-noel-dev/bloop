@@ -23,7 +23,6 @@ import {
   SIGN_IN,
   SignInAction,
   SIGN_OUT,
-  SignOutAction,
 } from '../dispatcher/action';
 import {Backend} from './Backend';
 import Long from 'long';

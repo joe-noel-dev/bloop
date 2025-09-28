@@ -1,12 +1,5 @@
 import React, {useState, useContext} from 'react';
-import {
-  Box,
-  IconButton,
-  Menu,
-  MenuItem,
-  Typography,
-  Divider,
-} from '@mui/joy';
+import {Box, IconButton, Menu, MenuItem, Typography, Divider} from '@mui/joy';
 import {Person, Logout} from '@mui/icons-material';
 import {BackendContext} from '../backend/Backend';
 import {useDispatcher} from '../dispatcher/dispatcher';
