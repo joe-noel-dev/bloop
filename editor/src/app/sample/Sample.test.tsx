@@ -5,6 +5,7 @@ import { AppStateContext } from '../../state/AppState';
 import { DispatcherContext } from '../../dispatcher/dispatcher';
 import { AudioControllerContext } from '../../audio/AudioControllerContext';
 import { emptyProject } from '../../api/project-helpers';
+import { createThemeState } from '../../state/ThemeState';
 import Long from 'long';
 
 // Mock MUI icons
@@ -49,6 +50,7 @@ const mockAppState = {
   playing: false,
   saveState: 'idle' as const,
   sampleStates: new Map(),
+  theme: createThemeState(),
 };
 
 const TestWrapper = ({ 

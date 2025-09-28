@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { reducer } from './reducer';
-import { setSampleStateAction } from './action';
+import { setSampleStateAction, setThemeModeAction } from './action';
 import { AppState } from '../state/AppState';
 import { emptyProject } from '../api/project-helpers';
+import { createThemeState } from '../state/ThemeState';
 import Long from 'long';
 
 describe('Reducer - Sample State', () => {
@@ -12,6 +13,7 @@ describe('Reducer - Sample State', () => {
     playing: false,
     saveState: 'idle',
     sampleStates: new Map(),
+    theme: createThemeState(),
   };
 
   const testSampleId = Long.fromNumber(12345);
@@ -79,5 +81,49 @@ describe('Reducer - Sample State', () => {
     expect(newState.sampleStates).not.toBe(initialState.sampleStates);
     expect(initialState.sampleStates.size).toBe(0);
     expect(newState.sampleStates.size).toBe(1);
+  });
+});
+
+describe('Reducer - Theme State', () => {
+  const initialState: AppState = {
+    project: emptyProject(),
+    projects: [],
+    playing: false,
+    saveState: 'idle',
+    sampleStates: new Map(),
+    theme: createThemeState(),
+  };
+
+  it('should set theme mode to light', () => {
+    const action = setThemeModeAction('light');
+    const newState = reducer(action, initialState);
+
+    expect(newState.theme.mode).toBe('light');
+    expect(newState.theme.effectiveMode).toBe('light');
+  });
+
+  it('should set theme mode to dark', () => {
+    const action = setThemeModeAction('dark');
+    const newState = reducer(action, initialState);
+
+    expect(newState.theme.mode).toBe('dark');
+    expect(newState.theme.effectiveMode).toBe('dark');
+  });
+
+  it('should set theme mode to system', () => {
+    const action = setThemeModeAction('system');
+    const newState = reducer(action, initialState);
+
+    expect(newState.theme.mode).toBe('system');
+    // effectiveMode should be either 'light' or 'dark' based on system preference
+    expect(['light', 'dark']).toContain(newState.theme.effectiveMode);
+  });
+
+  it('should not mutate original state when updating theme', () => {
+    const action = setThemeModeAction('dark');
+    const newState = reducer(action, initialState);
+
+    expect(newState).not.toBe(initialState);
+    expect(newState.theme).not.toBe(initialState.theme);
   });
 });

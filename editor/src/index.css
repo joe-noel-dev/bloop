@@ -24,7 +24,7 @@ body {
   --secondary-light: #534bae;
   --secondary-dark: #000051;
 
-  /* Neutral color palette */
+  /* Neutral color palette - light mode (default) */
   --neutral-0: white;
   --neutral-1: hsl(240, 5%, 88.5%);
   --neutral-2: hsl(240, 5%, 75%);
@@ -57,6 +57,43 @@ body {
   /* Shadow tokens - consistent with theme/tokens.ts */
   --shadow-level-1: 0px 1px 3px rgba(0, 0, 0, 0.12), 0px 1px 2px rgba(0, 0, 0, 0.24);
   --shadow-level-2: 0px 5px 10px rgba(0, 0, 0, 0.2), 0px 6px 6px rgba(0, 0, 0, 0.24);
+  --shadow-level-3: 0px 15px 30px rgba(0, 0, 0, 0.3), 0px 12px 12px rgba(0, 0, 0, 0.24);
+  --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-focus: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-active: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark mode theme */
+[data-theme="dark"] {
+  /* Neutral color palette - dark mode (inverted) */
+  --neutral-0: black;
+  --neutral-1: hsl(240, 5%, 12.5%);
+  --neutral-2: hsl(240, 5%, 25%);
+  --neutral-3: hsl(240, 5%, 37.5%);
+  --neutral-4: hsl(240, 5%, 50%);
+  --neutral-5: hsl(240, 5%, 67.5%);
+  --neutral-6: hsl(240, 5%, 75%);
+  --neutral-7: hsl(240, 5%, 88.5%);
+  --neutral-8: white;
+
+  /* Background colors */
+  --background: hsl(240, 5%, 12.5%);
+
+  /* Text colors for different backgrounds */
+  --text-on-background: white;
+
+  /* Dark mode shadows with lighter colors for visibility */
+  --shadow-level-1: 0px 1px 3px rgba(255, 255, 255, 0.08), 0px 1px 2px rgba(255, 255, 255, 0.16);
+  --shadow-level-2: 0px 5px 10px rgba(255, 255, 255, 0.12), 0px 6px 6px rgba(255, 255, 255, 0.16);
+  --shadow-level-3: 0px 15px 30px rgba(255, 255, 255, 0.18), 0px 12px 12px rgba(255, 255, 255, 0.16);
+  --shadow-hover: 0 4px 12px rgba(255, 255, 255, 0.08);
+  --shadow-focus: 0 2px 8px rgba(255, 255, 255, 0.06);
+  --shadow-active: 0 2px 4px rgba(255, 255, 255, 0.06);
+  --shadow-elevated: 0 4px 12px rgba(255, 255, 255, 0.12);
+  --shadow-soft: 0 2px 8px rgba(255, 255, 255, 0.08);
+}
   --shadow-level-3: 0px 15px 30px rgba(0, 0, 0, 0.3), 0px 12px 12px rgba(0, 0, 0, 0.24);
   --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
   --shadow-focus: 0 2px 8px rgba(0, 0, 0, 0.08);

@@ -33,7 +33,7 @@ export const colors = {
     dark: '#000051',
   },
 
-  // Neutral colors
+  // Neutral colors - light mode
   neutral: {
     0: 'white',
     1: 'hsl(240, 5%, 88.5%)',
@@ -44,6 +44,19 @@ export const colors = {
     6: 'hsl(240, 5%, 25%)',
     7: 'hsl(240, 5%, 12.5%)',
     8: 'black',
+  },
+
+  // Dark mode neutral colors (inverted)
+  neutralDark: {
+    0: 'black',
+    1: 'hsl(240, 5%, 12.5%)',
+    2: 'hsl(240, 5%, 25%)',
+    3: 'hsl(240, 5%, 37.5%)',
+    4: 'hsl(240, 5%, 50%)',
+    5: 'hsl(240, 5%, 67.5%)',
+    6: 'hsl(240, 5%, 75%)',
+    7: 'hsl(240, 5%, 88.5%)',
+    8: 'white',
   },
 
   // Palette colors
@@ -57,6 +70,7 @@ export const colors = {
 
   // Background
   background: 'white',
+  backgroundDark: 'hsl(240, 5%, 12.5%)',
 } as const;
 
 // Shadow tokens
@@ -85,6 +99,7 @@ export const radii = {
 // Text color tokens for different backgrounds
 export const textColors = {
   onBackground: 'black',
+  onBackgroundDark: 'white',
   onPrimary: 'black',
   onPrimaryLight: 'black', 
   onPrimaryDark: 'black',

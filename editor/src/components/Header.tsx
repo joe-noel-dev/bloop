@@ -13,6 +13,7 @@ import {Person, Logout} from '@mui/icons-material';
 import {BackendContext} from '../backend/Backend';
 import {useDispatcher} from '../dispatcher/dispatcher';
 import {signOutAction} from '../dispatcher/action';
+import {SettingsMenu} from './SettingsMenu';
 
 export const Header = () => {
   const backend = useContext(BackendContext);
@@ -34,11 +35,13 @@ export const Header = () => {
         justifyContent: 'flex-end',
         alignItems: 'center',
         padding: 2,
+        gap: 1,
         borderBottom: '1px solid',
         borderColor: 'neutral.200',
         backgroundColor: 'background.surface',
       }}
     >
+      <SettingsMenu />
       <Dropdown>
         <MenuButton
           slots={{root: IconButton}}
