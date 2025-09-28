@@ -20,11 +20,7 @@ export const Header = () => {
   const user = backend?.getUser();
 
   const handleLogout = async () => {
-    try {
-      dispatch(signOutAction());
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+    dispatch(signOutAction());
   };
 
   if (!user) {
