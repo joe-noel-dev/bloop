@@ -20,11 +20,13 @@ export const REMOVE_SONG = 'REMOVE_SONG';
 export const RENAME_PROJECT = 'RENAME_PROJECT';
 export const SELECT_SONG = 'SELECT_SONG';
 export const SIGN_IN = 'SIGN_IN';
+export const SIGN_OUT = 'SIGN_OUT';
 export const SPLIT_SECTION = 'SPLIT_SECTION';
 export const UPDATE_SECTION = 'UPDATE_SECTION';
 export const UPDATE_SONG = 'UPDATE_SONG';
 export const LOAD_PROJECTS = 'LOAD_PROJECTS';
 export const REMOVE_ALL_SECTIONS = 'REMOVE_ALL_SECTIONS';
+export const RESET_APP_STATE = 'RESET_APP_STATE';
 export const SET_PROJECT = 'SET_PROJECT';
 export const SET_PROJECTS = 'SET_PROJECTS';
 export const SET_PROJECT_INFO = 'SET_PROJECT_INFO';
@@ -119,6 +121,10 @@ export const signInAction = (userId: string, password: string) => ({
   password,
 });
 
+export const signOutAction = () => ({
+  type: SIGN_OUT,
+});
+
 export const updateSectionAction = (songId: ID, newSection: Section) => {
   return {
     type: UPDATE_SECTION,
@@ -145,6 +151,10 @@ export const loadProjectsAction = () => ({
 export const removeAllSectionsAction = (songId: ID) => ({
   type: REMOVE_ALL_SECTIONS,
   songId,
+});
+
+export const resetAppStateAction = () => ({
+  type: RESET_APP_STATE,
 });
 
 export const setProjectAction = (project: Project) => ({
@@ -189,7 +199,10 @@ export const setSaveStateAction = (saveState: SaveState) => ({
   saveState,
 });
 
-export const setSampleStateAction = (sampleId: ID, sampleState: SampleState) => ({
+export const setSampleStateAction = (
+  sampleId: ID,
+  sampleState: SampleState
+) => ({
   type: SET_SAMPLE_STATE,
   sampleId,
   sampleState,
@@ -211,6 +224,7 @@ export type RemoveSongAction = ReturnType<typeof removeSongAction>;
 export type RenameProjectAction = ReturnType<typeof renameProjectAction>;
 export type SelectSongAction = ReturnType<typeof selectSongAction>;
 export type SignInAction = ReturnType<typeof signInAction>;
+export type SignOutAction = ReturnType<typeof signOutAction>;
 export type SplitSectionAction = ReturnType<typeof splitSectionAction>;
 export type UpdateSectionAction = ReturnType<typeof updateSectionAction>;
 export type UpdateSongAction = ReturnType<typeof updateSongAction>;
@@ -218,6 +232,7 @@ export type LoadProjectsAction = ReturnType<typeof loadProjectsAction>;
 export type RemoveAllSectionsAction = ReturnType<
   typeof removeAllSectionsAction
 >;
+export type ResetAppStateAction = ReturnType<typeof resetAppStateAction>;
 export type SetProjectAction = ReturnType<typeof setProjectAction>;
 export type SetProjectsAction = ReturnType<typeof setProjectsAction>;
 export type SetProjectInfoAction = ReturnType<typeof setProjectInfoAction>;
@@ -244,11 +259,13 @@ export type Action =
   | RenameProjectAction
   | SelectSongAction
   | SignInAction
+  | SignOutAction
   | SplitSectionAction
   | UpdateSectionAction
   | UpdateSongAction
   | LoadProjectsAction
   | RemoveAllSectionsAction
+  | ResetAppStateAction
   | SetProjectAction
   | SetProjectsAction
   | SetProjectInfoAction
