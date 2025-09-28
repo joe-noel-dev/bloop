@@ -17,12 +17,14 @@ export interface AppState {
   sampleStates: Map<Long, SampleInCache>;
 }
 
-export const AppStateContext = createContext<AppState>({
+export const emptyAppState = (): AppState => ({
   project: emptyProject(),
   projects: [],
   playing: false,
   saveState: 'idle',
   sampleStates: new Map(),
 });
+
+export const AppStateContext = createContext<AppState>(emptyAppState());
 
 export const useAppState = () => useContext(AppStateContext);
