@@ -19,7 +19,7 @@ export const Header = () => {
   const dispatch = useDispatcher();
   const user = backend?.getUser();
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     dispatch(signOutAction());
   };
 
