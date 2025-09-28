@@ -39,7 +39,10 @@
     "generate-api": "buf generate",
     "test": "vitest",
     "test:watch": "vitest --watch",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "test:unit": "vitest src/",
+    "test:integration": "VITE_USE_LOCAL_POCKETBASE=true vitest tests/",
+    "test:coverage": "vitest --coverage"
   },
   "eslintConfig": {
     "extends": "react-app"
