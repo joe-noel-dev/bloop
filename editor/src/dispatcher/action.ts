@@ -20,6 +20,7 @@ export const REMOVE_SONG = 'REMOVE_SONG';
 export const RENAME_PROJECT = 'RENAME_PROJECT';
 export const SELECT_SONG = 'SELECT_SONG';
 export const SIGN_IN = 'SIGN_IN';
+export const SIGN_OUT = 'SIGN_OUT';
 export const SPLIT_SECTION = 'SPLIT_SECTION';
 export const UPDATE_SECTION = 'UPDATE_SECTION';
 export const UPDATE_SONG = 'UPDATE_SONG';
@@ -119,6 +120,10 @@ export const signInAction = (userId: string, password: string) => ({
   password,
 });
 
+export const signOutAction = () => ({
+  type: SIGN_OUT,
+});
+
 export const updateSectionAction = (songId: ID, newSection: Section) => {
   return {
     type: UPDATE_SECTION,
@@ -211,6 +216,7 @@ export type RemoveSongAction = ReturnType<typeof removeSongAction>;
 export type RenameProjectAction = ReturnType<typeof renameProjectAction>;
 export type SelectSongAction = ReturnType<typeof selectSongAction>;
 export type SignInAction = ReturnType<typeof signInAction>;
+export type SignOutAction = ReturnType<typeof signOutAction>;
 export type SplitSectionAction = ReturnType<typeof splitSectionAction>;
 export type UpdateSectionAction = ReturnType<typeof updateSectionAction>;
 export type UpdateSongAction = ReturnType<typeof updateSongAction>;
@@ -244,6 +250,7 @@ export type Action =
   | RenameProjectAction
   | SelectSongAction
   | SignInAction
+  | SignOutAction
   | SplitSectionAction
   | UpdateSectionAction
   | UpdateSongAction

@@ -6,6 +6,7 @@ import {Box} from '@mui/joy';
 import '@fontsource/inter';
 import {Project} from './app/project/Project';
 import {LoginScreen} from './app/login/LoginScreen';
+import {Header} from './components/Header';
 import {Backend, BackendContext, createBackend} from './backend/Backend';
 import {DispatcherContext} from './dispatcher/dispatcher';
 import {Action} from './dispatcher/action';
@@ -82,7 +83,14 @@ const App = () => {
                 }}
               >
                 {!user && <LoginScreen />}
-                {user && <Box sx={{flexGrow: 1}}>{<Project />}</Box>}
+                {user && (
+                  <>
+                    <Header />
+                    <Box sx={{flexGrow: 1}}>
+                      <Project />
+                    </Box>
+                  </>
+                )}
               </Box>
             </AppStateContext.Provider>
           </BackendContext.Provider>

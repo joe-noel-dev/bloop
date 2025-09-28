@@ -22,6 +22,8 @@ import {
   setSaveStateAction,
   SIGN_IN,
   SignInAction,
+  SIGN_OUT,
+  SignOutAction,
 } from '../dispatcher/action';
 import {Backend} from './Backend';
 import Long from 'long';
@@ -38,6 +40,12 @@ export const backendMiddleware =
         const {userId, password} = action as SignInAction;
         const user = await backend.signIn(userId, password);
         console.debug('Signed in user:', user);
+        break;
+      }
+
+      case SIGN_OUT: {
+        await backend.signOut();
+        console.debug('Signed out user');
         break;
       }
 
