@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {Button, Grid, Stack, Typography, Box} from '@mui/joy';
 import {useSong} from '../../model-hooks/song-hooks';
+import {shadows, transitions} from '../../theme';
 import {
   Add,
   ArrowDownward,
@@ -217,9 +218,9 @@ const TableFooter = ({onRequestAdd}: {onRequestAdd: () => void}) => (
       sx={{
         '&:hover': {
           transform: 'translateY(-1px)',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          boxShadow: shadows.hover,
         },
-        'transition': 'all 0.2s ease',
+        'transition': transitions.fast,
       }}
     >
       Add Section
@@ -239,7 +240,7 @@ const DropZone = ({index}: {index: number}) => {
         height: isOver ? 16 : 4,
         backgroundColor: isOver ? 'primary.500' : 'transparent',
         borderRadius: 'md',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: transitions.easeOut,
         marginY: isOver ? 1 : 0.5,
         opacity: isOver ? 1 : 0.2,
         position: 'relative',
@@ -255,7 +256,7 @@ const DropZone = ({index}: {index: number}) => {
             fontSize: '0.75rem',
             color: 'white',
             fontWeight: 'bold',
-            textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+            textShadow: shadows.level1,
             pointerEvents: 'none',
           },
           '&::after': {
@@ -302,7 +303,7 @@ const SortableSection = ({
       sx={{
         'position': 'relative',
         'borderRadius': 'md',
-        'transition': 'all 0.2s ease',
+        'transition': transitions.fast,
         'backgroundColor': 'background.surface',
         'border': '1px solid',
         'borderColor': 'neutral.200',
@@ -311,7 +312,7 @@ const SortableSection = ({
         '&:hover': {
           'backgroundColor': 'background.level1',
           'borderColor': 'primary.300',
-          'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.08)',
+          'boxShadow': shadows.focus,
           '& .drag-handle': {
             opacity: 1,
           },
@@ -336,7 +337,7 @@ const SortableSection = ({
           'zIndex': 10,
           'cursor': 'grab',
           'opacity': 0,
-          'transition': 'all 0.2s ease',
+          'transition': transitions.fast,
           'backgroundColor': 'background.surface',
           'borderRadius': 'md',
           'padding': 1,
@@ -347,11 +348,11 @@ const SortableSection = ({
           'justifyContent': 'center',
           'width': 32,
           'height': 32,
-          'boxShadow': '0 2px 4px rgba(0, 0, 0, 0.1)',
+          'boxShadow': shadows.active,
           '&:active': {
             cursor: 'grabbing',
             transform: 'translateY(-50%) scale(1.1)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+            boxShadow: shadows.elevated,
           },
           '&:hover': {
             borderColor: 'primary.500',
@@ -391,7 +392,7 @@ const SectionSplitter = ({
       sx={{
         position: 'relative',
         height: isHovered ? 40 : 8,
-        transition: 'height 0.2s ease',
+        transition: transitions.fast,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -409,7 +410,7 @@ const SectionSplitter = ({
             'position': 'absolute',
             'fontSize': '0.75rem',
             'borderRadius': 'lg',
-            'boxShadow': '0 2px 8px rgba(0, 0, 0, 0.15)',
+            'boxShadow': shadows.soft,
             '&:hover': {
               transform: 'scale(1.05)',
             },
@@ -429,7 +430,7 @@ const SectionSplitter = ({
           backgroundColor: isHovered ? 'primary.300' : 'neutral.200',
           borderRadius: 'sm',
           transform: 'translateY(-50%)',
-          transition: 'background-color 0.2s ease',
+          transition: transitions.fast,
           zIndex: -1,
         }}
       />
