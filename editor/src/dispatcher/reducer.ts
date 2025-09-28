@@ -15,6 +15,7 @@ import {
   RemoveSampleAction,
   RemoveSectionAction,
   RemoveSongAction,
+  RESET_APP_STATE,
   SELECT_SONG,
   SelectSongAction,
   SET_PLAYBACK_STATE,
@@ -36,7 +37,7 @@ import {
   UpdateSectionAction,
   UpdateSongAction,
 } from './action';
-import {AppState} from '../state/AppState';
+import {AppState, emptyAppState} from '../state/AppState';
 import {
   addSection,
   addSong,
@@ -142,6 +143,13 @@ export const reducer = (action: Action, state: AppState): AppState => {
       if (newState.project.selections?.section.equals(songId)) {
         newState.project.selections.section = Long.ZERO;
       }
+      break;
+    }
+
+    case RESET_APP_STATE: {
+      // Reset to initial state using shared function
+      const resetState = emptyAppState();
+      Object.assign(newState, resetState);
       break;
     }
 

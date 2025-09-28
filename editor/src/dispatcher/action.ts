@@ -26,6 +26,7 @@ export const UPDATE_SECTION = 'UPDATE_SECTION';
 export const UPDATE_SONG = 'UPDATE_SONG';
 export const LOAD_PROJECTS = 'LOAD_PROJECTS';
 export const REMOVE_ALL_SECTIONS = 'REMOVE_ALL_SECTIONS';
+export const RESET_APP_STATE = 'RESET_APP_STATE';
 export const SET_PROJECT = 'SET_PROJECT';
 export const SET_PROJECTS = 'SET_PROJECTS';
 export const SET_PROJECT_INFO = 'SET_PROJECT_INFO';
@@ -152,6 +153,10 @@ export const removeAllSectionsAction = (songId: ID) => ({
   songId,
 });
 
+export const resetAppStateAction = () => ({
+  type: RESET_APP_STATE,
+});
+
 export const setProjectAction = (project: Project) => ({
   type: SET_PROJECT,
   project,
@@ -227,6 +232,7 @@ export type LoadProjectsAction = ReturnType<typeof loadProjectsAction>;
 export type RemoveAllSectionsAction = ReturnType<
   typeof removeAllSectionsAction
 >;
+export type ResetAppStateAction = ReturnType<typeof resetAppStateAction>;
 export type SetProjectAction = ReturnType<typeof setProjectAction>;
 export type SetProjectsAction = ReturnType<typeof setProjectsAction>;
 export type SetProjectInfoAction = ReturnType<typeof setProjectInfoAction>;
@@ -259,6 +265,7 @@ export type Action =
   | UpdateSongAction
   | LoadProjectsAction
   | RemoveAllSectionsAction
+  | ResetAppStateAction
   | SetProjectAction
   | SetProjectsAction
   | SetProjectInfoAction

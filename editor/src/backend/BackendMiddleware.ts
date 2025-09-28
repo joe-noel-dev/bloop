@@ -15,6 +15,7 @@ import {
   RemoveProjectAction,
   RENAME_PROJECT,
   RenameProjectAction,
+  resetAppStateAction,
   SAVE_PROJECT,
   setProjectAction,
   setProjectInfoAction,
@@ -23,6 +24,7 @@ import {
   SIGN_IN,
   SignInAction,
   SIGN_OUT,
+  SignOutAction,
 } from '../dispatcher/action';
 import {Backend} from './Backend';
 import Long from 'long';
@@ -45,6 +47,8 @@ export const backendMiddleware =
       case SIGN_OUT: {
         await backend.signOut();
         console.debug('Signed out user');
+        // Reset the app state to clear all user data
+        api.dispatch(resetAppStateAction());
         break;
       }
 

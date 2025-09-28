@@ -1,5 +1,5 @@
 import {useEffect, useState, useRef} from 'react';
-import {AppState, AppStateContext} from './state/AppState';
+import {AppState, AppStateContext, emptyAppState} from './state/AppState';
 import CssBaseline from '@mui/joy/CssBaseline';
 import {CssVarsProvider} from '@mui/joy/styles';
 import {Box} from '@mui/joy';
@@ -11,7 +11,6 @@ import {Backend, BackendContext, createBackend} from './backend/Backend';
 import {DispatcherContext} from './dispatcher/dispatcher';
 import {Action} from './dispatcher/action';
 import {reducer} from './dispatcher/reducer';
-import {emptyProject} from './api/project-helpers';
 import {applyMiddleware, DispatchFunction} from './dispatcher/middleware';
 import {loggingMiddleware} from './dispatcher/loggingMiddleware';
 import {AudioControllerContext} from './audio/AudioControllerContext';
@@ -21,13 +20,7 @@ import {backendMiddleware} from './backend/BackendMiddleware';
 
 const App = () => {
   const [backend] = useState<Backend>(createBackend());
-  const [state, setState] = useState<AppState>({
-    project: emptyProject(),
-    projects: [],
-    playing: false,
-    saveState: 'idle',
-    sampleStates: new Map(),
-  });
+  const [state, setState] = useState<AppState>(emptyAppState());
   const stateRef = useRef<AppState>(state);
   const [audioController] = useState<AudioController>(
     createAudioController(backend)
