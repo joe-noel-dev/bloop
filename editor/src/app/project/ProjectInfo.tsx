@@ -94,8 +94,24 @@ export const ProjectInfo = () => {
         <Modal
           open={projectsModalOpen}
           onClose={() => setProjectsModalOpen(false)}
+          sx={{
+            '& > div': {
+              backgroundColor: 'rgba(0, 0, 0, 0.6) !important',
+            },
+            '&::before': {
+              backgroundColor: 'rgba(0, 0, 0, 0.6) !important',
+            },
+            'backgroundColor': 'rgba(0, 0, 0, 0.6) !important',
+          }}
         >
-          <ModalDialog>
+          <ModalDialog
+            sx={{
+              backgroundColor: 'background.surface',
+              color: 'text.primary',
+              border: '1px solid',
+              borderColor: 'neutral.200',
+            }}
+          >
             <ModalClose />
             <ProjectsModal onRequestClose={() => setProjectsModalOpen(false)} />
           </ModalDialog>
@@ -127,13 +143,22 @@ const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
   };
 
   return (
-    <Stack spacing={1}>
-      <Typography level="title-lg">Projects</Typography>
+    <Stack spacing={1} sx={{color: 'text.primary'}}>
+      <Typography level="title-lg" sx={{color: 'text.primary'}}>
+        Projects
+      </Typography>
 
-      <List sx={{overflow: 'scroll'}}>
+      <List
+        sx={{
+          overflow: 'scroll',
+          backgroundColor: 'background.level1',
+          borderRadius: 'sm',
+        }}
+      >
         {projects.map((projectInfo) => (
           <ListItem
             key={projectInfo.id.toString()}
+            sx={{backgroundColor: 'transparent'}}
             endAction={
               <IconButton
                 aria-label="Delete"
@@ -148,8 +173,17 @@ const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
             <ListItemButton
               variant="soft"
               onClick={() => loadProject(projectInfo.id)}
+              sx={{
+                'backgroundColor': 'background.level2',
+                'color': 'text.primary',
+                '&:hover': {
+                  backgroundColor: 'background.level3',
+                },
+              }}
             >
-              <ListItemContent>{projectInfo.name}</ListItemContent>
+              <ListItemContent sx={{color: 'inherit'}}>
+                {projectInfo.name}
+              </ListItemContent>
             </ListItemButton>
           </ListItem>
         ))}

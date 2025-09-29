@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  background: var(--neutral-1);
+  background: var(--background);
 }
 
 :root {
@@ -94,26 +94,6 @@ body {
   --shadow-elevated: 0 4px 12px rgba(255, 255, 255, 0.12);
   --shadow-soft: 0 2px 8px rgba(255, 255, 255, 0.08);
 }
-  --shadow-level-3: 0px 15px 30px rgba(0, 0, 0, 0.3), 0px 12px 12px rgba(0, 0, 0, 0.24);
-  --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --shadow-focus: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-active: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.2);
-  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.15);
-
-  /* Border radius tokens */
-  --border-radius: 2px;
-  --border-radius-sm: 2px;
-  --border-radius-md: 4px;
-  --border-radius-lg: 8px;
-
-  /* Transition tokens */
-  --transition-fast: all 0.2s ease;
-  --transition-normal: all 0.3s ease;
-  --transition-slow: all 0.5s ease;
-  --transition-ease-out: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-}
 
 html {
   box-sizing: border-box;
@@ -148,4 +128,16 @@ p {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Fix modal backdrop color */
+.MuiModal-backdrop,
+[role="presentation"] {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* MUI Joy Modal backdrop override */
+.MuiModal-root .MuiModal-backdrop,
+.MuiModal-root > div:first-child {
+  background-color: rgba(0, 0, 0, 0.6) !important;
 }

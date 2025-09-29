@@ -154,8 +154,10 @@ export const ClickToEdit = ({
           color={error ? 'danger' : 'neutral'}
           sx={{
             ...commonStyles,
+            'color': 'text.primary',
             '& input': {
               padding: '6px 8px',
+              color: 'inherit',
             },
           }}
           endDecorator={endDecorator}

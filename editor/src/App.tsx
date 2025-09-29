@@ -65,7 +65,7 @@ const App = () => {
     if (state.theme.mode !== 'system' || !window.matchMedia) return;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
+
     const handleChange = () => {
       // Re-trigger theme mode action to recalculate effective mode
       dispatch(setThemeModeAction('system'));
@@ -86,6 +86,7 @@ const App = () => {
                   display: 'flex',
                   flexDirection: 'column',
                   minHeight: '100vh',
+                  backgroundColor: 'background.body',
                 }}
               >
                 {!user && <LoginScreen />}

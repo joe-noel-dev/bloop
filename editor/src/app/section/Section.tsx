@@ -107,7 +107,7 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
     state.playingSectionId?.equals(sectionId);
 
   return (
-    <Grid container spacing={1}>
+    <Grid container spacing={1} sx={{color: 'inherit'}}>
       {columns.map((name) => {
         switch (name) {
           case 'Transport': {
@@ -244,7 +244,6 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
     </Grid>
   );
 };
-
 const EditButton = ({
   onClick,
   disabled,
