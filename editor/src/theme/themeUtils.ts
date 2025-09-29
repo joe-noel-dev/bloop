@@ -1,6 +1,5 @@
-import { colors, textColors } from './tokens';
-
-export type ThemeMode = 'light' | 'dark';
+import {ThemeMode} from '../state/ThemeState';
+import {colors, textColors} from './tokens';
 
 export const getThemeColors = (mode: ThemeMode) => {
   if (mode === 'dark') {
@@ -25,7 +24,7 @@ export const getThemeTextColors = (mode: ThemeMode) => {
 
 export const getThemeColor = (token: string, mode: ThemeMode = 'light') => {
   const themeColors = getThemeColors(mode);
-  
+
   // Handle nested color tokens like 'primary.main', 'neutral.3'
   const parts = token.split('.');
   if (parts.length === 2) {
