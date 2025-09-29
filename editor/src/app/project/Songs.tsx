@@ -52,10 +52,36 @@ export const Songs = () => {
         orientation="vertical"
         value={selectedSongId.toString()}
         onChange={onTabSelected}
+        sx={{
+          backgroundColor: 'background.surface',
+          color: 'text.primary',
+          borderRadius: 'md',
+          padding: 1,
+        }}
       >
-        <TabList>
+        <TabList
+          sx={{
+            backgroundColor: 'background.level1',
+            color: 'text.primary',
+            borderRadius: 'sm',
+          }}
+        >
           {songs.map((song) => (
-            <Tab key={song.id.toString()} value={song.id.toString()}>
+            <Tab
+              key={song.id.toString()}
+              value={song.id.toString()}
+              sx={{
+                'color': 'text.secondary',
+                '&.Mui-selected': {
+                  color: 'text.primary',
+                  backgroundColor: 'background.surface',
+                  fontWeight: 'bold',
+                },
+                '&:hover': {
+                  color: 'text.primary',
+                },
+              }}
+            >
               {song.name}
             </Tab>
           ))}

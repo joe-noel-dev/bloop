@@ -1,15 +1,14 @@
 import {useEffect, useState, useRef} from 'react';
 import {AppState, AppStateContext, emptyAppState} from './state/AppState';
-import CssBaseline from '@mui/joy/CssBaseline';
-import {CssVarsProvider} from '@mui/joy/styles';
 import {Box} from '@mui/joy';
 import '@fontsource/inter';
 import {Project} from './app/project/Project';
 import {LoginScreen} from './app/login/LoginScreen';
 import {Header} from './components/Header';
+import {ThemeWrapper} from './components/ThemeWrapper';
 import {Backend, BackendContext, createBackend} from './backend/Backend';
 import {DispatcherContext} from './dispatcher/dispatcher';
-import {Action} from './dispatcher/action';
+import {Action, setThemeModeAction} from './dispatcher/action';
 import {reducer} from './dispatcher/reducer';
 import {applyMiddleware, DispatchFunction} from './dispatcher/middleware';
 import {loggingMiddleware} from './dispatcher/loggingMiddleware';
@@ -61,18 +60,33 @@ const App = () => {
 
   middlewareDispatch = dispatch;
 
+  // Listen for system theme changes when in system mode
+  useEffect(() => {
+    if (state.theme.mode !== 'system' || !window.matchMedia) return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const handleChange = () => {
+      // Re-trigger theme mode action to recalculate effective mode
+      dispatch(setThemeModeAction('system'));
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [state.theme.mode, dispatch]);
+
   return (
-    <CssVarsProvider>
-      <CssBaseline />
-      <AudioControllerContext.Provider value={audioController}>
-        <DispatcherContext.Provider value={dispatch}>
-          <BackendContext.Provider value={backend}>
-            <AppStateContext.Provider value={state}>
+    <AudioControllerContext.Provider value={audioController}>
+      <DispatcherContext.Provider value={dispatch}>
+        <BackendContext.Provider value={backend}>
+          <AppStateContext.Provider value={state}>
+            <ThemeWrapper>
               <Box
                 sx={{
                   display: 'flex',
                   flexDirection: 'column',
                   minHeight: '100vh',
+                  backgroundColor: 'background.body',
                 }}
               >
                 {!user && <LoginScreen />}
@@ -85,11 +99,11 @@ const App = () => {
                   </>
                 )}
               </Box>
-            </AppStateContext.Provider>
-          </BackendContext.Provider>
-        </DispatcherContext.Provider>
-      </AudioControllerContext.Provider>
-    </CssVarsProvider>
+            </ThemeWrapper>
+          </AppStateContext.Provider>
+        </BackendContext.Provider>
+      </DispatcherContext.Provider>
+    </AudioControllerContext.Provider>
   );
 };
 

@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  background: var(--neutral-1);
+  background: var(--background);
 }
 
 :root {
@@ -14,17 +14,17 @@ body {
   --unit-space-x7: calc(7 * var(--unit-space));
   --unit-space-x8: calc(8 * var(--unit-space));
 
-  /* Primary color palette */
+  /* Primary color palette - matches tokens.ts */
   --primary: #ffab91;
   --primary-light: #ffddc1;
   --primary-dark: #c97b63;
 
-  /* Secondary color palette */
+  /* Secondary color palette - matches tokens.ts */
   --secondary: #1a237e;
   --secondary-light: #534bae;
   --secondary-dark: #000051;
 
-  /* Neutral color palette */
+  /* Neutral color palette - light mode (default) - matches tokens.ts */
   --neutral-0: white;
   --neutral-1: hsl(240, 5%, 88.5%);
   --neutral-2: hsl(240, 5%, 75%);
@@ -35,17 +35,17 @@ body {
   --neutral-7: hsl(240, 5%, 12.5%);
   --neutral-8: black;
 
-  /* Extended palette colors */
+  /* Extended palette colors - matches tokens.ts */
   --palette-1: #bcd8c1;
   --palette-2: #7f636e;
   --palette-3: #388697;
   --palette-4: #cc2936;
   --palette-5: #a93f55;
 
-  /* Background colors */
+  /* Background colors - matches tokens.ts */
   --background: white;
 
-  /* Text colors for different backgrounds */
+  /* Text colors for different backgrounds - matches tokens.ts */
   --text-on-background: black;
   --text-on-primary: black;
   --text-on-primary-light: black;
@@ -54,7 +54,7 @@ body {
   --text-on-secondary-light: white;
   --text-on-secondary-dark: white;
 
-  /* Shadow tokens - consistent with theme/tokens.ts */
+  /* Shadow tokens - matches tokens.ts */
   --shadow-level-1: 0px 1px 3px rgba(0, 0, 0, 0.12), 0px 1px 2px rgba(0, 0, 0, 0.24);
   --shadow-level-2: 0px 5px 10px rgba(0, 0, 0, 0.2), 0px 6px 6px rgba(0, 0, 0, 0.24);
   --shadow-level-3: 0px 15px 30px rgba(0, 0, 0, 0.3), 0px 12px 12px rgba(0, 0, 0, 0.24);
@@ -63,19 +63,36 @@ body {
   --shadow-active: 0 2px 4px rgba(0, 0, 0, 0.1);
   --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.2);
   --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.15);
-
-  /* Border radius tokens */
-  --border-radius: 2px;
-  --border-radius-sm: 2px;
-  --border-radius-md: 4px;
-  --border-radius-lg: 8px;
-
-  /* Transition tokens */
-  --transition-fast: all 0.2s ease;
-  --transition-normal: all 0.3s ease;
-  --transition-slow: all 0.5s ease;
-  --transition-ease-out: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Dark mode theme - matches tokens.ts */
+[data-theme="dark"] {
+  /* Neutral color palette - dark mode (inverted) - matches tokens.ts */
+  --neutral-0: black;
+  --neutral-1: hsl(240, 5%, 12.5%);
+  --neutral-2: hsl(240, 5%, 25%);
+  --neutral-3: hsl(240, 5%, 37.5%);
+  --neutral-4: hsl(240, 5%, 50%);
+  --neutral-5: hsl(240, 5%, 67.5%);
+  --neutral-6: hsl(240, 5%, 75%);
+  --neutral-7: hsl(240, 5%, 88.5%);
+  --neutral-8: white;
+
+  /* Background colors - matches tokens.ts */
+  --background: hsl(240, 5%, 12.5%);
+
+  /* Text colors for different backgrounds - matches tokens.ts */
+  --text-on-background: white;
+
+  /* Dark mode shadows with lighter colors for visibility */
+  --shadow-level-1: 0px 1px 3px rgba(255, 255, 255, 0.08), 0px 1px 2px rgba(255, 255, 255, 0.16);
+  --shadow-level-2: 0px 5px 10px rgba(255, 255, 255, 0.12), 0px 6px 6px rgba(255, 255, 255, 0.16);
+  --shadow-level-3: 0px 15px 30px rgba(255, 255, 255, 0.18), 0px 12px 12px rgba(255, 255, 255, 0.16);
+  --shadow-hover: 0 4px 12px rgba(255, 255, 255, 0.08);
+  --shadow-focus: 0 2px 8px rgba(255, 255, 255, 0.06);
+  --shadow-active: 0 2px 4px rgba(255, 255, 255, 0.06);
+  --shadow-elevated: 0 4px 12px rgba(255, 255, 255, 0.12);
+  --shadow-soft: 0 2px 8px rgba(255, 255, 255, 0.08);
 }
 
 html {
@@ -111,4 +128,16 @@ p {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Fix modal backdrop color */
+.MuiModal-backdrop,
+[role="presentation"] {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* MUI Joy Modal backdrop override */
+.MuiModal-root .MuiModal-backdrop,
+.MuiModal-root > div:first-child {
+  background-color: rgba(0, 0, 0, 0.6) !important;
 }

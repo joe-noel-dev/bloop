@@ -3,6 +3,7 @@ import {Project} from '../api/bloop';
 import {DbProject} from '../backend/Backend';
 import {emptyProject} from '../api/project-helpers';
 import {SampleInCache} from '../audio/SampleManager';
+import {ThemeState, createThemeState} from './ThemeState';
 
 export type SaveState = 'idle' | 'saving' | 'saved';
 
@@ -15,6 +16,7 @@ export interface AppState {
   playingSectionId?: Long;
   saveState: SaveState;
   sampleStates: Map<Long, SampleInCache>;
+  theme: ThemeState;
 }
 
 export const emptyAppState = (): AppState => ({
@@ -23,6 +25,7 @@ export const emptyAppState = (): AppState => ({
   playing: false,
   saveState: 'idle',
   sampleStates: new Map(),
+  theme: createThemeState(),
 });
 
 export const AppStateContext = createContext<AppState>(emptyAppState());

@@ -24,6 +24,7 @@ import {
   splitSectionAction,
 } from '../../dispatcher/action';
 import {useDispatcher} from '../../dispatcher/dispatcher';
+import {useAppState} from '../../state/AppState';
 import {
   DndContext,
   closestCenter,
@@ -108,51 +109,53 @@ const SongDetails = ({
   onMoveDown,
   onRemove,
 }: SongDetailsProps) => (
-  <Stack direction="column" spacing={2}>
-    <ClickToEdit initialValue={song.name} onSave={onEditName} size="large" />
-    <Stack direction={'row'} spacing={1} alignItems={'center'}>
-      <ClickToEdit
-        initialValue={`${song.tempo?.bpm ?? 120.0}`}
-        onSave={(value) => onEditTempo(parseFloat(value))}
-        size="medium"
-        endDecorator={
-          <Typography level="body-md" color="neutral">
-            bpm
-          </Typography>
-        }
-      />
+  <Box sx={{color: 'text.primary'}}>
+    <Stack direction="column" spacing={2}>
+      <ClickToEdit initialValue={song.name} onSave={onEditName} size="large" />
+      <Stack direction={'row'} spacing={1} alignItems={'center'}>
+        <ClickToEdit
+          initialValue={`${song.tempo?.bpm ?? 120.0}`}
+          onSave={(value) => onEditTempo(parseFloat(value))}
+          size="medium"
+          endDecorator={
+            <Typography level="body-md" sx={{color: 'text.secondary'}}>
+              bpm
+            </Typography>
+          }
+        />
+      </Stack>
+
+      <Stack direction="row" spacing={1}>
+        <Button
+          color="primary"
+          size="sm"
+          variant="soft"
+          aria-label="Move song up"
+          onClick={onMoveUp}
+          startDecorator={<ArrowUpward />}
+        >
+          Move Up
+        </Button>
+
+        <Button
+          color="primary"
+          size="sm"
+          variant="soft"
+          aria-label="Move song down"
+          onClick={onMoveDown}
+          startDecorator={<ArrowDownward />}
+        >
+          Move Down
+        </Button>
+
+        <AbletonUpload songId={song.id} />
+
+        <RemoveButton onClick={onRemove} />
+
+        <Sample sampleId={song.sample?.id ?? INVALID_ID} songId={song.id} />
+      </Stack>
     </Stack>
-
-    <Stack direction="row" spacing={1}>
-      <Button
-        color="primary"
-        size="sm"
-        variant="soft"
-        aria-label="Move song up"
-        onClick={onMoveUp}
-        startDecorator={<ArrowUpward />}
-      >
-        Move Up
-      </Button>
-
-      <Button
-        color="primary"
-        size="sm"
-        variant="soft"
-        aria-label="Move song down"
-        onClick={onMoveDown}
-        startDecorator={<ArrowDownward />}
-      >
-        Move Down
-      </Button>
-
-      <AbletonUpload songId={song.id} />
-
-      <RemoveButton onClick={onRemove} />
-
-      <Sample sampleId={song.sample?.id ?? INVALID_ID} songId={song.id} />
-    </Stack>
-  </Stack>
+  </Box>
 );
 
 const RemoveButton = ({onClick}: {onClick: () => void}) => (
@@ -286,8 +289,14 @@ const SortableSection = ({
   songId: ID;
   requestUpdateDuration: (sectionId: ID, duration: number) => void;
 }) => {
+  const state = useAppState();
   const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
     useSortable({id: sectionId.toString()});
+
+  const isPlaying =
+    state.playing &&
+    state.playingSongId?.equals(songId) &&
+    state.playingSectionId?.equals(sectionId);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -304,13 +313,14 @@ const SortableSection = ({
         'position': 'relative',
         'borderRadius': 'md',
         'transition': transitions.fast,
-        'backgroundColor': 'background.surface',
+        'backgroundColor': isPlaying ? 'primary.50' : 'background.surface',
+        'color': isPlaying ? 'primary.800' : 'text.primary',
         'border': '1px solid',
-        'borderColor': 'neutral.200',
+        'borderColor': isPlaying ? 'primary.200' : 'neutral.200',
         'padding': 1.5,
         'marginY': 0.5,
         '&:hover': {
-          'backgroundColor': 'background.level1',
+          'backgroundColor': isPlaying ? 'primary.100' : 'background.level1',
           'borderColor': 'primary.300',
           'boxShadow': shadows.focus,
           '& .drag-handle': {

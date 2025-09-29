@@ -3,6 +3,7 @@ import {ID} from '../api/helpers';
 import {DbProject} from '../backend/Backend';
 import {SaveState} from '../state/AppState';
 import {SampleState} from '../audio/SampleManager';
+import {ThemeMode} from '../state/ThemeState';
 
 // 1:
 export const ADD_SAMPLE = 'ADD_SAMPLE';
@@ -35,6 +36,7 @@ export const STOP = 'STOP';
 export const SET_PLAYBACK_STATE = 'SET_PLAYBACK_STATE';
 export const SET_SAVE_STATE = 'SET_SAVE_STATE';
 export const SET_SAMPLE_STATE = 'SET_SAMPLE_STATE';
+export const SET_THEME_MODE = 'SET_THEME_MODE';
 
 // 2:
 
@@ -208,6 +210,11 @@ export const setSampleStateAction = (
   sampleState,
 });
 
+export const setThemeModeAction = (mode: ThemeMode) => ({
+  type: SET_THEME_MODE,
+  mode,
+});
+
 // 3:
 export type AddSampleAction = ReturnType<typeof addSampleAction>;
 export type AddSectionAction = ReturnType<typeof addSectionAction>;
@@ -241,6 +248,7 @@ export type StopAction = ReturnType<typeof stopAction>;
 export type SetPlaybackStateAction = ReturnType<typeof setPlaybackStateAction>;
 export type SetSaveStateAction = ReturnType<typeof setSaveStateAction>;
 export type SetSampleStateAction = ReturnType<typeof setSampleStateAction>;
+export type SetThemeModeAction = ReturnType<typeof setThemeModeAction>;
 
 // 4:
 export type Action =
@@ -273,4 +281,5 @@ export type Action =
   | StopAction
   | SetPlaybackStateAction
   | SetSaveStateAction
-  | SetSampleStateAction;
+  | SetSampleStateAction
+  | SetThemeModeAction;
