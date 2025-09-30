@@ -90,22 +90,13 @@ export const Sample = ({sampleId, songId}: Props) => {
   );
 
   const ConvertingButton = () => (
-    <Button
-      loading={true}
-      color="primary"
-      startDecorator={<Sync />}
-      disabled
-    >
+    <Button loading={true} color="primary" startDecorator={<Sync />} disabled>
       Converting...
     </Button>
   );
 
   const ErrorButton = () => (
-    <Button
-      color="danger"
-      variant="soft"
-      disabled
-    >
+    <Button color="danger" variant="soft" disabled>
       Error Loading Sample
     </Button>
   );
@@ -114,19 +105,19 @@ export const Sample = ({sampleId, songId}: Props) => {
     if (sample && sampleState === 'loaded') {
       return <RemoveButton />;
     }
-    
+
     if (sampleState === 'loading') {
       return <LoadingButton />;
     }
-    
+
     if (sampleState === 'converting') {
       return <ConvertingButton />;
     }
-    
+
     if (sampleState === 'error') {
       return <ErrorButton />;
     }
-    
+
     return <UploadButton />;
   };
 

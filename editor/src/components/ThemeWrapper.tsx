@@ -87,6 +87,52 @@ const theme = extendTheme({
       },
     },
   },
+  components: {
+    JoyButton: {
+      styleOverrides: {
+        root: ({theme, ownerState}) => ({
+          // Ensure better text contrast for soft variant buttons
+          ...(ownerState.variant === 'soft' && {
+            color: theme.vars.palette.text.primary,
+          }),
+        }),
+      },
+    },
+    JoyIconButton: {
+      styleOverrides: {
+        root: ({theme, ownerState}) => ({
+          // Ensure better color contrast for soft variant icon buttons
+          ...(ownerState.variant === 'soft' && {
+            color: theme.vars.palette.text.primary,
+          }),
+        }),
+      },
+    },
+    JoyInput: {
+      styleOverrides: {
+        root: ({theme}) => ({
+          // Ensure better text contrast and background for input fields
+          '--Input-placeholderColor': theme.vars.palette.text.tertiary,
+          color: theme.vars.palette.text.primary,
+        }),
+        input: ({theme}) => ({
+          color: theme.vars.palette.text.primary,
+          '&::placeholder': {
+            color: theme.vars.palette.text.tertiary,
+            opacity: 1,
+          },
+        }),
+      },
+    },
+    JoyFormLabel: {
+      styleOverrides: {
+        root: ({theme}) => ({
+          // Ensure form labels have good contrast
+          color: theme.vars.palette.text.primary,
+        }),
+      },
+    },
+  },
 });
 
 interface ThemeWrapperProps {
