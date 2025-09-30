@@ -5,6 +5,12 @@ import {ID} from '../api/helpers';
 import Long from 'long';
 import {DispatchFunction} from '../dispatcher/middleware';
 
+interface PlaybackState {
+  playing: boolean;
+  songId: ID | null;
+  sectionId: ID | null;
+}
+
 export type PlaybackStateChangeCallback = (
   playing: boolean,
   songId?: ID,
@@ -15,12 +21,22 @@ export const createAudioController = (backend: Backend) => {
   const audioContext = new AudioContext();
   const samples: Samples = new Map();
   let dispatch: DispatchFunction | null = null;
-  
-  const sampleManager = createSampleManager(audioContext, samples, backend, (action) => {
-    if (dispatch) {
-      dispatch(action);
+  let playbackState: PlaybackState = {
+    playing: false,
+    songId: null,
+    sectionId: null,
+  };
+
+  const sampleManager = createSampleManager(
+    audioContext,
+    samples,
+    backend,
+    (action) => {
+      if (dispatch) {
+        dispatch(action);
+      }
     }
-  });
+  );
   let project: Project | null = null;
   let projectInfo: DbProject | null = null;
   let playbackStateChangeCallback: PlaybackStateChangeCallback | null = null;
@@ -35,6 +51,17 @@ export const createAudioController = (backend: Backend) => {
   const setProjectInfo = (newProjectInfo: DbProject) => {
     projectInfo = newProjectInfo;
     sampleManager.setProjectInfo(projectInfo);
+  };
+
+  const setPlaybackState = (newState: PlaybackState) => {
+    playbackState = newState;
+    if (playbackStateChangeCallback) {
+      playbackStateChangeCallback(
+        playbackState.playing,
+        playbackState.songId ?? undefined,
+        playbackState.sectionId ?? undefined
+      );
+    }
   };
 
   const play = (songId: Long, sectionId: Long, loop: boolean) => {
@@ -118,15 +145,15 @@ export const createAudioController = (backend: Backend) => {
 
     bufferNode.start(0, start, !loop && end ? end - start : undefined);
 
-    // Notify playback state: true, songId, sectionId
-    if (playbackStateChangeCallback) {
-      playbackStateChangeCallback(true, songId, sectionId);
-    }
+    setPlaybackState({playing: true, songId, sectionId});
 
     bufferNode.onended = () => {
-      // Notify playback state: false
-      if (playbackStateChangeCallback) {
-        playbackStateChangeCallback(false);
+      if (
+        playbackState.playing &&
+        playbackState.songId === songId &&
+        playbackState.sectionId === sectionId
+      ) {
+        setPlaybackState({playing: false, songId: null, sectionId: null});
       }
     };
   };
@@ -137,10 +164,8 @@ export const createAudioController = (backend: Backend) => {
       bufferNode.disconnect();
       bufferNode = null;
     }
-    // Notify playback state: false
-    if (playbackStateChangeCallback) {
-      playbackStateChangeCallback(false);
-    }
+
+    setPlaybackState({playing: false, songId: null, sectionId: null});
   };
 
   const setPlaybackStateChangeCallback = (

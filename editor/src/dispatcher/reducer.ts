@@ -158,6 +158,7 @@ export const reducer = (action: Action, state: AppState): AppState => {
     case SET_PROJECT: {
       const {project} = action as SetProjectAction;
       newState.project = project;
+      console.debug('Project set:', project);
       break;
     }
 
@@ -202,26 +203,26 @@ export const reducer = (action: Action, state: AppState): AppState => {
 
     case SET_THEME_MODE: {
       const {mode} = action as SetThemeModeAction;
-      
+
       // Save to localStorage
       try {
         localStorage.setItem('theme-mode', mode);
       } catch (e) {
         // Fallback for environments without localStorage
       }
-      
+
       // Determine effective mode with safe system preference check
       let systemPrefersDark = false;
       try {
-        systemPrefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches || false;
+        systemPrefersDark =
+          window.matchMedia?.('(prefers-color-scheme: dark)').matches || false;
       } catch (e) {
         // Fallback for environments without matchMedia
         systemPrefersDark = false;
       }
-      
-      const effectiveMode = mode === 'system' 
-        ? (systemPrefersDark ? 'dark' : 'light')
-        : mode;
+
+      const effectiveMode =
+        mode === 'system' ? (systemPrefersDark ? 'dark' : 'light') : mode;
 
       newState.theme = {
         mode,

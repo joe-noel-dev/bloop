@@ -13,7 +13,7 @@ export const useSectionsById = (sectionIds: ID[]) => {
 
 export const useSectionById = (sectionId: ID) => {
   const sections = useSections();
-  return sections?.find((section) => section.id === sectionId);
+  return sections?.find((section) => section.id.equals(sectionId));
 };
 
 export const useSelectedSectionId = () => {

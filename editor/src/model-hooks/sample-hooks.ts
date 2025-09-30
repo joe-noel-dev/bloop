@@ -10,7 +10,7 @@ export const useSampleWithId = (sampleId: ID) => {
       return found;
     }
 
-    if (song.sample?.id === sampleId) {
+    if (song.sample?.id.equals(sampleId)) {
       return song.sample;
     }
 

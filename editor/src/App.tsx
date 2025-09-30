@@ -5,6 +5,7 @@ import '@fontsource/inter';
 import {Project} from './app/project/Project';
 import {LoginScreen} from './app/login/LoginScreen';
 import {Header} from './components/Header';
+import {TransportBar} from './components/TransportBar';
 import {ThemeWrapper} from './components/ThemeWrapper';
 import {Backend, BackendContext, createBackend} from './backend/Backend';
 import {DispatcherContext} from './dispatcher/dispatcher';
@@ -93,9 +94,10 @@ const App = () => {
                 {user && (
                   <>
                     <Header />
-                    <Box sx={{flexGrow: 1}}>
+                    <Box sx={{flexGrow: 1, paddingBottom: 7}}>
                       <Project />
                     </Box>
+                    <TransportBar />
                   </>
                 )}
               </Box>
