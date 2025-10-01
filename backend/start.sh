@@ -27,7 +27,7 @@ if [ ! -d "pb_data" ] || [ -z "$(ls -A pb_data 2>/dev/null)" ]; then
     
     cp -r pb_data_backup pb_data
     
-    echo -e "${GREEN}✅ Backup restore successfully!${NC}"
+    echo -e "${GREEN}✅ Backup restored successfully!${NC}"
 else
     echo -e "${GREEN}✅ Existing pb_data found. Skipping backup restore.${NC}"
 fi
