@@ -23,7 +23,9 @@ export interface DbProject {
 export const BackendContext = createContext<Backend | null>(null);
 
 export const createBackend = () => {
-  const pocketbase = new PocketBase('https://joe-noel-dev-bloop.fly.dev');
+  const baseURL =
+    import.meta.env.VITE_BACKEND_URL || 'https://joe-noel-dev-bloop.fly.dev';
+  const pocketbase = new PocketBase(baseURL);
 
   pocketbase.authStore.onChange(() => {
     console.log('Auth store changed:', pocketbase.authStore.record);
