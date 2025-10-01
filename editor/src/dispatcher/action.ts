@@ -38,6 +38,8 @@ export const SET_PLAYBACK_STATE = 'SET_PLAYBACK_STATE';
 export const SET_SAVE_STATE = 'SET_SAVE_STATE';
 export const SET_SAMPLE_STATE = 'SET_SAMPLE_STATE';
 export const SET_THEME_MODE = 'SET_THEME_MODE';
+export const SHOW_ERROR_NOTIFICATION = 'SHOW_ERROR_NOTIFICATION';
+export const HIDE_ERROR_NOTIFICATION = 'HIDE_ERROR_NOTIFICATION';
 
 // 2:
 
@@ -211,6 +213,15 @@ export const setThemeModeAction = (mode: ThemeMode) => ({
   mode,
 });
 
+export const showErrorNotificationAction = (message: string) => ({
+  type: SHOW_ERROR_NOTIFICATION,
+  message,
+});
+
+export const hideErrorNotificationAction = () => ({
+  type: HIDE_ERROR_NOTIFICATION,
+});
+
 // 3:
 export type AddSampleAction = ReturnType<typeof addSampleAction>;
 export type AddSectionAction = ReturnType<typeof addSectionAction>;
@@ -245,6 +256,8 @@ export type SetPlaybackStateAction = ReturnType<typeof setPlaybackStateAction>;
 export type SetSaveStateAction = ReturnType<typeof setSaveStateAction>;
 export type SetSampleStateAction = ReturnType<typeof setSampleStateAction>;
 export type SetThemeModeAction = ReturnType<typeof setThemeModeAction>;
+export type ShowErrorNotificationAction = ReturnType<typeof showErrorNotificationAction>;
+export type HideErrorNotificationAction = ReturnType<typeof hideErrorNotificationAction>;
 
 // 4:
 export type Action =
@@ -278,4 +291,6 @@ export type Action =
   | SetPlaybackStateAction
   | SetSaveStateAction
   | SetSampleStateAction
-  | SetThemeModeAction;
+  | SetThemeModeAction
+  | ShowErrorNotificationAction
+  | HideErrorNotificationAction;
