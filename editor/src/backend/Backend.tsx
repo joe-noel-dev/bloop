@@ -24,7 +24,7 @@ export const BackendContext = createContext<Backend | null>(null);
 
 export const createBackend = () => {
   const baseURL =
-    import.meta.env.VITE_BACKEND_URL || 'http://joe-noel-dev-bloop.fly.dev';
+    import.meta.env.VITE_BACKEND_URL || 'https://joe-noel-dev-bloop.fly.dev';
   const pocketbase = new PocketBase(baseURL);
 
   pocketbase.authStore.onChange(() => {
