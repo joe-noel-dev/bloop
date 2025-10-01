@@ -34,10 +34,10 @@ fi
 
 echo -e "${YELLOW}Starting new container...${NC}"
 docker run -d \
---name $CONTAINER_NAME \
--p $PORT:8080 \
--v $(pwd)/pb_data:/pb/pb_data \
-$IMAGE_NAME
+--name "$CONTAINER_NAME" \
+-p "$PORT":8080 \
+-v "$(pwd)/pb_data:/pb/pb_data" \
+"$IMAGE_NAME"
 
 echo -e "${GREEN}✅ Backend started successfully!${NC}"
 echo -e "${GREEN}🌐 PocketBase admin UI: http://localhost:$PORT/_/admin${NC}"
