@@ -178,10 +178,15 @@ export const createAudioController = (backend: Backend) => {
       const section = song.sections.at(sectionIndex);
       const nextSection = song.sections.at(sectionIndex + 1);
 
+      if (!section) {
+        console.error(`Section at index ${sectionIndex} not found. Stopping playback loop.`);
+        break;
+      }
+
       const duration = scheduleSection(
         sampleInCache.buffer,
         song,
-        section!,
+        section,
         nextSection,
         startTime
       );
