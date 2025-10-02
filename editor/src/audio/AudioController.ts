@@ -214,7 +214,7 @@ export const createAudioController = (backend: Backend) => {
       } else {
         setPlaybackState({playing: false, songId: null, sectionId: null});
       }
-    }, 50);
+    }, 15);
   };
 
   const stop = () => {
