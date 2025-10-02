@@ -28,7 +28,7 @@ export const TransportBar = () => {
     } else {
       // Need both song and section to play
       if (selectedSong && selectedSection) {
-        dispatch(playAction(selectedSong.id, selectedSection.id, false));
+        dispatch(playAction(selectedSong.id, selectedSection.id));
       }
     }
   };
