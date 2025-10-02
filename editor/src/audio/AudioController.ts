@@ -196,6 +196,8 @@ export const createAudioController = (backend: Backend) => {
       }
     }
 
+    const notificationIntervalMs = 15;
+
     callbackId = window.setInterval(() => {
       const currentTime = audioContext.currentTime;
       const current = playbackSchedule.find((point) => {
@@ -219,7 +221,7 @@ export const createAudioController = (backend: Backend) => {
       } else {
         setPlaybackState({playing: false, songId: null, sectionId: null});
       }
-    }, 15);
+    }, notificationIntervalMs);
   };
 
   const stop = () => {
