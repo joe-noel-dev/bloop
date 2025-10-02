@@ -1,4 +1,4 @@
-import {Project} from '../api/bloop';
+import {Project, Section, Song} from '../api/bloop';
 import {Backend, DbProject} from '../backend/Backend';
 import {createSampleManager, Samples} from './SampleManager';
 import {ID} from '../api/helpers';
@@ -41,7 +41,15 @@ export const createAudioController = (backend: Backend) => {
   let projectInfo: DbProject | null = null;
   let playbackStateChangeCallback: PlaybackStateChangeCallback | null = null;
 
-  let bufferNode: AudioBufferSourceNode | null = null;
+  let bufferNodes: AudioBufferSourceNode[] = [];
+  interface SchedulePoint {
+    start: number;
+    end?: number;
+    songId: Long;
+    sectionId: Long;
+  }
+  let playbackSchedule: SchedulePoint[] = [];
+  let callbackId: number | null = null;
 
   const setProject = (newProject: Project) => {
     project = newProject;
@@ -54,6 +62,15 @@ export const createAudioController = (backend: Backend) => {
   };
 
   const setPlaybackState = (newState: PlaybackState) => {
+    if (
+      newState.playing === playbackState.playing &&
+      newState.songId?.equals(playbackState.songId || Long.UZERO) &&
+      newState.sectionId?.equals(playbackState.sectionId || Long.UZERO)
+    ) {
+      return;
+    }
+
+    console.debug('Playback state:', newState);
     playbackState = newState;
     if (playbackStateChangeCallback) {
       playbackStateChangeCallback(
@@ -64,7 +81,54 @@ export const createAudioController = (backend: Backend) => {
     }
   };
 
-  const play = (songId: Long, sectionId: Long, loop: boolean) => {
+  const scheduleSection = (
+    sample: AudioBuffer,
+    song: Song,
+    section: Section,
+    nextSection: Section | undefined,
+    startTime: number
+  ): number | undefined => {
+    const bufferNode = audioContext.createBufferSource();
+    bufferNodes.push(bufferNode);
+
+    bufferNode.connect(audioContext.destination);
+    bufferNode.buffer = sample;
+    bufferNode.loop = section.loop;
+
+    const tempo = song.tempo?.bpm ?? 120;
+    const beatFrequency = tempo / 60.0;
+    const beatInterval = 1.0 / beatFrequency;
+
+    const startPosInSample = section.start * beatInterval;
+    const endPosInSample = nextSection
+      ? nextSection.start * beatInterval
+      : undefined;
+    const duration =
+      !section.loop && endPosInSample
+        ? endPosInSample - startPosInSample
+        : undefined;
+
+    if (section.loop) {
+      bufferNode.loopStart = startPosInSample;
+    }
+
+    if (section.loop && endPosInSample) {
+      bufferNode.loopEnd = endPosInSample;
+    }
+
+    bufferNode.start(startTime, startPosInSample, duration);
+
+    playbackSchedule.push({
+      start: startTime,
+      end: duration ? startTime + duration : undefined,
+      songId: song.id,
+      sectionId: section.id,
+    });
+
+    return duration;
+  };
+
+  const play = (songId: Long, sectionId: Long) => {
     if (!project) {
       console.error('No project loaded. Cannot play.');
       return;
@@ -76,42 +140,8 @@ export const createAudioController = (backend: Backend) => {
       return;
     }
 
-    const sectionIndex = song.sections.findIndex((sec) =>
-      sec.id.equals(sectionId)
-    );
-    if (sectionIndex === -1) {
-      console.error(
-        `Section with ID ${sectionId} not found in song ${songId}. Cannot play.`
-      );
-      return;
-    }
-
-    const section = song.sections[sectionIndex];
-    if (!section) {
-      console.error(`Section with ID ${sectionId} not found. Cannot play.`);
-      return;
-    }
-
-    const nextSection =
-      sectionIndex + 1 < song.sections.length
-        ? song.sections[sectionIndex + 1]
-        : null;
-
     if (!song.sample) {
       console.error(`Song with ID ${songId} has no sample. Cannot play.`);
-      return;
-    }
-
-    const sampleInCache = samples.get(song.sample.id);
-    if (!sampleInCache || sampleInCache.state !== 'loaded') {
-      console.error(
-        `Sample with ID ${song.sample.id} not loaded. Cannot play.`
-      );
-      return;
-    }
-
-    if (!sampleInCache.buffer) {
-      console.error(`Sample with ID ${song.sample.id} has no audio buffer.`);
       return;
     }
 
@@ -119,50 +149,92 @@ export const createAudioController = (backend: Backend) => {
       audioContext.resume();
     }
 
-    if (bufferNode) {
-      stop();
+    const sampleInCache = samples.get(song.sample.id);
+    if (
+      !sampleInCache ||
+      sampleInCache.state !== 'loaded' ||
+      !sampleInCache.buffer
+    ) {
+      console.error(
+        `Sample with ID ${song.sample.id} not loaded. Cannot play.`
+      );
+      return;
     }
 
-    bufferNode = audioContext.createBufferSource();
-    bufferNode.connect(audioContext.destination);
-    bufferNode.buffer = sampleInCache.buffer;
-    bufferNode.loop = loop;
+    stop();
 
-    const tempo = song.tempo?.bpm ?? 120;
-    const beatFrequency = tempo / 60.0;
-    const beatInterval = 1.0 / beatFrequency;
+    const startIndex = song.sections.findIndex((sec) =>
+      sec.id.equals(sectionId)
+    );
 
-    const start = section.start * beatInterval;
-    const end = nextSection ? nextSection.start * beatInterval : undefined;
+    const lookaheadS = 0.05;
+    let startTime = audioContext.currentTime + lookaheadS;
 
-    if (loop) {
-      bufferNode.loopStart = start;
+    for (
+      let sectionIndex = startIndex;
+      0 <= sectionIndex && sectionIndex < song.sections.length;
+      ++sectionIndex
+    ) {
+      const section = song.sections.at(sectionIndex);
+      const nextSection = song.sections.at(sectionIndex + 1);
+
+      if (!section) {
+        console.error(`Section at index ${sectionIndex} not found. Stopping playback loop.`);
+        break;
+      }
+
+      const duration = scheduleSection(
+        sampleInCache.buffer,
+        song,
+        section,
+        nextSection,
+        startTime
+      );
+
+      if (duration) {
+        startTime += duration;
+      }
     }
 
-    if (loop && end) {
-      bufferNode.loopEnd = end;
-    }
+    const notificationIntervalMs = 15;
 
-    bufferNode.start(0, start, !loop && end ? end - start : undefined);
+    callbackId = window.setInterval(() => {
+      const currentTime = audioContext.currentTime;
+      const current = playbackSchedule.find((point) => {
+        if (point.start > currentTime) {
+          return false;
+        }
 
-    setPlaybackState({playing: true, songId, sectionId});
+        if (point.end && point.end <= currentTime) {
+          return false;
+        }
 
-    bufferNode.onended = () => {
-      if (
-        playbackState.playing &&
-        playbackState.songId === songId &&
-        playbackState.sectionId === sectionId
-      ) {
+        return true;
+      });
+
+      if (current) {
+        setPlaybackState({
+          playing: true,
+          songId: current.songId,
+          sectionId: current.sectionId,
+        });
+      } else {
         setPlaybackState({playing: false, songId: null, sectionId: null});
       }
-    };
+    }, notificationIntervalMs);
   };
 
   const stop = () => {
-    if (bufferNode) {
-      bufferNode.stop();
-      bufferNode.disconnect();
-      bufferNode = null;
+    bufferNodes.forEach((node) => {
+      node.stop();
+      node.disconnect();
+    });
+
+    bufferNodes = [];
+    playbackSchedule = [];
+
+    if (callbackId) {
+      window.clearInterval(callbackId);
     }
 
     setPlaybackState({playing: false, songId: null, sectionId: null});

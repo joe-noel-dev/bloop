@@ -106,7 +106,7 @@ describe('TransportBar', () => {
     fireEvent.click(button);
 
     expect(mockDispatch).toHaveBeenCalledWith(
-      playAction(Long.fromNumber(1), Long.fromNumber(1), false)
+      playAction(Long.fromNumber(1), Long.fromNumber(1))
     );
   });
 
