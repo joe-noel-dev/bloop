@@ -14,7 +14,7 @@
     "@mui/joy": "^5.0.0-beta.52",
     "@mui/material": "^5.16.7",
     "@types/lodash.isequal": "^4.5.8",
-    "@types/node": "^24.3.2",
+    "@types/node": "^24.6.1",
     "@types/pako": "^2.0.3",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.9",
