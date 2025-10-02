@@ -174,11 +174,10 @@ export const setProjectInfoAction = (projectInfo: DbProject) => ({
   projectInfo,
 });
 
-export const playAction = (songId: ID, sectionId: ID, loop: boolean) => ({
+export const playAction = (songId: ID, sectionId: ID) => ({
   type: PLAY,
   songId,
   sectionId,
-  loop,
 });
 
 export const stopAction = () => ({

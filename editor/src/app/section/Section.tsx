@@ -63,7 +63,7 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
   const remove = () => dispatch(removeSectionAction(songId, sectionId));
 
   const handlePlay = () => {
-    dispatch(playAction(songId, sectionId, section.loop));
+    dispatch(playAction(songId, sectionId));
   };
 
   const handleStop = () => {
