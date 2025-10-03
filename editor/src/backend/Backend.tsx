@@ -3,6 +3,7 @@ import PocketBase, {RecordModel} from 'pocketbase';
 import {Project} from '../api/bloop';
 import {ID} from '../api/helpers';
 import {emptyProject} from '../api/project-helpers';
+import Long from 'long';
 
 export interface DbUser {
   email: string;
@@ -81,6 +82,12 @@ export const createBackend = () => {
 
     fetchSample: async (project: DbProject, sampleId: ID) =>
       await fetchSample(pocketbase, project, sampleId),
+
+    getIdFromSampleFileName: (fileName: string): ID | null => {
+      // pocketbase sample files are named like "<id>_<randomstring>.<ext>"
+      const match = fileName.match(/^([0-9a-fA-F]+)\_(.*)$/);
+      return match ? Long.fromString(match[1]) : null;
+    },
   };
 };
 

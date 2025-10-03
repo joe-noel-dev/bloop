@@ -308,8 +308,8 @@ const removeUnusedSamples = async (
   const samplesInUse = getSamplesInProject(project);
 
   for (const sampleIdString in projectInfo.samples) {
-    const sampleId = Long.fromString(sampleIdString.split('_')[0]);
-    if (sampleId.ne(Long.ZERO) && !samplesInUse.has(sampleId)) {
+    const sampleId = backend.getIdFromSampleFileName(sampleIdString);
+    if (sampleId && !samplesInUse.has(sampleId)) {
       console.debug(`Removing unused sample ${sampleId} from backend`);
       await backend.removeSample(projectInfo.id, sampleId);
     }
