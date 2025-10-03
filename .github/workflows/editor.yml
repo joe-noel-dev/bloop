@@ -6,8 +6,17 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: editor/yarn.lock
       - name: Install dependencies
         run: yarn install
+        working-directory: editor
+      - name: Run tests
+        run: yarn test --run
         working-directory: editor
       - name: Build all
         run: yarn build

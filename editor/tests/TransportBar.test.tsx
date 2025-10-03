@@ -4,7 +4,11 @@ import {TransportBar} from '../src/components/TransportBar';
 import {AppStateContext} from '../src/state/AppState';
 import {DispatcherContext} from '../src/dispatcher/dispatcher';
 import {playAction, stopAction} from '../src/dispatcher/action';
-import {emptyProject} from '../src/api/project-helpers';
+import {
+  createTestAppState,
+  createTestTheme,
+  createTestAppStateWithPlayback,
+} from '../src/test-utils/app-state-helpers';
 import Long from 'long';
 
 // Mock Material-UI icons
@@ -41,17 +45,9 @@ vi.mock('../src/model-hooks/section-hooks', () => ({
 describe('TransportBar', () => {
   const mockDispatch = vi.fn();
 
-  const mockAppState = {
-    project: emptyProject(),
-    projects: [],
-    playing: false,
-    saveState: 'idle' as const,
-    sampleStates: new Map(),
-    theme: {
-      mode: 'light' as const,
-      effectiveMode: 'light' as const,
-    },
-  };
+  const mockAppState = createTestAppState({
+    theme: createTestTheme('light'),
+  });
 
   beforeEach(() => {
     mockDispatch.mockClear();
@@ -84,12 +80,12 @@ describe('TransportBar', () => {
   });
 
   it('shows stop button when playing', () => {
-    const playingState = {
-      ...mockAppState,
-      playing: true,
-      playingSongId: Long.fromNumber(1),
-      playingSectionId: Long.fromNumber(1),
-    };
+    const playingState = createTestAppStateWithPlayback(
+      true,
+      Long.fromNumber(1),
+      Long.fromNumber(1),
+      {theme: createTestTheme('light')}
+    );
 
     renderTransportBar(playingState);
 
@@ -111,12 +107,12 @@ describe('TransportBar', () => {
   });
 
   it('dispatches stop action when stop button is clicked while playing', () => {
-    const playingState = {
-      ...mockAppState,
-      playing: true,
-      playingSongId: Long.fromNumber(1),
-      playingSectionId: Long.fromNumber(1),
-    };
+    const playingState = createTestAppStateWithPlayback(
+      true,
+      Long.fromNumber(1),
+      Long.fromNumber(1),
+      {theme: createTestTheme('light')}
+    );
 
     renderTransportBar(playingState);
 
@@ -127,12 +123,12 @@ describe('TransportBar', () => {
   });
 
   it('shows playing song and section when playing', () => {
-    const playingState = {
-      ...mockAppState,
-      playing: true,
-      playingSongId: Long.fromNumber(1),
-      playingSectionId: Long.fromNumber(1),
-    };
+    const playingState = createTestAppStateWithPlayback(
+      true,
+      Long.fromNumber(1),
+      Long.fromNumber(1),
+      {theme: createTestTheme('light')}
+    );
 
     renderTransportBar(playingState);
 

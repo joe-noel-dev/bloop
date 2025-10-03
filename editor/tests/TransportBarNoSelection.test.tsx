@@ -3,7 +3,10 @@ import {describe, it, expect, vi} from 'vitest';
 import {TransportBar} from '../src/components/TransportBar';
 import {AppStateContext} from '../src/state/AppState';
 import {DispatcherContext} from '../src/dispatcher/dispatcher';
-import {emptyProject} from '../src/api/project-helpers';
+import {
+  createTestAppState,
+  createTestTheme,
+} from '../src/test-utils/app-state-helpers';
 
 // Mock Material-UI icons
 vi.mock('@mui/icons-material', () => ({
@@ -25,17 +28,9 @@ vi.mock('../src/model-hooks/section-hooks', () => ({
 describe('TransportBar - No Selection', () => {
   const mockDispatch = vi.fn();
 
-  const mockAppState = {
-    project: emptyProject(),
-    projects: [],
-    playing: false,
-    saveState: 'idle' as const,
-    sampleStates: new Map(),
-    theme: {
-      mode: 'light' as const,
-      effectiveMode: 'light' as const,
-    },
-  };
+  const mockAppState = createTestAppState({
+    theme: createTestTheme('light'),
+  });
 
   const renderTransportBar = (appState = mockAppState) => {
     return render(
