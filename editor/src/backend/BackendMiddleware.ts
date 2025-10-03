@@ -28,6 +28,16 @@ import {
 import {Backend} from './Backend';
 import Long from 'long';
 
+// Track pending requests by unique identifiers to prevent duplicates
+const pendingRequests = new Set<string>();
+
+const createRequestId = (
+  type: string,
+  ...params: (string | number)[]
+): string => {
+  return `${type}:${params.join(':')}`;
+};
+
 export const backendMiddleware =
   (api: MiddlewareAPI) =>
   (next: DispatchFunction) =>
@@ -75,20 +85,47 @@ export const backendMiddleware =
 
       case LOAD_PROJECT: {
         const {projectId} = action as LoadProjectAction;
-        const [project, info] = await backend.loadProject(projectId);
-        api.dispatch(setProjectInfoAction(info));
-        api.dispatch(setProjectAction(project));
+        const requestId = createRequestId('LOAD_PROJECT', projectId);
+
+        // Prevent duplicate concurrent requests for the same project
+        if (pendingRequests.has(requestId)) {
+          console.debug(
+            `Project load for ${projectId} already in progress, skipping duplicate request`
+          );
+          break;
+        }
+
+        try {
+          pendingRequests.add(requestId);
+          const [project, info] = await backend.loadProject(projectId);
+          api.dispatch(setProjectInfoAction(info));
+          api.dispatch(setProjectAction(project));
+        } catch (error) {
+          console.error(`Failed to load project ${projectId}:`, error);
+          throw error;
+        } finally {
+          pendingRequests.delete(requestId);
+        }
         break;
       }
 
       case SAVE_PROJECT:
         {
+          const projectId = state.projectInfo?.id ?? '';
+          const requestId = createRequestId('SAVE_PROJECT', projectId);
+
+          // Prevent duplicate concurrent saves for the same project
+          if (pendingRequests.has(requestId)) {
+            console.debug(
+              `Project save for ${projectId} already in progress, skipping duplicate request`
+            );
+            break;
+          }
+
           api.dispatch(setSaveStateAction('saving'));
           try {
-            await backend.updateProject(
-              state.projectInfo?.id ?? '',
-              state.project
-            );
+            pendingRequests.add(requestId);
+            await backend.updateProject(projectId, state.project);
             api.dispatch(setSaveStateAction('saved'));
 
             // Auto-revert to idle after 2 seconds
@@ -98,6 +135,9 @@ export const backendMiddleware =
           } catch (error) {
             console.error(`Failed to update project on backend: ${error}`);
             api.dispatch(setSaveStateAction('idle'));
+            throw error;
+          } finally {
+            pendingRequests.delete(requestId);
           }
         }
         break;
@@ -121,24 +161,31 @@ export const backendMiddleware =
       }
 
       case LOAD_PROJECTS: {
-        const projects = await backend.fetchProjects();
-        api.dispatch(setProjectsAction(projects));
+        const requestId = createRequestId('LOAD_PROJECTS');
+
+        // Prevent duplicate concurrent requests
+        if (pendingRequests.has(requestId)) {
+          console.debug(
+            'Projects fetch already in progress, skipping duplicate request'
+          );
+          break;
+        }
+
+        try {
+          pendingRequests.add(requestId);
+          const projects = await backend.fetchProjects();
+          api.dispatch(setProjectsAction(projects));
+        } catch (error) {
+          console.error('Failed to fetch projects:', error);
+          throw error;
+        } finally {
+          pendingRequests.delete(requestId);
+        }
         break;
       }
     }
 
-    const previousSamplesInUse = getSamplesInProject(api.getState().project);
-
     await next(action);
-
-    const currentSamplesInUse = getSamplesInProject(api.getState().project);
-
-    await garbageCollectSamples(
-      backend,
-      state.projectInfo?.id ?? '',
-      previousSamplesInUse,
-      currentSamplesInUse
-    );
   };
 
 const addSampleToSong = async (
@@ -218,26 +265,4 @@ const getTempoFromFileName = (fileName: string): number => {
   }
 
   return bpm;
-};
-
-const getSamplesInProject = (project: Project): Set<Long> =>
-  project.songs.reduce((sampleIds, song) => {
-    if (song.sample) {
-      sampleIds.add(song.sample.id);
-    }
-
-    return sampleIds;
-  }, new Set<Long>());
-
-const garbageCollectSamples = async (
-  backend: Backend,
-  projectId: string,
-  previous: Set<Long>,
-  current: Set<Long>
-) => {
-  for (const sampleId of previous) {
-    if (!current.has(sampleId)) {
-      await backend.removeSample(projectId, sampleId);
-    }
-  }
 };
