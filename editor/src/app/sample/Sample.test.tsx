@@ -1,20 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { Sample } from './Sample';
-import { AppStateContext } from '../../state/AppState';
-import { DispatcherContext } from '../../dispatcher/dispatcher';
-import { AudioControllerContext } from '../../audio/AudioControllerContext';
-import { emptyProject } from '../../api/project-helpers';
-import { createThemeState } from '../../state/ThemeState';
+import {describe, it, expect} from 'vitest';
+import {render, screen} from '@testing-library/react';
+import {Sample} from './Sample';
+import {AppStateContext} from '../../state/AppState';
+import {DispatcherContext} from '../../dispatcher/dispatcher';
+import {AudioControllerContext} from '../../audio/AudioControllerContext';
+import {emptyProject} from '../../api/project-helpers';
+import {createThemeState} from '../../state/ThemeState';
 import Long from 'long';
-
-// Mock MUI icons
-vi.mock('@mui/icons-material', () => ({
-  Delete: () => <div>Delete Icon</div>,
-  FileUpload: () => <div>FileUpload Icon</div>,
-  Download: () => <div>Download Icon</div>,
-  Sync: () => <div>Sync Icon</div>,
-}));
 
 // Mock dependencies
 const mockDispatch = () => {};
@@ -34,13 +26,15 @@ const testSongId = Long.fromNumber(456);
 // Create a project with a song for testing
 const createProjectWithSong = () => {
   const project = emptyProject();
-  project.songs = [{
-    id: testSongId,
-    name: 'Test Song',
-    tempo: { bpm: 120 },
-    sections: [],
-    sample: undefined,
-  }];
+  project.songs = [
+    {
+      id: testSongId,
+      name: 'Test Song',
+      tempo: {bpm: 120},
+      sections: [],
+      sample: undefined,
+    },
+  ];
   return project;
 };
 
@@ -53,14 +47,14 @@ const mockAppState = {
   theme: createThemeState(),
 };
 
-const TestWrapper = ({ 
-  children, 
-  sampleStates = new Map() 
-}: { 
+const TestWrapper = ({
+  children,
+  sampleStates = new Map(),
+}: {
   children: React.ReactNode;
   sampleStates?: Map<Long, any>;
 }) => (
-  <AppStateContext.Provider value={{ ...mockAppState, sampleStates }}>
+  <AppStateContext.Provider value={{...mockAppState, sampleStates}}>
     <DispatcherContext.Provider value={mockDispatch}>
       <AudioControllerContext.Provider value={mockAudioController}>
         {children}
@@ -80,9 +74,9 @@ describe('Sample Component', () => {
     expect(screen.getByText('Upload Sample')).toBeInTheDocument();
   });
 
-  it('shows downloading indicator when sample is loading', () => {
+  it('shows download status chip and upload button when sample is loading', () => {
     const sampleStates = new Map();
-    sampleStates.set(testSampleId, { state: 'loading' });
+    sampleStates.set(testSampleId, {state: 'loading'});
 
     render(
       <TestWrapper sampleStates={sampleStates}>
@@ -91,12 +85,12 @@ describe('Sample Component', () => {
     );
 
     expect(screen.getByText('Downloading...')).toBeInTheDocument();
-    expect(screen.getByText('Downloading...')).toBeDisabled();
+    expect(screen.getByText('Upload Sample')).toBeInTheDocument();
   });
 
-  it('shows converting indicator when sample is converting', () => {
+  it('shows download status chip and upload button when sample is converting', () => {
     const sampleStates = new Map();
-    sampleStates.set(testSampleId, { state: 'converting' });
+    sampleStates.set(testSampleId, {state: 'converting'});
 
     render(
       <TestWrapper sampleStates={sampleStates}>
@@ -105,12 +99,12 @@ describe('Sample Component', () => {
     );
 
     expect(screen.getByText('Converting...')).toBeInTheDocument();
-    expect(screen.getByText('Converting...')).toBeDisabled();
+    expect(screen.getByText('Upload Sample')).toBeInTheDocument();
   });
 
-  it('shows error indicator when sample loading fails', () => {
+  it('shows download error chip and upload button when sample loading fails', () => {
     const sampleStates = new Map();
-    sampleStates.set(testSampleId, { state: 'error' });
+    sampleStates.set(testSampleId, {state: 'error'});
 
     render(
       <TestWrapper sampleStates={sampleStates}>
@@ -118,7 +112,44 @@ describe('Sample Component', () => {
       </TestWrapper>
     );
 
-    expect(screen.getByText('Error Loading Sample')).toBeInTheDocument();
-    expect(screen.getByText('Error Loading Sample')).toBeDisabled();
+    expect(screen.getByText('Download Error')).toBeInTheDocument();
+    expect(screen.getByText('Upload Sample')).toBeInTheDocument();
+  });
+
+  it('shows remove button when sample is loaded and no download status', () => {
+    const sampleStates = new Map();
+    sampleStates.set(testSampleId, {state: 'loaded'});
+
+    // Update the test wrapper to include a sample in the project
+    const projectWithSample = createProjectWithSong();
+    projectWithSample.songs[0].sample = {
+      id: testSampleId,
+      name: 'test-sample.wav',
+      tempo: {bpm: 120},
+      sampleRate: 44100,
+      sampleCount: Long.fromNumber(1000),
+      channelCount: 2,
+    };
+
+    const appStateWithSample = {
+      ...mockAppState,
+      project: projectWithSample,
+      sampleStates,
+    };
+
+    render(
+      <AppStateContext.Provider value={appStateWithSample}>
+        <DispatcherContext.Provider value={mockDispatch}>
+          <AudioControllerContext.Provider value={mockAudioController}>
+            <Sample sampleId={testSampleId} songId={testSongId} />
+          </AudioControllerContext.Provider>
+        </DispatcherContext.Provider>
+      </AppStateContext.Provider>
+    );
+
+    expect(screen.getByText('Remove Sample')).toBeInTheDocument();
+    expect(screen.queryByText('Downloading...')).not.toBeInTheDocument();
+    expect(screen.queryByText('Converting...')).not.toBeInTheDocument();
+    expect(screen.queryByText('Download Error')).not.toBeInTheDocument();
   });
 });

@@ -1,11 +1,12 @@
-import {Button} from '@mui/joy';
+import {Button, Chip, Stack} from '@mui/joy';
 import {useSampleWithId, useSampleState} from '../../model-hooks/sample-hooks';
-import {Delete, FileUpload, Download, Sync} from '@mui/icons-material';
+import {Delete, FileUpload, Download, Sync, Error} from '@mui/icons-material';
 import {useEffect, useRef, useState} from 'react';
 import {ID} from '../../api/helpers';
 import {useSong} from '../../model-hooks/song-hooks';
 import {useDispatcher} from '../../dispatcher/dispatcher';
 import {addSampleAction, updateSongAction} from '../../dispatcher/action';
+import {spacing} from '../../theme/tokens';
 
 interface Props {
   sampleId: ID;
@@ -78,53 +79,69 @@ export const Sample = ({sampleId, songId}: Props) => {
     </Button>
   );
 
-  const LoadingButton = () => (
-    <Button
-      loading={true}
-      color="primary"
-      startDecorator={<Download />}
-      disabled
-    >
-      Downloading...
-    </Button>
-  );
-
-  const ConvertingButton = () => (
-    <Button loading={true} color="primary" startDecorator={<Sync />} disabled>
-      Converting...
-    </Button>
-  );
-
-  const ErrorButton = () => (
-    <Button color="danger" variant="soft" disabled>
-      Error Loading Sample
-    </Button>
-  );
-
-  const getSampleButton = () => {
-    if (sample && sampleState === 'loaded') {
-      return <RemoveButton />;
-    }
-
+  const DownloadStatusChip = () => {
     if (sampleState === 'loading') {
-      return <LoadingButton />;
+      return (
+        <Chip
+          variant="soft"
+          color="primary"
+          startDecorator={<Download />}
+          sx={{gap: spacing.xs}}
+        >
+          Downloading...
+        </Chip>
+      );
     }
 
     if (sampleState === 'converting') {
-      return <ConvertingButton />;
+      return (
+        <Chip
+          variant="soft"
+          color="primary"
+          startDecorator={<Sync />}
+          sx={{gap: spacing.xs}}
+        >
+          Converting...
+        </Chip>
+      );
     }
 
     if (sampleState === 'error') {
-      return <ErrorButton />;
+      return (
+        <Chip
+          variant="soft"
+          color="danger"
+          startDecorator={<Error />}
+          sx={{gap: spacing.xs}}
+        >
+          Download Error
+        </Chip>
+      );
+    }
+
+    return null;
+  };
+
+  const getSampleButton = () => {
+    if (sample) {
+      return <RemoveButton />;
     }
 
     return <UploadButton />;
   };
 
+  const hasDownloadStatus =
+    sampleState === 'loading' ||
+    sampleState === 'converting' ||
+    sampleState === 'error';
+
   return (
     <>
       <InvisibleFileInput />
-      {getSampleButton()}
+      <Stack direction="row" spacing={spacing.sm} alignItems="center">
+        {getSampleButton()}
+        {hasDownloadStatus && <DownloadStatusChip />}
+      </Stack>
     </>
   );
 };
