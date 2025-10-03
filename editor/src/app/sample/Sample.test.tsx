@@ -1,4 +1,4 @@
-import {describe, it, expect} from 'vitest';
+import {describe, it, expect, vi} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import {Sample} from './Sample';
 import {AppStateContext} from '../../state/AppState';
@@ -7,6 +7,15 @@ import {AudioControllerContext} from '../../audio/AudioControllerContext';
 import {emptyProject} from '../../api/project-helpers';
 import {createTestAppStateWithSamples} from '../../test-utils/app-state-helpers';
 import Long from 'long';
+
+// Mock Material-UI icons
+vi.mock('@mui/icons-material', () => ({
+  Delete: () => <svg data-testid="delete-icon" />,
+  FileUpload: () => <svg data-testid="file-upload-icon" />,
+  Download: () => <svg data-testid="download-icon" />,
+  Sync: () => <svg data-testid="sync-icon" />,
+  Error: () => <svg data-testid="error-icon" />,
+}));
 
 // Mock dependencies
 const mockDispatch = () => {};
