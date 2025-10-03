@@ -9,7 +9,7 @@ export type SaveState = 'idle' | 'saving' | 'saved';
 
 export interface AppState {
   project: Project;
-  projectInfo?: DbProject;
+  projectInfo: DbProject | null;
   projects: DbProject[];
   playing: boolean;
   playingSongId?: Long;
@@ -21,6 +21,7 @@ export interface AppState {
 
 export const emptyAppState = (): AppState => ({
   project: emptyProject(),
+  projectInfo: null,
   projects: [],
   playing: false,
   saveState: 'idle',

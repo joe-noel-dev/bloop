@@ -40,6 +40,7 @@ const createProjectWithSong = () => {
 
 const mockAppState = {
   project: createProjectWithSong(),
+  projectInfo: null,
   projects: [],
   playing: false,
   saveState: 'idle' as const,

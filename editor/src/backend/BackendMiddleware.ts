@@ -64,10 +64,15 @@ export const backendMiddleware =
       case ADD_SAMPLE: {
         const {sample, songId} = action as AddSampleAction;
 
+        if (!state.projectInfo) {
+          console.error('No project info available. Cannot add sample.');
+          break;
+        }
+
         const sampleDetails = await addSampleToSong(
           backend,
           state.project,
-          state.projectInfo?.id ?? '',
+          state.projectInfo.id,
           songId,
           sample
         );
@@ -131,7 +136,12 @@ export const backendMiddleware =
 
       case SAVE_PROJECT:
         {
-          const projectId = state.projectInfo?.id ?? '';
+          if (!state.projectInfo) {
+            console.error('No project info available. Cannot save project.');
+            break;
+          }
+
+          const projectId = state.projectInfo.id;
           const requestId = createRequestId('SAVE_PROJECT', projectId);
 
           // Prevent duplicate concurrent saves for the same project
@@ -145,13 +155,11 @@ export const backendMiddleware =
           api.dispatch(setSaveStateAction('saving'));
 
           try {
-            if (state.projectInfo) {
-              await removeUnusedSamples(
-                state.project,
-                state.projectInfo,
-                backend
-              );
-            }
+            await removeUnusedSamples(
+              state.project,
+              state.projectInfo,
+              backend
+            );
 
             pendingRequests.add(requestId);
             await backend.updateProject(projectId, state.project);
@@ -179,11 +187,18 @@ export const backendMiddleware =
       }
 
       case RENAME_PROJECT: {
+        if (!state.projectInfo) {
+          console.error('No project info available. Cannot rename project.');
+          break;
+        }
+
         const {newName} = action as RenameProjectAction;
+
         const projectInfo = await backend.renameProject(
-          state.projectInfo?.id ?? '',
+          state.projectInfo.id,
           newName
         );
+
         api.dispatch(setProjectInfoAction(projectInfo));
         api.dispatch(loadProjectsAction());
         break;

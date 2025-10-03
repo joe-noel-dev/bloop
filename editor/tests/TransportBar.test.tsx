@@ -43,6 +43,7 @@ describe('TransportBar', () => {
 
   const mockAppState = {
     project: emptyProject(),
+    projectInfo: null,
     projects: [],
     playing: false,
     saveState: 'idle' as const,
