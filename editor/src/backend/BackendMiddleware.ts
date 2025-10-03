@@ -1,6 +1,5 @@
 import {Project, Sample} from '../api/bloop';
 import {ID, randomId} from '../api/helpers';
-import {updateSong} from '../api/project-helpers';
 import {DispatchFunction, MiddlewareAPI} from '../dispatcher';
 import {
   Action,
@@ -24,8 +23,9 @@ import {
   SIGN_IN,
   SignInAction,
   SIGN_OUT,
+  updateSongAction,
 } from '../dispatcher/action';
-import {Backend} from './Backend';
+import {Backend, DbProject} from './Backend';
 import Long from 'long';
 
 // Track pending requests by unique identifiers to prevent duplicates
@@ -64,12 +64,32 @@ export const backendMiddleware =
       case ADD_SAMPLE: {
         const {sample, songId} = action as AddSampleAction;
 
-        await addSampleToSong(
+        const sampleDetails = await addSampleToSong(
           backend,
           state.project,
           state.projectInfo?.id ?? '',
           songId,
           sample
+        );
+
+        if (!sampleDetails) {
+          console.error('Failed to add sample to song');
+          break;
+        }
+
+        const song = state.project.songs.find((s) => s.id.equals(songId));
+
+        if (!song) {
+          console.error(`Song with ID ${songId} not found`);
+          break;
+        }
+
+        api.dispatch(
+          updateSongAction({
+            ...song,
+            tempo: sampleDetails.tempo ?? song.tempo,
+            sample: sampleDetails,
+          })
         );
 
         break;
@@ -123,7 +143,16 @@ export const backendMiddleware =
           }
 
           api.dispatch(setSaveStateAction('saving'));
+
           try {
+            if (state.projectInfo) {
+              await removeUnusedSamples(
+                state.project,
+                state.projectInfo,
+                backend
+              );
+            }
+
             pendingRequests.add(requestId);
             await backend.updateProject(projectId, state.project);
             api.dispatch(setSaveStateAction('saved'));
@@ -194,7 +223,7 @@ const addSampleToSong = async (
   projectId: string,
   songId: ID,
   sample: File
-) => {
+): Promise<Sample | undefined> => {
   const sampleId = randomId();
 
   const song = project.songs.find((s) => s.id.equals(songId));
@@ -206,13 +235,7 @@ const addSampleToSong = async (
 
   await backend.addSample(projectId, sampleId, sample);
 
-  const sampleDetails = await createSampleFromFile(sampleId, sample);
-
-  updateSong(project, {
-    ...song,
-    tempo: sampleDetails.tempo ?? song.tempo,
-    sample: sampleDetails,
-  });
+  return await createSampleFromFile(sampleId, sample);
 };
 
 const createSampleFromFile = async (
@@ -265,4 +288,30 @@ const getTempoFromFileName = (fileName: string): number => {
   }
 
   return bpm;
+};
+
+const getSamplesInProject = (project: Project): Set<ID> => {
+  const samples = new Set<ID>();
+  for (const song of project.songs) {
+    if (song.sample) {
+      samples.add(song.sample.id);
+    }
+  }
+  return samples;
+};
+
+const removeUnusedSamples = async (
+  project: Project,
+  projectInfo: DbProject,
+  backend: Backend
+) => {
+  const samplesInUse = getSamplesInProject(project);
+
+  for (const sampleIdString in projectInfo.samples) {
+    const sampleId = backend.getIdFromSampleFileName(sampleIdString);
+    if (sampleId && !samplesInUse.has(sampleId)) {
+      console.debug(`Removing unused sample ${sampleId} from backend`);
+      await backend.removeSample(projectInfo.id, sampleId);
+    }
+  }
 };
