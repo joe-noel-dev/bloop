@@ -5,7 +5,7 @@ import {AppStateContext} from '../../state/AppState';
 import {DispatcherContext} from '../../dispatcher/dispatcher';
 import {AudioControllerContext} from '../../audio/AudioControllerContext';
 import {emptyProject} from '../../api/project-helpers';
-import {createThemeState} from '../../state/ThemeState';
+import {createTestAppStateWithSamples} from '../../test-utils/app-state-helpers';
 import Long from 'long';
 
 // Mock dependencies
@@ -38,16 +38,6 @@ const createProjectWithSong = () => {
   return project;
 };
 
-const mockAppState = {
-  project: createProjectWithSong(),
-  projectInfo: null,
-  projects: [],
-  playing: false,
-  saveState: 'idle' as const,
-  sampleStates: new Map(),
-  theme: createThemeState(),
-};
-
 const TestWrapper = ({
   children,
   sampleStates = new Map(),
@@ -55,7 +45,11 @@ const TestWrapper = ({
   children: React.ReactNode;
   sampleStates?: Map<Long, any>;
 }) => (
-  <AppStateContext.Provider value={{...mockAppState, sampleStates}}>
+  <AppStateContext.Provider
+    value={createTestAppStateWithSamples(sampleStates, {
+      project: createProjectWithSong(),
+    })}
+  >
     <DispatcherContext.Provider value={mockDispatch}>
       <AudioControllerContext.Provider value={mockAudioController}>
         {children}
@@ -132,11 +126,9 @@ describe('Sample Component', () => {
       channelCount: 2,
     };
 
-    const appStateWithSample = {
-      ...mockAppState,
+    const appStateWithSample = createTestAppStateWithSamples(sampleStates, {
       project: projectWithSample,
-      sampleStates,
-    };
+    });
 
     render(
       <AppStateContext.Provider value={appStateWithSample}>

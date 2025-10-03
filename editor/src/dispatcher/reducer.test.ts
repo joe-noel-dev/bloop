@@ -1,20 +1,11 @@
-import { describe, it, expect } from 'vitest';
-import { reducer } from './reducer';
-import { setSampleStateAction, setThemeModeAction } from './action';
-import { AppState } from '../state/AppState';
-import { emptyProject } from '../api/project-helpers';
-import { createThemeState } from '../state/ThemeState';
+import {describe, it, expect} from 'vitest';
+import {reducer} from './reducer';
+import {setSampleStateAction, setThemeModeAction} from './action';
+import {createTestAppState} from '../test-utils/app-state-helpers';
 import Long from 'long';
 
 describe('Reducer - Sample State', () => {
-  const initialState: AppState = {
-    project: emptyProject(),
-    projects: [],
-    playing: false,
-    saveState: 'idle',
-    sampleStates: new Map(),
-    theme: createThemeState(),
-  };
+  const initialState = createTestAppState();
 
   const testSampleId = Long.fromNumber(12345);
 
@@ -22,7 +13,10 @@ describe('Reducer - Sample State', () => {
     const action = setSampleStateAction(testSampleId, 'loading');
     const newState = reducer(action, initialState);
 
-    expect(newState.sampleStates.get(testSampleId)).toEqual({ state: 'loading', buffer: undefined });
+    expect(newState.sampleStates.get(testSampleId)).toEqual({
+      state: 'loading',
+      buffer: undefined,
+    });
     expect(newState.sampleStates.size).toBe(1);
   });
 
@@ -33,7 +27,10 @@ describe('Reducer - Sample State', () => {
     const convertingAction = setSampleStateAction(testSampleId, 'converting');
     const convertingState = reducer(convertingAction, loadingState);
 
-    expect(convertingState.sampleStates.get(testSampleId)).toEqual({ state: 'converting', buffer: undefined });
+    expect(convertingState.sampleStates.get(testSampleId)).toEqual({
+      state: 'converting',
+      buffer: undefined,
+    });
     expect(convertingState.sampleStates.size).toBe(1);
   });
 
@@ -45,9 +42,9 @@ describe('Reducer - Sample State', () => {
     const loadedAction = setSampleStateAction(testSampleId, 'loaded');
     const loadedState = reducer(loadedAction, convertingState);
 
-    expect(loadedState.sampleStates.get(testSampleId)).toEqual({ 
-      state: 'loaded', 
-      buffer: undefined // Buffer is not managed through this action anymore
+    expect(loadedState.sampleStates.get(testSampleId)).toEqual({
+      state: 'loaded',
+      buffer: undefined, // Buffer is not managed through this action anymore
     });
   });
 
@@ -55,7 +52,10 @@ describe('Reducer - Sample State', () => {
     const action = setSampleStateAction(testSampleId, 'error');
     const newState = reducer(action, initialState);
 
-    expect(newState.sampleStates.get(testSampleId)).toEqual({ state: 'error', buffer: undefined });
+    expect(newState.sampleStates.get(testSampleId)).toEqual({
+      state: 'error',
+      buffer: undefined,
+    });
   });
 
   it('should handle multiple samples independently', () => {
@@ -68,8 +68,14 @@ describe('Reducer - Sample State', () => {
     const action2 = setSampleStateAction(sampleId2, 'converting');
     const state2 = reducer(action2, state1);
 
-    expect(state2.sampleStates.get(sampleId1)).toEqual({ state: 'loading', buffer: undefined });
-    expect(state2.sampleStates.get(sampleId2)).toEqual({ state: 'converting', buffer: undefined });
+    expect(state2.sampleStates.get(sampleId1)).toEqual({
+      state: 'loading',
+      buffer: undefined,
+    });
+    expect(state2.sampleStates.get(sampleId2)).toEqual({
+      state: 'converting',
+      buffer: undefined,
+    });
     expect(state2.sampleStates.size).toBe(2);
   });
 
@@ -85,14 +91,7 @@ describe('Reducer - Sample State', () => {
 });
 
 describe('Reducer - Theme State', () => {
-  const initialState: AppState = {
-    project: emptyProject(),
-    projects: [],
-    playing: false,
-    saveState: 'idle',
-    sampleStates: new Map(),
-    theme: createThemeState(),
-  };
+  const initialState = createTestAppState();
 
   it('should set theme mode to light', () => {
     const action = setThemeModeAction('light');
