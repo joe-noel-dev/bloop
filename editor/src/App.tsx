@@ -9,7 +9,11 @@ import {TransportBar} from './components/TransportBar';
 import {ThemeWrapper} from './components/ThemeWrapper';
 import {Backend, BackendContext, createBackend} from './backend/Backend';
 import {DispatcherContext} from './dispatcher/dispatcher';
-import {Action, setThemeModeAction} from './dispatcher/action';
+import {
+  Action,
+  setThemeModeAction,
+  loadProjectsAction,
+} from './dispatcher/action';
 import {reducer} from './dispatcher/reducer';
 import {applyMiddleware, DispatchFunction} from './dispatcher/middleware';
 import {loggingMiddleware} from './dispatcher/loggingMiddleware';
@@ -32,10 +36,6 @@ const App = () => {
   }, [state]);
 
   const user = backend?.getUser();
-
-  useEffect(() => {
-    backend.fetchProjects().then((projects) => setState({...state, projects}));
-  }, []);
 
   const baseDispatch = (action: Action) => {
     const newState = reducer(action, stateRef.current);
@@ -75,6 +75,12 @@ const App = () => {
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [state.theme.mode, dispatch]);
+
+  useEffect(() => {
+    if (user) {
+      dispatch(loadProjectsAction());
+    }
+  }, []);
 
   return (
     <AudioControllerContext.Provider value={audioController}>

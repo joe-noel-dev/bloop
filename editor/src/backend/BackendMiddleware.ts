@@ -28,6 +28,9 @@ import {
 import {Backend} from './Backend';
 import Long from 'long';
 
+// Track if a projects fetch is currently in progress to prevent duplicates
+let projectsFetchInProgress = false;
+
 export const backendMiddleware =
   (api: MiddlewareAPI) =>
   (next: DispatchFunction) =>
@@ -121,24 +124,26 @@ export const backendMiddleware =
       }
 
       case LOAD_PROJECTS: {
-        const projects = await backend.fetchProjects();
-        api.dispatch(setProjectsAction(projects));
+        // Prevent duplicate concurrent requests
+        if (projectsFetchInProgress) {
+          console.debug(
+            'Projects fetch already in progress, skipping duplicate request'
+          );
+          break;
+        }
+
+        try {
+          projectsFetchInProgress = true;
+          const projects = await backend.fetchProjects();
+          api.dispatch(setProjectsAction(projects));
+        } finally {
+          projectsFetchInProgress = false;
+        }
         break;
       }
     }
 
-    const previousSamplesInUse = getSamplesInProject(api.getState().project);
-
     await next(action);
-
-    const currentSamplesInUse = getSamplesInProject(api.getState().project);
-
-    await garbageCollectSamples(
-      backend,
-      state.projectInfo?.id ?? '',
-      previousSamplesInUse,
-      currentSamplesInUse
-    );
   };
 
 const addSampleToSong = async (
@@ -218,26 +223,4 @@ const getTempoFromFileName = (fileName: string): number => {
   }
 
   return bpm;
-};
-
-const getSamplesInProject = (project: Project): Set<Long> =>
-  project.songs.reduce((sampleIds, song) => {
-    if (song.sample) {
-      sampleIds.add(song.sample.id);
-    }
-
-    return sampleIds;
-  }, new Set<Long>());
-
-const garbageCollectSamples = async (
-  backend: Backend,
-  projectId: string,
-  previous: Set<Long>,
-  current: Set<Long>
-) => {
-  for (const sampleId of previous) {
-    if (!current.has(sampleId)) {
-      await backend.removeSample(projectId, sampleId);
-    }
-  }
 };
