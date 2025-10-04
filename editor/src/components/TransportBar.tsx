@@ -6,7 +6,7 @@ import {useSelectedSection} from '../model-hooks/section-hooks';
 import {useSectionById} from '../model-hooks/section-hooks';
 import {useDispatcher} from '../dispatcher/dispatcher';
 import {playAction, stopAction} from '../dispatcher/action';
-import {spacing, shadows, transitions} from '../theme';
+import {spacing, shadows, transitions, typography, borders} from '../theme';
 import {INVALID_ID} from '../api/helpers';
 
 export const TransportBar = () => {
@@ -42,9 +42,9 @@ export const TransportBar = () => {
         bottom: 0,
         left: 0,
         right: 0,
-        height: spacing.xxxxl,
+        height: spacing.transportBarHeight,
         backgroundColor: 'background.surface',
-        borderTop: '1px solid',
+        borderTop: `${borders.width.thin}px solid`,
         borderTopColor: 'divider',
         boxShadow: shadows.level1,
         display: 'flex',
@@ -60,8 +60,8 @@ export const TransportBar = () => {
           display: 'flex',
           alignItems: 'center',
           gap: spacing.lg,
-          minWidth: '400px',
-          maxWidth: '600px',
+          minWidth: spacing.controlsMinWidth,
+          maxWidth: spacing.controlsMaxWidth,
           justifyContent: 'center',
         }}
       >
@@ -89,7 +89,7 @@ export const TransportBar = () => {
             flex: 1,
             minWidth: 0,
             textAlign: 'center',
-            maxWidth: '300px',
+            maxWidth: spacing.songInfoMaxWidth,
           }}
         >
           <Typography
@@ -122,8 +122,8 @@ export const TransportBar = () => {
         {/* Progress Info - Fixed Width */}
         <Box
           sx={{
-            width: '80px',
-            minWidth: '80px',
+            width: spacing.progressWidth,
+            minWidth: spacing.progressWidth,
             display: 'flex',
             flexDirection: 'row',
             alignItems: 'center',
@@ -147,11 +147,11 @@ export const TransportBar = () => {
               level="body-xs"
               sx={{
                 color: 'text.tertiary',
-                fontSize: '8px',
+                fontSize: typography.fontSize.xs,
                 textTransform: 'uppercase',
-                letterSpacing: '0.3px',
+                letterSpacing: typography.letterSpacing.normal,
                 lineHeight: 1,
-                marginBottom: '1px',
+                marginBottom: spacing.xxs,
               }}
             >
               Sec
@@ -182,11 +182,11 @@ export const TransportBar = () => {
               level="body-xs"
               sx={{
                 color: 'text.tertiary',
-                fontSize: '8px',
+                fontSize: typography.fontSize.xs,
                 textTransform: 'uppercase',
-                letterSpacing: '0.3px',
+                letterSpacing: typography.letterSpacing.normal,
                 lineHeight: 1,
-                marginBottom: '1px',
+                marginBottom: spacing.xxs,
               }}
             >
               Song
