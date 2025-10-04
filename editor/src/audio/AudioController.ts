@@ -4,15 +4,18 @@ import {createSampleManager, Samples} from './SampleManager';
 import {ID} from '../api/helpers';
 import Long from 'long';
 import {DispatchFunction} from '../dispatcher/middleware';
+import {setPlaybackStateAction, setProgressAction} from '../dispatcher/action';
 
 export interface PlaybackState {
   songId: ID | null;
   sectionId: ID | null;
 }
 
-export type PlaybackStateChangeCallback = (
-  playbackState: PlaybackState | null
-) => void;
+export interface Progress {
+  normalisedSectionProgress: number;
+  songBeat: number;
+  sectionBeat: number;
+}
 
 export const createAudioController = (backend: Backend) => {
   const audioContext = new AudioContext();
@@ -32,7 +35,6 @@ export const createAudioController = (backend: Backend) => {
   );
   let project: Project | null = null;
   let projectInfo: DbProject | null = null;
-  let playbackStateChangeCallback: PlaybackStateChangeCallback | null = null;
 
   let bufferNodes: AudioBufferSourceNode[] = [];
   interface SchedulePoint {
@@ -40,6 +42,9 @@ export const createAudioController = (backend: Backend) => {
     end?: number;
     songId: Long;
     sectionId: Long;
+    loopStart?: number;
+    loopEnd?: number;
+    beatInterval: number;
   }
   let playbackSchedule: SchedulePoint[] = [];
   let callbackId: number | null = null;
@@ -56,8 +61,64 @@ export const createAudioController = (backend: Backend) => {
 
   const setPlaybackState = (newState: PlaybackState | null) => {
     playbackState = newState;
-    if (playbackStateChangeCallback) {
-      playbackStateChangeCallback(playbackState);
+    if (dispatch) {
+      dispatch(setPlaybackStateAction(playbackState));
+    }
+  };
+
+  const notifyProgress = (point: SchedulePoint) => {
+    if (!dispatch) {
+      return;
+    }
+
+    const song = project?.songs.find((s) => s.id.equals(point.songId));
+    if (!song) {
+      return;
+    }
+
+    const section = song.sections.find((sec) => sec.id.equals(point.sectionId));
+    if (!section) {
+      return;
+    }
+
+    const currentTime = audioContext.currentTime;
+
+    let sectionStartSeconds = point.start;
+
+    let sectionDurationSeconds = 0;
+
+    if (point.end) {
+      sectionDurationSeconds = point.end - point.start;
+    } else if (
+      point.loopEnd &&
+      point.loopStart &&
+      point.loopEnd > point.loopStart
+    ) {
+      sectionDurationSeconds = point.loopEnd - point.loopStart;
+    }
+
+    const timeIntoSectionSeconds =
+      sectionDurationSeconds > 0
+        ? (currentTime - sectionStartSeconds) % sectionDurationSeconds
+        : 0;
+
+    const beatsIntoSection = timeIntoSectionSeconds / point.beatInterval;
+
+    const normalisedSectionProgress =
+      sectionDurationSeconds > 0
+        ? timeIntoSectionSeconds / sectionDurationSeconds
+        : 0;
+
+    const beatsIntoSong = beatsIntoSection + section.start;
+
+    if (dispatch) {
+      dispatch(
+        setProgressAction({
+          normalisedSectionProgress,
+          sectionBeat: beatsIntoSection,
+          songBeat: beatsIntoSong,
+        })
+      );
     }
   };
 
@@ -103,6 +164,9 @@ export const createAudioController = (backend: Backend) => {
       end: duration ? startTime + duration : undefined,
       songId: song.id,
       sectionId: section.id,
+      loopStart: bufferNode.loopStart,
+      loopEnd: bufferNode.loopEnd,
+      beatInterval,
     });
 
     return duration;
@@ -194,6 +258,10 @@ export const createAudioController = (backend: Backend) => {
         return true;
       });
 
+      if (current) {
+        notifyProgress(current);
+      }
+
       setPlaybackState(
         current ? {songId: current.songId, sectionId: current.sectionId} : null
       );
@@ -216,12 +284,6 @@ export const createAudioController = (backend: Backend) => {
     setPlaybackState(null);
   };
 
-  const setPlaybackStateChangeCallback = (
-    callback: PlaybackStateChangeCallback
-  ) => {
-    playbackStateChangeCallback = callback;
-  };
-
   const setDispatch = (dispatchFunction: DispatchFunction) => {
     dispatch = dispatchFunction;
   };
@@ -236,7 +298,6 @@ export const createAudioController = (backend: Backend) => {
     setProjectInfo,
     play,
     stop,
-    setPlaybackStateChangeCallback,
     setDispatch,
     getSampleState,
   };

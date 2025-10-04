@@ -102,9 +102,9 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
   };
 
   const isPlaying =
-    state.playing &&
-    state.playingSongId?.equals(songId) &&
-    state.playingSectionId?.equals(sectionId);
+    state.playbackState &&
+    state.playbackState.songId?.equals(songId) &&
+    state.playbackState.sectionId?.equals(sectionId);
 
   return (
     <Grid container spacing={1} sx={{color: 'inherit'}}>
