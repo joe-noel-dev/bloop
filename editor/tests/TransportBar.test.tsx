@@ -81,9 +81,10 @@ describe('TransportBar', () => {
 
   it('shows stop button when playing', () => {
     const playingState = createTestAppStateWithPlayback(
-      true,
-      Long.fromNumber(1),
-      Long.fromNumber(1),
+      {
+        songId: Long.fromNumber(1),
+        sectionId: Long.fromNumber(1),
+      },
       {theme: createTestTheme('light')}
     );
 
@@ -108,9 +109,10 @@ describe('TransportBar', () => {
 
   it('dispatches stop action when stop button is clicked while playing', () => {
     const playingState = createTestAppStateWithPlayback(
-      true,
-      Long.fromNumber(1),
-      Long.fromNumber(1),
+      {
+        songId: Long.fromNumber(1),
+        sectionId: Long.fromNumber(1),
+      },
       {theme: createTestTheme('light')}
     );
 
@@ -124,9 +126,10 @@ describe('TransportBar', () => {
 
   it('shows playing song and section when playing', () => {
     const playingState = createTestAppStateWithPlayback(
-      true,
-      Long.fromNumber(1),
-      Long.fromNumber(1),
+      {
+        songId: Long.fromNumber(1),
+        sectionId: Long.fromNumber(1),
+      },
       {theme: createTestTheme('light')}
     );
 

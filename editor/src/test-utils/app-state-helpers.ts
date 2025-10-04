@@ -2,6 +2,7 @@ import {AppState, emptyAppState} from '../state/AppState';
 import {Project} from '../api/bloop';
 import {SampleInCache} from '../audio/SampleManager';
 import {ThemeState} from '../state/ThemeState';
+import {PlaybackState} from '../audio/AudioController';
 
 /**
  * Creates an empty AppState for testing purposes
@@ -51,14 +52,10 @@ export const createTestAppStateWithSamples = (
  * Creates an AppState with playing state
  */
 export const createTestAppStateWithPlayback = (
-  playing: boolean,
-  playingSongId?: Long,
-  playingSectionId?: Long,
+  playbackState: PlaybackState | null,
   overrides: Partial<AppState> = {}
 ): AppState =>
   createTestAppState({
-    playing,
-    playingSongId,
-    playingSectionId,
+    playbackState,
     ...overrides,
   });

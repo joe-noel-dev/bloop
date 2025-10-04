@@ -294,9 +294,9 @@ const SortableSection = ({
     useSortable({id: sectionId.toString()});
 
   const isPlaying =
-    state.playing &&
-    state.playingSongId?.equals(songId) &&
-    state.playingSectionId?.equals(sectionId);
+    state.playbackState &&
+    state.playbackState.songId?.equals(songId) &&
+    state.playbackState.sectionId?.equals(sectionId);
 
   const style = {
     transform: CSS.Transform.toString(transform),

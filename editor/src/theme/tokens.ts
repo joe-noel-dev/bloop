@@ -6,6 +6,7 @@
 // Spacing tokens (based on 8px unit system)
 export const spacing = {
   unit: 8,
+  xxs: 1,
   xs: 4,
   sm: 8,
   md: 16,
@@ -15,6 +16,12 @@ export const spacing = {
   xxxl: 48,
   xxxxl: 56,
   xxxxxl: 64,
+  // Semantic sizing for UI components
+  transportBarHeight: 56,
+  progressWidth: 80,
+  controlsMinWidth: 400,
+  controlsMaxWidth: 600,
+  songInfoMaxWidth: 300,
 } as const;
 
 // Color palette tokens
@@ -25,8 +32,8 @@ export const colors = {
     light: '#ffddc1',
     dark: '#c97b63',
   },
-  
-  // Secondary colors  
+
+  // Secondary colors
   secondary: {
     main: '#1a237e',
     light: '#534bae',
@@ -62,7 +69,7 @@ export const colors = {
   // Palette colors
   palette: {
     1: '#bcd8c1',
-    2: '#7f636e', 
+    2: '#7f636e',
     3: '#388697',
     4: '#cc2936',
     5: '#a93f55',
@@ -78,7 +85,7 @@ export const shadows = {
   level1: '0px 1px 3px rgba(0, 0, 0, 0.12), 0px 1px 2px rgba(0, 0, 0, 0.24)',
   level2: '0px 5px 10px rgba(0, 0, 0, 0.2), 0px 6px 6px rgba(0, 0, 0, 0.24)',
   level3: '0px 15px 30px rgba(0, 0, 0, 0.3), 0px 12px 12px rgba(0, 0, 0, 0.24)',
-  
+
   // Common hover/interaction shadows
   hover: '0 4px 12px rgba(0, 0, 0, 0.15)',
   focus: '0 2px 8px rgba(0, 0, 0, 0.08)',
@@ -101,7 +108,7 @@ export const textColors = {
   onBackground: 'black',
   onBackgroundDark: 'white',
   onPrimary: 'black',
-  onPrimaryLight: 'black', 
+  onPrimaryLight: 'black',
   onPrimaryDark: 'black',
   onSecondary: 'white',
   onSecondaryLight: 'white',
@@ -113,12 +120,12 @@ export const transitions = {
   fast: 'all 0.2s ease',
   normal: 'all 0.3s ease',
   slow: 'all 0.5s ease',
-  
+
   // Specific easing curves
   easeOut: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   easeIn: 'all 0.3s cubic-bezier(0.4, 0, 1, 1)',
   bounce: 'all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-  
+
   // Specific property transitions
   transform: 'transform 0.1s ease',
 } as const;
@@ -129,6 +136,32 @@ export const fonts = {
   mono: 'source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace',
 } as const;
 
+// Typography scale tokens
+export const typography = {
+  fontSize: {
+    xs: 8,
+    sm: 10,
+    md: 12,
+    lg: 14,
+    xl: 16,
+    xxl: 18,
+  },
+  letterSpacing: {
+    tight: '0.2px',
+    normal: '0.3px',
+    wide: '0.5px',
+  },
+} as const;
+
+// Border tokens
+export const borders = {
+  width: {
+    thin: 1,
+    medium: 2,
+    thick: 4,
+  },
+} as const;
+
 // Export type definitions for TypeScript
 export type SpacingToken = keyof typeof spacing;
 export type ColorToken = keyof typeof colors;
@@ -137,6 +170,10 @@ export type RadiusToken = keyof typeof radii;
 export type TextColorToken = keyof typeof textColors;
 export type TransitionToken = keyof typeof transitions;
 export type FontToken = keyof typeof fonts;
+export type TypographyFontSizeToken = keyof typeof typography.fontSize;
+export type TypographyLetterSpacingToken =
+  keyof typeof typography.letterSpacing;
+export type BorderWidthToken = keyof typeof borders.width;
 
 // Utility functions for accessing tokens
 export const getSpacing = (token: SpacingToken) => `${spacing[token]}px`;
@@ -152,3 +189,9 @@ export const getColor = (token: string) => {
 export const getShadow = (token: ShadowToken) => shadows[token];
 export const getRadius = (token: RadiusToken) => `${radii[token]}px`;
 export const getTransition = (token: TransitionToken) => transitions[token];
+export const getFontSize = (token: TypographyFontSizeToken) =>
+  `${typography.fontSize[token]}px`;
+export const getLetterSpacing = (token: TypographyLetterSpacingToken) =>
+  typography.letterSpacing[token];
+export const getBorderWidth = (token: BorderWidthToken) =>
+  `${borders.width[token]}px`;

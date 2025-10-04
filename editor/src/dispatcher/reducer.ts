@@ -38,6 +38,8 @@ import {
   UPDATE_SONG,
   UpdateSectionAction,
   UpdateSongAction,
+  SET_PROGRESS,
+  SetProgressAction,
 } from './action';
 import {AppState, emptyAppState} from '../state/AppState';
 import {
@@ -175,10 +177,14 @@ export const reducer = (action: Action, state: AppState): AppState => {
     }
 
     case SET_PLAYBACK_STATE: {
-      const {playing, songId, sectionId} = action as SetPlaybackStateAction;
-      newState.playing = playing;
-      newState.playingSongId = songId;
-      newState.playingSectionId = sectionId;
+      const {playbackState} = action as SetPlaybackStateAction;
+      newState.playbackState = playbackState;
+      break;
+    }
+
+    case SET_PROGRESS: {
+      const {progress} = action as SetProgressAction;
+      newState.progress = progress;
       break;
     }
 
