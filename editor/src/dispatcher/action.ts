@@ -4,6 +4,7 @@ import {DbProject} from '../backend/Backend';
 import {SaveState} from '../state/AppState';
 import {SampleState} from '../audio/SampleManager';
 import {ThemeMode} from '../state/ThemeState';
+import {PlaybackState} from '../audio/AudioController';
 
 // 1:
 export const ADD_SAMPLE = 'ADD_SAMPLE';
@@ -185,14 +186,10 @@ export const stopAction = () => ({
 });
 
 export const setPlaybackStateAction = (
-  playing: boolean,
-  songId?: ID,
-  sectionId?: ID
+  playbackState: PlaybackState | null
 ) => ({
   type: SET_PLAYBACK_STATE,
-  playing,
-  songId,
-  sectionId,
+  playbackState,
 });
 
 export const setSaveStateAction = (saveState: SaveState) => ({

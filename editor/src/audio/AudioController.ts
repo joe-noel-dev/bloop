@@ -5,27 +5,20 @@ import {ID} from '../api/helpers';
 import Long from 'long';
 import {DispatchFunction} from '../dispatcher/middleware';
 
-interface PlaybackState {
-  playing: boolean;
+export interface PlaybackState {
   songId: ID | null;
   sectionId: ID | null;
 }
 
 export type PlaybackStateChangeCallback = (
-  playing: boolean,
-  songId?: ID,
-  sectionId?: ID
+  playbackState: PlaybackState | null
 ) => void;
 
 export const createAudioController = (backend: Backend) => {
   const audioContext = new AudioContext();
   const samples: Samples = new Map();
   let dispatch: DispatchFunction | null = null;
-  let playbackState: PlaybackState = {
-    playing: false,
-    songId: null,
-    sectionId: null,
-  };
+  let playbackState: PlaybackState | null = null;
 
   const sampleManager = createSampleManager(
     audioContext,
@@ -61,23 +54,10 @@ export const createAudioController = (backend: Backend) => {
     sampleManager.setProjectInfo(projectInfo);
   };
 
-  const setPlaybackState = (newState: PlaybackState) => {
-    if (
-      newState.playing === playbackState.playing &&
-      newState.songId?.equals(playbackState.songId || Long.UZERO) &&
-      newState.sectionId?.equals(playbackState.sectionId || Long.UZERO)
-    ) {
-      return;
-    }
-
-    console.debug('Playback state:', newState);
+  const setPlaybackState = (newState: PlaybackState | null) => {
     playbackState = newState;
     if (playbackStateChangeCallback) {
-      playbackStateChangeCallback(
-        playbackState.playing,
-        playbackState.songId ?? undefined,
-        playbackState.sectionId ?? undefined
-      );
+      playbackStateChangeCallback(playbackState);
     }
   };
 
@@ -179,7 +159,9 @@ export const createAudioController = (backend: Backend) => {
       const nextSection = song.sections.at(sectionIndex + 1);
 
       if (!section) {
-        console.error(`Section at index ${sectionIndex} not found. Stopping playback loop.`);
+        console.error(
+          `Section at index ${sectionIndex} not found. Stopping playback loop.`
+        );
         break;
       }
 
@@ -212,15 +194,9 @@ export const createAudioController = (backend: Backend) => {
         return true;
       });
 
-      if (current) {
-        setPlaybackState({
-          playing: true,
-          songId: current.songId,
-          sectionId: current.sectionId,
-        });
-      } else {
-        setPlaybackState({playing: false, songId: null, sectionId: null});
-      }
+      setPlaybackState(
+        current ? {songId: current.songId, sectionId: current.sectionId} : null
+      );
     }, notificationIntervalMs);
   };
 
@@ -237,7 +213,7 @@ export const createAudioController = (backend: Backend) => {
       window.clearInterval(callbackId);
     }
 
-    setPlaybackState({playing: false, songId: null, sectionId: null});
+    setPlaybackState(null);
   };
 
   const setPlaybackStateChangeCallback = (

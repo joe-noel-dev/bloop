@@ -10,20 +10,20 @@ import {spacing, shadows, transitions} from '../theme';
 import {INVALID_ID} from '../api/helpers';
 
 export const TransportBar = () => {
-  const {playing, playingSongId, playingSectionId} = useAppState();
+  const {playbackState} = useAppState();
   const selectedSong = useSelectedSong();
   const selectedSection = useSelectedSection();
-  const playingSong = useSong(playingSongId || INVALID_ID);
-  const playingSection = useSectionById(playingSectionId || INVALID_ID);
+  const playingSong = useSong(playbackState?.songId || INVALID_ID);
+  const playingSection = useSectionById(playbackState?.sectionId || INVALID_ID);
   const dispatch = useDispatcher();
 
   // Determine which song/section to display
-  const displaySong = playing && playingSongId ? playingSong : selectedSong;
+  const displaySong = playbackState ? playingSong : selectedSong;
   const displaySection =
-    playing && playingSectionId ? playingSection : selectedSection;
+    playbackState && playingSection ? playingSection : selectedSection;
 
   const handlePlayStop = () => {
-    if (playing) {
+    if (playbackState) {
       dispatch(stopAction());
     } else {
       // Need both song and section to play
@@ -56,8 +56,8 @@ export const TransportBar = () => {
     >
       {/* Play/Stop Button */}
       <IconButton
-        variant={playing ? 'solid' : 'soft'}
-        color={playing ? 'primary' : 'neutral'}
+        variant={playbackState ? 'solid' : 'soft'}
+        color={playbackState ? 'primary' : 'neutral'}
         disabled={!canPlay}
         onClick={handlePlayStop}
         sx={{
@@ -66,7 +66,7 @@ export const TransportBar = () => {
           transition: transitions.normal,
         }}
       >
-        {playing ? <Stop /> : <PlayArrow />}
+        {playbackState ? <Stop /> : <PlayArrow />}
       </IconButton>
 
       {/* Song and Section Info */}

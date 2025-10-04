@@ -175,10 +175,8 @@ export const reducer = (action: Action, state: AppState): AppState => {
     }
 
     case SET_PLAYBACK_STATE: {
-      const {playing, songId, sectionId} = action as SetPlaybackStateAction;
-      newState.playing = playing;
-      newState.playingSongId = songId;
-      newState.playingSectionId = sectionId;
+      const {playbackState} = action as SetPlaybackStateAction;
+      newState.playbackState = playbackState;
       break;
     }
 
