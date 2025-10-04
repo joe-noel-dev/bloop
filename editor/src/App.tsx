@@ -1,4 +1,4 @@
-import {useEffect, useState, useRef} from 'react';
+import {useEffect, useState, useRef, useMemo} from 'react';
 import {AppState, AppStateContext, emptyAppState} from './state/AppState';
 import {Box} from '@mui/joy';
 import '@fontsource/inter';
@@ -23,11 +23,12 @@ import {audioMiddleware} from './audio/AudioMiddleware';
 import {backendMiddleware} from './backend/BackendMiddleware';
 
 const App = () => {
-  const [backend] = useState<Backend>(createBackend());
+  const backend = useMemo<Backend>(() => createBackend(), []);
   const [state, setState] = useState<AppState>(emptyAppState());
   const stateRef = useRef<AppState>(state);
-  const [audioController] = useState<AudioController>(
-    createAudioController(backend)
+  const audioController = useMemo<AudioController>(
+    () => createAudioController(backend),
+    [backend]
   );
 
   // Keep ref in sync with state

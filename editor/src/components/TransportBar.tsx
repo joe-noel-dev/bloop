@@ -10,7 +10,7 @@ import {spacing, shadows, transitions} from '../theme';
 import {INVALID_ID} from '../api/helpers';
 
 export const TransportBar = () => {
-  const {playbackState} = useAppState();
+  const {playbackState, progress} = useAppState();
   const selectedSong = useSelectedSong();
   const selectedSection = useSelectedSection();
   const playingSong = useSong(playbackState?.songId || INVALID_ID);
@@ -49,51 +49,161 @@ export const TransportBar = () => {
         boxShadow: shadows.level1,
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
         paddingX: spacing.md,
-        gap: spacing.md,
         zIndex: 1000,
       }}
     >
-      {/* Play/Stop Button */}
-      <IconButton
-        variant={playbackState ? 'solid' : 'soft'}
-        color={playbackState ? 'primary' : 'neutral'}
-        disabled={!canPlay}
-        onClick={handlePlayStop}
+      {/* Centered Controls Group */}
+      <Box
         sx={{
-          minWidth: spacing.xl,
-          minHeight: spacing.xl,
-          transition: transitions.normal,
+          display: 'flex',
+          alignItems: 'center',
+          gap: spacing.lg,
+          minWidth: '400px',
+          maxWidth: '600px',
+          justifyContent: 'center',
         }}
       >
-        {playbackState ? <Stop /> : <PlayArrow />}
-      </IconButton>
+        {/* Play/Stop Button */}
+        <IconButton
+          variant={playbackState ? 'solid' : 'soft'}
+          color={playbackState ? 'primary' : 'neutral'}
+          disabled={!canPlay}
+          onClick={handlePlayStop}
+          sx={{
+            width: spacing.xxl,
+            height: spacing.xxl,
+            minWidth: spacing.xxl,
+            minHeight: spacing.xxl,
+            transition: transitions.normal,
+            flexShrink: 0,
+          }}
+        >
+          {playbackState ? <Stop /> : <PlayArrow />}
+        </IconButton>
 
-      {/* Song and Section Info */}
-      <Box sx={{flex: 1, minWidth: 0}}>
-        <Typography
-          level="title-sm"
+        {/* Song and Section Info - Centered */}
+        <Box
           sx={{
-            color: displaySong ? 'text.primary' : 'text.tertiary',
-            fontWeight: 'md',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            flex: 1,
+            minWidth: 0,
+            textAlign: 'center',
+            maxWidth: '300px',
           }}
         >
-          {displaySong?.name || 'No song selected'}
-        </Typography>
-        <Typography
-          level="body-xs"
+          <Typography
+            level="title-sm"
+            sx={{
+              color: displaySong ? 'text.primary' : 'text.tertiary',
+              fontWeight: 'md',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              lineHeight: 1.2,
+            }}
+          >
+            {displaySong?.name || 'No song selected'}
+          </Typography>
+          <Typography
+            level="body-xs"
+            sx={{
+              color: displaySection ? 'text.secondary' : 'text.tertiary',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              lineHeight: 1.2,
+            }}
+          >
+            {displaySection?.name || 'No section selected'}
+          </Typography>
+        </Box>
+
+        {/* Progress Info - Fixed Width */}
+        <Box
           sx={{
-            color: displaySection ? 'text.secondary' : 'text.tertiary',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            width: '80px',
+            minWidth: '80px',
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-around',
+            opacity: playbackState ? 1 : 0,
+            transition: transitions.normal,
+            flexShrink: 0,
+            height: '100%',
           }}
         >
-          {displaySection?.name || 'No section selected'}
-        </Typography>
+          {/* Section Beat */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Typography
+              level="body-xs"
+              sx={{
+                color: 'text.tertiary',
+                fontSize: '8px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.3px',
+                lineHeight: 1,
+                marginBottom: '1px',
+              }}
+            >
+              Sec
+            </Typography>
+            <Typography
+              level="body-sm"
+              sx={{
+                color: 'text.primary',
+                fontFamily: 'monospace',
+                fontWeight: 'bold',
+                lineHeight: 1,
+              }}
+            >
+              {Math.floor(progress?.sectionBeat ?? 0)}
+            </Typography>
+          </Box>
+
+          {/* Song Beat */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Typography
+              level="body-xs"
+              sx={{
+                color: 'text.tertiary',
+                fontSize: '8px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.3px',
+                lineHeight: 1,
+                marginBottom: '1px',
+              }}
+            >
+              Song
+            </Typography>
+            <Typography
+              level="body-sm"
+              sx={{
+                color: 'text.secondary',
+                fontFamily: 'monospace',
+                fontWeight: 'bold',
+                lineHeight: 1,
+              }}
+            >
+              {Math.floor(progress?.songBeat ?? 0)}
+            </Typography>
+          </Box>
+        </Box>
       </Box>
     </Box>
   );

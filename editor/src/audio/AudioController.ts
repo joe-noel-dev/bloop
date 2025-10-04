@@ -45,6 +45,8 @@ export const createAudioController = (backend: Backend) => {
     loopStart?: number;
     loopEnd?: number;
     beatInterval: number;
+    song: Song;
+    section: Section;
   }
   let playbackSchedule: SchedulePoint[] = [];
   let callbackId: number | null = null;
@@ -71,16 +73,6 @@ export const createAudioController = (backend: Backend) => {
       return;
     }
 
-    const song = project?.songs.find((s) => s.id.equals(point.songId));
-    if (!song) {
-      return;
-    }
-
-    const section = song.sections.find((sec) => sec.id.equals(point.sectionId));
-    if (!section) {
-      return;
-    }
-
     const currentTime = audioContext.currentTime;
 
     let sectionStartSeconds = point.start;
@@ -90,8 +82,8 @@ export const createAudioController = (backend: Backend) => {
     if (point.end) {
       sectionDurationSeconds = point.end - point.start;
     } else if (
-      point.loopEnd &&
-      point.loopStart &&
+      point.loopEnd !== undefined &&
+      point.loopStart !== undefined &&
       point.loopEnd > point.loopStart
     ) {
       sectionDurationSeconds = point.loopEnd - point.loopStart;
@@ -109,7 +101,7 @@ export const createAudioController = (backend: Backend) => {
         ? timeIntoSectionSeconds / sectionDurationSeconds
         : 0;
 
-    const beatsIntoSong = beatsIntoSection + section.start;
+    const beatsIntoSong = beatsIntoSection + point.section.start;
 
     if (dispatch) {
       dispatch(
@@ -143,11 +135,10 @@ export const createAudioController = (backend: Backend) => {
     const startPosInSample = section.start * beatInterval;
     const endPosInSample = nextSection
       ? nextSection.start * beatInterval
-      : undefined;
-    const duration =
-      !section.loop && endPosInSample
-        ? endPosInSample - startPosInSample
-        : undefined;
+      : sample.duration;
+    const duration = section.loop
+      ? undefined
+      : endPosInSample - startPosInSample;
 
     if (section.loop) {
       bufferNode.loopStart = startPosInSample;
@@ -167,6 +158,8 @@ export const createAudioController = (backend: Backend) => {
       loopStart: bufferNode.loopStart,
       loopEnd: bufferNode.loopEnd,
       beatInterval,
+      song,
+      section,
     });
 
     return duration;
@@ -211,7 +204,7 @@ export const createAudioController = (backend: Backend) => {
       sec.id.equals(sectionId)
     );
 
-    const lookaheadS = 0.05;
+    const lookaheadS = 0.0;
     let startTime = audioContext.currentTime + lookaheadS;
 
     for (
@@ -237,9 +230,11 @@ export const createAudioController = (backend: Backend) => {
         startTime
       );
 
-      if (duration) {
-        startTime += duration;
+      if (!duration) {
+        break;
       }
+
+      startTime += duration;
     }
 
     const notificationIntervalMs = 15;
