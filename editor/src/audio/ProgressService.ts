@@ -44,8 +44,6 @@ export const useProgressSubscription = (
       callbackRef.current(progress);
     });
 
-    // Cleanup function - this will be called when the component unmounts
-    // or when the dependencies change
     return unsubscribe;
   }, []);
 };
