@@ -4,7 +4,7 @@ import {DbProject} from '../backend/Backend';
 import {SaveState} from '../state/AppState';
 import {SampleState} from '../audio/SampleManager';
 import {ThemeMode} from '../state/ThemeState';
-import {PlaybackState, Progress} from '../audio/AudioController';
+import {PlaybackState} from '../audio/AudioController';
 
 // 1:
 export const ADD_SAMPLE = 'ADD_SAMPLE';
@@ -35,7 +35,6 @@ export const SET_PROJECT_INFO = 'SET_PROJECT_INFO';
 export const PLAY = 'PLAY';
 export const STOP = 'STOP';
 export const SET_PLAYBACK_STATE = 'SET_PLAYBACK_STATE';
-export const SET_PROGRESS = 'SET_PROGRESS';
 export const SET_SAVE_STATE = 'SET_SAVE_STATE';
 export const SET_SAMPLE_STATE = 'SET_SAMPLE_STATE';
 export const SET_THEME_MODE = 'SET_THEME_MODE';
@@ -193,11 +192,6 @@ export const setPlaybackStateAction = (
   playbackState,
 });
 
-export const setProgressAction = (progress: Progress) => ({
-  type: SET_PROGRESS,
-  progress,
-});
-
 export const setSaveStateAction = (saveState: SaveState) => ({
   type: SET_SAVE_STATE,
   saveState,
@@ -248,7 +242,6 @@ export type SetProjectInfoAction = ReturnType<typeof setProjectInfoAction>;
 export type PlayAction = ReturnType<typeof playAction>;
 export type StopAction = ReturnType<typeof stopAction>;
 export type SetPlaybackStateAction = ReturnType<typeof setPlaybackStateAction>;
-export type SetProgressAction = ReturnType<typeof setProgressAction>;
 export type SetSaveStateAction = ReturnType<typeof setSaveStateAction>;
 export type SetSampleStateAction = ReturnType<typeof setSampleStateAction>;
 export type SetThemeModeAction = ReturnType<typeof setThemeModeAction>;
@@ -283,7 +276,6 @@ export type Action =
   | PlayAction
   | StopAction
   | SetPlaybackStateAction
-  | SetProgressAction
   | SetSaveStateAction
   | SetSampleStateAction
   | SetThemeModeAction;

@@ -8,14 +8,23 @@ import {useDispatcher} from '../dispatcher/dispatcher';
 import {playAction, stopAction} from '../dispatcher/action';
 import {spacing, shadows, transitions, typography, borders} from '../theme';
 import {INVALID_ID} from '../api/helpers';
+import {useProgressSubscription} from '../audio/ProgressService';
+import {useState} from 'react';
+import {Progress} from '../audio/AudioController';
 
 export const TransportBar = () => {
-  const {playbackState, progress} = useAppState();
+  const {playbackState} = useAppState();
   const selectedSong = useSelectedSong();
   const selectedSection = useSelectedSection();
   const playingSong = useSong(playbackState?.songId || INVALID_ID);
   const playingSection = useSectionById(playbackState?.sectionId || INVALID_ID);
   const dispatch = useDispatcher();
+
+  // Local state for progress that updates independently of AppState
+  const [progress, setProgress] = useState<Progress | null>(null);
+
+  // Subscribe to high-frequency progress updates
+  useProgressSubscription(setProgress);
 
   // Determine which song/section to display
   const displaySong = playbackState ? playingSong : selectedSong;
