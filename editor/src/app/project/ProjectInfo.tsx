@@ -148,7 +148,10 @@ const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
   );
 
   return (
-    <Stack spacing={spacing.stackSpacing3} sx={{color: 'text.primary', width: '100%'}}>
+    <Stack
+      spacing={spacing.stackSpacing3}
+      sx={{color: 'text.primary', width: '100%'}}
+    >
       <Typography
         level="h4"
         id="projects-modal-title"
@@ -280,9 +283,9 @@ const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
                   removeProject(projectInfo.id);
                 }}
                 sx={{
-                  ml: spacing.modalMarginLeft,
-                  opacity: opacity.hover,
-                  transition: transitions.fast,
+                  'ml': spacing.modalMarginLeft,
+                  'opacity': opacity.hover,
+                  'transition': transitions.fast,
                   '&:hover': {
                     opacity: opacity.active,
                     backgroundColor: 'danger.100',
