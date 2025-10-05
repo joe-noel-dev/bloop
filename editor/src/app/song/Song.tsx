@@ -1,4 +1,3 @@
-import {useState} from 'react';
 import {Button, Grid, Stack, Typography, Box} from '@mui/joy';
 import {useSong} from '../../model-hooks/song-hooks';
 import {shadows, transitions} from '../../theme';
@@ -21,7 +20,6 @@ import {
   removeSongAction,
   updateSongAction,
   moveSectionAction,
-  splitSectionAction,
 } from '../../dispatcher/action';
 import {useDispatcher} from '../../dispatcher/dispatcher';
 import {useAppState} from '../../state/AppState';
@@ -245,10 +243,10 @@ const DropZone = ({index}: {index: number}) => {
         borderRadius: 'md',
         transition: transitions.easeOut,
         marginY: isOver ? 1 : 0.5,
-        opacity: isOver ? 1 : 0.2,
+        opacity: isOver ? 1 : 0,
         position: 'relative',
-        border: isOver ? '2px dashed' : '1px dashed',
-        borderColor: isOver ? 'primary.500' : 'neutral.300',
+        border: isOver ? '2px dashed' : 'none',
+        borderColor: 'primary.500',
         ...(isOver && {
           '&::before': {
             content: '"Drop section here"',
@@ -381,73 +379,6 @@ const SortableSection = ({
   );
 };
 
-const SectionSplitter = ({
-  previousSectionId,
-  songId,
-}: {
-  previousSectionId: ID;
-  songId: ID;
-}) => {
-  const dispatch = useDispatcher();
-  const [isHovered, setIsHovered] = useState(false);
-
-  const handleSplit = () => {
-    dispatch(splitSectionAction(songId, previousSectionId));
-  };
-
-  return (
-    <Box
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      sx={{
-        position: 'relative',
-        height: isHovered ? 40 : 8,
-        transition: transitions.fast,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-      }}
-    >
-      {isHovered && (
-        <Button
-          onClick={handleSplit}
-          size="sm"
-          variant="soft"
-          color="primary"
-          startDecorator={<Add />}
-          sx={{
-            'position': 'absolute',
-            'fontSize': '0.75rem',
-            'borderRadius': 'lg',
-            'boxShadow': shadows.soft,
-            '&:hover': {
-              transform: 'scale(1.05)',
-            },
-            'transition': transitions.transform,
-          }}
-        >
-          Split Section
-        </Button>
-      )}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: '50%',
-          left: 0,
-          right: 0,
-          height: 2,
-          backgroundColor: isHovered ? 'primary.300' : 'neutral.200',
-          borderRadius: 'sm',
-          transform: 'translateY(-50%)',
-          transition: transitions.fast,
-          zIndex: -1,
-        }}
-      />
-    </Box>
-  );
-};
-
 const SectionsTable = ({
   song,
   requestAdd,
@@ -535,12 +466,6 @@ const SectionsTable = ({
                     requestUpdateDuration={requestUpdateSectionDuration}
                   />
                   <DropZone index={index + 1} />
-                  {index !== song.sections.length - 1 && (
-                    <SectionSplitter
-                      previousSectionId={section.id}
-                      songId={song.id}
-                    />
-                  )}
                 </Box>
               ))}
 
