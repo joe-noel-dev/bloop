@@ -6,6 +6,7 @@ import {
   Delete,
   PlayArrow,
   Stop,
+  ContentCut,
 } from '@mui/icons-material';
 import {columnSize, columns} from './TableInfo';
 import isEqual from 'lodash.isequal';
@@ -20,8 +21,11 @@ import {
   removeSectionAction,
   stopAction,
   updateSectionAction,
+  splitSectionAction,
 } from '../../dispatcher/action';
 import {useAppState} from '../../state/AppState';
+import {useState} from 'react';
+import {transitions} from '../../theme';
 
 interface Props {
   songId: ID;
@@ -34,6 +38,7 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
   const song = useSong(songId);
   const state = useAppState();
   const dispatch = useDispatcher();
+  const [isHovered, setIsHovered] = useState(false);
 
   const duration = song ? getSectionBeatLength(song, sectionId) : 0;
   const isFirst = song?.sections.at(0)?.id === sectionId;
@@ -61,6 +66,8 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
     });
 
   const remove = () => dispatch(removeSectionAction(songId, sectionId));
+
+  const split = () => dispatch(splitSectionAction(songId, sectionId));
 
   const handlePlay = () => {
     dispatch(playAction(songId, sectionId));
@@ -107,7 +114,17 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
     state.playbackState.sectionId?.equals(sectionId);
 
   return (
-    <Grid container spacing={1} sx={{color: 'inherit'}}>
+    <Grid
+      container
+      spacing={1}
+      sx={{
+        color: 'inherit',
+        transition: transitions.normal,
+        cursor: 'pointer',
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {columns.map((name) => {
         switch (name) {
           case 'Transport': {
@@ -213,6 +230,11 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
                     }
                     color="primary"
                     disabled={isFirst}
+                    sx={{
+                      opacity: isHovered ? 1 : 0,
+                      visibility: isHovered ? 'visible' : 'hidden',
+                      transition: transitions.normal,
+                    }}
                   >
                     <ArrowUpward />
                   </EditButton>
@@ -229,11 +251,37 @@ export const Section = ({songId, sectionId, requestUpdateDuration}: Props) => {
                     }
                     color="primary"
                     disabled={isLast}
+                    sx={{
+                      opacity: isHovered ? 1 : 0,
+                      visibility: isHovered ? 'visible' : 'hidden',
+                      transition: transitions.normal,
+                    }}
                   >
                     <ArrowDownward />
                   </EditButton>
 
-                  <EditButton onClick={remove} color="danger">
+                  <EditButton
+                    onClick={split}
+                    color="warning"
+                    disabled={isLast}
+                    sx={{
+                      opacity: isHovered ? 1 : 0,
+                      visibility: isHovered ? 'visible' : 'hidden',
+                      transition: transitions.normal,
+                    }}
+                  >
+                    <ContentCut />
+                  </EditButton>
+
+                  <EditButton
+                    onClick={remove}
+                    color="danger"
+                    sx={{
+                      opacity: isHovered ? 1 : 0,
+                      visibility: isHovered ? 'visible' : 'hidden',
+                      transition: transitions.normal,
+                    }}
+                  >
                     <Delete />
                   </EditButton>
                 </Stack>
@@ -249,11 +297,13 @@ const EditButton = ({
   disabled,
   color,
   children,
+  sx,
 }: {
   onClick: () => void;
   disabled?: boolean;
   color?: ColorPaletteProp;
   children: React.ReactNode;
+  sx?: object;
 }) => (
   <IconButton
     variant="soft"
@@ -265,6 +315,7 @@ const EditButton = ({
       onClick();
       event.stopPropagation();
     }}
+    sx={sx}
   >
     {children}
   </IconButton>
