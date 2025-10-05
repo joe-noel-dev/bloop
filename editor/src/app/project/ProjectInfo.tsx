@@ -23,7 +23,7 @@ import {
 import {useState} from 'react';
 import {ClickToEdit} from '../../components/ClickToEdit';
 import {useDispatcher} from '../../dispatcher/dispatcher';
-import {transitions} from '../../theme';
+import {transitions, spacing, backdrop, opacity} from '../../theme';
 import {
   createProjectAction,
   loadProjectAction,
@@ -74,13 +74,13 @@ export const ProjectInfo = () => {
   };
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={spacing.stackSpacing2}>
       <ClickToEdit
         size="large"
         initialValue={projectInfo?.name || ''}
         onSave={renameProject}
       />
-      <Stack direction="row" spacing={2}>
+      <Stack direction="row" spacing={spacing.stackSpacing2}>
         <Button startDecorator={<FolderOpen />} onClick={openProjects}>
           Projects
         </Button>
@@ -94,8 +94,8 @@ export const ProjectInfo = () => {
           slotProps={{
             backdrop: {
               sx: {
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                backdropFilter: 'blur(4px)',
+                backgroundColor: backdrop.default,
+                backdropFilter: backdrop.blur,
               },
             },
           }}
@@ -107,9 +107,9 @@ export const ProjectInfo = () => {
               color: 'text.primary',
               border: '1px solid',
               borderColor: 'neutral.300',
-              minWidth: 400,
-              maxWidth: 600,
-              maxHeight: '80vh',
+              minWidth: spacing.modalMinWidth,
+              maxWidth: spacing.modalMaxWidth,
+              maxHeight: spacing.modalMaxHeight,
             }}
           >
             <ModalClose />
@@ -148,7 +148,7 @@ const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
   );
 
   return (
-    <Stack spacing={3} sx={{color: 'text.primary', width: '100%'}}>
+    <Stack spacing={spacing.stackSpacing3} sx={{color: 'text.primary', width: '100%'}}>
       <Typography
         level="h4"
         id="projects-modal-title"
@@ -160,20 +160,20 @@ const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
       {sortedProjects.length === 0 ? (
         // Empty state
         <Stack
-          spacing={2}
+          spacing={spacing.stackSpacing2}
           sx={{
             alignItems: 'center',
-            py: 6,
-            px: 4,
+            py: spacing.emptyStatePaddingY,
+            px: spacing.emptyStatePaddingX,
             textAlign: 'center',
             color: 'text.secondary',
           }}
         >
           <FolderOpen
             sx={{
-              fontSize: 48,
+              fontSize: spacing.emptyStateIconSize,
               color: 'neutral.400',
-              opacity: 0.7,
+              opacity: opacity.hover,
             }}
           />
           <Typography level="body-lg" sx={{color: 'text.secondary'}}>
@@ -189,7 +189,7 @@ const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
           role="list"
           aria-label="Projects list"
           sx={{
-            maxHeight: '50vh',
+            maxHeight: spacing.modalListMaxHeight,
             overflow: 'auto',
             backgroundColor: 'background.level1',
             borderRadius: 'md',
@@ -204,7 +204,7 @@ const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
               role="listitem"
               sx={{
                 'alignItems': 'center',
-                'p': 2,
+                'p': spacing.layoutPadding,
                 'backgroundColor': 'background.surface',
                 'borderBottom':
                   index < sortedProjects.length - 1 ? '1px solid' : 'none',
@@ -241,9 +241,9 @@ const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
                   'outline': 'none',
                   'borderRadius': 'sm',
                   '&:focus-visible': {
-                    outline: '2px solid',
+                    outline: `${spacing.focusOutlineWidth}px solid`,
                     outlineColor: 'primary.500',
-                    outlineOffset: '2px',
+                    outlineOffset: `${spacing.focusOutlineOffset}px`,
                   },
                 }}
               >
@@ -263,7 +263,7 @@ const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
                   level="body-sm"
                   sx={{
                     color: 'text.tertiary',
-                    mt: 0.5,
+                    mt: spacing.textMarginTop,
                   }}
                 >
                   Created {new Date(projectInfo.created).toLocaleDateString()}
@@ -280,11 +280,11 @@ const ProjectsModal = ({onRequestClose}: ProjectsModalProps) => {
                   removeProject(projectInfo.id);
                 }}
                 sx={{
-                  'ml': 2,
-                  'opacity': 0.7,
-                  'transition': transitions.fast,
+                  ml: spacing.modalMarginLeft,
+                  opacity: opacity.hover,
+                  transition: transitions.fast,
                   '&:hover': {
-                    opacity: 1,
+                    opacity: opacity.active,
                     backgroundColor: 'danger.100',
                   },
                 }}
