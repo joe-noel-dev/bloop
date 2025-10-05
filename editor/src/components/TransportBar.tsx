@@ -9,7 +9,7 @@ import {playAction, stopAction} from '../dispatcher/action';
 import {spacing, shadows, transitions, typography, borders} from '../theme';
 import {INVALID_ID} from '../api/helpers';
 import {useProgressSubscription} from '../audio/ProgressService';
-import {useState, useCallback} from 'react';
+import {useState} from 'react';
 import {Progress} from '../audio/AudioController';
 
 export const TransportBar = () => {
@@ -24,11 +24,7 @@ export const TransportBar = () => {
   const [progress, setProgress] = useState<Progress | null>(null);
 
   // Subscribe to high-frequency progress updates
-  useProgressSubscription(
-    useCallback((newProgress: Progress | null) => {
-      setProgress(newProgress);
-    }, [])
-  );
+  useProgressSubscription(setProgress);
 
   // Determine which song/section to display
   const displaySong = playbackState ? playingSong : selectedSong;

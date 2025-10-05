@@ -1,4 +1,4 @@
-import {useRef, useMemo} from 'react';
+import {useRef, useEffect} from 'react';
 import {Progress} from './AudioController';
 
 /**
@@ -39,10 +39,13 @@ export const useProgressSubscription = (
   const callbackRef = useRef(callback);
   callbackRef.current = callback;
 
-  useMemo(() => {
+  useEffect(() => {
     const unsubscribe = progressService.subscribe((progress) => {
       callbackRef.current(progress);
     });
+
+    // Cleanup function - this will be called when the component unmounts
+    // or when the dependencies change
     return unsubscribe;
   }, []);
 };
