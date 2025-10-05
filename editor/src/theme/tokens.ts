@@ -22,6 +22,25 @@ export const spacing = {
   controlsMinWidth: 400,
   controlsMaxWidth: 600,
   songInfoMaxWidth: 300,
+  // Modal dimensions
+  modalMinWidth: 400,
+  modalMaxWidth: 600,
+  modalMaxHeight: '80vh',
+  modalListMaxHeight: '50vh',
+  // Empty state dimensions
+  emptyStateIconSize: 48,
+  emptyStatePaddingY: 6,
+  emptyStatePaddingX: 4,
+  // Focus outline
+  focusOutlineWidth: 2,
+  focusOutlineOffset: 2,
+  // Layout padding and margins
+  layoutPadding: 2,
+  modalMarginLeft: 2,
+  textMarginTop: 0.5,
+  // Stack spacing
+  stackSpacing2: 2,
+  stackSpacing3: 3,
 } as const;
 
 // Color palette tokens
@@ -92,6 +111,23 @@ export const shadows = {
   active: '0 2px 4px rgba(0, 0, 0, 0.1)',
   elevated: '0 4px 12px rgba(0, 0, 0, 0.2)',
   soft: '0 2px 8px rgba(0, 0, 0, 0.15)',
+} as const;
+
+// Backdrop and overlay tokens
+export const backdrop = {
+  default: 'rgba(0, 0, 0, 0.5)',
+  light: 'rgba(0, 0, 0, 0.3)',
+  heavy: 'rgba(0, 0, 0, 0.7)',
+  blur: 'blur(4px)',
+} as const;
+
+// Opacity tokens
+export const opacity = {
+  disabled: 0.3,
+  inactive: 0.5,
+  hover: 0.7,
+  active: 1,
+  focus: 0.8,
 } as const;
 
 // Border radius tokens
@@ -166,6 +202,8 @@ export const borders = {
 export type SpacingToken = keyof typeof spacing;
 export type ColorToken = keyof typeof colors;
 export type ShadowToken = keyof typeof shadows;
+export type BackdropToken = keyof typeof backdrop;
+export type OpacityToken = keyof typeof opacity;
 export type RadiusToken = keyof typeof radii;
 export type TextColorToken = keyof typeof textColors;
 export type TransitionToken = keyof typeof transitions;
@@ -187,6 +225,8 @@ export const getColor = (token: string) => {
   return (colors as any)[token] || token;
 };
 export const getShadow = (token: ShadowToken) => shadows[token];
+export const getBackdrop = (token: BackdropToken) => backdrop[token];
+export const getOpacity = (token: OpacityToken) => opacity[token];
 export const getRadius = (token: RadiusToken) => `${radii[token]}px`;
 export const getTransition = (token: TransitionToken) => transitions[token];
 export const getFontSize = (token: TypographyFontSizeToken) =>
