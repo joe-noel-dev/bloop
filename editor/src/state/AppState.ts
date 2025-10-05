@@ -4,7 +4,7 @@ import {DbProject} from '../backend/Backend';
 import {emptyProject} from '../api/project-helpers';
 import {SampleInCache} from '../audio/SampleManager';
 import {ThemeState, createThemeState} from './ThemeState';
-import {PlaybackState, Progress} from '../audio/AudioController';
+import {PlaybackState} from '../audio/AudioController';
 
 export type SaveState = 'idle' | 'saving' | 'saved';
 
@@ -13,7 +13,6 @@ export interface AppState {
   projectInfo: DbProject | null;
   projects: DbProject[];
   playbackState: PlaybackState | null;
-  progress: Progress | null;
   saveState: SaveState;
   sampleStates: Map<Long, SampleInCache>;
   theme: ThemeState;
@@ -24,7 +23,6 @@ export const emptyAppState = (): AppState => ({
   projectInfo: null,
   projects: [],
   playbackState: null,
-  progress: null,
   saveState: 'idle',
   sampleStates: new Map(),
   theme: createThemeState(),

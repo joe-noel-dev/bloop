@@ -4,7 +4,8 @@ import {createSampleManager, Samples} from './SampleManager';
 import {ID} from '../api/helpers';
 import Long from 'long';
 import {DispatchFunction} from '../dispatcher/middleware';
-import {setPlaybackStateAction, setProgressAction} from '../dispatcher/action';
+import {setPlaybackStateAction} from '../dispatcher/action';
+import {progressService} from './ProgressService';
 
 export interface PlaybackState {
   songId: ID | null;
@@ -69,10 +70,6 @@ export const createAudioController = (backend: Backend) => {
   };
 
   const notifyProgress = (point: SchedulePoint) => {
-    if (!dispatch) {
-      return;
-    }
-
     const currentTime = audioContext.currentTime;
 
     let sectionStartSeconds = point.start;
@@ -103,15 +100,14 @@ export const createAudioController = (backend: Backend) => {
 
     const beatsIntoSong = beatsIntoSection + point.section.start;
 
-    if (dispatch) {
-      dispatch(
-        setProgressAction({
-          normalisedSectionProgress,
-          sectionBeat: beatsIntoSection,
-          songBeat: beatsIntoSong,
-        })
-      );
-    }
+    const progress = {
+      normalisedSectionProgress,
+      sectionBeat: beatsIntoSection,
+      songBeat: beatsIntoSong,
+    };
+
+    // Use progress service for all progress updates
+    progressService.updateProgress(progress);
   };
 
   const scheduleSection = (
@@ -277,6 +273,7 @@ export const createAudioController = (backend: Backend) => {
     }
 
     setPlaybackState(null);
+    progressService.updateProgress(null); // Clear progress in service
   };
 
   const setDispatch = (dispatchFunction: DispatchFunction) => {
