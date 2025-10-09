@@ -49,12 +49,10 @@ Cross compile from Mac:
 Install to Raspberry Pi:
 
 ```sh
-./scripts/install.sh [destination]
+scp ./target/release/bloop-core joe@bloopi.local:/home/joe/
 ```
 
-## Notes 2025-03-09
-
-### `/home/joe/.config/openbox/autostart`
+## `/home/joe/.config/openbox/autostart`
 
 ```sh
 #!/bin/bash
@@ -68,7 +66,7 @@ cd /home/joe/bloop
 /usr/bin/bloop-core &
 ```
 
-### `/etc/systemd/system/jackd.service`
+## `/etc/systemd/system/jackd.service`
 
 ```toml
 [Unit]
@@ -88,10 +86,48 @@ Environment=JACK_NO_AUDIO_RESERVATION=1
 WantedBy=default.target
 ```
 
-### `/etc/lightdm/lightdm.conf`
+## `/etc/lightdm/lightdm.conf`
 
 ```toml
 [Seat:*]
 autologin-user=joe
 autologin-session=openbox
+```
+
+## Preferences `~/bloop/preferences.json`
+
+```json
+{
+  "audio": {
+    "outputChannelCount": 4,
+    "sampleRate": 48000
+  },
+  "pedal": {
+    "serialPath": "/dev/bloop_pedal"
+  },
+  "switch": {
+    "mappings": [
+      {
+        "pin": 4,
+        "gesture": "press",
+        "action": "toggleLoop"
+      },
+      {
+        "pin": 17,
+        "gesture": "release",
+        "action": "nextSong"
+      },
+      {
+        "pin": 17,
+        "gesture": "hold",
+        "action": "previousSong"
+      },
+      {
+        "pin": 22,
+        "gesture": "press",
+        "action": "togglePlay"
+      }
+    ]
+  }
+}
 ```
