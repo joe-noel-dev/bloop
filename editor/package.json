@@ -9,7 +9,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.14.1",
-    "@fontsource/inter": "^5.2.6",
+    "@fontsource/inter": "^5.2.8",
     "@mui/icons-material": "^7.3.2",
     "@mui/joy": "^5.0.0-beta.52",
     "@mui/material": "^5.16.7",
