@@ -33,7 +33,7 @@ check_tag_exists() {
 # Function to update Cargo.toml
 update_cargo_toml() {
     local version=$1
-    local cargo_file="./Cargo.toml"
+    local cargo_file="./core/Cargo.toml"
     
     if [ ! -f "$cargo_file" ]; then
         echo "Error: $cargo_file not found"
@@ -53,7 +53,7 @@ update_cargo_lock() {
     
     # Use cargo update to refresh the lock file with the new version
     # This will update the lock file to reflect the version change in Cargo.toml
-    cargo update --workspace
+    (cd core && cargo update --workspace)
     
     echo "Cargo.lock updated successfully"
 }
@@ -172,8 +172,8 @@ main() {
     check_tag_exists "$version"
     
     # Ensure we're in the project root
-    if [ ! -f "./Cargo.toml" ]; then
-        echo "Error: Must run from project root (Cargo.toml not found)"
+    if [ ! -f "./core/Cargo.toml" ]; then
+        echo "Error: Must run from project root (core/Cargo.toml not found)"
         exit 1
     fi
     
