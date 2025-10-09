@@ -59,7 +59,7 @@ jobs:
     - name: Cache Cargo build
       uses: actions/cache@v4
       with:
-        path: target
+        path: core/target
         key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-cargo-build-
@@ -69,13 +69,16 @@ jobs:
       run: cargo install cargo-deb
 
     - name: Build
+      working-directory: core
       run: cargo build --verbose
 
     - name: Run tests
+      working-directory: core
       run: cargo test --verbose
 
     - name: Create Debian package
       if: startsWith(github.ref, 'refs/tags/')
+      working-directory: core
       run: cargo deb
       
     - name: Upload Debian package
@@ -83,7 +86,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: bloop-core-${{ github.ref_name }}.deb
-        path: target/debian/*.deb
+        path: core/target/debian/*.deb
 
     - name: Upload Release Asset
       uses: softprops/action-gh-release@v2
@@ -91,5 +94,5 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        files: target/debian/*.deb
+        files: core/target/debian/*.deb
         generate_release_notes: true

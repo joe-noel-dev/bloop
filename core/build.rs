@@ -4,8 +4,8 @@ use std::{env, fs};
 fn main() {
     protobuf_codegen::Codegen::new()
         .cargo_out_dir("protos")
-        .include("api")
-        .input("api/bloop.proto")
+        .include("../api")
+        .input("../api/bloop.proto")
         .run_from_script();
 
     let target_directory = PathBuf::from("target");

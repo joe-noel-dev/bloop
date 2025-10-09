@@ -3,7 +3,7 @@
 set -e
 
 
-CARGO_TOML_PATH="../Cargo.toml"
+CARGO_TOML_PATH="../core/Cargo.toml"
 VERSION_FILE_PATH="./source/app/Version.swift"
 
 if [ ! -f "$CARGO_TOML_PATH" ]; then

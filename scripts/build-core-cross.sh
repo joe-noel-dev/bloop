@@ -17,7 +17,7 @@ docker run \
     --rm \
     --platform ${PLATFORM} \
     --volume .:${CONTAINER_SRC_DIR} \
-    --workdir ${CONTAINER_SRC_DIR} \
+    --workdir ${CONTAINER_SRC_DIR}/core \
     --name bloop_cross_${ARCH} \
     ${CONTAINER_TAG} \
     cargo build --release
