@@ -1,37 +1,16 @@
 # bloop
 
-Backing looper
+A looping audio workstation that runs on Raspberry Pi, controlled via iOS app or web editor.
 
-Consists of:
+## Components
 
-- Audio server, built in Rust: [/core](core)
-- iOS application: [/ios](ios)
-- Firmware for a control pedal, running on an Arduino: [/pedal](pedal)
-- A React-based editor: [/editor](editor)
+- **[core](core)** - Audio server built in Rust for audio processing, looping, and MIDI control
+- **[ios](ios)** - iOS application for controlling the looper
+- **[editor](editor)** - React-based web editor for creating and managing projects
+- **[backend](backend)** - PocketBase backend for storing projects and samples
 
-## Server
+Each component has its own README with build and run instructions.
 
-Build:
+## Learn More
 
-```sh
-cd core
-cargo build
-```
-
-Test:
-
-```sh
-cd core
-cargo test
-```
-
-Run:
-
-```sh
-cd core
-cargo run
-```
-
-### Run on Raspberry Pi
-
-See instructions in [raspberry-pi](./docs/raspberry-pi.md)
+Read the [blog post](https://www.joenoel.co.uk/blog/bloop) for more information about the project.
