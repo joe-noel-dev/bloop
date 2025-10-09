@@ -278,7 +278,7 @@ impl Backend for PocketbaseBackend {
             .samples
             .iter()
             .find(|s| s.starts_with(sample_name) && s.ends_with(".wav"))
-            .ok_or_else(|| anyhow::anyhow!("Sample not found: {}", sample_name))?;
+            .ok_or_else(|| anyhow::anyhow!("Sample not found: {sample_name}"))?;
 
         self.read_project_file(project_id, sample_path).await
     }

@@ -227,7 +227,7 @@ impl Project {
         }
 
         if !self.contains_song(song_id) {
-            return Err(anyhow!("Song ID not found to remove - {}", song_id));
+            return Err(anyhow!("Song ID not found to remove - {song_id}"));
         }
 
         let selected_song_index = self.selected_song_index();
@@ -288,7 +288,7 @@ impl Project {
     pub fn add_sample_to_song(mut self, sample: Sample, song_id: ID) -> anyhow::Result<Self> {
         let song = self
             .song_with_id_mut(song_id)
-            .ok_or_else(|| anyhow!("Couldn't find song with ID: {}", song_id))?;
+            .ok_or_else(|| anyhow!("Couldn't find song with ID: {song_id}"))?;
 
         let tempo = sample.tempo.clone();
         song.sample = Some(sample).into();
@@ -308,12 +308,12 @@ impl Project {
 
     pub fn select_section(mut self, section_id: ID) -> anyhow::Result<Self> {
         if self.section_with_id(section_id).is_none() {
-            return Err(anyhow!("Couldn't find section with ID: {}", section_id));
+            return Err(anyhow!("Couldn't find section with ID: {section_id}"));
         }
 
         let song_id = self
             .song_with_section(section_id)
-            .ok_or_else(|| anyhow!("Couldn't find song with Section ID: {}", section_id))?
+            .ok_or_else(|| anyhow!("Couldn't find song with Section ID: {section_id}"))?
             .id;
 
         self.selections = Some(Selections {
@@ -372,7 +372,7 @@ impl Project {
 
         let song = self
             .song_with_id(song_id)
-            .ok_or_else(|| anyhow!("Couldn't find song with ID: {}", song_id))?;
+            .ok_or_else(|| anyhow!("Couldn't find song with ID: {song_id}"))?;
 
         let current_section_index = match song.sections.iter().position(|section| section.id == section_id) {
             Some(position) => position,
@@ -402,7 +402,7 @@ impl Project {
 
         let song = self
             .song_with_id(song_id)
-            .ok_or_else(|| anyhow!("Couldn't find song with ID: {}", song_id))?;
+            .ok_or_else(|| anyhow!("Couldn't find song with ID: {song_id}"))?;
 
         let current_section_index = match song.sections.iter().position(|section| section.id == section_id) {
             Some(position) => position,

@@ -45,10 +45,7 @@ impl SamplesCache {
 
     pub async fn upload(&mut self, id: ID, data: &[u8]) -> anyhow::Result<()> {
         debug!("Received bytes for upload id={}, length={}", id, data.len());
-        let sample = self
-            .samples
-            .get(&id)
-            .ok_or_else(|| anyhow!("Sample not found: {}", id))?;
+        let sample = self.samples.get(&id).ok_or_else(|| anyhow!("Sample not found: {id}"))?;
         let path = sample.get_path();
         self.write_to_file(data, path).await?;
         Ok(())
@@ -58,11 +55,11 @@ impl SamplesCache {
         let sample = self
             .samples
             .get_mut(&id)
-            .ok_or_else(|| anyhow!("Sample not found: {}", id))?;
+            .ok_or_else(|| anyhow!("Sample not found: {id}"))?;
 
         let path = sample.get_path();
         if !path.is_file() {
-            return Err(anyhow!("Sample doesn't exist on disk: {}", id));
+            return Err(anyhow!("Sample doesn't exist on disk: {id}"));
         }
 
         sample.set_cached(true);
@@ -87,14 +84,11 @@ impl SamplesCache {
     }
 
     pub fn get_sample_metadata(&self, id: ID) -> anyhow::Result<SampleMetadata> {
-        let sample = self
-            .samples
-            .get(&id)
-            .ok_or_else(|| anyhow!("Sample not found: {}", id))?;
+        let sample = self.samples.get(&id).ok_or_else(|| anyhow!("Sample not found: {id}"))?;
 
         let path = sample.get_path();
         if !sample.is_cached() || !path.is_file() {
-            return Err(anyhow!("Sample doesn't exist on disk: {}", id));
+            return Err(anyhow!("Sample doesn't exist on disk: {id}"));
         }
 
         let wav_reader = hound::WavReader::open(path).with_context(|| format!("Couldn't read audio file: {id}"))?;

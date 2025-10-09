@@ -92,7 +92,7 @@ impl Backend for FilesystemBackend {
 
         // Check if the project directory exists
         if !project_dir.exists() {
-            return Err(anyhow::anyhow!("Project {} does not exist", project_id));
+            return Err(anyhow::anyhow!("Project {project_id} does not exist"));
         }
 
         // Read the project metadata file
@@ -129,7 +129,7 @@ impl Backend for FilesystemBackend {
 
         // Check if the project directory exists
         if !project_dir.exists() {
-            return Err(anyhow::anyhow!("Project {} does not exist", project_id));
+            return Err(anyhow::anyhow!("Project {project_id} does not exist"));
         }
 
         // Read the current project metadata
@@ -150,7 +150,7 @@ impl Backend for FilesystemBackend {
 
         // Check if the project directory exists
         if !project_dir.exists() {
-            return Err(anyhow::anyhow!("Project {} does not exist", project_id));
+            return Err(anyhow::anyhow!("Project {project_id} does not exist"));
         }
 
         // Read the current project metadata
@@ -175,7 +175,7 @@ impl Backend for FilesystemBackend {
         // Get the project directory and check if it exists
         let project_dir = self.directory_for_project(project_id);
         if !project_dir.exists() {
-            return Err(anyhow::anyhow!("Project {} does not exist", project_id));
+            return Err(anyhow::anyhow!("Project {project_id} does not exist"));
         }
 
         // Read the current project metadata
@@ -186,14 +186,14 @@ impl Backend for FilesystemBackend {
         if !samples_dir.exists() {
             tokio::fs::create_dir_all(&samples_dir)
                 .await
-                .map_err(|e| anyhow::anyhow!("Failed to create samples directory: {}", e))?;
+                .map_err(|e| anyhow::anyhow!("Failed to create samples directory: {e}"))?;
         }
 
         // Write the sample file
         let sample_file_path = samples_dir.join(format!("{sample_name}.wav"));
         tokio::fs::write(&sample_file_path, sample_bytes)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to write sample file: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to write sample file: {e}"))?;
 
         // Update timestamp
         project.updated = chrono::Utc::now();
@@ -208,7 +208,7 @@ impl Backend for FilesystemBackend {
         // Get the project directory and check if it exists
         let project_dir = self.directory_for_project(project_id);
         if !project_dir.exists() {
-            return Err(anyhow::anyhow!("Project {} does not exist", project_id));
+            return Err(anyhow::anyhow!("Project {project_id} does not exist"));
         }
 
         // Read the current project metadata
@@ -217,12 +217,12 @@ impl Backend for FilesystemBackend {
         // Remove the sample file from the filesystem
         let sample_file_path = project_dir.join("samples").join(format!("{sample_name}.wav"));
         if !sample_file_path.exists() {
-            return Err(anyhow::anyhow!("Sample {} does not exist", sample_name));
+            return Err(anyhow::anyhow!("Sample {sample_name} does not exist"));
         }
 
         tokio::fs::remove_file(&sample_file_path)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to remove sample file: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to remove sample file: {e}"))?;
 
         // Update timestamp
         project.updated = chrono::Utc::now();
@@ -252,7 +252,7 @@ impl Backend for FilesystemBackend {
 
         // Check if project directory exists
         if !project_dir.exists() {
-            return Err(anyhow::anyhow!("Project {} does not exist", project_id));
+            return Err(anyhow::anyhow!("Project {project_id} does not exist"));
         }
 
         let samples_dir = project_dir.join("samples");
@@ -290,7 +290,7 @@ impl Backend for FilesystemBackend {
 
         // Check if project directory exists
         if !project_dir.exists() {
-            return Err(anyhow::anyhow!("Project {} does not exist", project_id));
+            return Err(anyhow::anyhow!("Project {project_id} does not exist"));
         }
 
         // Validate sample_name to prevent path traversal
@@ -299,14 +299,14 @@ impl Backend for FilesystemBackend {
             || sample_name.contains("\\")
             || sample_name.starts_with(".")
         {
-            return Err(anyhow::anyhow!("Invalid sample name: '{}'", sample_name));
+            return Err(anyhow::anyhow!("Invalid sample name: '{sample_name}'"));
         }
 
         let sample_file_path = project_dir.join("samples").join(format!("{sample_name}.wav"));
 
         // Check if sample file exists
         if !sample_file_path.exists() {
-            return Err(anyhow::anyhow!("Sample {} does not exist", sample_name));
+            return Err(anyhow::anyhow!("Sample {sample_name} does not exist"));
         }
 
         // Read and return sample contents
@@ -320,17 +320,14 @@ impl Backend for FilesystemBackend {
 
         // Check if project directory exists
         if !project_dir.exists() {
-            return Err(anyhow::anyhow!("Project {} does not exist", project_id));
+            return Err(anyhow::anyhow!("Project {project_id} does not exist"));
         }
 
         let project_file_path = project_dir.join("project.bin");
 
         // Check if project file exists
         if !project_file_path.exists() {
-            return Err(anyhow::anyhow!(
-                "Project file does not exist for project {}",
-                project_id
-            ));
+            return Err(anyhow::anyhow!("Project file does not exist for project {project_id}"));
         }
 
         // Read and return project file contents
