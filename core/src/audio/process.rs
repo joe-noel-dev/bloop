@@ -77,7 +77,11 @@ impl Process {
     #[allow(dead_code)]
     pub fn new(mut audio_process: Box<dyn AudioProcess + Send>, preferences: AudioPreferences) -> Self {
         #[cfg(target_os = "linux")]
-        let host = cpal::host_from_id(cpal::HostId::Jack).unwrap_or_else(|_| cpal::default_host());
+        let host = if preferences.use_jack {
+            cpal::host_from_id(cpal::HostId::Jack).unwrap_or_else(|_| cpal::default_host())
+        } else {
+            cpal::default_host()
+        };
 
         #[cfg(not(target_os = "linux"))]
         let host = cpal::default_host();

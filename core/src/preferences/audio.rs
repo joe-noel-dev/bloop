@@ -14,6 +14,9 @@ pub struct AudioPreferences {
 
     #[serde(default = "default_output_channel_count")]
     pub output_channel_count: usize,
+
+    #[serde(default)]
+    pub use_jack: bool,
 }
 
 fn default_sample_rate() -> usize {
@@ -35,6 +38,7 @@ impl Default for AudioPreferences {
             sample_rate: default_sample_rate(),
             buffer_size: default_buffer_size(),
             output_channel_count: default_output_channel_count(),
+            use_jack: false,
         }
     }
 }
