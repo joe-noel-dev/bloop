@@ -27,7 +27,7 @@ hound = "3.5.1"
 humantime = "2.3.0"
 iced = { git = "https://github.com/iced-rs/iced.git", rev = "f8337b8da7ff6bcf876b54d1c7dac460d2e03747", features = ["advanced", "default", "tokio", "debug", "svg"], optional = true }
 iced_native = { version = "0.10.3", optional = true }
-log = "0.4.22"
+log = "0.4.28"
 mdns-sd = "0.13.11"
 midir = { version = "0.10.2", optional = true }
 num-traits = "0.2.18"
