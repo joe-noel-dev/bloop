@@ -41,11 +41,11 @@ impl WaveformStore {
 
         let sample = match samples_cache.get_sample(sample_id) {
             Some(sample) => sample,
-            None => return Err(anyhow!("Couldn't find sample with ID: {}", sample_id)),
+            None => return Err(anyhow!("Couldn't find sample with ID: {sample_id}")),
         };
 
         if !sample.is_cached() {
-            return Err(anyhow!("Sample is not cached: {}", sample_id));
+            return Err(anyhow!("Sample is not cached: {sample_id}"));
         }
 
         self.samples_being_generated.insert(sample_id);
