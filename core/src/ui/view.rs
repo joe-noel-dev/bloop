@@ -6,6 +6,7 @@ use super::constants::display_units;
 use super::message::Message;
 use super::project::project_view;
 use super::state::State;
+use super::theme;
 use super::transport::transport_view;
 
 pub fn render(state: &State) -> Element<'_, Message> {
@@ -18,6 +19,7 @@ pub fn render(state: &State) -> Element<'_, Message> {
     .into()
 }
 
+/// Returns the unified Bloop theme matching Editor and iOS color schemes
 pub fn theme(_state: &State) -> Theme {
-    Theme::Moonfly
+    theme::create_bloop_theme()
 }
