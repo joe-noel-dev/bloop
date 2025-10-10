@@ -1,20 +1,14 @@
-import { describe, it, expect } from 'vitest';
-import { reducer } from '../dispatcher/reducer';
-import { showErrorNotificationAction, hideErrorNotificationAction } from '../dispatcher/action';
-import { AppState } from '../state/AppState';
-import { emptyProject } from '../api/project-helpers';
-import { createThemeState } from '../state/ThemeState';
+import {describe, it, expect} from 'vitest';
+import {reducer} from '../dispatcher/reducer';
+import {
+  showErrorNotificationAction,
+  hideErrorNotificationAction,
+} from '../dispatcher/action';
+import {AppState} from '../state/AppState';
+import {createTestAppState} from '../test-utils/app-state-helpers';
 
 describe('Reducer - Error Notifications', () => {
-  const initialState: AppState = {
-    project: emptyProject(),
-    projects: [],
-    playing: false,
-    saveState: 'idle',
-    sampleStates: new Map(),
-    theme: createThemeState(),
-    errorNotification: undefined,
-  };
+  const initialState = createTestAppState();
 
   it('should show error notification when action is dispatched', () => {
     const errorMessage = 'Test error message';
@@ -54,18 +48,22 @@ describe('Reducer - Error Notifications', () => {
     const finalState = reducer(secondAction, stateWithFirstError);
 
     expect(finalState.errorNotification?.message).toBe(secondMessage);
-    expect(finalState.errorNotification?.id).not.toBe(stateWithFirstError.errorNotification?.id);
+    expect(finalState.errorNotification?.id).not.toBe(
+      stateWithFirstError.errorNotification?.id
+    );
   });
 
   it('should generate unique IDs for different error notifications', () => {
     const message = 'Test error';
-    
+
     const firstAction = showErrorNotificationAction(message);
     const firstState = reducer(firstAction, initialState);
-    
+
     const secondAction = showErrorNotificationAction(message);
     const secondState = reducer(secondAction, initialState);
 
-    expect(firstState.errorNotification?.id).not.toBe(secondState.errorNotification?.id);
+    expect(firstState.errorNotification?.id).not.toBe(
+      secondState.errorNotification?.id
+    );
   });
 });
