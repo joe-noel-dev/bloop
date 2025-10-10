@@ -6,9 +6,11 @@ SOURCE_LIB_NAME="bloop"
 DEST_LIB_NAME="bloop"
 DEPLOYMENT_TARGET="15.0"
 CORE_DIR="./core"
+BUILD_DEBUG="${BUILD_DEBUG:-false}"
+TARGET_DIR="${CORE_DIR}/target/universal-ios"
 
-rm -rf ./target/universal-ios
-mkdir -p ./target/universal-ios
+rm -rf "${TARGET_DIR}"
+mkdir -p "${TARGET_DIR}"
 
 build_target() {
   local build_type=$1 # "release" or "debug"
@@ -28,25 +30,42 @@ build_target() {
   fi
 }
 
-# Release builds
+echo "Building iOS target"
 build_target release aarch64-apple-ios iphoneos -mios-version-min
-build_target release aarch64-apple-ios-sim iphonesimulator -mios-simulator-version-min
+echo "iOS target build complete ✅"
 
-# Debug builds
-build_target debug aarch64-apple-ios iphoneos -mios-version-min
-build_target debug aarch64-apple-ios-sim iphonesimulator -mios-simulator-version-min
+echo "Building iOS Simulator target"
+build_target release aarch64-apple-ios-sim iphonesimulator -mios-simulator-version-min
+echo "iOS Simulator target build complete ✅"
+
+# Debug builds (optional)
+if [ "$BUILD_DEBUG" = "true" ]; then
+  echo "Building iOS debug target"
+  build_target debug aarch64-apple-ios iphoneos -mios-version-min
+  echo "iOS debug target build complete ✅"
+
+  echo "Building iOS Simulator debug target"
+  build_target debug aarch64-apple-ios-sim iphonesimulator -mios-simulator-version-min
+  echo "iOS Simulator debug target build complete ✅"
+fi
 
 # Generate XCFrameworks
+echo "Creating XCFrameworks"
 xcodebuild -create-xcframework \
   -library ./core/target/aarch64-apple-ios/release/lib${SOURCE_LIB_NAME}.a \
   -headers ./core/target/include \
   -library ./core/target/aarch64-apple-ios-sim/release/lib${SOURCE_LIB_NAME}.a \
   -headers ./core/target/include \
-  -output ./target/universal-ios/${DEST_LIB_NAME}.xcframework
+  -output "${TARGET_DIR}/${DEST_LIB_NAME}.xcframework"
+echo "XCFramework creation complete ✅"
 
-xcodebuild -create-xcframework \
-  -library ./core/target/aarch64-apple-ios/debug/lib${SOURCE_LIB_NAME}.a \
-  -headers ./core/target/include \
-  -library ./core/target/aarch64-apple-ios-sim/debug/lib${SOURCE_LIB_NAME}.a \
-  -headers ./core/target/include \
-  -output ./target/universal-ios/${DEST_LIB_NAME}_Debug.xcframework
+if [ "$BUILD_DEBUG" = "true" ]; then
+  echo "Creating Debug XCFrameworks"
+  xcodebuild -create-xcframework \
+    -library ./core/target/aarch64-apple-ios/debug/lib${SOURCE_LIB_NAME}.a \
+    -headers ./core/target/include \
+    -library ./core/target/aarch64-apple-ios-sim/debug/lib${SOURCE_LIB_NAME}.a \
+    -headers ./core/target/include \
+    -output "${TARGET_DIR}/${DEST_LIB_NAME}_Debug.xcframework"
+  echo "Debug XCFramework creation complete ✅"
+fi

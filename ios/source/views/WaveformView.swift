@@ -19,7 +19,7 @@ struct WaveformView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.thinMaterial)
-        .cornerRadius(Layout.corderRadiusMedium)
+        .cornerRadius(Layout.cornerRadiusMedium)
     }
 }
 
