@@ -23,6 +23,25 @@ struct Colours {
     static let neutral6 = Color("neutral-6")
     static let neutral7 = Color("neutral-7")
     static let neutral8 = Color("neutral-8")
+    
+    // Gradients
+    static let primaryGradient = LinearGradient(
+        colors: [theme1, theme1],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    
+    static let buttonGradient = LinearGradient(
+        colors: [theme1, theme1],
+        startPoint: .leading,
+        endPoint: .trailing
+    )
+    
+    static let disabledGradient = LinearGradient(
+        colors: [.gray, .gray],
+        startPoint: .leading,
+        endPoint: .trailing
+    )
 
     static func neutralText(against contrast: Color) -> Color {
         switch contrast {
