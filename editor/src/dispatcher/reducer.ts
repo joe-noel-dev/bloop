@@ -235,7 +235,7 @@ export const reducer = (action: Action, state: AppState): AppState => {
     case SHOW_ERROR_NOTIFICATION: {
       const {message} = action as ShowErrorNotificationAction;
       newState.errorNotification = {
-        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
         message,
         timestamp: Date.now(),
       };
