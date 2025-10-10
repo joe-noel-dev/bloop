@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bloop Unified Color Scheme</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 40px;
+            background: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+            color: #1e1e21;
+        }
+        
+        .subtitle {
+            color: #5a5a64;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+        
+        .section {
+            background: white;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section h2 {
+            margin-bottom: 20px;
+            color: #1e1e21;
+            border-bottom: 2px solid #e0e0e3;
+            padding-bottom: 10px;
+        }
+        
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .color-card {
+            border: 1px solid #e0e0e3;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .color-swatch {
+            height: 100px;
+            width: 100%;
+        }
+        
+        .color-info {
+            padding: 15px;
+            background: #fafafa;
+        }
+        
+        .color-name {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1e1e21;
+        }
+        
+        .color-hex {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #5a5a64;
+            margin-bottom: 4px;
+        }
+        
+        .color-platforms {
+            font-size: 11px;
+            color: #797985;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e0e0e3;
+        }
+        
+        .platform-tag {
+            display: inline-block;
+            background: #e0e0e3;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+        
+        .neutral-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 10px;
+        }
+        
+        .neutral-card {
+            text-align: center;
+        }
+        
+        .neutral-swatch {
+            height: 80px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            border: 1px solid #e0e0e3;
+        }
+        
+        .neutral-label {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .neutral-hex {
+            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            color: #797985;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bloop Unified Color Scheme</h1>
+    <p class="subtitle">Visual reference for colors synchronized across Editor, iOS, and Core platforms</p>
+    
+    <div class="section">
+        <h2>Theme Colors</h2>
+        <div class="color-grid">
+            <div class="color-card">
+                <div class="color-swatch" style="background: #ffab91;"></div>
+                <div class="color-info">
+                    <div class="color-name">Theme 1 (Primary)</div>
+                    <div class="color-hex">#ffab91</div>
+                    <div class="color-hex">rgb(255, 171, 145)</div>
+                    <div class="color-platforms">
+                        <div class="platform-tag">Editor: primary.main</div>
+                        <div class="platform-tag">iOS: theme1</div>
+                        <div class="platform-tag">Core: PRIMARY</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="color-card">
+                <div class="color-swatch" style="background: #bcd8c1;"></div>
+                <div class="color-info">
+                    <div class="color-name">Theme 2 (Mint Green)</div>
+                    <div class="color-hex">#bcd8c1</div>
+                    <div class="color-hex">rgb(188, 216, 193)</div>
+                    <div class="color-platforms">
+                        <div class="platform-tag">Editor: palette.1</div>
+                        <div class="platform-tag">iOS: theme2</div>
+                        <div class="platform-tag">Core: palette::COLOR_1</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="color-card">
+                <div class="color-swatch" style="background: #388697;"></div>
+                <div class="color-info">
+                    <div class="color-name">Theme 3 (Teal)</div>
+                    <div class="color-hex">#388697</div>
+                    <div class="color-hex">rgb(56, 134, 151)</div>
+                    <div class="color-platforms">
+                        <div class="platform-tag">Editor: palette.3</div>
+                        <div class="platform-tag">iOS: theme3</div>
+                        <div class="platform-tag">Core: palette::COLOR_3</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="color-card">
+                <div class="color-swatch" style="background: #cc2936;"></div>
+                <div class="color-info">
+                    <div class="color-name">Theme 4 (Red)</div>
+                    <div class="color-hex">#cc2936</div>
+                    <div class="color-hex">rgb(204, 41, 54)</div>
+                    <div class="color-platforms">
+                        <div class="platform-tag">Editor: palette.4</div>
+                        <div class="platform-tag">iOS: theme4</div>
+                        <div class="platform-tag">Core: palette::COLOR_4</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="color-card">
+                <div class="color-swatch" style="background: #a93f55;"></div>
+                <div class="color-info">
+                    <div class="color-name">Theme 5 (Burgundy)</div>
+                    <div class="color-hex">#a93f55</div>
+                    <div class="color-hex">rgb(169, 63, 85)</div>
+                    <div class="color-platforms">
+                        <div class="platform-tag">Editor: palette.5</div>
+                        <div class="platform-tag">iOS: theme5</div>
+                        <div class="platform-tag">Core: palette::COLOR_5</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>Neutral Scale</h2>
+        <p style="margin-bottom: 20px; color: #5a5a64; font-size: 14px;">
+            Grayscale with subtle blue tint (HSL: 240°, 5%, varying lightness)
+        </p>
+        <div class="neutral-grid">
+            <div class="neutral-card">
+                <div class="neutral-swatch" style="background: #ffffff; border: 2px solid #e0e0e3;"></div>
+                <div class="neutral-label">N0</div>
+                <div class="neutral-hex">#ffffff</div>
+            </div>
+            <div class="neutral-card">
+                <div class="neutral-swatch" style="background: #e0e0e3;"></div>
+                <div class="neutral-label">N1</div>
+                <div class="neutral-hex">#e0e0e3</div>
+            </div>
+            <div class="neutral-card">
+                <div class="neutral-swatch" style="background: #bcbcc2;"></div>
+                <div class="neutral-label">N2</div>
+                <div class="neutral-hex">#bcbcc2</div>
+            </div>
+            <div class="neutral-card">
+                <div class="neutral-swatch" style="background: #a7a7b0;"></div>
+                <div class="neutral-label">N3</div>
+                <div class="neutral-hex">#a7a7b0</div>
+            </div>
+            <div class="neutral-card">
+                <div class="neutral-swatch" style="background: #797985;"></div>
+                <div class="neutral-label">N4</div>
+                <div class="neutral-hex">#797985</div>
+            </div>
+            <div class="neutral-card">
+                <div class="neutral-swatch" style="background: #5a5a64;"></div>
+                <div class="neutral-label" style="color: #e0e0e3;">N5</div>
+                <div class="neutral-hex" style="color: #bcbcc2;">#5a5a64</div>
+            </div>
+            <div class="neutral-card">
+                <div class="neutral-swatch" style="background: #3c3c42;"></div>
+                <div class="neutral-label" style="color: #e0e0e3;">N6</div>
+                <div class="neutral-hex" style="color: #bcbcc2;">#3c3c42</div>
+            </div>
+            <div class="neutral-card">
+                <div class="neutral-swatch" style="background: #1e1e21;"></div>
+                <div class="neutral-label" style="color: #e0e0e3;">N7</div>
+                <div class="neutral-hex" style="color: #bcbcc2;">#1e1e21</div>
+            </div>
+            <div class="neutral-card">
+                <div class="neutral-swatch" style="background: #000000;"></div>
+                <div class="neutral-label" style="color: #e0e0e3;">N8</div>
+                <div class="neutral-hex" style="color: #bcbcc2;">#000000</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>Background Colors</h2>
+        <div class="color-grid">
+            <div class="color-card">
+                <div class="color-swatch" style="background: #ffffff; border: 2px solid #e0e0e3;"></div>
+                <div class="color-info">
+                    <div class="color-name">Light Mode Background</div>
+                    <div class="color-hex">#ffffff</div>
+                    <div class="color-hex">rgb(255, 255, 255)</div>
+                    <div class="color-platforms">
+                        <div class="platform-tag">Editor: background</div>
+                        <div class="platform-tag">iOS: backgroundLight</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="color-card">
+                <div class="color-swatch" style="background: #1f1f20;"></div>
+                <div class="color-info">
+                    <div class="color-name">Dark Mode Background</div>
+                    <div class="color-hex">#1f1f20</div>
+                    <div class="color-hex">rgb(31, 31, 32)</div>
+                    <div class="color-platforms">
+                        <div class="platform-tag">Editor: backgroundDark</div>
+                        <div class="platform-tag">iOS: backgroundDark</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>Platform Reference</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f5f5f5;">
+                    <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e3;">Color</th>
+                    <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e3;">Editor (TypeScript)</th>
+                    <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e3;">iOS (Swift)</th>
+                    <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e0e0e3;">Core (Rust)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #e0e0e3;">Primary</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e0e0e3;"><code>colors.primary.main</code></td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e0e0e3;"><code>Colours.theme1</code></td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e0e0e3;"><code>theme::PRIMARY</code></td>
+                </tr>
+                <tr style="background: #fafafa;">
+                    <td style="padding: 12px; border-bottom: 1px solid #e0e0e3;">Palette 1</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e0e0e3;"><code>colors.palette[1]</code></td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e0e0e3;"><code>Colours.theme2</code></td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e0e0e3;"><code>palette::COLOR_1</code></td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #e0e0e3;">Neutral 4</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e0e0e3;"><code>colors.neutral[4]</code></td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e0e0e3;"><code>Colours.neutral4</code></td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e0e0e3;"><code>neutral::N4</code></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <footer style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #e0e0e3; color: #797985; font-size: 12px;">
+        <p>See <code>/docs/COLOR_SCHEME.md</code> for complete documentation</p>
+        <p>Source of truth: <code>editor/src/theme/tokens.ts</code></p>
+    </footer>
+</body>
+</html>
