@@ -4,6 +4,7 @@ import {Close} from '@mui/icons-material';
 import {useAppState} from '../state/AppState';
 import {useDispatcher} from '../dispatcher/dispatcher';
 import {hideErrorNotificationAction} from '../dispatcher/action';
+import {spacing} from '../theme';
 
 const AUTO_DISMISS_DELAY = 5000; // 5 seconds
 
@@ -34,7 +35,7 @@ export const ErrorNotificationBar: React.FC = () => {
         horizontal: 'center',
       }}
       sx={{
-        top: 16,
+        top: spacing.md,
         zIndex: 9999,
       }}
     >
@@ -42,8 +43,8 @@ export const ErrorNotificationBar: React.FC = () => {
         variant="soft"
         color="danger"
         sx={{
-          minWidth: 300,
-          maxWidth: 600,
+          minWidth: spacing.notificationMinWidth,
+          maxWidth: spacing.notificationMaxWidth,
           display: 'flex',
           alignItems: 'center',
           gap: 1,
