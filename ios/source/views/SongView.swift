@@ -310,7 +310,7 @@ private struct SampleDetailsEditor: View {
         .frame(maxWidth: .infinity)
         .padding(Layout.units(2))
         .background(Color(.secondarySystemBackground))
-        .cornerRadius(Layout.corderRadiusMedium)
+        .cornerRadius(Layout.cornerRadiusMedium)
         .fileImporter(isPresented: $editingSample, allowedContentTypes: [.wav]) { result in
             onSampleSelected(result)
         }
@@ -373,7 +373,7 @@ private struct SongDetailsEditor: View {
         }
         .padding(Layout.units(2))
         .background(Color(.secondarySystemBackground))
-        .cornerRadius(Layout.corderRadiusMedium)
+        .cornerRadius(Layout.cornerRadiusMedium)
         .onSubmit {
             switch focusedField {
             case .name:

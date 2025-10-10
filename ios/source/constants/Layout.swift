@@ -2,7 +2,7 @@ import Foundation
 
 struct Layout {
     static let cornerRadiusSmall = 2.0
-    static let corderRadiusMedium = 4.0
+    static let cornerRadiusMedium = 4.0
     static let cornerRadiusLarge = 8.0
     static let cornerRadiusXLarge = 12.0
 
