@@ -675,7 +675,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = "0.7.3 (bf259de)";
+				CURRENT_PROJECT_VERSION = "0.8.0 (4b58b18)";
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"source/app/Preview Content\"";
 				DEVELOPMENT_TEAM = "";
@@ -700,7 +700,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				MARKETING_VERSION = 0.7.3;
+				MARKETING_VERSION = "0.8.0";
 				PRODUCT_BUNDLE_IDENTIFIER = com.joenoel.bloop;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -723,7 +723,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = "0.7.3 (bf259de)";
+				CURRENT_PROJECT_VERSION = "0.8.0 (4b58b18)";
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"source/app/Preview Content\"";
 				DEVELOPMENT_TEAM = "";
@@ -748,7 +748,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				MARKETING_VERSION = 0.7.3;
+				MARKETING_VERSION = "0.8.0";
 				PRODUCT_BUNDLE_IDENTIFIER = com.joenoel.bloop;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -767,13 +767,13 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "0.7.3 (bf259de)";
+				CURRENT_PROJECT_VERSION = "0.8.0 (4b58b18)";
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 6J84F35UVP;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				MARKETING_VERSION = 0.7.3;
+				MARKETING_VERSION = "0.8.0";
 				PRODUCT_BUNDLE_IDENTIFIER = uk.co.joenoel.BloopTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
@@ -790,13 +790,13 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "0.7.3 (bf259de)";
+				CURRENT_PROJECT_VERSION = "0.8.0 (4b58b18)";
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 6J84F35UVP;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				MARKETING_VERSION = 0.7.3;
+				MARKETING_VERSION = "0.8.0";
 				PRODUCT_BUNDLE_IDENTIFIER = uk.co.joenoel.BloopTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
@@ -812,13 +812,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "0.7.3 (bf259de)";
+				CURRENT_PROJECT_VERSION = "0.8.0 (4b58b18)";
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 6J84F35UVP;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				MARKETING_VERSION = 0.7.3;
+				MARKETING_VERSION = "0.8.0";
 				PRODUCT_BUNDLE_IDENTIFIER = uk.co.joenoel.BloopUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
@@ -834,13 +834,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "0.7.3 (bf259de)";
+				CURRENT_PROJECT_VERSION = "0.8.0 (4b58b18)";
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 6J84F35UVP;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				MACOSX_DEPLOYMENT_TARGET = 13.3;
-				MARKETING_VERSION = 0.7.3;
+				MARKETING_VERSION = "0.8.0";
 				PRODUCT_BUNDLE_IDENTIFIER = uk.co.joenoel.BloopUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
