@@ -21,6 +21,7 @@ import {AudioControllerContext} from './audio/AudioControllerContext';
 import {AudioController, createAudioController} from './audio/AudioController';
 import {audioMiddleware} from './audio/AudioMiddleware';
 import {backendMiddleware} from './backend/BackendMiddleware';
+import {ErrorNotificationBar} from './components/ErrorNotificationBar';
 
 const App = () => {
   const backend = useMemo<Backend>(() => createBackend(), []);
@@ -107,6 +108,7 @@ const App = () => {
                     <TransportBar />
                   </>
                 )}
+                <ErrorNotificationBar />
               </Box>
             </ThemeWrapper>
           </AppStateContext.Provider>

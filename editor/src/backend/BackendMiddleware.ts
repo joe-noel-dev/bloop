@@ -24,6 +24,7 @@ import {
   SignInAction,
   SIGN_OUT,
   updateSongAction,
+  showErrorNotificationAction,
 } from '../dispatcher/action';
 import {Backend, DbProject} from './Backend';
 import Long from 'long';
@@ -48,8 +49,19 @@ export const backendMiddleware =
     switch (action.type) {
       case SIGN_IN: {
         const {userId, password} = action as SignInAction;
-        const user = await backend.signIn(userId, password);
-        console.debug('Signed in user:', user);
+
+        try {
+          const user = await backend.signIn(userId, password);
+          console.debug('Signed in user:', user);
+        } catch (error) {
+          console.error('Failed to sign in:', error);
+          api.dispatch(
+            showErrorNotificationAction(
+              'Failed to sign in. Please check your credentials and try again.'
+            )
+          );
+        }
+
         break;
       }
 
@@ -65,69 +77,94 @@ export const backendMiddleware =
         const {sample, songId} = action as AddSampleAction;
 
         if (!state.projectInfo) {
-          console.error('No project info available. Cannot add sample.');
-          break;
-        }
-
-        const sampleDetails = await addSampleToSong(
-          backend,
-          state.project,
-          state.projectInfo.id,
-          songId,
-          sample
-        );
-
-        if (!sampleDetails) {
-          console.error('Failed to add sample to song');
-          break;
-        }
-
-        const song = state.project.songs.find((s) => s.id.equals(songId));
-
-        if (!song) {
-          console.error(`Song with ID ${songId} not found`);
-          break;
-        }
-
-        api.dispatch(
-          updateSongAction({
-            ...song,
-            tempo: sampleDetails.tempo ?? song.tempo,
-            sample: sampleDetails,
-          })
-        );
-
-        break;
-      }
-
-      case CREATE_PROJECT: {
-        const [project, info] = await backend.createProject();
-        api.dispatch(setProjectInfoAction(info));
-        api.dispatch(setProjectAction(project));
-        api.dispatch(loadProjectsAction());
-        break;
-      }
-
-      case LOAD_PROJECT: {
-        const {projectId} = action as LoadProjectAction;
-        const requestId = createRequestId('LOAD_PROJECT', projectId);
-
-        // Prevent duplicate concurrent requests for the same project
-        if (pendingRequests.has(requestId)) {
-          console.debug(
-            `Project load for ${projectId} already in progress, skipping duplicate request`
+          api.dispatch(
+            showErrorNotificationAction(
+              'Create or load a project to add a sample.'
+            )
           );
           break;
         }
 
         try {
+          const sampleDetails = await addSampleToSong(
+            backend,
+            state.project,
+            state.projectInfo.id,
+            songId,
+            sample
+          );
+
+          if (!sampleDetails) {
+            throw new Error('Sample details are undefined');
+          }
+
+          const song = state.project.songs.find((s) => s.id.equals(songId));
+
+          if (!song) {
+            throw new Error(`Song with ID ${songId} not found`);
+          }
+
+          api.dispatch(
+            updateSongAction({
+              ...song,
+              tempo: sampleDetails.tempo ?? song.tempo,
+              sample: sampleDetails,
+            })
+          );
+        } catch (error) {
+          console.error('Failed to add sample:', error);
+          api.dispatch(
+            showErrorNotificationAction(
+              'Failed to add sample. Please try again.'
+            )
+          );
+        }
+
+        break;
+      }
+
+      case CREATE_PROJECT: {
+        try {
+          const [project, info] = await backend.createProject();
+          api.dispatch(setProjectInfoAction(info));
+          api.dispatch(setProjectAction(project));
+          api.dispatch(loadProjectsAction());
+        } catch (error) {
+          console.error('Failed to create project:', error);
+          api.dispatch(
+            showErrorNotificationAction(
+              'Failed to create project. Please try again.'
+            )
+          );
+        }
+        break;
+      }
+
+      case LOAD_PROJECT: {
+        const {projectId} = action as LoadProjectAction;
+
+        const requestId = createRequestId('LOAD_PROJECT', projectId);
+
+        try {
+          // Prevent duplicate concurrent requests for the same project
+          if (pendingRequests.has(requestId)) {
+            console.debug(
+              `Project load for ${projectId} already in progress, skipping duplicate request`
+            );
+            break;
+          }
+
           pendingRequests.add(requestId);
           const [project, info] = await backend.loadProject(projectId);
           api.dispatch(setProjectInfoAction(info));
           api.dispatch(setProjectAction(project));
         } catch (error) {
           console.error(`Failed to load project ${projectId}:`, error);
-          throw error;
+          api.dispatch(
+            showErrorNotificationAction(
+              `Failed to load project. Please try again.`
+            )
+          );
         } finally {
           pendingRequests.delete(requestId);
         }
@@ -172,7 +209,11 @@ export const backendMiddleware =
           } catch (error) {
             console.error(`Failed to update project on backend: ${error}`);
             api.dispatch(setSaveStateAction('idle'));
-            throw error;
+            api.dispatch(
+              showErrorNotificationAction(
+                'Failed to save project. Please try again.'
+              )
+            );
           } finally {
             pendingRequests.delete(requestId);
           }
@@ -221,7 +262,11 @@ export const backendMiddleware =
           api.dispatch(setProjectsAction(projects));
         } catch (error) {
           console.error('Failed to fetch projects:', error);
-          throw error;
+          api.dispatch(
+            showErrorNotificationAction(
+              'Failed to fetch projects. Please try again.'
+            )
+          );
         } finally {
           pendingRequests.delete(requestId);
         }

@@ -27,6 +27,9 @@ export const spacing = {
   modalMaxWidth: 600,
   modalMaxHeight: '80vh',
   modalListMaxHeight: '50vh',
+  // Notification dimensions
+  notificationMinWidth: 300,
+  notificationMaxWidth: 600,
   // Empty state dimensions
   emptyStateIconSize: 48,
   emptyStatePaddingY: 6,

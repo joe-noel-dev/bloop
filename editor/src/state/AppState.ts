@@ -8,6 +8,12 @@ import {PlaybackState} from '../audio/AudioController';
 
 export type SaveState = 'idle' | 'saving' | 'saved';
 
+export interface ErrorNotification {
+  id: string;
+  message: string;
+  timestamp: number;
+}
+
 export interface AppState {
   project: Project;
   projectInfo: DbProject | null;
@@ -16,6 +22,7 @@ export interface AppState {
   saveState: SaveState;
   sampleStates: Map<Long, SampleInCache>;
   theme: ThemeState;
+  errorNotification?: ErrorNotification;
 }
 
 export const emptyAppState = (): AppState => ({
@@ -26,6 +33,7 @@ export const emptyAppState = (): AppState => ({
   saveState: 'idle',
   sampleStates: new Map(),
   theme: createThemeState(),
+  errorNotification: undefined,
 });
 
 export const AppStateContext = createContext<AppState>(emptyAppState());

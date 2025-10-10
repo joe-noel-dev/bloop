@@ -3,6 +3,7 @@ import {
   ADD_SECTION,
   ADD_SONG,
   AddSectionAction,
+  HIDE_ERROR_NOTIFICATION,
   MOVE_SECTION,
   MOVE_SONG,
   MoveSectionAction,
@@ -32,6 +33,8 @@ import {
   SetSaveStateAction,
   SetSampleStateAction,
   SetThemeModeAction,
+  SHOW_ERROR_NOTIFICATION,
+  ShowErrorNotificationAction,
   SPLIT_SECTION,
   SplitSectionAction,
   UPDATE_SECTION,
@@ -226,6 +229,21 @@ export const reducer = (action: Action, state: AppState): AppState => {
         mode,
         effectiveMode,
       };
+      break;
+    }
+
+    case SHOW_ERROR_NOTIFICATION: {
+      const {message} = action as ShowErrorNotificationAction;
+      newState.errorNotification = {
+        id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+        message,
+        timestamp: Date.now(),
+      };
+      break;
+    }
+
+    case HIDE_ERROR_NOTIFICATION: {
+      newState.errorNotification = undefined;
       break;
     }
   }

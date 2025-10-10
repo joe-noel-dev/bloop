@@ -25,12 +25,7 @@ export const LoginScreen = () => {
     }
     setError('');
 
-    try {
-      dispatch(signInAction(username, password));
-    } catch (err) {
-      setError('Error signing in');
-      console.error(err);
-    }
+    dispatch(signInAction(username, password));
   };
 
   return (
