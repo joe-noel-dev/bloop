@@ -1,13 +1,13 @@
 use iced::{
     widget::{button, column, row},
     Alignment::Center,
-    Color, Element,
+    Element,
     Length::Fill,
 };
 
 use crate::model::{PlaybackState, Progress};
 
-use super::{constants::display_units, icons::Icon, message::Message, metronome::metronome};
+use super::{constants::display_units, icons::Icon, message::Message, metronome::metronome, theme};
 
 pub fn transport_view(playback_state: &PlaybackState, progress: &Progress) -> Element<'static, Message> {
     let is_playing = playback_state.is_playing();
@@ -29,7 +29,7 @@ pub fn transport_view(playback_state: &PlaybackState, progress: &Progress) -> El
         })
         .style(move |theme, status| {
             if is_looping {
-                return button::primary(theme, status).with_background(Color::from_rgb(0.0, 1.0, 0.0));
+                return button::primary(theme, status).with_background(theme::PRIMARY);
             }
 
             button::primary(theme, status)
@@ -39,7 +39,7 @@ pub fn transport_view(playback_state: &PlaybackState, progress: &Progress) -> El
         .on_press(play_message)
         .style(move |theme, status| {
             if is_playing {
-                return button::primary(theme, status).with_background(Color::from_rgb(0.0, 1.0, 0.0));
+                return button::primary(theme, status).with_background(theme::PRIMARY);
             }
 
             button::primary(theme, status)

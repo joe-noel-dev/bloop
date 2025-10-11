@@ -6,6 +6,8 @@ This directory contains the centralized theming system for the Bloop editor.
 
 The theme system provides consistent design tokens across the application, replacing hardcoded values with centralized constants.
 
+**Important**: This Editor theme system serves as the **source of truth** for colors across all Bloop platforms (Editor, iOS app, and Core UI). See `/docs/COLOR_SCHEME.md` for the complete unified color scheme documentation.
+
 ## Usage
 
 ### Import theme tokens
@@ -46,10 +48,13 @@ const padding = getSpacing('md'); // Returns '16px'
 ## Available Tokens
 
 ### Colors
+
+**Note**: Colors defined here are synchronized across all platforms. See `/docs/COLOR_SCHEME.md` for cross-platform color mappings.
+
 - `colors.primary` - Primary color palette (main, light, dark)
 - `colors.secondary` - Secondary color palette  
 - `colors.neutral` - Neutral colors (0-8 scale)
-- `colors.palette` - Extended palette colors
+- `colors.palette` - Extended palette colors (1-5)
 
 ### Shadows
 - `shadows.level1/2/3` - Standard elevation shadows
