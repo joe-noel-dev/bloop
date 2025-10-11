@@ -2,7 +2,7 @@ use iced::{widget::row, Color, Element};
 
 use crate::model::{PlaybackState, PlayingState, Progress};
 
-use super::{constants::display_units, message::Message};
+use super::{constants::display_units, message::Message, theme};
 
 pub fn metronome(playback_state: &PlaybackState, progress: &Progress) -> Element<'static, Message> {
     let beat = (progress.section_beat % 4.0).floor() as i64;
@@ -12,9 +12,9 @@ pub fn metronome(playback_state: &PlaybackState, progress: &Progress) -> Element
         let is_active = is_playing && beat_index == beat;
         let size = display_units(8.0);
         let color = match (is_playing, is_active) {
-            (true, true) => Color::from_rgb8(0x32, 0xD9, 0x87),
-            (true, false) => Color::from_rgb8(0xDC, 0x30, 0x1A),
-            (false, _) => Color::from_rgb(0.1, 0.1, 0.1),
+            (true, true) => theme::PRIMARY,
+            (true, false) => theme::palette::COLOR_4,
+            (false, _) => theme::neutral::N6,
         };
         let border_radius = display_units(1.0);
 

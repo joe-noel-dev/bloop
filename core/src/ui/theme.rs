@@ -5,9 +5,13 @@ use iced::{Color, Theme};
 /// - editor/src/theme/tokens.ts
 /// - ios/source/constants/Colours.swift
 pub fn create_bloop_theme() -> Theme {
-    // Use a base theme and customize it
-    // For now, use a dark theme as base since our primary color works well on dark backgrounds
-    Theme::TokyoNightStorm
+    // Create a custom dark theme with our primary color
+    let mut palette = Theme::TokyoNightStorm.palette();
+    
+    // Override the primary color to use our coral/peach
+    palette.primary = PRIMARY;
+    
+    Theme::custom("Bloop".to_string(), palette)
 }
 
 /// Primary color - matches Editor primary.main (#ffab91)
