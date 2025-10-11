@@ -49,13 +49,13 @@ struct Colours {
     
     // Gradients
     static let primaryGradient = LinearGradient(
-        colors: [theme1, theme1],
+        colors: [theme1, theme1.opacity(0.8)],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
     
     static let buttonGradient = LinearGradient(
-        colors: [theme1, theme1],
+        colors: [theme1, theme1.opacity(0.8)],
         startPoint: .leading,
         endPoint: .trailing
     )
