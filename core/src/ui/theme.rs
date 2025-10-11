@@ -11,6 +11,9 @@ pub fn create_bloop_theme() -> Theme {
     // Override the primary color to use our coral/peach
     palette.primary = PRIMARY;
     
+    // Override the background to use our dark theme background (#1f1f20)
+    palette.background = BACKGROUND_DARK;
+    
     Theme::custom("Bloop".to_string(), palette)
 }
 
@@ -20,6 +23,14 @@ pub const PRIMARY: Color = Color {
     r: 1.0,      // 255/255
     g: 0.671,    // 171/255
     b: 0.569,    // 145/255
+    a: 1.0,
+};
+
+/// Dark background color - matches Editor backgroundDark (#1f1f20)
+pub const BACKGROUND_DARK: Color = Color {
+    r: 0.122,    // 31/255
+    g: 0.122,    // 31/255
+    b: 0.125,    // 32/255
     a: 1.0,
 };
 
