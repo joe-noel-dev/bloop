@@ -18,9 +18,13 @@ pub struct AudioPreferences {
     #[serde(default)]
     pub use_jack: bool,
 
+    /// Channel offset for main audio output (e.g., 0 for channels 1-2, 2 for channels 3-4).
+    /// This determines which output channels the main audio (samplers) will be routed to.
     #[serde(default = "default_main_channel_offset")]
     pub main_channel_offset: usize,
 
+    /// Channel offset for click/metronome output (e.g., 0 for channels 1-2, 2 for channels 3-4).
+    /// This determines which output channels the metronome will be routed to.
     #[serde(default = "default_click_channel_offset")]
     pub click_channel_offset: usize,
 }
