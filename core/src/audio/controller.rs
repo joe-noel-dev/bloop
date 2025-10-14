@@ -16,7 +16,7 @@ use crate::{
 use futures::StreamExt;
 use futures_channel::mpsc;
 use log::{error, info};
-use rawdio::{connect_nodes, create_engine_with_options, Context, EngineOptions, Mixer, Sampler, Timestamp};
+use rawdio::{connect_nodes, create_engine_with_options, AudioBuffer, Context, EngineOptions, Mixer, Sampler, Timestamp};
 use std::{
     collections::{HashMap, HashSet},
     path::PathBuf,
@@ -41,6 +41,7 @@ pub struct AudioController {
     mixer: Mixer,
     sequencer: Sequencer,
     tick_interval: tokio::time::Interval,
+    preferences: AudioPreferences,
 }
 
 impl AudioController {
@@ -56,9 +57,10 @@ impl AudioController {
 
         let metronome = Metronome::new(context.as_ref());
 
-        // If available, metronome is on output 3-4
-        if preferences.output_channel_count >= 4 {
-            metronome.output_node().connect_channels_to(&mixer.node, 0, 2, 2);
+        // Route metronome to the specified click channel offset
+        let click_offset = preferences.click_channel_offset;
+        if preferences.output_channel_count >= click_offset + 2 {
+            metronome.output_node().connect_channels_to(&mixer.node, 0, click_offset, 2);
         }
 
         context.start();
@@ -86,6 +88,7 @@ impl AudioController {
             mixer,
             sequencer: Sequencer::default(),
             tick_interval: tokio::time::interval(Duration::from_secs_f64(1.0 / 60.0)),
+            preferences,
         }
     }
 
@@ -179,9 +182,14 @@ impl AudioController {
         info!("Sample converted: {}", result.sample_id);
 
         let event_channel_capacity = 1024;
+        
+        // Route sampler to the specified main channel offset
+        let main_offset = self.preferences.main_channel_offset;
+        let audio_channel_count = audio_data.channel_count();
+        let channel_count = audio_channel_count.min(self.preferences.output_channel_count - main_offset);
+        
         let sampler = Sampler::new_with_event_capacity(self.context.as_ref(), audio_data, event_channel_capacity);
-
-        connect_nodes!(sampler => self.mixer);
+        sampler.node.connect_channels_to(&self.mixer.node, 0, main_offset, channel_count);
 
         self.samplers.insert(result.sample_id, sampler);
     }
