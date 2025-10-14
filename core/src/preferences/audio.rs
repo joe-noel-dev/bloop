@@ -17,6 +17,12 @@ pub struct AudioPreferences {
 
     #[serde(default)]
     pub use_jack: bool,
+
+    #[serde(default = "default_main_channel_offset")]
+    pub main_channel_offset: usize,
+
+    #[serde(default = "default_click_channel_offset")]
+    pub click_channel_offset: usize,
 }
 
 fn default_sample_rate() -> usize {
@@ -31,6 +37,14 @@ fn default_output_channel_count() -> usize {
     2
 }
 
+fn default_main_channel_offset() -> usize {
+    0
+}
+
+fn default_click_channel_offset() -> usize {
+    2
+}
+
 impl Default for AudioPreferences {
     fn default() -> Self {
         Self {
@@ -39,6 +53,8 @@ impl Default for AudioPreferences {
             buffer_size: default_buffer_size(),
             output_channel_count: default_output_channel_count(),
             use_jack: false,
+            main_channel_offset: default_main_channel_offset(),
+            click_channel_offset: default_click_channel_offset(),
         }
     }
 }
