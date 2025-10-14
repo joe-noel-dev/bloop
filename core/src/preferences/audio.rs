@@ -58,3 +58,39 @@ impl Default for AudioPreferences {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_audio_preferences() {
+        let prefs = AudioPreferences::default();
+        assert_eq!(prefs.sample_rate, 48_000);
+        assert_eq!(prefs.buffer_size, 512);
+        assert_eq!(prefs.output_channel_count, 2);
+        assert_eq!(prefs.main_channel_offset, 0);
+        assert_eq!(prefs.click_channel_offset, 2);
+        assert_eq!(prefs.use_jack, false);
+    }
+
+    #[test]
+    fn test_serde_with_defaults() {
+        // Test that missing fields use defaults
+        let json = r#"{}"#;
+        let prefs: AudioPreferences = serde_json::from_str(json).unwrap();
+        assert_eq!(prefs.sample_rate, 48_000);
+        assert_eq!(prefs.main_channel_offset, 0);
+        assert_eq!(prefs.click_channel_offset, 2);
+    }
+
+    #[test]
+    fn test_serde_with_custom_offsets() {
+        // Test serialization/deserialization with custom offsets
+        let json = r#"{"mainChannelOffset": 2, "clickChannelOffset": 4}"#;
+        let prefs: AudioPreferences = serde_json::from_str(json).unwrap();
+        assert_eq!(prefs.main_channel_offset, 2);
+        assert_eq!(prefs.click_channel_offset, 4);
+    }
+}
+
