@@ -1,4 +1,4 @@
-use iced::{widget::row, Color, Element};
+use iced::{widget::row, Element};
 
 use crate::model::{PlaybackState, PlayingState, Progress};
 
