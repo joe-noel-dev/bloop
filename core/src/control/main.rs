@@ -8,7 +8,7 @@ use crate::{
     control::user_store::UserStore,
     midi::MidiController,
     model::{Action, Project, Sample, Section, Tempo, INVALID_ID},
-    preferences::{read_preferences, Preferences},
+    preferences::read_preferences,
     samples::SamplesCache,
     switch,
 };

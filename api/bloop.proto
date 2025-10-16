@@ -303,3 +303,50 @@ message ProjectSyncResponse {
     SyncStatus status = 2;
 }
 
+message Preferences {
+    AudioPreferences audio = 1;
+    MidiPreferences midi = 2;
+    SwitchPreferences switch = 3;
+}
+
+message AudioPreferences {
+    string output_device = 1;
+    uint32 sample_rate = 2;
+    uint32 buffer_size = 3;
+    uint32 output_channel_count = 4; 
+    bool use_jack = 5;
+    uint32 main_channel_offset = 6;
+    uint32 click_channel_offset = 7;
+}
+
+message MidiPreferences {
+    string input_device = 1;
+}
+
+message SwitchPreferences {
+    repeated SwitchMapping mappings = 1;
+} 
+
+message SwitchMapping {
+    uint32 pin = 1;
+    Gesture gesture = 2;
+    Action action = 3;
+}
+
+enum Gesture {
+    GESTURE_UNKNOWN = 0;
+    GESTURE_PRESS = 1;
+    GESTURE_RELEASE = 2;
+    GESTURE_HOLD = 3;
+}
+
+enum Action {
+    ACTION_UNKNOWN = 0;
+    ACTION_PREVIOUS_SONG = 1;
+    ACTION_NEXT_SONG = 2;
+    ACTION_PREVIOUS_SECTION = 3;
+    ACTION_NEXT_SECTION = 4;
+    ACTION_QUEUE_SELECTED = 5;
+    ACTION_TOGGLE_LOOP = 6;
+    ACTION_TOGGLE_PLAY = 7;
+}

@@ -1,6 +1,7 @@
 use super::matcher::Matcher;
+use crate::bloop::MidiPreferences;
+use crate::midi::matcher::ExactMatcher;
 use crate::model::Action;
-use crate::{midi::matcher::ExactMatcher, preferences::MidiPreferences};
 use log::{error, info};
 use midir::{MidiInput, MidiInputConnection};
 use tokio::sync::mpsc;
@@ -19,6 +20,8 @@ struct Mapping {
 struct Context {
     action_tx: mpsc::Sender<Action>,
 }
+
+const DEFAULT_DEVICE_NAME: &str = "iCON G_Boar V1.03";
 
 fn get_mappings() -> Vec<Mapping> {
     vec![
@@ -83,7 +86,11 @@ impl MidiController {
     pub fn new(action_tx: mpsc::Sender<Action>, preferences: MidiPreferences) -> Self {
         let midi_input = MidiInput::new("Bloop").expect("Unable to connect to MIDI backend");
 
-        let desired_input_device_name = preferences.input_device.unwrap_or("iCON G_Boar V1.03".to_string());
+        let desired_input_device_name = if preferences.input_device.is_empty() {
+            DEFAULT_DEVICE_NAME.to_string()
+        } else {
+            preferences.input_device.clone()
+        };
 
         print_midi_inputs(&midi_input);
 

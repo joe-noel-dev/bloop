@@ -1,9 +1,8 @@
-use std::thread::JoinHandle;
-
+use crate::bloop::SwitchPreferences;
+use crate::model::Action;
 use log::info;
+use std::thread::JoinHandle;
 use tokio::sync::mpsc;
-
-use crate::{model::Action, preferences::SwitchPreferences};
 
 pub fn run(_action_tx: mpsc::Sender<Action>, _preferences: SwitchPreferences) -> JoinHandle<()> {
     std::thread::spawn(move || {

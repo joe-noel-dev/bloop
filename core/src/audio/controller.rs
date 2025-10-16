@@ -4,19 +4,21 @@ use super::{
     sampler_converter::{SampleConversionResult, SampleConverter},
     sequencer::Sequencer,
 };
+use crate::bloop::AudioPreferences;
 use crate::{
     audio::process::{create_audio_process, create_dummy_process},
     bloop::Response,
 };
 use crate::{
     model::{PlaybackState, PlayingState, Progress, Project, ID},
-    preferences::AudioPreferences,
     samples::SamplesCache,
 };
 use futures::StreamExt;
 use futures_channel::mpsc;
 use log::{error, info};
-use rawdio::{connect_nodes, create_engine_with_options, AudioBuffer, Context, EngineOptions, Mixer, Sampler, Timestamp};
+use rawdio::{
+    connect_nodes, create_engine_with_options, AudioBuffer, Context, EngineOptions, Mixer, Sampler, Timestamp,
+};
 use std::{
     collections::{HashMap, HashSet},
     path::PathBuf,
@@ -48,19 +50,21 @@ impl AudioController {
     pub fn new(response_tx: broadcast::Sender<Response>, preferences: AudioPreferences, use_dummy_audio: bool) -> Self {
         let (mut context, process) = create_engine_with_options(
             EngineOptions::default()
-                .with_sample_rate(preferences.sample_rate)
-                .with_maximum_channel_count(preferences.output_channel_count),
+                .with_sample_rate(preferences.sample_rate as usize)
+                .with_maximum_channel_count(preferences.output_channel_count as usize),
         );
 
-        let mixer = Mixer::unity(context.as_ref(), preferences.output_channel_count);
+        let mixer = Mixer::unity(context.as_ref(), preferences.output_channel_count as usize);
         connect_nodes!(mixer => "output");
 
         let metronome = Metronome::new(context.as_ref());
 
         // Route metronome to the specified click channel offset
-        let click_offset = preferences.click_channel_offset;
-        if preferences.output_channel_count >= click_offset + 2 {
-            metronome.output_node().connect_channels_to(&mixer.node, 0, click_offset, 2);
+        let click_offset = preferences.click_channel_offset as usize;
+        if preferences.output_channel_count as usize >= click_offset + 2 {
+            metronome
+                .output_node()
+                .connect_channels_to(&mixer.node, 0, click_offset, 2);
         }
 
         context.start();
@@ -76,7 +80,7 @@ impl AudioController {
         Self {
             context,
             realtime_process,
-            sample_converter: SampleConverter::new(conversion_tx, preferences.sample_rate),
+            sample_converter: SampleConverter::new(conversion_tx, preferences.sample_rate as usize),
             conversion_rx,
             response_tx,
             samples_being_converted: HashSet::new(),
@@ -182,14 +186,16 @@ impl AudioController {
         info!("Sample converted: {}", result.sample_id);
 
         let event_channel_capacity = 1024;
-        
+
         // Route sampler to the specified main channel offset
-        let main_offset = self.preferences.main_channel_offset;
+        let main_offset = self.preferences.main_channel_offset as usize;
         let audio_channel_count = audio_data.channel_count();
-        let channel_count = audio_channel_count.min(self.preferences.output_channel_count - main_offset);
-        
+        let channel_count = audio_channel_count.min(self.preferences.output_channel_count as usize - main_offset);
+
         let sampler = Sampler::new_with_event_capacity(self.context.as_ref(), audio_data, event_channel_capacity);
-        sampler.node.connect_channels_to(&self.mixer.node, 0, main_offset, channel_count);
+        sampler
+            .node
+            .connect_channels_to(&self.mixer.node, 0, main_offset, channel_count);
 
         self.samplers.insert(result.sample_id, sampler);
     }

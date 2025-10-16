@@ -1,11 +1,10 @@
+use crate::bloop::AudioPreferences;
 use cpal::{
     traits::{DeviceTrait, HostTrait, StreamTrait},
     Device, Host, Stream, StreamConfig,
 };
 use log::{debug, error, info};
 use rawdio::{AudioBuffer, AudioProcess, BorrowedAudioBuffer, MutableBorrowedAudioBuffer, OwnedAudioBuffer};
-
-use crate::preferences::AudioPreferences;
 
 pub trait AudioProcessRunner {}
 
@@ -54,8 +53,7 @@ fn get_stream_config(preferences: &AudioPreferences, device: &Device) -> StreamC
             return false;
         }
 
-        if config.min_sample_rate().0 > preferences.sample_rate as u32
-            || config.max_sample_rate().0 < preferences.sample_rate as u32
+        if config.min_sample_rate().0 > preferences.sample_rate || config.max_sample_rate().0 < preferences.sample_rate
         {
             return false;
         }
@@ -63,7 +61,7 @@ fn get_stream_config(preferences: &AudioPreferences, device: &Device) -> StreamC
         true
     }) {
         return perfect_config
-            .with_sample_rate(cpal::SampleRate(preferences.sample_rate as u32))
+            .with_sample_rate(cpal::SampleRate(preferences.sample_rate))
             .config();
     }
 
@@ -90,16 +88,16 @@ impl Process {
 
         print_output_devices(&host);
 
-        let preferred_device = match preferences.clone().output_device {
-            Some(preferred_device_name) => host
-                .output_devices()
+        let preferred_device = if !preferences.output_device.is_empty() {
+            host.output_devices()
                 .unwrap()
                 .find(|device| match device.name() {
-                    Ok(device_name) => device_name.contains(&preferred_device_name),
+                    Ok(device_name) => device_name.contains(&preferences.output_device),
                     Err(_) => false,
                 })
-                .or_else(|| host.default_output_device()),
-            None => host.default_output_device(),
+                .or_else(|| host.default_output_device())
+        } else {
+            host.default_output_device()
         };
 
         let device = preferred_device.expect("Couldn't connect to output audio device");
@@ -137,16 +135,16 @@ impl Process {
 
         // Allocate larger buffer size in case the system ignores our requested buffer size
         let maximum_buffer_size = 8192;
-        let input_buffer = OwnedAudioBuffer::new(maximum_buffer_size, 0, preferences.sample_rate);
+        let input_buffer = OwnedAudioBuffer::new(maximum_buffer_size, 0, preferences.sample_rate as usize);
         let mut output_buffer = OwnedAudioBuffer::new(
             maximum_buffer_size,
-            preferences.output_channel_count,
-            preferences.sample_rate,
+            preferences.output_channel_count as usize,
+            preferences.sample_rate as usize,
         );
 
         let timeout = None;
 
-        let channel_count = preferences.output_channel_count;
+        let channel_count = preferences.output_channel_count as usize;
 
         let audio_callback = move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
             let frame_count = data.len() / channel_count;
@@ -171,7 +169,7 @@ impl Process {
 
         Self {
             output_stream: stream,
-            output_channel_count: preferences.output_channel_count,
+            output_channel_count: preferences.output_channel_count as usize,
         }
     }
 }
@@ -189,15 +187,15 @@ impl DummyProcess {
     #[allow(dead_code)]
     pub fn new(mut audio_process: Box<dyn AudioProcess + Send>, preferences: AudioPreferences) -> DummyProcess {
         let input_buffer = OwnedAudioBuffer::new(
-            preferences.buffer_size,
-            preferences.output_channel_count,
-            preferences.sample_rate,
+            preferences.buffer_size as usize,
+            preferences.output_channel_count as usize,
+            preferences.sample_rate as usize,
         );
 
         let mut output_buffer = OwnedAudioBuffer::new(
-            preferences.buffer_size,
-            preferences.output_channel_count,
-            preferences.sample_rate,
+            preferences.buffer_size as usize,
+            preferences.output_channel_count as usize,
+            preferences.sample_rate as usize,
         );
 
         let audio_thread = std::thread::spawn(move || loop {
