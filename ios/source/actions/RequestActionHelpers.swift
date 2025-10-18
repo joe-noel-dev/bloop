@@ -247,3 +247,23 @@ func logOutAction() -> Action {
         }
     )
 }
+
+func getPreferencesAction() -> Action {
+    .sendRequest(
+        .with {
+            $0.get = .with {
+                $0.entity = .preferences
+            }
+        }
+    )
+}
+
+func updatePreferencesAction(_ preferences: Bloop_Preferences) -> Action {
+    .sendRequest(
+        .with {
+            $0.update = .with {
+                $0.preferences = preferences
+            }
+        }
+    )
+}

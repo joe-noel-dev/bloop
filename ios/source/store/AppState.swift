@@ -14,6 +14,7 @@ struct AppState {
     var waveforms: [Id: Bloop_WaveformData] = [:]
     var user: Bloop_User? = .none
     var errors: [String] = []
+    var preferences: Bloop_Preferences? = .none
 }
 
 func emptyProject() -> Bloop_Project {

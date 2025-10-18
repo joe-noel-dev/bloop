@@ -4,6 +4,7 @@ enum EditingEntity {
     case projects
     case projectName
     case songs
+    case settings
 }
 
 enum ToolbarAction {
@@ -41,6 +42,12 @@ struct MainToolbar: ToolbarContent {
                     Button("Rename Project", systemImage: "pencil") {
                         editingEntity = .projectName
                     }
+                }
+
+                Divider()
+
+                Button("Settings", systemImage: "gearshape") {
+                    editingEntity = .settings
                 }
 
                 Divider()
