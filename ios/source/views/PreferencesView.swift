@@ -9,7 +9,11 @@ struct PreferencesView: View {
     @State private var showingSaveConfirmation = false
     @State private var isSaving = false
 
-    init(preferences: Bloop_Preferences?, dispatch: @escaping Dispatch, onDismiss: @escaping () -> Void) {
+    init(
+        preferences: Bloop_Preferences?,
+        dispatch: @escaping Dispatch,
+        onDismiss: @escaping () -> Void
+    ) {
         self.preferences = preferences
         self.dispatch = dispatch
         self.onDismiss = onDismiss
