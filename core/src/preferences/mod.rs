@@ -48,7 +48,11 @@ pub fn read_preferences(preferences_dir: &Path) -> anyhow::Result<Preferences> {
 }
 
 pub fn default_preferences() -> Preferences {
-    Preferences { ..Default::default() }
+    Preferences {
+        audio: Some(default_audio_preferences()).into(),
+        midi: Some(default_midi_preferences()).into(),
+        ..Default::default()
+    }
 }
 
 pub fn default_audio_preferences() -> AudioPreferences {
