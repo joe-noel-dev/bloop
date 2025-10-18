@@ -320,7 +320,8 @@ impl MainController {
                         .with_project(&self.project)
                         .with_playback_state(self.audio_controller.get_playback_state())
                         .with_project_info(&self.project_info)
-                        .with_user(self.user.clone()),
+                        .with_user(self.user.clone())
+                        .with_preferences(&self.preferences),
                 )
             }
             Entity::PROJECTS => {
