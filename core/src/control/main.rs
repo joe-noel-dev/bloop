@@ -515,6 +515,7 @@ impl MainController {
             if let Err(error) = preferences::write_preferences(&self.preferences, &self.directories.root) {
                 warn!("Unable to write preferences: {error}");
             }
+            self.send_response(Response::default().with_preferences(&self.preferences));
         }
 
         Ok(project)
