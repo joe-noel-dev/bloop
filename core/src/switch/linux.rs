@@ -8,10 +8,7 @@ use std::{
 
 use tokio::sync::mpsc;
 
-use crate::{
-    model::Action,
-    preferences::{Gesture, SwitchMapping, SwitchPreferences},
-};
+use crate::bloop::*;
 
 pub fn run(action_tx: mpsc::Sender<Action>, preferences: SwitchPreferences) -> JoinHandle<()> {
     std::thread::spawn(move || run_thread(preferences, action_tx))
@@ -65,10 +62,18 @@ fn init_gpio_pins(preferences: &SwitchPreferences, gpio: &Gpio) -> Vec<InputPin>
         .mappings
         .iter()
         .map(|mapping| mapping.pin)
-        .collect::<HashSet<u8>>();
+        .collect::<HashSet<u32>>();
+
+    for &pin in pins.iter() {
+        if pin > u8::MAX as u32 {
+            warn!("Configured pin {} is out of range (> 255) and will be ignored.", pin);
+        }
+    }
 
     pins.iter()
-        .map(|&pin| {
+        .filter(|&&pin| pin <= u8::MAX as u32)
+        .map(|&pin| pin as u8)
+        .map(|pin| {
             let mut gpio_pin = gpio
                 .get(pin)
                 .unwrap_or_else(|_| panic!("Error getting pin: {}", pin))
@@ -94,13 +99,13 @@ fn on_press(
 
     let mapping = match mappings
         .iter()
-        .find(|mapping| mapping.pin == pin && mapping.gesture == Gesture::Press)
+        .find(|mapping| mapping.pin == pin as u32 && mapping.gesture.enum_value_or_default() == Gesture::GESTURE_PRESS)
     {
         Some(mapping) => mapping,
         None => return,
     };
 
-    let _ = action_tx.blocking_send(mapping.action);
+    let _ = action_tx.blocking_send(mapping.action.enum_value_or_default());
 }
 
 fn on_release(
@@ -117,30 +122,28 @@ fn on_release(
     };
 
     if duration <= HOLD_DURATION {
-        let mapping = match mappings
-            .iter()
-            .find(|mapping| mapping.pin == pin && mapping.gesture == Gesture::Release)
-        {
+        let mapping = match mappings.iter().find(|mapping| {
+            mapping.pin == pin as u32 && mapping.gesture.enum_value_or_default() == Gesture::GESTURE_RELEASE
+        }) {
             Some(mapping) => mapping,
             None => return,
         };
 
-        let _ = action_tx.blocking_send(mapping.action);
+        let _ = action_tx.blocking_send(mapping.action.enum_value_or_default());
     }
 }
 
 fn on_tick(press_times: &mut HashMap<u8, Instant>, mappings: &[SwitchMapping], action_tx: &mpsc::Sender<Action>) {
     for (index, press_time) in press_times.iter() {
         if press_time.elapsed() > HOLD_DURATION {
-            let mapping = match mappings
-                .iter()
-                .find(|mapping| mapping.pin == *index && mapping.gesture == Gesture::Hold)
-            {
+            let mapping = match mappings.iter().find(|mapping| {
+                mapping.pin == *index as u32 && mapping.gesture.enum_value_or_default() == Gesture::GESTURE_HOLD
+            }) {
                 Some(mapping) => mapping,
                 None => continue,
             };
 
-            let _ = action_tx.blocking_send(mapping.action);
+            let _ = action_tx.blocking_send(mapping.action.enum_value_or_default());
         }
     }
 

@@ -8,7 +8,7 @@ use crate::{
     control::user_store::UserStore,
     midi::MidiController,
     model::{Action, Project, Sample, Section, Tempo, INVALID_ID},
-    preferences::{read_preferences, Preferences},
+    preferences::{self, default_audio_preferences, default_midi_preferences, default_preferences, read_preferences},
     samples::SamplesCache,
     switch,
 };
@@ -48,6 +48,7 @@ struct MainController {
     user: Option<User>,
     local_backend: Arc<dyn Backend>,
     remote_backend: Arc<dyn Backend>,
+    directories: Directories,
 }
 
 impl MainController {
@@ -67,12 +68,12 @@ impl MainController {
             }
             Err(error) => {
                 warn!("Unable to read preferences, using default: {error}");
-                Default::default()
+                default_preferences()
             }
         };
 
-        let audio_preferences = preferences.clone().audio.unwrap_or_default();
-        let midi_preferences = preferences.clone().midi.unwrap_or_default();
+        let audio_preferences = preferences.clone().audio.unwrap_or(default_audio_preferences());
+        let midi_preferences = preferences.clone().midi.unwrap_or(default_midi_preferences());
 
         let auth = create_pocketbase_auth(app_config.api_url.clone(), &directories.backend);
         let remote_backend = create_pocketbase_backend(app_config.api_url, auth.clone());
@@ -103,6 +104,7 @@ impl MainController {
             user: None,
             local_backend,
             remote_backend,
+            directories,
         }
     }
 
@@ -341,6 +343,9 @@ impl MainController {
             Entity::WAVEFORM => {
                 self.waveform_store.get_waveform(get_request.id, &self.samples_cache)?;
             }
+            Entity::PREFERENCES => {
+                self.send_response(Response::default().with_preferences(&self.preferences));
+            }
             _ => (),
         };
 
@@ -398,13 +403,14 @@ impl MainController {
 
     fn handle_action(&mut self, action: Action) {
         match action {
-            Action::PreviousSong => self.previous_song(),
-            Action::NextSong => self.next_song(),
-            Action::PreviousSection => self.previous_section(),
-            Action::NextSection => self.next_section(),
-            Action::QueueSelected => self.queue_selected(),
-            Action::ToggleLoop => self.audio_controller.toggle_loop(),
-            Action::TogglePlay => self.audio_controller.toggle_play(),
+            Action::ACTION_UNKNOWN => (),
+            Action::ACTION_PREVIOUS_SONG => self.previous_song(),
+            Action::ACTION_NEXT_SONG => self.next_song(),
+            Action::ACTION_PREVIOUS_SECTION => self.previous_section(),
+            Action::ACTION_NEXT_SECTION => self.next_section(),
+            Action::ACTION_QUEUE_SELECTED => self.queue_selected(),
+            Action::ACTION_TOGGLE_LOOP => self.audio_controller.toggle_loop(),
+            Action::ACTION_TOGGLE_PLAY => self.audio_controller.toggle_play(),
         }
     }
 
@@ -483,7 +489,7 @@ impl MainController {
         }
     }
 
-    fn handle_update(&self, mut project: Project, update_request: &UpdateRequest) -> anyhow::Result<Project> {
+    fn handle_update(&mut self, mut project: Project, update_request: &UpdateRequest) -> anyhow::Result<Project> {
         if let Some(song) = update_request.song.as_ref() {
             project = project.replace_song(song)?;
         }
@@ -502,6 +508,14 @@ impl MainController {
             }
 
             project = new_project.clone();
+        }
+
+        if let Some(preferences) = update_request.preferences.as_ref() {
+            self.preferences = preferences.clone();
+            if let Err(error) = preferences::write_preferences(&self.preferences, &self.directories.root) {
+                warn!("Unable to write preferences: {error}");
+            }
+            self.send_response(Response::default().with_preferences(&self.preferences));
         }
 
         Ok(project)

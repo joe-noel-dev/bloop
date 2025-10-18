@@ -1,6 +1,6 @@
 use super::matcher::Matcher;
-use crate::model::Action;
-use crate::{midi::matcher::ExactMatcher, preferences::MidiPreferences};
+use crate::bloop::{Action, MidiPreferences};
+use crate::midi::matcher::ExactMatcher;
 use log::{error, info};
 use midir::{MidiInput, MidiInputConnection};
 use tokio::sync::mpsc;
@@ -20,35 +20,37 @@ struct Context {
     action_tx: mpsc::Sender<Action>,
 }
 
+const DEFAULT_DEVICE_NAME: &str = "iCON G_Boar V1.03";
+
 fn get_mappings() -> Vec<Mapping> {
     vec![
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 40_u8, 127_u8])),
-            action: Action::PreviousSong,
+            action: Action::ACTION_PREVIOUS_SONG,
         },
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 41_u8, 127_u8])),
-            action: Action::NextSong,
+            action: Action::ACTION_NEXT_SONG,
         },
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 42_u8, 127_u8])),
-            action: Action::QueueSelected,
+            action: Action::ACTION_QUEUE_SELECTED,
         },
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 44_u8, 127_u8])),
-            action: Action::PreviousSection,
+            action: Action::ACTION_PREVIOUS_SECTION,
         },
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 45_u8, 127_u8])),
-            action: Action::NextSection,
+            action: Action::ACTION_NEXT_SECTION,
         },
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 46_u8, 127_u8])),
-            action: Action::ToggleLoop,
+            action: Action::ACTION_TOGGLE_LOOP,
         },
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 47_u8, 127_u8])),
-            action: Action::TogglePlay,
+            action: Action::ACTION_TOGGLE_PLAY,
         },
     ]
 }
@@ -83,7 +85,11 @@ impl MidiController {
     pub fn new(action_tx: mpsc::Sender<Action>, preferences: MidiPreferences) -> Self {
         let midi_input = MidiInput::new("Bloop").expect("Unable to connect to MIDI backend");
 
-        let desired_input_device_name = preferences.input_device.unwrap_or("iCON G_Boar V1.03".to_string());
+        let desired_input_device_name = if preferences.input_device.is_empty() {
+            DEFAULT_DEVICE_NAME.to_string()
+        } else {
+            preferences.input_device.clone()
+        };
 
         print_midi_inputs(&midi_input);
 
