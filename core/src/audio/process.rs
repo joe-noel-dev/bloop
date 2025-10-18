@@ -144,7 +144,7 @@ impl Process {
 
         let timeout = None;
 
-        let channel_count = (preferences.output_channel_count as usize).min(2);
+        let channel_count = (preferences.output_channel_count as usize).max(2);
 
         let audio_callback = move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
             let frame_count = data.len() / channel_count;
