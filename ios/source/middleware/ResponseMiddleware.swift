@@ -61,5 +61,9 @@ class ResponseMiddleware: Middleware {
                 .setProjectSync(response.projectSync.projectID, response.projectSync.status)
             )
         }
+
+        if response.hasPreferences {
+            self.dispatch?(.setPreferences(response.preferences))
+        }
     }
 }

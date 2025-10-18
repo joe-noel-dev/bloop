@@ -157,6 +157,11 @@ struct SongView: View {
         .sheet(isPresented: editingEntityBinding(.songs)) {
             SongsView(state: state, dispatch: dispatch)
         }
+        .sheet(isPresented: editingEntityBinding(.settings)) {
+            PreferencesView(preferences: state.preferences, dispatch: dispatch) {
+                editingEntity = nil
+            }
+        }
         .navigationTitle(editMode?.wrappedValue == .active ? editSong.name : song.name)
         .onChange(of: editMode?.wrappedValue) { oldValue, newValue in
             onEditModeChanged(newValue)

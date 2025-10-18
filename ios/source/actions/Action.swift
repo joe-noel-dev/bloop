@@ -25,6 +25,7 @@ enum Action {
     case setUser(Bloop_User)
     case clearUser
     case addError(String)
+    case setPreferences(Bloop_Preferences)
 
     case connect(Server)
     case connectLocal

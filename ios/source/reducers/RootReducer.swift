@@ -56,6 +56,9 @@ func rootReducer(state: AppState, action: Action) -> AppState {
     case .clearUser:
         state.user = nil
 
+    case .setPreferences(let preferences):
+        state.preferences = preferences
+
     default:
         break
     }

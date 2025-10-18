@@ -17,6 +17,7 @@
 		740E75302D8F5330006F62C8 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 740E752F2D8F5330006F62C8 /* SwiftProtobuf */; };
 		740E75322D8F5478006F62C8 /* ApiHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75312D8F5474006F62C8 /* ApiHelpers.swift */; };
 		740E75462D917998006F62C8 /* MainToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 740E75452D917995006F62C8 /* MainToolbar.swift */; };
+		C0D70E6652683E101932D2EC /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E62F86FE8751503D22C048BA /* PreferencesView.swift */; };
 		7430DBBF2E99AB8C0015654B /* bloop.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7430DBBE2E99AB8C0015654B /* bloop.xcframework */; };
 		743FF9212DE7AFE4004375D5 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 743FF9202DE7AFE0004375D5 /* LoginView.swift */; };
 		7473163A2E1B104900BD602A /* ServerSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 747316392E1B104900BD602A /* ServerSelectionView.swift */; };
@@ -85,6 +86,7 @@
 		740E752C2D8F52AC006F62C8 /* bloop.pb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = bloop.pb.swift; path = ../api/out/swift/bloop.pb.swift; sourceTree = SOURCE_ROOT; };
 		740E75312D8F5474006F62C8 /* ApiHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiHelpers.swift; sourceTree = "<group>"; };
 		740E75452D917995006F62C8 /* MainToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainToolbar.swift; sourceTree = "<group>"; };
+		E62F86FE8751503D22C048BA /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		7430DBBE2E99AB8C0015654B /* bloop.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = bloop.xcframework; path = "../core/target/universal-ios/bloop.xcframework"; sourceTree = SOURCE_ROOT; };
 		743FF9202DE7AFE0004375D5 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		747316392E1B104900BD602A /* ServerSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerSelectionView.swift; sourceTree = "<group>"; };
@@ -178,6 +180,7 @@
 				C247A6E52A4D949A00001DB2 /* ContentView.swift */,
 				740E75452D917995006F62C8 /* MainToolbar.swift */,
 				C257F0262A8F806E00E2E77C /* MetronomeView.swift */,
+				E62F86FE8751503D22C048BA /* PreferencesView.swift */,
 				C25FA0CA2A54610C0066C539 /* ProgressBar.swift */,
 				C25FA0CC2A54888E0066C539 /* ProjectsView.swift */,
 				C229B9742A4D9DA30044F2C6 /* ProjectView.swift */,
@@ -478,6 +481,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				740E75462D917998006F62C8 /* MainToolbar.swift in Sources */,
+				C0D70E6652683E101932D2EC /* PreferencesView.swift in Sources */,
 				740E752D2D8F52AC006F62C8 /* bloop.pb.swift in Sources */,
 				740E751B2D882E0D006F62C8 /* ResponseMiddleware.swift in Sources */,
 				C27E2A662A51D5F200D48D91 /* Colours.swift in Sources */,
