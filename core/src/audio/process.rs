@@ -33,8 +33,8 @@ fn print_output_devices(host: &Host) {
 fn get_stream_config(preferences: &AudioPreferences, _device: &Device) -> StreamConfig {
     StreamConfig {
         channels: preferences.output_channel_count as u16,
-        sample_rate: cpal::SampleRate(preferences.sample_rate as u32),
-        buffer_size: cpal::BufferSize::Fixed(preferences.buffer_size as u32),
+        sample_rate: cpal::SampleRate(preferences.sample_rate),
+        buffer_size: cpal::BufferSize::Fixed(preferences.buffer_size),
     }
 }
 

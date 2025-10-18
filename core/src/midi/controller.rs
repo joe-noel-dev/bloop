@@ -1,7 +1,6 @@
 use super::matcher::Matcher;
-use crate::bloop::MidiPreferences;
+use crate::bloop::{Action, MidiPreferences};
 use crate::midi::matcher::ExactMatcher;
-use crate::model::Action;
 use log::{error, info};
 use midir::{MidiInput, MidiInputConnection};
 use tokio::sync::mpsc;
@@ -27,31 +26,31 @@ fn get_mappings() -> Vec<Mapping> {
     vec![
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 40_u8, 127_u8])),
-            action: Action::PreviousSong,
+            action: Action::ACTION_PREVIOUS_SONG,
         },
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 41_u8, 127_u8])),
-            action: Action::NextSong,
+            action: Action::ACTION_NEXT_SONG,
         },
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 42_u8, 127_u8])),
-            action: Action::QueueSelected,
+            action: Action::ACTION_QUEUE_SELECTED,
         },
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 44_u8, 127_u8])),
-            action: Action::PreviousSection,
+            action: Action::ACTION_PREVIOUS_SECTION,
         },
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 45_u8, 127_u8])),
-            action: Action::NextSection,
+            action: Action::ACTION_NEXT_SECTION,
         },
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 46_u8, 127_u8])),
-            action: Action::ToggleLoop,
+            action: Action::ACTION_TOGGLE_LOOP,
         },
         Mapping {
             matcher: Box::new(ExactMatcher::new(&[176_u8, 47_u8, 127_u8])),
-            action: Action::TogglePlay,
+            action: Action::ACTION_TOGGLE_PLAY,
         },
     ]
 }

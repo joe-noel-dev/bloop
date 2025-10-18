@@ -398,13 +398,14 @@ impl MainController {
 
     fn handle_action(&mut self, action: Action) {
         match action {
-            Action::PreviousSong => self.previous_song(),
-            Action::NextSong => self.next_song(),
-            Action::PreviousSection => self.previous_section(),
-            Action::NextSection => self.next_section(),
-            Action::QueueSelected => self.queue_selected(),
-            Action::ToggleLoop => self.audio_controller.toggle_loop(),
-            Action::TogglePlay => self.audio_controller.toggle_play(),
+            Action::ACTION_UNKNOWN => (),
+            Action::ACTION_PREVIOUS_SONG => self.previous_song(),
+            Action::ACTION_NEXT_SONG => self.next_song(),
+            Action::ACTION_PREVIOUS_SECTION => self.previous_section(),
+            Action::ACTION_NEXT_SECTION => self.next_section(),
+            Action::ACTION_QUEUE_SELECTED => self.queue_selected(),
+            Action::ACTION_TOGGLE_LOOP => self.audio_controller.toggle_loop(),
+            Action::ACTION_TOGGLE_PLAY => self.audio_controller.toggle_play(),
         }
     }
 
