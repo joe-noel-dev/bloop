@@ -64,8 +64,14 @@ fn init_gpio_pins(preferences: &SwitchPreferences, gpio: &Gpio) -> Vec<InputPin>
         .map(|mapping| mapping.pin)
         .collect::<HashSet<u32>>();
 
+    for &pin in pins.iter() {
+        if pin > u8::MAX as u32 {
+            warn!("Configured pin {} is out of range (> 255) and will be ignored.", pin);
+        }
+    }
+
     pins.iter()
-        .filter(|&&pin| pin < u8::MAX as u32)
+        .filter(|&&pin| pin <= u8::MAX as u32)
         .map(|&pin| pin as u8)
         .map(|pin| {
             let mut gpio_pin = gpio
