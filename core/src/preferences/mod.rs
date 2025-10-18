@@ -47,6 +47,23 @@ pub fn read_preferences(preferences_dir: &Path) -> anyhow::Result<Preferences> {
     read_preferences_from_str(&json)
 }
 
+pub fn write_preferences(preferences: &Preferences, preferences_dir: &Path) -> anyhow::Result<()> {
+    let mut preferences_path = preferences_dir.to_path_buf();
+    preferences_path.push("preferences.json");
+
+    info!("Writing preferences to {preferences_path:?}");
+
+    let print_options = protobuf_json_mapping::PrintOptions {
+        enum_values_int: false,
+        always_output_default_values: false,
+        ..Default::default()
+    };
+
+    let json = protobuf_json_mapping::print_to_string_with_options(preferences, &print_options)?;
+    std::fs::write(preferences_path, json)?;
+    Ok(())
+}
+
 pub fn default_preferences() -> Preferences {
     Preferences {
         audio: Some(default_audio_preferences()).into(),

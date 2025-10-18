@@ -8,7 +8,7 @@ use crate::{
     control::user_store::UserStore,
     midi::MidiController,
     model::{Action, Project, Sample, Section, Tempo, INVALID_ID},
-    preferences::{default_audio_preferences, default_midi_preferences, default_preferences, read_preferences},
+    preferences::{self, default_audio_preferences, default_midi_preferences, default_preferences, read_preferences},
     samples::SamplesCache,
     switch,
 };
@@ -48,6 +48,7 @@ struct MainController {
     user: Option<User>,
     local_backend: Arc<dyn Backend>,
     remote_backend: Arc<dyn Backend>,
+    directories: Directories,
 }
 
 impl MainController {
@@ -103,6 +104,7 @@ impl MainController {
             user: None,
             local_backend,
             remote_backend,
+            directories,
         }
     }
 
@@ -341,6 +343,9 @@ impl MainController {
             Entity::WAVEFORM => {
                 self.waveform_store.get_waveform(get_request.id, &self.samples_cache)?;
             }
+            Entity::PREFERENCES => {
+                self.send_response(Response::default().with_preferences(&self.preferences));
+            }
             _ => (),
         };
 
@@ -484,7 +489,7 @@ impl MainController {
         }
     }
 
-    fn handle_update(&self, mut project: Project, update_request: &UpdateRequest) -> anyhow::Result<Project> {
+    fn handle_update(&mut self, mut project: Project, update_request: &UpdateRequest) -> anyhow::Result<Project> {
         if let Some(song) = update_request.song.as_ref() {
             project = project.replace_song(song)?;
         }
@@ -503,6 +508,13 @@ impl MainController {
             }
 
             project = new_project.clone();
+        }
+
+        if let Some(preferences) = update_request.preferences.as_ref() {
+            self.preferences = preferences.clone();
+            if let Err(error) = preferences::write_preferences(&self.preferences, &self.directories.root) {
+                warn!("Unable to write preferences: {error}");
+            }
         }
 
         Ok(project)

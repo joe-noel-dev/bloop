@@ -103,6 +103,7 @@ enum Entity {
     SECTION = 4;
     SONG = 5;
     WAVEFORM = 6;
+    PREFERENCES = 7;
 }
 
 message AddRequest {
@@ -125,6 +126,7 @@ message UpdateRequest {
     Section section = 2;
     Sample sample = 3;
     Project project = 4;
+    Preferences preferences = 5;
 }
 
 message SaveProjectRequest {
@@ -203,6 +205,7 @@ message Response {
     ProjectInfo project_info = 11;
     ProjectSyncResponse project_sync = 12;
     repeated ProjectInfo cloud_projects = 13;
+    Preferences preferences = 14;
 } 
 
 message WaveformResponse {

@@ -71,4 +71,9 @@ impl crate::bloop::Response {
         self.project_sync = Some(project_sync.clone()).into();
         self
     }
+
+    pub fn with_preferences(mut self, preferences: &crate::bloop::Preferences) -> Self {
+        self.preferences = Some(preferences.clone()).into();
+        self
+    }
 }
