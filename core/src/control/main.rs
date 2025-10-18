@@ -8,7 +8,7 @@ use crate::{
     control::user_store::UserStore,
     midi::MidiController,
     model::{Action, Project, Sample, Section, Tempo, INVALID_ID},
-    preferences::read_preferences,
+    preferences::{default_audio_preferences, default_midi_preferences, default_preferences, read_preferences},
     samples::SamplesCache,
     switch,
 };
@@ -67,12 +67,12 @@ impl MainController {
             }
             Err(error) => {
                 warn!("Unable to read preferences, using default: {error}");
-                Default::default()
+                default_preferences()
             }
         };
 
-        let audio_preferences = preferences.clone().audio.unwrap_or_default();
-        let midi_preferences = preferences.clone().midi.unwrap_or_default();
+        let audio_preferences = preferences.clone().audio.unwrap_or(default_audio_preferences());
+        let midi_preferences = preferences.clone().midi.unwrap_or(default_midi_preferences());
 
         let auth = create_pocketbase_auth(app_config.api_url.clone(), &directories.backend);
         let remote_backend = create_pocketbase_backend(app_config.api_url, auth.clone());

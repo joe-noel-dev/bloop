@@ -47,23 +47,25 @@ pub fn read_preferences(preferences_dir: &Path) -> anyhow::Result<Preferences> {
     read_preferences_from_str(&json)
 }
 
-fn default_preferences() -> Preferences {
-    Preferences {
-        audio: Some(AudioPreferences {
-            output_device: String::new(),
-            sample_rate: 48_000,
-            buffer_size: 512,
-            output_channel_count: 2,
-            use_jack: false,
-            main_channel_offset: 0,
-            click_channel_offset: 2,
-            ..Default::default()
-        })
-        .into(),
-        midi: None.into(),
-        switch: None.into(),
+pub fn default_preferences() -> Preferences {
+    Preferences { ..Default::default() }
+}
+
+pub fn default_audio_preferences() -> AudioPreferences {
+    AudioPreferences {
+        output_device: String::new(),
+        sample_rate: 48_000,
+        buffer_size: 512,
+        output_channel_count: 2,
+        use_jack: false,
+        main_channel_offset: 0,
+        click_channel_offset: 2,
         ..Default::default()
     }
+}
+
+pub fn default_midi_preferences() -> MidiPreferences {
+    MidiPreferences { ..Default::default() }
 }
 
 #[cfg(test)]
