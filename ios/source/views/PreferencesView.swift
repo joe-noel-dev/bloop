@@ -148,7 +148,12 @@ struct PreferencesView: View {
 
     @ViewBuilder
     private var switchSection: some View {
-        Section(header: Text("Switches")) {
+        Section(
+            header: Text("Switches"),
+            footer: Button(action: addSwitchMapping) {
+                Label("Add Mapping", systemImage: "plus.circle.fill")
+            }
+        ) {
             if editedPreferences.switch.mappings.isEmpty {
                 Text("No switch mappings configured")
                     .foregroundColor(.secondary)
@@ -170,19 +175,34 @@ struct PreferencesView: View {
                         HStack {
                             Text("Gesture")
                             Spacer()
-                            Text(gestureName(editedPreferences.switch.mappings[index].gesture))
-                                .foregroundColor(.secondary)
+                            Picker("", selection: Binding(
+                                get: { editedPreferences.switch.mappings[index].gesture },
+                                set: { editedPreferences.switch.mappings[index].gesture = $0 }
+                            )) {
+                                ForEach(allGestures, id: \.self) { gesture in
+                                    Text(gestureName(gesture)).tag(gesture)
+                                }
+                            }
+                            .pickerStyle(.menu)
                         }
 
                         HStack {
                             Text("Action")
                             Spacer()
-                            Text(actionName(editedPreferences.switch.mappings[index].action))
-                                .foregroundColor(.secondary)
+                            Picker("", selection: Binding(
+                                get: { editedPreferences.switch.mappings[index].action },
+                                set: { editedPreferences.switch.mappings[index].action = $0 }
+                            )) {
+                                ForEach(allActions, id: \.self) { action in
+                                    Text(actionName(action)).tag(action)
+                                }
+                            }
+                            .pickerStyle(.menu)
                         }
                     }
                     .padding(.vertical, 4)
                 }
+                .onDelete(perform: deleteSwitchMapping)
             }
         }
     }
@@ -207,5 +227,29 @@ struct PreferencesView: View {
         case .togglePlay: return "Toggle Play"
         default: return "Unknown"
         }
+    }
+
+    private var allGestures: [Bloop_Gesture] {
+        [.press, .release, .hold]
+    }
+
+    private var allActions: [Bloop_Action] {
+        [
+            .previousSong, .nextSong, .previousSection, .nextSection,
+            .queueSelected, .toggleLoop, .togglePlay,
+        ]
+    }
+
+    private func addSwitchMapping() {
+        let newMapping = Bloop_SwitchMapping.with {
+            $0.pin = 0
+            $0.gesture = .press
+            $0.action = .togglePlay
+        }
+        editedPreferences.switch.mappings.append(newMapping)
+    }
+
+    private func deleteSwitchMapping(at offsets: IndexSet) {
+        editedPreferences.switch.mappings.remove(atOffsets: offsets)
     }
 }

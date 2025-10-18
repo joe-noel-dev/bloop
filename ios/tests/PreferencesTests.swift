@@ -63,4 +63,30 @@ final class PreferencesTests: XCTestCase {
             XCTFail("Expected sendRequest action")
         }
     }
+
+    func testSetPreferencesWithSwitchMappings() {
+        // Given
+        let initialState = AppState()
+        let mapping = Bloop_SwitchMapping.with {
+            $0.pin = 1
+            $0.gesture = .press
+            $0.action = .togglePlay
+        }
+        let preferences = Bloop_Preferences.with {
+            $0.switch = Bloop_SwitchPreferences.with {
+                $0.mappings = [mapping]
+            }
+        }
+
+        // When
+        let action = Action.setPreferences(preferences)
+        let newState = rootReducer(state: initialState, action: action)
+
+        // Then
+        XCTAssertNotNil(newState.preferences)
+        XCTAssertEqual(newState.preferences?.switch.mappings.count, 1)
+        XCTAssertEqual(newState.preferences?.switch.mappings.first?.pin, 1)
+        XCTAssertEqual(newState.preferences?.switch.mappings.first?.gesture, .press)
+        XCTAssertEqual(newState.preferences?.switch.mappings.first?.action, .togglePlay)
+    }
 }
