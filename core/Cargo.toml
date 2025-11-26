@@ -51,7 +51,7 @@ protobuf-json-mapping = "3.7.2"
 wiremock = "0.6.5"
 
 [build-dependencies]
-cbindgen = "0.29.0"
+cbindgen = "0.29.2"
 protobuf-codegen = "3.7.1"
 protoc-rust = "2.28.0"
 
