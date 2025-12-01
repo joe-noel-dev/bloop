@@ -30,7 +30,7 @@
     "react-dom": "^19.1.1",
     "react-is": "^19.1.0",
     "react-modal": "^3.16.1",
-    "ts-proto": "^2.7.5"
+    "ts-proto": "^2.8.3"
   },
   "scripts": {
     "start": "yarn run generate-api && vite",
