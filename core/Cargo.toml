@@ -10,7 +10,7 @@ edition = "2018"
 anyhow = "1.0.100"
 approx = "0.5.1"
 async-trait = "0.1.89"
-async_zip = { version = "0.0.17", features = ["full"] }
+async_zip = { version = "0.0.18", features = ["full"] }
 chrono = { version = "0.4.42", features = ["serde"] }
 cpal = { version = "0.16.0", features = ["jack"] }
 fern = "0.7.1"
