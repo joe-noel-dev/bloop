@@ -12,7 +12,7 @@
     "@fontsource/inter": "^5.2.8",
     "@mui/icons-material": "^7.3.4",
     "@mui/joy": "^5.0.0-beta.52",
-    "@mui/material": "^7.3.5",
+    "@mui/material": "^7.3.6",
     "@types/lodash.isequal": "^4.5.8",
     "@types/node": "^24.6.1",
     "@types/pako": "^2.0.4",
