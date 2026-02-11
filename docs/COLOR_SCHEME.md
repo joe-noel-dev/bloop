@@ -9,6 +9,7 @@ The Bloop color scheme is centralized and synchronized across all platforms. The
 ## Color Palette
 
 ### Primary Color
+
 - **Color**: `#ffab91` (warm coral/peach)
 - **Usage**: Main brand color, primary actions, highlights
 - **Platforms**:
@@ -124,7 +125,7 @@ When adding new colors or updating existing ones:
 
 ### Conversion Formula
 
-```
+```javascript
 // Hex to RGB
 R = parseInt(hex.substring(1, 3), 16)  // 0-255
 G = parseInt(hex.substring(3, 5), 16)  // 0-255
