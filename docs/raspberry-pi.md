@@ -131,3 +131,12 @@ autologin-session=openbox
   }
 }
 ```
+
+## `~/.config/labwc/autostart`
+
+```bash
+wlr-randr --output HDMI-A-1 --scale 1.8
+sleep 2
+export WGPU_BACKEND=vulcan
+bloop-core
+```

@@ -1,6 +1,8 @@
 use futures::stream::unfold;
 use iced::Subscription;
-use tokio::sync::mpsc;
+use std::hash::{Hash, Hasher};
+use std::time::Duration;
+use tokio::sync::{broadcast, mpsc};
 
 use crate::bloop::{Entity, Request, Response, TransportMethod};
 
@@ -9,6 +11,9 @@ use super::{message::Message, state::State};
 pub fn update(state: &mut State, message: Message) {
     match message {
         Message::ApiResponse(response) => handle_api_response(state, *response),
+        Message::Tick => {
+            // No-op: just triggers a redraw
+        }
         Message::StartPlayback => {
             let request = Request::transport_request(TransportMethod::PLAY);
             send_request(state.request_tx.clone(), request);
@@ -54,17 +59,36 @@ fn select_song_with_offset(state: &State, offset: i64) {
     send_request(state.request_tx.clone(), request);
 }
 
+struct ResponseSender(broadcast::Sender<Response>);
+
+impl Hash for ResponseSender {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        "api_response_subscription".hash(state);
+    }
+}
+
 pub fn subscription(state: &State) -> Subscription<Message> {
-    Subscription::run_with_id(
-        "api_response_subscription",
-        unfold(
-            state.response_tx.subscribe(),
-            async move |mut response_rx| match response_rx.recv().await {
+    let api_subscription = Subscription::run_with(ResponseSender(state.response_tx.clone()), |sender| {
+        unfold(sender.0.subscribe(), async move |mut response_rx| {
+            match response_rx.recv().await {
                 Ok(response) => Some((Message::ApiResponse(Box::new(response)), response_rx)),
                 Err(_) => None,
-            },
-        ),
-    )
+            }
+        })
+    });
+
+    // On Linux (Raspberry Pi), add a periodic heartbeat to force redraws
+    // This works around a rendering issue where the UI doesn't always update
+    #[cfg(target_os = "linux")]
+    {
+        let heartbeat = iced::time::every(Duration::from_millis(500)).map(|_| Message::Tick);
+        Subscription::batch([api_subscription, heartbeat])
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    {
+        api_subscription
+    }
 }
 
 fn handle_api_response(state: &mut State, response: Response) {

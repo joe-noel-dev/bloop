@@ -76,7 +76,7 @@ mod square {
             }
         }
 
-        fn layout(&self, _tree: &mut widget::Tree, _renderer: &Renderer, _limits: &layout::Limits) -> layout::Node {
+        fn layout(&mut self, _tree: &mut widget::Tree, _renderer: &Renderer, _limits: &layout::Limits) -> layout::Node {
             layout::Node::new(Size::new(self.side_length, self.side_length))
         }
 

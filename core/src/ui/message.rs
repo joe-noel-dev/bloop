@@ -11,4 +11,6 @@ pub enum Message {
     SelectNextSong,
     #[allow(unused)]
     SelectSection(ID),
+    /// Periodic tick to force UI redraw on platforms that need it (e.g., Raspberry Pi)
+    Tick,
 }

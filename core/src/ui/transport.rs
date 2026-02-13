@@ -29,20 +29,20 @@ pub fn transport_view(playback_state: &PlaybackState, progress: &Progress) -> El
         })
         .style(move |theme, status| {
             if is_looping {
-                return button::primary(theme, status).with_background(theme::PRIMARY);
+                button::primary(theme, status).with_background(theme::PRIMARY)
+            } else {
+                button::primary(theme, status).with_background(theme::neutral::N6)
             }
-
-            button::primary(theme, status)
         });
 
     let play_button = button(play_icon.to_svg_with_size(icon_dimension))
         .on_press(play_message)
         .style(move |theme, status| {
             if is_playing {
-                return button::primary(theme, status).with_background(theme::PRIMARY);
+                button::primary(theme, status).with_background(theme::PRIMARY)
+            } else {
+                button::primary(theme, status).with_background(theme::neutral::N6)
             }
-
-            button::primary(theme, status)
         });
 
     column![row![

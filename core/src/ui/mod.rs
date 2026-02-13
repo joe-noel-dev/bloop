@@ -10,7 +10,7 @@ mod theme;
 mod transport;
 mod view;
 
-use iced::{Size, Task};
+use iced::Size;
 use state::State;
 use tokio::sync::{broadcast, mpsc};
 
@@ -28,10 +28,17 @@ pub fn run_ui(response_tx: broadcast::Sender<Response>, request_tx: mpsc::Sender
         ..iced::window::Settings::default()
     };
 
-    iced::application("Bloop", control::update, view::render)
-        .theme(view::theme)
-        .window(window_settings)
-        .resizable(cfg!(target_os = "linux") == false)
-        .subscription(control::subscription)
-        .run_with(move || (state, Task::none()))
+    let state = std::cell::RefCell::new(Some(state));
+
+    iced::application(
+        move || state.borrow_mut().take().expect("boot called more than once"),
+        control::update,
+        view::render,
+    )
+    .title("Bloop")
+    .theme(view::theme)
+    .window(window_settings)
+    .resizable(cfg!(target_os = "linux") == false)
+    .subscription(control::subscription)
+    .run()
 }

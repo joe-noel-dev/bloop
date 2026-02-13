@@ -1,4 +1,7 @@
-use iced::widget::{svg, Svg};
+use iced::{
+    widget::{svg, Svg},
+    ContentFit,
+};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Icon {
@@ -29,6 +32,7 @@ impl Icon {
         self.to_svg()
             .width(dimension)
             .height(dimension)
+            .content_fit(ContentFit::Contain)
             .style(|theme, _status| svg::Style {
                 color: Some(theme.extended_palette().primary.base.text),
             })
