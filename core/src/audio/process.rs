@@ -18,8 +18,8 @@ fn print_output_devices(host: &Host) {
     let mut output = String::from("Output devices: \n");
 
     host.output_devices().unwrap().for_each(|device| {
-        let device_name = match device.name() {
-            Ok(name) => name,
+        let device_name = match device.description() {
+            Ok(description) => description.name().to_string(),
             Err(_) => return,
         };
 
@@ -33,7 +33,7 @@ fn print_output_devices(host: &Host) {
 fn get_stream_config(preferences: &AudioPreferences, _device: &Device) -> StreamConfig {
     StreamConfig {
         channels: preferences.output_channel_count as u16,
-        sample_rate: cpal::SampleRate(preferences.sample_rate),
+        sample_rate: preferences.sample_rate,
         buffer_size: cpal::BufferSize::Fixed(preferences.buffer_size),
     }
 }
@@ -53,16 +53,13 @@ fn get_stream_config(preferences: &AudioPreferences, device: &Device) -> StreamC
             return false;
         }
 
-        if config.min_sample_rate().0 > preferences.sample_rate || config.max_sample_rate().0 < preferences.sample_rate
-        {
+        if config.min_sample_rate() > preferences.sample_rate || config.max_sample_rate() < preferences.sample_rate {
             return false;
         }
 
         true
     }) {
-        return perfect_config
-            .with_sample_rate(cpal::SampleRate(preferences.sample_rate))
-            .config();
+        return perfect_config.with_sample_rate(preferences.sample_rate).config();
     }
 
     device
@@ -91,8 +88,8 @@ impl Process {
         let preferred_device = if !preferences.output_device.is_empty() {
             host.output_devices()
                 .unwrap()
-                .find(|device| match device.name() {
-                    Ok(device_name) => device_name.contains(&preferences.output_device),
+                .find(|device| match device.description() {
+                    Ok(description) => description.name().contains(&preferences.output_device),
                     Err(_) => false,
                 })
                 .or_else(|| host.default_output_device())
@@ -101,7 +98,7 @@ impl Process {
         };
 
         let device = preferred_device.expect("Couldn't connect to output audio device");
-        info!("Connecting to device: {}\n", device.name().unwrap());
+        info!("Connecting to device: {}\n", device.description().unwrap().name());
 
         device
             .supported_output_configs()
@@ -115,8 +112,8 @@ impl Process {
                 debug!(
                     "Supported output config: channels {}, sample rate {}-{}, buffer size {}-{}, format {:?}",
                     config.channels(),
-                    config.min_sample_rate().0,
-                    config.max_sample_rate().0,
+                    config.min_sample_rate(),
+                    config.max_sample_rate(),
                     buffer_size_range.0,
                     buffer_size_range.1,
                     config.sample_format()
@@ -131,7 +128,7 @@ impl Process {
 
         info!("Config buffer size: {:#?}\n", config.buffer_size);
         info!("Config channel count: {}\n", config.channels);
-        info!("Config sample rate: {}\n", config.sample_rate.0);
+        info!("Config sample rate: {}\n", config.sample_rate);
 
         // Allocate larger buffer size in case the system ignores our requested buffer size
         let maximum_buffer_size = 8192;
