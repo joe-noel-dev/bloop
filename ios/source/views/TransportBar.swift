@@ -4,6 +4,10 @@ struct TransportBar: View {
     var state: AppState
     var dispatch: Dispatch
 
+    #if os(iOS)
+        @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    #endif
+
     var body: some View {
         VStack(spacing: Layout.units(2)) {
 
@@ -11,6 +15,8 @@ struct TransportBar: View {
                 isPlaying: playbackState.playing == .playing,
                 sectionBeat: progress.sectionBeat
             )
+
+            beatPositionView
 
             HStack(alignment: .center, spacing: Layout.units(4)) {
                 backButton
@@ -42,6 +48,41 @@ struct TransportBar: View {
 
     private var progress: Bloop_Progress {
         state.progress
+    }
+
+    private var playingSong: Bloop_Song? {
+        project.songs.first { $0.id == playbackState.songID }
+    }
+
+    private var playingSection: Bloop_Section? {
+        playingSong?.sections.first { $0.id == playbackState.sectionID }
+    }
+
+    private var sectionBeatDisplay: Int {
+        Int(progress.sectionBeat)
+    }
+
+    private var songBeatDisplay: Int {
+        let sectionStart = playingSection?.start ?? 0
+        return Int(progress.sectionBeat + sectionStart)
+    }
+
+    private var isCompact: Bool {
+        #if os(iOS)
+            return horizontalSizeClass == .compact
+        #else
+            return false
+        #endif
+    }
+
+    @ViewBuilder
+    private var beatPositionView: some View {
+        if playbackState.playing == .playing {
+            HStack(spacing: Layout.units(3)) {
+                BeatCounter(label: isCompact ? nil : "Sec", value: sectionBeatDisplay)
+                BeatCounter(label: isCompact ? nil : "Song", value: songBeatDisplay, color: .secondary)
+            }
+        }
     }
 
     @ViewBuilder
@@ -176,6 +217,27 @@ struct TransportButton: View {
             Label(name, systemImage: systemImageName)
                 .labelStyle(.iconOnly)
                 .font(.system(size: 36))
+        }
+    }
+}
+
+struct BeatCounter: View {
+    var label: String?
+    var value: Int
+    var color: Color = .primary
+
+    var body: some View {
+        HStack(spacing: Layout.units(0.5)) {
+            if let label {
+                Text(label)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            Text(String(value))
+                .font(.system(.body, design: .monospaced))
+                .fontWeight(.bold)
+                .foregroundColor(color)
+                .frame(minWidth: Layout.units(5), alignment: .leading)
         }
     }
 }

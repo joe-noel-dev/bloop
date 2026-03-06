@@ -78,18 +78,18 @@ struct SectionView: View {
             if isPlaying {
                 GeometryReader { geometry in
                     Rectangle()
-                        .fill(Colours.playing)
+                        .fill(Colours.playing.opacity(0.3))
                         .frame(width: progress.sectionProgress * geometry.size.width)
                 }
             }
         }
         .background(isQueued ? .thickMaterial : .thinMaterial)
-        .onTapGesture {
+        .simultaneousGesture(TapGesture().onEnded {
             if !isSelected {
                 let action = selectSectionAction(section.id)
                 dispatch(action)
             }
-        }
+        })
         .cornerRadius(Layout.cornerRadiusSmall)
     }
 }
