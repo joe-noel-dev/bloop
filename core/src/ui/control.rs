@@ -1,6 +1,8 @@
+use std::hash::{Hash, Hasher};
+
 use futures::stream::unfold;
 use iced::Subscription;
-use tokio::sync::mpsc;
+use tokio::sync::{broadcast, mpsc};
 
 use crate::bloop::{Entity, Request, Response, TransportMethod};
 
@@ -54,17 +56,25 @@ fn select_song_with_offset(state: &State, offset: i64) {
     send_request(state.request_tx.clone(), request);
 }
 
+struct ResponseSubscription(broadcast::Sender<Response>);
+
+impl Hash for ResponseSubscription {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        "api_response_subscription".hash(state);
+    }
+}
+
+fn build_response_stream(data: &ResponseSubscription) -> impl futures::Stream<Item = Message> {
+    unfold(data.0.subscribe(), async move |mut response_rx| {
+        match response_rx.recv().await {
+            Ok(response) => Some((Message::ApiResponse(Box::new(response)), response_rx)),
+            Err(_) => None,
+        }
+    })
+}
+
 pub fn subscription(state: &State) -> Subscription<Message> {
-    Subscription::run_with_id(
-        "api_response_subscription",
-        unfold(
-            state.response_tx.subscribe(),
-            async move |mut response_rx| match response_rx.recv().await {
-                Ok(response) => Some((Message::ApiResponse(Box::new(response)), response_rx)),
-                Err(_) => None,
-            },
-        ),
-    )
+    Subscription::run_with(ResponseSubscription(state.response_tx.clone()), build_response_stream)
 }
 
 fn handle_api_response(state: &mut State, response: Response) {
