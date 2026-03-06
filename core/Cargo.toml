@@ -15,7 +15,7 @@ chrono = { version = "0.4.42", features = ["serde"] }
 cpal = { version = "0.17.0", features = ["jack"] }
 fern = "0.7.1"
 fixed = "1.29.0"
-futures = "0.3.31"
+futures = "0.3.32"
 futures-channel = "0.3.31"
 futures-lite = "2.6.1"
 futures-util = "0.3.31" 
