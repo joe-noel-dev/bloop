@@ -272,50 +272,48 @@ private struct SampleDetailsEditor: View {
     @State var editingSample: Bool = false
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: Layout.units(1)) {
-                Text("Sample Details")
-                    .font(.title2)
-                    .padding(.bottom, Layout.units(0.5))
+        VStack(alignment: .leading, spacing: Layout.units(2)) {
+            Text("Sample Details")
+                .font(.headline)
+                .foregroundStyle(.primary)
 
-                if song.hasSample {
-
-                    Text("Name")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-
+            if song.hasSample {
+                SongDetailField(label: "Name") {
                     Text(song.sample.name)
-
-                }
-
-                HStack {
-                    Button(
-                        song.hasSample ? "Replace Sample" : "Add Sample",
-                        systemImage: song.hasSample ? "arrow.2.squarepath" : "plus"
-                    ) {
-                        editingSample = true
-                    }
-                    .buttonStyle(.bordered)
-
-                    if song.hasSample {
-                        Button(role: .destructive) {
-                            var newSong = song
-                            newSong.clearSample()
-                            dispatch(updateSongAction(newSong))
-                        } label: {
-                            Label("Remove Sample", systemImage: "trash")
-                        }
-                        .buttonStyle(.bordered)
-                    }
+                        .font(.body)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, Layout.units(1.5))
+                        .padding(.vertical, Layout.units(1.25))
+                        .background(Color(.systemBackground))
+                        .cornerRadius(Layout.cornerRadiusLarge)
                 }
             }
 
-            Spacer()
+            HStack(spacing: Layout.units(1)) {
+                Button(
+                    song.hasSample ? "Replace Sample" : "Add Sample",
+                    systemImage: song.hasSample ? "arrow.2.squarepath" : "plus"
+                ) {
+                    editingSample = true
+                }
+                .buttonStyle(.bordered)
+
+                if song.hasSample {
+                    Button(role: .destructive) {
+                        var newSong = song
+                        newSong.clearSample()
+                        dispatch(updateSongAction(newSong))
+                    } label: {
+                        Label("Remove Sample", systemImage: "trash")
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Layout.units(2))
         .background(Color(.secondarySystemBackground))
-        .cornerRadius(Layout.cornerRadiusMedium)
+        .cornerRadius(Layout.cornerRadiusXLarge)
         .fileImporter(isPresented: $editingSample, allowedContentTypes: [.wav]) { result in
             onSampleSelected(result)
         }
@@ -344,17 +342,13 @@ private struct SongDetailsEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Layout.units(2)) {
             Text("Song Details")
-                .font(.title2)
-                .padding(.bottom, Layout.units(0.5))
+                .font(.headline)
+                .foregroundStyle(.primary)
 
             HStack(spacing: Layout.units(1.5)) {
-                VStack(alignment: .leading, spacing: Layout.units(0.5)) {
-                    Text("Name")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-
+                SongDetailField(label: "Name") {
                     TextField("Enter song name", text: $song.name)
-                        .textFieldStyle(.roundedBorder)
+                        .font(.body)
                         #if os(iOS)
                             .textInputAutocapitalization(.words)
                         #endif
@@ -363,22 +357,19 @@ private struct SongDetailsEditor: View {
                         .submitLabel(.next)
                 }
 
-                VStack(alignment: .leading, spacing: Layout.units(0.5)) {
-                    Text("Tempo (BPM)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-
+                SongDetailField(label: "Tempo (BPM)", systemImage: "metronome") {
                     TextField("120", value: $song.tempo.bpm, formatter: NumberFormatter())
+                        .font(.body.monospacedDigit())
                         .keyboardType(.decimalPad)
-                        .textFieldStyle(.roundedBorder)
                         .focused($focusedField, equals: .tempo)
                         .submitLabel(.done)
                 }
+                .frame(maxWidth: 160)
             }
         }
         .padding(Layout.units(2))
         .background(Color(.secondarySystemBackground))
-        .cornerRadius(Layout.cornerRadiusMedium)
+        .cornerRadius(Layout.cornerRadiusXLarge)
         .onSubmit {
             switch focusedField {
             case .name:
@@ -386,6 +377,35 @@ private struct SongDetailsEditor: View {
             default:
                 focusedField = nil
             }
+        }
+    }
+}
+
+private struct SongDetailField<Content: View>: View {
+    let label: String
+    var systemImage: String? = nil
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Layout.units(0.75)) {
+            if let systemImage {
+                Label(label, systemImage: systemImage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+            } else {
+                Text(label)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+            }
+
+            content
+                .textFieldStyle(.plain)
+                .padding(.horizontal, Layout.units(1.5))
+                .padding(.vertical, Layout.units(1.25))
+                .background(Color(.systemBackground))
+                .cornerRadius(Layout.cornerRadiusLarge)
         }
     }
 }
