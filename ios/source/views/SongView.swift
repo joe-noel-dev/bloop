@@ -282,10 +282,6 @@ private struct SampleDetailsEditor: View {
                     Text(song.sample.name)
                         .font(.body)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, Layout.units(1.5))
-                        .padding(.vertical, Layout.units(1.25))
-                        .background(Color(.systemBackground))
-                        .cornerRadius(Layout.cornerRadiusLarge)
                 }
             }
 
@@ -384,7 +380,13 @@ private struct SongDetailsEditor: View {
 private struct SongDetailField<Content: View>: View {
     let label: String
     var systemImage: String? = nil
-    @ViewBuilder let content: Content
+    let content: Content
+
+    init(label: String, systemImage: String? = nil, @ViewBuilder content: () -> Content) {
+        self.label = label
+        self.systemImage = systemImage
+        self.content = content()
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Layout.units(0.75)) {
