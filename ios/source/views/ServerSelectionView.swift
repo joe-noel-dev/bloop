@@ -147,6 +147,7 @@ struct ServerSelectionView: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 
     private var version: String {
