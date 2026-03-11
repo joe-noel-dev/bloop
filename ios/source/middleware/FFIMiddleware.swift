@@ -21,8 +21,13 @@ class FFIMiddleware: Middleware {
             )
         }
 
+        if case .connect = action {
+            shutDownCore()
+        }
+
         if case .disconnect = action {
             if state.connected == .local {
+                shutDownCore()
                 self.dispatch?(.setConnected(.none))
             }
         }
