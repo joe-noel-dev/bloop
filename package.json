@@ -2,5 +2,8 @@
     "private": true,
     "workspaces": [
         "editor"
-    ]
+    ],
+    "resolutions": {
+        "vite": "^7.3.1"
+    }
 }
