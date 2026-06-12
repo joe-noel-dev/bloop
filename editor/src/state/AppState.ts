@@ -1,4 +1,5 @@
 import {createContext, useContext} from 'react';
+import Long from 'long';
 import {Project} from '../api/bloop';
 import {DbProject} from '../backend/Backend';
 import {emptyProject} from '../api/project-helpers';
