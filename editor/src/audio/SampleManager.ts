@@ -1,3 +1,4 @@
+import Long from 'long';
 import {Project} from '../api/bloop';
 import {Backend, DbProject} from '../backend/Backend';
 import {setSampleStateAction} from '../dispatcher/action';

@@ -1,3 +1,4 @@
+import Long from 'long';
 import {AppState, emptyAppState} from '../state/AppState';
 import {Project} from '../api/bloop';
 import {SampleInCache} from '../audio/SampleManager';
