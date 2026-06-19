@@ -20,10 +20,10 @@ try {
     }
 
     private fun onReceivedRawResponse(data: ByteArray, dispatch: (AppAction) -> Unit) {
-        try {
-            dispatch(AppAction.ReceivedResponse(Bloop.Response.parseFrom(data)))
-        } catch (error: Throwable) {
-            dispatch(AppAction.AddError("Failed to decode response: ${error.message ?: "unknown error"}"))
-        }
+try {
+    dispatch(AppAction.ReceivedResponse(Bloop.Response.parseFrom(data)))
+} catch (error: Exception) {
+    dispatch(AppAction.AddError("Failed to decode response: ${error.message ?: "unknown error"}"))
+}
     }
 }
