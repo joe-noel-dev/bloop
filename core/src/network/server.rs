@@ -73,7 +73,7 @@ pub async fn listen_on_ip(ip: IpAddr, request_tx: mpsc::Sender<Request>, respons
 
 fn service_instance_name(ip: IpAddr) -> String {
     let fallback = safe_fallback_name(ip);
-    
+
     match hostname::get() {
         Ok(hostname) => match hostname.into_string() {
             Ok(raw_hostname) => {
