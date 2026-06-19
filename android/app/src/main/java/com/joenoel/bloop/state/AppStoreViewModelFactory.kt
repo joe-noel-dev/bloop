@@ -10,7 +10,11 @@ class AppStoreViewModelFactory(
         if (modelClass.isAssignableFrom(AppStoreViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return AppStoreViewModel(
-                middlewares = listOf(LocalCoreMiddleware(bloopHome = bloopHome))
+                middlewares = listOf(
+                    AppCodecMiddleware(),
+                    ResponseMiddleware(),
+                    LocalCoreMiddleware(bloopHome = bloopHome),
+                )
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

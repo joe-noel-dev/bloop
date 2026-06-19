@@ -23,6 +23,7 @@ sealed interface AppAction {
     data object ClearUser : AppAction
     data class AddError(val error: String) : AppAction
     data class SetPreferences(val preferences: Bloop.Preferences) : AppAction
+    data class SetLastResponseText(val text: String) : AppAction
 
     data class Connect(val server: ServerEndpoint) : AppAction
     data object ConnectLocal : AppAction

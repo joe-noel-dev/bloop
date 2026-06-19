@@ -25,6 +25,7 @@ object AppReducer {
             is AppAction.SetUser -> state.copy(user = action.user)
             AppAction.ClearUser -> state.copy(user = null)
             is AppAction.SetPreferences -> state.copy(preferences = action.preferences)
+            is AppAction.SetLastResponseText -> state.copy(lastResponseText = action.text)
             is AppAction.SetConnected -> state.copy(connected = action.connected)
 
             is AppAction.SendRequest,
