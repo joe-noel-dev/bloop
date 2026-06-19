@@ -1,10 +1,11 @@
-use std::{
-    fs::OpenOptions,
-    path::{Path, PathBuf},
-    time::SystemTime,
-};
+use std::path::PathBuf;
+#[cfg(not(target_os = "android"))]
+use std::{fs::OpenOptions, path::Path, time::SystemTime};
 
+#[cfg(not(target_os = "android"))]
 use anyhow::{Context, Result};
+#[cfg(target_os = "android")]
+use log::LevelFilter;
 
 pub struct LogOptions {
     log_to_console: bool,
@@ -40,29 +41,47 @@ impl LogOptions {
     }
 }
 
+#[cfg_attr(target_os = "android", allow(unused_variables))]
 pub fn set_up_logger(options: LogOptions) {
-    let mut logger = fern::Dispatch::new();
-
-    if options.log_to_console {
-        let file_logger = set_up_console_logger();
-        logger = logger.chain(file_logger);
+    #[cfg(target_os = "android")]
+    {
+        // Use Android's native logging sink so Rust logs show in logcat.
+        android_logger::init_once(
+            android_logger::Config::default()
+                .with_tag("bloop")
+                .with_max_level(LevelFilter::Debug),
+        );
+        return;
     }
 
-    if let Some(path) = options.log_to_file {
-        if let Ok(file_logger) = set_up_file_logger(&path) {
+    #[cfg(not(target_os = "android"))]
+    {
+        let mut logger = fern::Dispatch::new();
+
+        if options.log_to_console {
+            let file_logger = set_up_console_logger();
             logger = logger.chain(file_logger);
         }
-    }
 
-    if let Some(path) = options.log_dependencies_to_file {
-        if let Ok(deps_logger) = set_up_dependencies_logger(&path) {
-            logger = logger.chain(deps_logger);
+        if let Some(path) = options.log_to_file {
+            if let Ok(file_logger) = set_up_file_logger(&path) {
+                logger = logger.chain(file_logger);
+            }
+        }
+
+        if let Some(path) = options.log_dependencies_to_file {
+            if let Ok(deps_logger) = set_up_dependencies_logger(&path) {
+                logger = logger.chain(deps_logger);
+            }
+        }
+
+        if let Err(error) = logger.apply() {
+            eprintln!("Logger setup skipped: {error}");
         }
     }
-
-    logger.apply().expect("Failed to set up logger");
 }
 
+#[cfg(not(target_os = "android"))]
 fn set_up_file_logger(path: &Path) -> Result<fern::Dispatch> {
     let log_file = OpenOptions::new()
         .create(true)
@@ -86,6 +105,7 @@ fn set_up_file_logger(path: &Path) -> Result<fern::Dispatch> {
         .chain(log_file))
 }
 
+#[cfg(not(target_os = "android"))]
 fn set_up_dependencies_logger(path: &Path) -> Result<fern::Dispatch> {
     let log_file = OpenOptions::new()
         .create(true)
@@ -108,6 +128,7 @@ fn set_up_dependencies_logger(path: &Path) -> Result<fern::Dispatch> {
         .chain(log_file))
 }
 
+#[cfg(not(target_os = "android"))]
 fn set_up_console_logger() -> fern::Dispatch {
     fern::Dispatch::new()
         .format(|out, message, record| {

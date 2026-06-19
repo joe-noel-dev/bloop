@@ -36,20 +36,19 @@ class AppStoreViewModelTest {
         assertEquals(true, store.state.value.scanning)
     }
 
-@Test
-fun `middleware can dispatch follow up actions`() = runTest(testDispatcher) {
-    val middleware = AppMiddleware { _, action, dispatch ->
-        if (action is AppAction.ConnectLocal) {
-            dispatch(AppAction.SetConnected(ConnectionType.LOCAL))
+    @Test
+    fun `middleware can dispatch follow up actions`() = runTest(testDispatcher) {
+        val middleware = AppMiddleware { _, action, dispatch ->
+            if (action is AppAction.ConnectLocal) {
+                dispatch(AppAction.SetConnected(ConnectionType.LOCAL))
+            }
         }
-    }
 
-    val store = AppStoreViewModel(middlewares = listOf(middleware))
+        val store = AppStoreViewModel(middlewares = listOf(middleware))
 
-    store.dispatch(AppAction.ConnectLocal)
-    advanceUntilIdle()
+        store.dispatch(AppAction.ConnectLocal)
+        advanceUntilIdle()
 
-    assertEquals(ConnectionType.LOCAL, store.state.value.connected)
-}
+        assertEquals(ConnectionType.LOCAL, store.state.value.connected)
     }
 }

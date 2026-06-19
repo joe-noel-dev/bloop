@@ -12,9 +12,12 @@ package com.joenoel.bloop.core
  *
  * @throws IllegalStateException if the native core fails to initialise.
  */
-class BloopCore(private val onResponse: (ByteArray) -> Unit) : AutoCloseable {
+class BloopCore(
+    private val bloopHome: String,
+    private val onResponse: (ByteArray) -> Unit
+) : AutoCloseable {
 
-    private val handle: Long = BloopJNI.bloopInit { data -> onResponse(data) }
+    private val handle: Long = BloopJNI.bloopInit(bloopHome) { data -> onResponse(data) }
 
     init {
         check(handle != 0L) { "Failed to initialise the Rust core" }
