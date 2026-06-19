@@ -12,11 +12,11 @@ class AppCodecMiddleware : AppMiddleware {
     }
 
     private fun onSendRequest(request: Bloop.Request, dispatch: (AppAction) -> Unit) {
-        try {
-            dispatch(AppAction.SendRawRequest(request.toByteArray()))
-        } catch (error: Throwable) {
-            dispatch(AppAction.AddError("Failed to encode request: ${error.message ?: "unknown error"}"))
-        }
+try {
+    dispatch(AppAction.SendRawRequest(request.toByteArray()))
+} catch (error: Exception) {
+    dispatch(AppAction.AddError("Failed to encode request: ${error.message ?: "unknown error"}"))
+}
     }
 
     private fun onReceivedRawResponse(data: ByteArray, dispatch: (AppAction) -> Unit) {
