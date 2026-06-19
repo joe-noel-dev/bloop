@@ -12,7 +12,11 @@ if [ -z "${ndk_root}" ]; then
   ndk_dir="${sdk_root}/ndk"
 
   if [ -d "${ndk_dir}" ]; then
+<<<<<<< HEAD
     latest_ndk="$(find "${ndk_dir}" -mindepth 1 -maxdepth 1 -type d ! -name 'ndk-bundle' | sort -V | tail -n 1)"
+=======
+    latest_ndk="$(find "${ndk_dir}" -mindepth 1 -maxdepth 1 -type d | sort | tail -n 1)"
+>>>>>>> f49c8f6 (Build Rust core for Android)
     if [ -n "${latest_ndk}" ]; then
       ndk_root="${latest_ndk}"
     fi
@@ -39,6 +43,7 @@ fi
 
 bin_dir="${ndk_root}/toolchains/llvm/prebuilt/${host_tag}/bin"
 
+<<<<<<< HEAD
 clang_triple="${target_triple}"
 if [ "${target_triple}" = "armv7-linux-androideabi" ]; then
   clang_triple="armv7a-linux-androideabi"
@@ -52,6 +57,16 @@ case "${tool_name}" in
   clang++)
     api_level="${ANDROID_MIN_SDK_VERSION:-26}"
     tool_path="${bin_dir}/${clang_triple}${api_level}-clang++"
+=======
+case "${tool_name}" in
+  clang)
+    api_level="${ANDROID_MIN_SDK_VERSION:-26}"
+    tool_path="${bin_dir}/${target_triple}${api_level}-clang"
+    ;;
+  clang++)
+    api_level="${ANDROID_MIN_SDK_VERSION:-26}"
+    tool_path="${bin_dir}/${target_triple}${api_level}-clang++"
+>>>>>>> f49c8f6 (Build Rust core for Android)
     ;;
   ar)
     tool_path="${bin_dir}/llvm-ar"
