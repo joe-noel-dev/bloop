@@ -77,10 +77,10 @@ protobuf {
     generateProtoTasks {
         all().forEach { task ->
             task.builtins {
-                create("java") {
+                maybeCreate("java").apply {
                     option("lite")
                 }
-                create("kotlin") {
+                maybeCreate("kotlin").apply {
                     option("lite")
                 }
             }
