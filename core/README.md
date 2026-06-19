@@ -16,6 +16,7 @@ Use no default features for Android so desktop UI and MIDI remain disabled:
 ../scripts/build-android.sh
 ```
 
+<<<<<<< HEAD
 The script builds `aarch64-linux-android` by default and stages `libbloop.so` under `target/android/jniLibs/arm64-v8a/`.
 
 Optional targets can be passed explicitly, for example:
@@ -28,6 +29,8 @@ Android builds look for the NDK in this order: `ANDROID_NDK_HOME`, `ANDROID_NDK_
 
 The default Android API level is `26` because the current audio stack links against `aaudio`. Override it with `ANDROID_MIN_SDK_VERSION` if the Android app build needs a newer API level.
 
+=======
+>>>>>>> d395b60 (Require BLOOP_HOME from app)
 Android runtime expectation: the app layer must set `BLOOP_HOME` before core startup. On Android, core now treats a missing `BLOOP_HOME` as a startup error.
 
 ## Test
