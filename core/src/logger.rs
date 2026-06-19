@@ -1,10 +1,6 @@
-#[cfg(not(target_os = "android"))]
-use std::{
-    fs::OpenOptions,
-    path::Path,
-    time::SystemTime,
-};
 use std::path::PathBuf;
+#[cfg(not(target_os = "android"))]
+use std::{fs::OpenOptions, path::Path, time::SystemTime};
 
 #[cfg(not(target_os = "android"))]
 use anyhow::{Context, Result};
@@ -60,28 +56,28 @@ pub fn set_up_logger(options: LogOptions) {
 
     #[cfg(not(target_os = "android"))]
     {
-    let mut logger = fern::Dispatch::new();
+        let mut logger = fern::Dispatch::new();
 
-    if options.log_to_console {
-        let file_logger = set_up_console_logger();
-        logger = logger.chain(file_logger);
-    }
-
-    if let Some(path) = options.log_to_file {
-        if let Ok(file_logger) = set_up_file_logger(&path) {
+        if options.log_to_console {
+            let file_logger = set_up_console_logger();
             logger = logger.chain(file_logger);
         }
-    }
 
-    if let Some(path) = options.log_dependencies_to_file {
-        if let Ok(deps_logger) = set_up_dependencies_logger(&path) {
-            logger = logger.chain(deps_logger);
+        if let Some(path) = options.log_to_file {
+            if let Ok(file_logger) = set_up_file_logger(&path) {
+                logger = logger.chain(file_logger);
+            }
         }
-    }
 
-    if let Err(error) = logger.apply() {
-        eprintln!("Logger setup skipped: {error}");
-    }
+        if let Some(path) = options.log_dependencies_to_file {
+            if let Ok(deps_logger) = set_up_dependencies_logger(&path) {
+                logger = logger.chain(deps_logger);
+            }
+        }
+
+        if let Err(error) = logger.apply() {
+            eprintln!("Logger setup skipped: {error}");
+        }
     }
 }
 
