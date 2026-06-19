@@ -8,6 +8,14 @@ The core audio server built in Rust. Handles audio processing, looping, and MIDI
 cargo build
 ```
 
+## Build for Android
+
+Use no default features for Android so desktop UI and MIDI remain disabled:
+
+```sh
+cargo build --target aarch64-linux-android --no-default-features
+```
+
 ## Test
 
 ```sh
