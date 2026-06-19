@@ -12,7 +12,7 @@ if [ -z "${ndk_root}" ]; then
   ndk_dir="${sdk_root}/ndk"
 
   if [ -d "${ndk_dir}" ]; then
-    latest_ndk="$(find "${ndk_dir}" -mindepth 1 -maxdepth 1 -type d | sort | tail -n 1)"
+    latest_ndk="$(find "${ndk_dir}" -mindepth 1 -maxdepth 1 -type d ! -name 'ndk-bundle' | sort -V | tail -n 1)"
     if [ -n "${latest_ndk}" ]; then
       ndk_root="${latest_ndk}"
     fi
