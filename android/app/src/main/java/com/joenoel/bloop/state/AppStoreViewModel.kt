@@ -14,7 +14,7 @@ fun interface AppMiddleware {
     suspend fun execute(state: AppState, action: AppAction, dispatch: (AppAction) -> Unit)
 }
 
-class AppStoreViewModel(
+class AppStoreViewModel @JvmOverloads constructor(
     initialState: AppState = AppState(),
     private val reducer: Reducer = AppReducer::reduce,
     private val middlewares: List<AppMiddleware> = emptyList(),
