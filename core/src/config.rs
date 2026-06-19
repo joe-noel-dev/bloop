@@ -54,11 +54,16 @@ fn get_root_directory() -> PathBuf {
     } else {
         if cfg!(target_os = "android") {
 <<<<<<< HEAD
+<<<<<<< HEAD
             log::error!("BLOOP_HOME must be set on Android by the app layer");
             std::process::exit(1);
 =======
             panic!("BLOOP_HOME must be set on Android by the app layer")
 >>>>>>> d395b60 (Require BLOOP_HOME from app)
+=======
+            log::error!("BLOOP_HOME must be set on Android by the app layer");
+            std::process::exit(1);
+>>>>>>> 8306b0c (Don't panic across FFI boundary)
         }
 
         let mut home = home::home_dir().unwrap();
