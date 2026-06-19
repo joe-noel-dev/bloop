@@ -39,14 +39,19 @@ fi
 
 bin_dir="${ndk_root}/toolchains/llvm/prebuilt/${host_tag}/bin"
 
+clang_triple="${target_triple}"
+if [ "${target_triple}" = "armv7-linux-androideabi" ]; then
+  clang_triple="armv7a-linux-androideabi"
+fi
+
 case "${tool_name}" in
   clang)
     api_level="${ANDROID_MIN_SDK_VERSION:-26}"
-    tool_path="${bin_dir}/${target_triple}${api_level}-clang"
+    tool_path="${bin_dir}/${clang_triple}${api_level}-clang"
     ;;
   clang++)
     api_level="${ANDROID_MIN_SDK_VERSION:-26}"
-    tool_path="${bin_dir}/${target_triple}${api_level}-clang++"
+    tool_path="${bin_dir}/${clang_triple}${api_level}-clang++"
     ;;
   ar)
     tool_path="${bin_dir}/llvm-ar"
