@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.protobuf")
 }
 
 android {
@@ -69,11 +70,31 @@ android {
     }
 }
 
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:4.28.2"
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                maybeCreate("java").apply {
+                    option("lite")
+                }
+                maybeCreate("kotlin").apply {
+                    option("lite")
+                }
+            }
+        }
+    }
+}
+
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
 
     implementation(composeBom)
     androidTestImplementation(composeBom)
+
+    implementation("com.google.protobuf:protobuf-kotlin-lite:4.28.2")
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
