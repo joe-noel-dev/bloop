@@ -48,7 +48,7 @@ pub fn set_up_logger(options: LogOptions) {
         // Use Android's native logging sink so Rust logs show in logcat.
         android_logger::init_once(
             android_logger::Config::default()
-                .with_tag("bloop-core")
+                .with_tag("bloop")
                 .with_max_level(LevelFilter::Debug),
         );
         return;

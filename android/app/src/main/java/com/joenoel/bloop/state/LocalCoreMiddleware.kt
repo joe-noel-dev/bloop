@@ -1,6 +1,7 @@
 package com.joenoel.bloop.state
 
 import com.joenoel.bloop.core.BloopCore
+import kotlinx.coroutines.CancellationException
 
 fun interface LocalCoreFactory {
     fun create(onResponse: (ByteArray) -> Unit): LocalCoreSession
@@ -59,7 +60,10 @@ class LocalCoreMiddleware(
                         dispatch(AppAction.ReceivedRawResponse(response))
                     }
                     true
+                } catch (error: CancellationException) {
+                    throw error
                 } catch (error: Throwable) {
+                    if (error is CancellationException) throw error
                     dispatch(AppAction.AddError("Failed to start local core: ${error.message ?: "unknown error"}"))
                     false
                 }
