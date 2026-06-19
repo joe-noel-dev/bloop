@@ -1,7 +1,7 @@
 use log::info;
 use tokio::sync::mpsc;
 
-use crate::{model::Action, preferences::MidiPreferences};
+use crate::{bloop::MidiPreferences, model::Action};
 
 pub struct MidiController {}
 
