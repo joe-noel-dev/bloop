@@ -124,6 +124,9 @@ Java_com_joenoel_bloop_core_BloopJNI_bloopAddRequest(
     AndroidBloopContext *android_ctx = (AndroidBloopContext *)(intptr_t)ctx_handle;
     jsize size = (*env)->GetArrayLength(env, request);
     jbyte *bytes = (*env)->GetByteArrayElements(env, request, NULL);
+    if (!bytes) {
+        return BloopErrorCode_ErrorPostingRequest;
+    }
 
     BloopErrorCode code = bloop_add_request(
             android_ctx->bloop_ctx, (const uint8_t *)bytes, (size_t)size);
