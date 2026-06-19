@@ -7,10 +7,10 @@ core_dir="${project_root}/core"
 output_root="${project_root}/target/android"
 library_name="libbloop.so"
 build_profile="${BUILD_PROFILE:-release}"
-targets=("${@}")
-
-if [ ${#targets[@]} -eq 0 ]; then
+if [ $# -eq 0 ]; then
   targets=("aarch64-linux-android")
+else
+  targets=("$@")
 fi
 
 mkdir -p "${output_root}/jniLibs"

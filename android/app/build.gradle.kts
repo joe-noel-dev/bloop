@@ -43,6 +43,21 @@ android {
         compose = true
     }
 
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+
+    sourceSets {
+        getByName("main") {
+            // Prebuilt libbloop.so files staged by scripts/build-android.sh.
+            // Each ABI subdirectory (arm64-v8a, x86_64, …) is picked up automatically.
+            jniLibs.srcDirs("${rootProject.rootDir.parent}/target/android/jniLibs")
+        }
+    }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"
     }
