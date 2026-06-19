@@ -14,3 +14,5 @@ Each component has its own README with build and run instructions.
 ## Learn More
 
 Read the [blog post](https://www.joenoel.co.uk/blog/bloop) for more information about the project.
+
+- [Android port work breakdown](docs/ANDROID_PORT_PLAN.md)
