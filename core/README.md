@@ -13,7 +13,7 @@ cargo build
 Use no default features for Android so desktop UI and MIDI remain disabled:
 
 ```sh
-./scripts/build-android.sh
+../scripts/build-android.sh
 ```
 
 The script builds `aarch64-linux-android` by default and stages `libbloop.so` under `target/android/jniLibs/arm64-v8a/`.
@@ -21,7 +21,7 @@ The script builds `aarch64-linux-android` by default and stages `libbloop.so` un
 Optional targets can be passed explicitly, for example:
 
 ```sh
-./scripts/build-android.sh aarch64-linux-android x86_64-linux-android armv7-linux-androideabi
+../scripts/build-android.sh aarch64-linux-android x86_64-linux-android armv7-linux-androideabi
 ```
 
 Android builds look for the NDK in this order: `ANDROID_NDK_HOME`, `ANDROID_NDK_ROOT`, then the latest version under `ANDROID_SDK_ROOT`, `ANDROID_HOME`, or `~/Library/Android/sdk/ndk`.

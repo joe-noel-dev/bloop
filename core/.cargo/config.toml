@@ -1,0 +1,7 @@
+[target.aarch64-linux-android]
+ar = "../scripts/android-ar-wrapper.sh"
+linker = "../scripts/android-clang-wrapper.sh"
+
+[env]
+CC_aarch64_linux_android = { value = "../scripts/android-clang-wrapper.sh", relative = true }
+AR_aarch64_linux_android = { value = "../scripts/android-ar-wrapper.sh", relative = true }
