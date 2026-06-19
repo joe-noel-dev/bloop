@@ -16,12 +16,19 @@ This document breaks the Android port into a sequence of small, reviewable PRs.
 - Add a safe Android fallback for hostname-dependent service naming in `core/src/network/server.rs`
 - Document any Android-specific environment expectations
 
+Android environment expectations for PR 2:
+
+- Android app layer must set `BLOOP_HOME` before initializing core
+- If `BLOOP_HOME` is missing on Android, core exits early with a clear startup error
+- mDNS service instance naming must remain stable even when hostname lookup fails or returns non-UTF-8
+
 ### PR 3: Android Rust build script
 
 - Add a `scripts/build-android.sh` script
 - Build at least `aarch64-linux-android`
 - Optionally include emulator/device targets such as `x86_64-linux-android` and `armv7-linux-androideabi`
 - Stage generated native libraries in a predictable output directory
+- Add a `.cargo/config.toml` that sets `CC_aarch64_linux_android` and `AR_aarch64_linux_android` via the NDK toolchain path, so Android builds work without manual shell exports (discovered during PR 2 validation)
 
 ## Phase 2: Android App Scaffold
 

@@ -16,6 +16,8 @@ Use no default features for Android so desktop UI and MIDI remain disabled:
 cargo build --target aarch64-linux-android --no-default-features
 ```
 
+Android runtime expectation: the app layer must set `BLOOP_HOME` before core startup. On Android, core now treats a missing `BLOOP_HOME` as a startup error.
+
 ## Test
 
 ```sh

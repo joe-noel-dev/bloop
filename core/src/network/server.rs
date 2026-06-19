@@ -34,22 +34,24 @@ pub async fn listen_on_ip(ip: IpAddr, request_tx: mpsc::Sender<Request>, respons
     let local_address = listener.local_addr().expect("Unable to get address from port");
 
     let local_port = local_address.port();
-    let raw_hostname = hostname::get()
-        .expect("Failed to get hostname")
-        .into_string()
-        .expect("Failed to convert hostname to String");
-    let clean_hostname = raw_hostname.replace(".local", "").replace(".lan", "");
+    let instance_name = service_instance_name(ip);
 
     let mdns = ServiceDaemon::new().expect("Failed to create daemon");
 
     let service_type = "_bloop._tcp.local.";
-    let instance_name = clean_hostname.as_str();
     let host_name = format!("{ip}.local.");
     let version = env!("CARGO_PKG_VERSION");
     let properties = [("version", version)];
 
-    let service_info = ServiceInfo::new(service_type, instance_name, &host_name, ip, local_port, &properties[..])
-        .expect("Unable to create service info");
+    let service_info = ServiceInfo::new(
+        service_type,
+        instance_name.as_str(),
+        &host_name,
+        ip,
+        local_port,
+        &properties[..],
+    )
+    .expect("Unable to create service info");
 
     mdns.register(service_info).expect("Failed to register service");
 
@@ -66,6 +68,39 @@ pub async fn listen_on_ip(ip: IpAddr, request_tx: mpsc::Sender<Request>, respons
 
     if let Err(error) = mdns.shutdown() {
         warn!("Failed to shutdown mDNS daemon: {error}");
+    }
+}
+
+fn service_instance_name(ip: IpAddr) -> String {
+    let fallback = android_safe_fallback_name(ip);
+
+    match hostname::get() {
+        Ok(hostname) => match hostname.into_string() {
+            Ok(raw_hostname) => {
+                let clean_hostname = raw_hostname.replace(".local", "").replace(".lan", "");
+                if clean_hostname.trim().is_empty() {
+                    fallback
+                } else {
+                    clean_hostname
+                }
+            }
+            Err(_) => {
+                warn!("Hostname is not valid UTF-8; using fallback mDNS instance name");
+                fallback
+            }
+        },
+        Err(error) => {
+            warn!("Failed to get hostname ({error}); using fallback mDNS instance name");
+            fallback
+        }
+    }
+}
+
+fn android_safe_fallback_name(ip: IpAddr) -> String {
+    if cfg!(target_os = "android") {
+        format!("bloop-android-{}", ip.to_string().replace('.', "-"))
+    } else {
+        format!("bloop-{}", ip.to_string().replace('.', "-"))
     }
 }
 
