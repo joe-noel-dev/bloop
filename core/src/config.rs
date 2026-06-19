@@ -53,7 +53,8 @@ fn get_root_directory() -> PathBuf {
         PathBuf::from(bloop_home)
     } else {
         if cfg!(target_os = "android") {
-            panic!("BLOOP_HOME must be set on Android by the app layer")
+            log::error!("BLOOP_HOME must be set on Android by the app layer");
+            std::process::exit(1);
         }
 
         let mut home = home::home_dir().unwrap();
