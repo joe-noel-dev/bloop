@@ -73,10 +73,14 @@ pub async fn listen_on_ip(ip: IpAddr, request_tx: mpsc::Sender<Request>, respons
 
 fn service_instance_name(ip: IpAddr) -> String {
 <<<<<<< HEAD
+<<<<<<< HEAD
     let fallback = safe_fallback_name(ip);
 =======
     let fallback = android_safe_fallback_name(ip);
 >>>>>>> d395b60 (Require BLOOP_HOME from app)
+=======
+    let fallback = safe_fallback_name(ip);
+>>>>>>> 99faabd (Don't need a separate fallback for Android)
 
     match hostname::get() {
         Ok(hostname) => match hostname.into_string() {
@@ -101,6 +105,7 @@ fn service_instance_name(ip: IpAddr) -> String {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 fn safe_fallback_name(ip: IpAddr) -> String {
     format!("bloop-{}", ip.to_string().replace('.', "-"))
 =======
@@ -111,6 +116,10 @@ fn android_safe_fallback_name(ip: IpAddr) -> String {
         format!("bloop-{}", ip.to_string().replace('.', "-"))
     }
 >>>>>>> d395b60 (Require BLOOP_HOME from app)
+=======
+fn safe_fallback_name(ip: IpAddr) -> String {
+    format!("bloop-{}", ip.to_string().replace('.', "-"))
+>>>>>>> 99faabd (Don't need a separate fallback for Android)
 }
 
 fn should_respond_on_interface(iface: &Interface) -> bool {
