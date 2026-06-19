@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.joenoel.bloop.state.AppAction
 import com.joenoel.bloop.state.AppState
 import com.joenoel.bloop.state.AppStoreViewModel
 import com.joenoel.bloop.state.ConnectionType
@@ -29,11 +31,21 @@ import com.joenoel.bloop.ui.theme.BloopTheme
 fun BloopApp(store: AppStoreViewModel) {
     val state by store.state.collectAsStateWithLifecycle()
 
-    BloopAppContent(state)
+    BloopAppContent(
+        state = state,
+        onStartCore = { store.dispatch(AppAction.ConnectLocal) },
+        onStopCore = { store.dispatch(AppAction.Disconnect) }
+    )
 }
 
 @Composable
-private fun BloopAppContent(state: AppState) {
+private fun BloopAppContent(
+    state: AppState,
+    onStartCore: () -> Unit = {},
+    onStopCore: () -> Unit = {}
+) {
+    val isCoreRunning = state.connected == ConnectionType.LOCAL
+
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(
             modifier = Modifier
@@ -69,6 +81,18 @@ private fun BloopAppContent(state: AppState) {
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.secondary
                 )
+                Text(
+                    text = "Embedded core: ${if (isCoreRunning) "running" else "stopped"}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (isCoreRunning) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
+                    }
+                )
+                Button(onClick = if (isCoreRunning) onStopCore else onStartCore) {
+                    Text(if (isCoreRunning) "Stop Local Core" else "Start Local Core")
+                }
                 Text(
                     text = "Connection: ${connectionText(state.connected)}",
                     style = MaterialTheme.typography.bodyMedium,

@@ -76,7 +76,19 @@ typedef struct {
 // ---------------------------------------------------------------------------
 
 JNIEXPORT jlong JNICALL
-Java_com_joenoel_bloop_core_BloopJNI_bloopInit(JNIEnv *env, jclass cls, jobject callback) {
+Java_com_joenoel_bloop_core_BloopJNI_bloopInit(JNIEnv *env, jclass cls, jstring bloop_home, jobject callback) {
+    if (!bloop_home) {
+        return 0L;
+    }
+
+    const char *bloop_home_utf8 = (*env)->GetStringUTFChars(env, bloop_home, NULL);
+    if (!bloop_home_utf8) {
+        return 0L;
+    }
+
+    setenv("BLOOP_HOME", bloop_home_utf8, 1);
+    (*env)->ReleaseStringUTFChars(env, bloop_home, bloop_home_utf8);
+
     JavaVM *jvm = NULL;
     (*env)->GetJavaVM(env, &jvm);
 
