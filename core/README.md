@@ -10,7 +10,9 @@ cargo build
 
 ## Build for Android
 
-Use no default features for Android so desktop UI and MIDI remain disabled:
+Use no default features for Android so desktop UI and MIDI remain disabled.
+
+Run the following from the **repo root**:
 
 ```sh
 ./scripts/build-android.sh
@@ -18,7 +20,7 @@ Use no default features for Android so desktop UI and MIDI remain disabled:
 
 The script builds `aarch64-linux-android` by default and stages `libbloop.so` under `target/android/jniLibs/arm64-v8a/`.
 
-Optional targets can be passed explicitly, for example:
+Optional targets can be passed explicitly, for example (run from repo root):
 
 ```sh
 ./scripts/build-android.sh aarch64-linux-android x86_64-linux-android armv7-linux-androideabi
