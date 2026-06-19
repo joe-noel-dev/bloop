@@ -13,15 +13,27 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.joenoel.bloop.state.AppState
+import com.joenoel.bloop.state.AppStoreViewModel
+import com.joenoel.bloop.state.ConnectionType
 import com.joenoel.bloop.ui.theme.BloopTheme
 
 @Composable
-fun BloopApp() {
+fun BloopApp(store: AppStoreViewModel) {
+    val state by store.state.collectAsStateWithLifecycle()
+
+    BloopAppContent(state)
+}
+
+@Composable
+private fun BloopAppContent(state: AppState) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(
             modifier = Modifier
@@ -42,12 +54,12 @@ fun BloopApp() {
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Android scaffold",
+                    text = "State architecture ready",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "This project contains the Android Compose app shell and base launcher flow.",
+                    text = "This shell now uses an app store with action/reducer/state flow modeled after iOS.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.84f)
                 )
@@ -58,7 +70,22 @@ fun BloopApp() {
                     color = MaterialTheme.colorScheme.secondary
                 )
                 Text(
-                    text = "Scaffold only: activity, theme, and initial UI shell.",
+                    text = "Connection: ${connectionText(state.connected)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
+                )
+                Text(
+                    text = "Servers: ${state.servers.size} | Scanning: ${state.scanning}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
+                )
+                Text(
+                    text = "Projects: ${state.projects.size} local, ${state.cloudProjects.size} cloud",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
+                )
+                Text(
+                    text = "Errors: ${state.errors.size} | Waveforms: ${state.waveforms.size}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
                 )
@@ -67,10 +94,18 @@ fun BloopApp() {
     }
 }
 
+private fun connectionText(connected: ConnectionType?): String {
+    return when (connected) {
+        ConnectionType.LOCAL -> "local"
+        ConnectionType.REMOTE -> "remote"
+        null -> "not connected"
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun BloopAppPreview() {
     BloopTheme {
-        BloopApp()
+        BloopAppContent(AppState())
     }
 }
