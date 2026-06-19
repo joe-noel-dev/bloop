@@ -36,7 +36,7 @@ fun BloopApp() {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "bloop",
+                    text = androidx.compose.ui.res.stringResource(id = com.joenoel.bloop.R.string.app_name),
                     style = MaterialTheme.typography.displaySmall,
                     color = MaterialTheme.colorScheme.onBackground,
                     fontWeight = FontWeight.Bold
