@@ -26,7 +26,17 @@ object AppReducer {
             AppAction.ClearUser -> state.copy(user = null)
             is AppAction.SetPreferences -> state.copy(preferences = action.preferences)
             is AppAction.SetConnected -> state.copy(connected = action.connected)
-            else -> state
+
+            is AppAction.SendRequest,
+            is AppAction.ReceivedResponse,
+            is AppAction.SendRawRequest,
+            is AppAction.ReceivedRawResponse,
+            is AppAction.Connect,
+            AppAction.ConnectLocal,
+            AppAction.Disconnect,
+            is AppAction.UploadSample,
+            is AppAction.UploadAck,
+            AppAction.RestartScan -> state
         }
     }
 }
