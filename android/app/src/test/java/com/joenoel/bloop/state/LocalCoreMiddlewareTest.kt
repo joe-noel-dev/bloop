@@ -10,11 +10,13 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class LocalCoreMiddlewareTest {
 
+    private val bloopHome = "${System.getProperty("java.io.tmpdir")}/bloop-test"
+
     @Test
     fun `connect local starts core and marks local connection`() = runTest {
         val fakeCore = FakeCoreSession()
         var created = 0
-        val middleware = LocalCoreMiddleware(bloopHome = "/tmp/bloop-test", coreFactory = LocalCoreFactory {
+        val middleware = LocalCoreMiddleware(bloopHome = bloopHome, coreFactory = LocalCoreFactory {
             created += 1
             fakeCore
         })
@@ -30,7 +32,7 @@ class LocalCoreMiddlewareTest {
     fun `connect local does not reinitialize existing core`() = runTest {
         val fakeCore = FakeCoreSession()
         var created = 0
-        val middleware = LocalCoreMiddleware(bloopHome = "/tmp/bloop-test", coreFactory = LocalCoreFactory {
+        val middleware = LocalCoreMiddleware(bloopHome = bloopHome, coreFactory = LocalCoreFactory {
             created += 1
             fakeCore
         })
@@ -45,7 +47,7 @@ class LocalCoreMiddlewareTest {
     fun `disconnect while local shuts down core and clears connection`() = runTest {
         val fakeCore = FakeCoreSession()
         val middleware = LocalCoreMiddleware(
-            bloopHome = "/tmp/bloop-test",
+            bloopHome = bloopHome,
             coreFactory = LocalCoreFactory { _ -> fakeCore }
         )
         val dispatched = mutableListOf<AppAction>()
@@ -64,7 +66,7 @@ class LocalCoreMiddlewareTest {
     fun `send raw request forwards to local core`() = runTest {
         val fakeCore = FakeCoreSession(sendResult = true)
         val middleware = LocalCoreMiddleware(
-            bloopHome = "/tmp/bloop-test",
+            bloopHome = bloopHome,
             coreFactory = LocalCoreFactory { _ -> fakeCore }
         )
         val payload = byteArrayOf(1, 2, 3)
@@ -83,7 +85,7 @@ class LocalCoreMiddlewareTest {
     fun `failed send emits error action`() = runTest {
         val fakeCore = FakeCoreSession(sendResult = false)
         val middleware = LocalCoreMiddleware(
-            bloopHome = "/tmp/bloop-test",
+            bloopHome = bloopHome,
             coreFactory = LocalCoreFactory { _ -> fakeCore }
         )
         val dispatched = mutableListOf<AppAction>()
@@ -101,7 +103,7 @@ class LocalCoreMiddlewareTest {
     fun `connect remote while local closes embedded core`() = runTest {
         val fakeCore = FakeCoreSession()
         val middleware = LocalCoreMiddleware(
-            bloopHome = "/tmp/bloop-test",
+            bloopHome = bloopHome,
             coreFactory = LocalCoreFactory { _ -> fakeCore }
         )
 
@@ -119,7 +121,7 @@ class LocalCoreMiddlewareTest {
         var callback: ((ByteArray) -> Unit)? = null
         val fakeCore = FakeCoreSession()
         val middleware = LocalCoreMiddleware(
-            bloopHome = "/tmp/bloop-test",
+            bloopHome = bloopHome,
             coreFactory = LocalCoreFactory { onResponse ->
                 callback = onResponse
                 fakeCore
@@ -139,7 +141,7 @@ class LocalCoreMiddlewareTest {
     @Test
     fun `failed core startup records error and does not connect`() = runTest {
         val middleware = LocalCoreMiddleware(
-            bloopHome = "/tmp/bloop-test",
+            bloopHome = bloopHome,
             coreFactory = LocalCoreFactory { _ -> throw IllegalStateException("boom") }
         )
         val dispatched = mutableListOf<AppAction>()
