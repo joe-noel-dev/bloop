@@ -5,6 +5,7 @@ A looping audio workstation that runs on Raspberry Pi, controlled via iOS app or
 ## Components
 
 - **[core](core)** - Audio server built in Rust for audio processing, looping, and MIDI control
+- **[android](android)** - Android application scaffold built with Jetpack Compose
 - **[ios](ios)** - iOS application for controlling the looper
 - **[editor](editor)** - React-based web editor for creating and managing projects
 - **[backend](backend)** - PocketBase backend for storing projects and samples
