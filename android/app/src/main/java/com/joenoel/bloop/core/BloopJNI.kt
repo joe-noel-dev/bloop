@@ -32,7 +32,7 @@ internal object BloopJNI {
     /**
      * Send a raw Protobuf-encoded request to the core.
      *
-     * @return 0 on success, non-zero on error (mirrors [BloopErrorCode]).
+     * @return 0 on success, non-zero on error (mirrors the native BloopErrorCode).
      */
     external fun bloopAddRequest(ctx: Long, request: ByteArray): Int
 
