@@ -17,6 +17,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,6 +53,10 @@ fun BloopApp(store: AppStoreViewModel) {
         onConnectRemoteUrl = { url ->
             store.dispatch(AppAction.Connect(ServerEndpoint.Url(url)))
         },
+        onRestartScan = { store.dispatch(AppAction.RestartScan) },
+        onConnectDiscoveredServer = { endpoint ->
+            store.dispatch(AppAction.Connect(endpoint))
+        },
         onGetAll = {
             store.dispatch(
                 AppAction.SendRequest(
@@ -73,6 +78,8 @@ private fun BloopAppContent(
     onDisconnect: () -> Unit = {},
     onConnectRemoteHostPort: (String, Int) -> Unit = { _, _ -> },
     onConnectRemoteUrl: (String) -> Unit = {},
+    onRestartScan: () -> Unit = {},
+    onConnectDiscoveredServer: (ServerEndpoint) -> Unit = {},
     onGetAll: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
@@ -87,6 +94,10 @@ private fun BloopAppContent(
         get = getRequest {
             entity = Bloop.Entity.ALL
         }
+    }
+
+    LaunchedEffect(Unit) {
+        onRestartScan()
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -218,6 +229,57 @@ private fun BloopAppContent(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
                 )
+                Text(
+                    text = "Service discovery (temporary)",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Button(onClick = onRestartScan) {
+                    Text("Restart Discovery")
+                }
+                if (state.scanning && state.servers.isEmpty()) {
+                    Text(
+                        text = "Scanning for _bloop._tcp services...",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
+                    )
+                }
+                if (!state.scanning && state.servers.isEmpty()) {
+                    Text(
+                        text = "No discovered services yet.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
+                    )
+                }
+                state.servers.forEach { endpoint ->
+                    when (endpoint) {
+                        is ServerEndpoint.HostPort -> {
+                            Button(onClick = { onConnectDiscoveredServer(endpoint) }) {
+                                Text("Connect discovered ${endpoint.host}:${endpoint.port}")
+                            }
+                        }
+
+                        is ServerEndpoint.Url -> {
+                            Button(onClick = { onConnectDiscoveredServer(endpoint) }) {
+                                Text("Connect discovered ${endpoint.value}")
+                            }
+                        }
+
+                        is ServerEndpoint.Opaque -> {
+                            Button(onClick = { onConnectDiscoveredServer(endpoint) }) {
+                                Text("Connect discovered ${endpoint.value}")
+                            }
+                        }
+
+                        is ServerEndpoint.Service -> {
+                            Text(
+                                text = "Discovered ${endpoint.name} (${endpoint.type})",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
+                            )
+                        }
+                    }
+                }
                 Text(
                     text = "Projects: ${state.projects.size} local, ${state.cloudProjects.size} cloud",
                     style = MaterialTheme.typography.bodyMedium,
