@@ -54,6 +54,7 @@ fun BloopApp(store: AppStoreViewModel) {
             store.dispatch(AppAction.Connect(ServerEndpoint.Url(url)))
         },
         onRestartScan = { store.dispatch(AppAction.RestartScan) },
+        onStopScan = { store.dispatch(AppAction.StopScan) },
         onConnectDiscoveredServer = { endpoint ->
             store.dispatch(AppAction.Connect(endpoint))
         },
@@ -79,6 +80,7 @@ private fun BloopAppContent(
     onConnectRemoteHostPort: (String, Int) -> Unit = { _, _ -> },
     onConnectRemoteUrl: (String) -> Unit = {},
     onRestartScan: () -> Unit = {},
+    onStopScan: () -> Unit = {},
     onConnectDiscoveredServer: (ServerEndpoint) -> Unit = {},
     onGetAll: () -> Unit = {}
 ) {
@@ -236,6 +238,9 @@ private fun BloopAppContent(
                 )
                 Button(onClick = onRestartScan) {
                     Text("Restart Discovery")
+                }
+                Button(onClick = onStopScan) {
+                    Text("Stop Discovery")
                 }
                 if (state.scanning && state.servers.isEmpty()) {
                     Text(

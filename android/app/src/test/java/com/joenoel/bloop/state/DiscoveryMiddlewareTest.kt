@@ -50,10 +50,24 @@ class DiscoveryMiddlewareTest {
         assertEquals(0, dispatched.size)
         assertTrue(!controller.wasRestarted)
     }
+
+    @Test
+    fun `stop scan calls controller stop`() = runTest {
+        val controller = FakeServiceDiscoveryController()
+        val middleware = DiscoveryMiddleware(controller)
+        val dispatched = mutableListOf<AppAction>()
+
+        middleware.execute(AppState(), AppAction.StopScan) { dispatched += it }
+
+        assertEquals(0, dispatched.size)
+        assertTrue(controller.wasStopped)
+    }
 }
 
 private class FakeServiceDiscoveryController : ServiceDiscoveryController {
     var wasRestarted: Boolean = false
+        private set
+    var wasStopped: Boolean = false
         private set
 
     private var onScanningChanged: ((Boolean) -> Unit)? = null
@@ -69,6 +83,10 @@ private class FakeServiceDiscoveryController : ServiceDiscoveryController {
         this.onScanningChanged = onScanningChanged
         this.onServersChanged = onServersChanged
         this.onError = onError
+    }
+
+    override fun stop() {
+        wasStopped = true
     }
 
     fun emitScanning(scanning: Boolean) {

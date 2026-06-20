@@ -38,4 +38,5 @@ sealed interface AppAction {
     data object RemoveAllServers : AppAction
 
     data object RestartScan : AppAction
+    data object StopScan : AppAction
 }

@@ -11,6 +11,8 @@ interface ServiceDiscoveryController {
         onServersChanged: (List<ServerEndpoint>) -> Unit,
         onError: (String) -> Unit,
     )
+
+    fun stop()
 }
 
 class AndroidNsdServiceDiscoveryController(
@@ -45,6 +47,13 @@ class AndroidNsdServiceDiscoveryController(
 
         stopDiscoveryIfNeeded()
         startDiscovery()
+    }
+
+    override fun stop() {
+        stopDiscoveryIfNeeded()
+        synchronized(lock) {
+            notifyScanningLocked(false)
+        }
     }
 
     private fun startDiscovery() {

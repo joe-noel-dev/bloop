@@ -20,6 +20,9 @@ class DiscoveryMiddleware(
                     }
                 )
             }
+            AppAction.StopScan -> {
+                discoveryController.stop()
+            }
             else -> Unit
         }
     }
