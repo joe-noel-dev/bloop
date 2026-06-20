@@ -55,9 +55,11 @@ internal class OkHttpRemoteConnection(
 
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
         listener.onDisconnected()
+        client.dispatcher.executorService.shutdown()
     }
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
         listener.onDisconnected()
+        client.dispatcher.executorService.shutdown()
     }
 }

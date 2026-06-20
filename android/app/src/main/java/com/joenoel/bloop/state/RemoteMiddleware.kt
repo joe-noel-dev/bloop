@@ -20,6 +20,11 @@ class RemoteMiddleware(
     override suspend fun execute(state: AppState, action: AppAction, dispatch: (AppAction) -> Unit) {
         when (action) {
             is AppAction.Connect -> connectRemote(action.server, dispatch)
+            AppAction.ConnectLocal -> {
+                if (state.connected == ConnectionType.REMOTE) {
+                    disconnectRemote()
+                }
+            }
             AppAction.Disconnect -> {
                 if (state.connected == ConnectionType.REMOTE) {
                     disconnectRemote()
@@ -46,9 +51,16 @@ class RemoteMiddleware(
 
         disconnectRemote()
 
+        var createError: Throwable? = null
+
         synchronized(lock) {
-            connection = connectionFactory.create(url, object : RemoteConnectionListener {
+            var createdConnection: RemoteConnection? = null
+
+            val listener = object : RemoteConnectionListener {
+                private fun isCurrent(): Boolean = synchronized(lock) { connection === createdConnection }
+
                 override fun onConnected() {
+                    if (!isCurrent()) return
                     dispatch(AppAction.SetConnected(ConnectionType.REMOTE))
                     dispatch(
                         AppAction.SendRequest(
@@ -58,13 +70,32 @@ class RemoteMiddleware(
                 }
 
                 override fun onDisconnected() {
+                    if (!isCurrent()) return
                     dispatch(AppAction.SetConnected(null))
                 }
 
                 override fun onMessage(data: ByteArray) {
+                    if (!isCurrent()) return
                     dispatch(AppAction.ReceivedRawResponse(data))
                 }
-            })
+            }
+
+            createdConnection = try {
+                connectionFactory.create(url, listener)
+            } catch (t: Throwable) {
+                createError = t
+                null
+            }
+
+            connection = createdConnection
+        }
+
+        if (createError != null) {
+            dispatch(
+                AppAction.AddError(
+                    "Cannot connect to remote server at $url: ${createError?.message ?: "unknown error"}"
+                )
+            )
         }
     }
 
