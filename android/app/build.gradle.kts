@@ -100,6 +100,8 @@ dependencies {
 
     implementation("com.google.protobuf:protobuf-kotlin-lite:4.28.2")
 
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.3")
