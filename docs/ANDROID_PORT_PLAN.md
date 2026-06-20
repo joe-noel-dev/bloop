@@ -149,6 +149,8 @@ Android environment expectations for PR 2:
 
 - Add CI coverage for Android app builds
 - Add Rust Android build validation to the project workflow where appropriate
+- Run Android build and unit tests on every pull request and on pushes to `main`
+- On release publication, build Android and attach the generated APK to the GitHub Release
 
 ## Suggested Order
 
