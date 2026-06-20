@@ -1,6 +1,7 @@
 package com.joenoel.bloop.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,12 +10,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +35,7 @@ import com.joenoel.bloop.state.AppAction
 import com.joenoel.bloop.state.AppState
 import com.joenoel.bloop.state.AppStoreViewModel
 import com.joenoel.bloop.state.ConnectionType
+import com.joenoel.bloop.state.ServerEndpoint
 import com.joenoel.bloop.ui.theme.BloopTheme
 
 @Composable
@@ -37,7 +45,13 @@ fun BloopApp(store: AppStoreViewModel) {
     BloopAppContent(
         state = state,
         onStartCore = { store.dispatch(AppAction.ConnectLocal) },
-        onStopCore = { store.dispatch(AppAction.Disconnect) },
+        onDisconnect = { store.dispatch(AppAction.Disconnect) },
+        onConnectRemoteHostPort = { host, port ->
+            store.dispatch(AppAction.Connect(ServerEndpoint.HostPort(host, port)))
+        },
+        onConnectRemoteUrl = { url ->
+            store.dispatch(AppAction.Connect(ServerEndpoint.Url(url)))
+        },
         onGetAll = {
             store.dispatch(
                 AppAction.SendRequest(
@@ -56,10 +70,19 @@ fun BloopApp(store: AppStoreViewModel) {
 private fun BloopAppContent(
     state: AppState,
     onStartCore: () -> Unit = {},
-    onStopCore: () -> Unit = {},
+    onDisconnect: () -> Unit = {},
+    onConnectRemoteHostPort: (String, Int) -> Unit = { _, _ -> },
+    onConnectRemoteUrl: (String) -> Unit = {},
     onGetAll: () -> Unit = {}
 ) {
-    val isCoreRunning = state.connected == ConnectionType.LOCAL
+    val scrollState = rememberScrollState()
+    var remoteHost by rememberSaveable { mutableStateOf("127.0.0.1") }
+    var remotePortText by rememberSaveable { mutableStateOf("14072") }
+    var remoteUrl by rememberSaveable { mutableStateOf("ws://127.0.0.1:14072") }
+    var remoteInputError by remember { mutableStateOf<String?>(null) }
+
+    val isConnectedLocal = state.connected == ConnectionType.LOCAL
+    val isConnectedRemote = state.connected == ConnectionType.REMOTE
     val getAllRequest = request {
         get = getRequest {
             entity = Bloop.Entity.ALL
@@ -76,7 +99,8 @@ private fun BloopAppContent(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .align(Alignment.CenterStart),
+                    .align(Alignment.TopStart)
+                    .verticalScroll(scrollState),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
@@ -102,16 +126,84 @@ private fun BloopAppContent(
                     color = MaterialTheme.colorScheme.secondary
                 )
                 Text(
-                    text = "Embedded core: ${if (isCoreRunning) "running" else "stopped"}",
+                    text = "Embedded core: ${if (isConnectedLocal) "running" else "stopped"}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (isCoreRunning) {
+                    color = if (isConnectedLocal) {
                         MaterialTheme.colorScheme.primary
                     } else {
                         MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
                     }
                 )
-                Button(onClick = if (isCoreRunning) onStopCore else onStartCore) {
-                    Text(if (isCoreRunning) "Stop Local Core" else "Start Local Core")
+                Button(onClick = if (isConnectedLocal) onDisconnect else onStartCore) {
+                    Text(if (isConnectedLocal) "Stop Local Core" else "Start Local Core")
+                }
+                Text(
+                    text = "Remote server testing",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                OutlinedTextField(
+                    value = remoteHost,
+                    onValueChange = {
+                        remoteHost = it
+                        remoteInputError = null
+                    },
+                    label = { Text("Remote host") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = remotePortText,
+                    onValueChange = {
+                        remotePortText = it
+                        remoteInputError = null
+                    },
+                    label = { Text("Remote port") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Button(onClick = {
+                    val host = remoteHost.trim()
+                    val port = remotePortText.toIntOrNull()
+                    if (host.isBlank() || port == null) {
+                        remoteInputError = "Enter a valid host and numeric port"
+                    } else {
+                        onConnectRemoteHostPort(host, port)
+                    }
+                }) {
+                    Text(if (isConnectedRemote) "Reconnect Remote (host:port)" else "Connect Remote (host:port)")
+                }
+                OutlinedTextField(
+                    value = remoteUrl,
+                    onValueChange = {
+                        remoteUrl = it
+                        remoteInputError = null
+                    },
+                    label = { Text("Remote ws URL") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Button(onClick = {
+                    val url = remoteUrl.trim()
+                    if (url.isBlank()) {
+                        remoteInputError = "Enter a valid ws:// URL"
+                    } else {
+                        onConnectRemoteUrl(url)
+                    }
+                }) {
+                    Text("Connect Remote (ws URL)")
+                }
+                if (state.connected != null) {
+                    Button(onClick = onDisconnect) {
+                        Text("Disconnect")
+                    }
+                }
+                if (remoteInputError != null) {
+                    Text(
+                        text = remoteInputError ?: "",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
                 Button(onClick = onGetAll) {
                     Text("Send Get All Request")

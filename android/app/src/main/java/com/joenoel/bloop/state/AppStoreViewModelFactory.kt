@@ -14,6 +14,7 @@ class AppStoreViewModelFactory(
                     AppCodecMiddleware(),
                     ResponseMiddleware(),
                     LocalCoreMiddleware(bloopHome = bloopHome),
+                    RemoteMiddleware(),
                 )
             ) as T
         }
