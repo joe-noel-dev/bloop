@@ -149,6 +149,14 @@ Android environment expectations for PR 2:
 
 - Add CI coverage for Android app builds
 - Add Rust Android build validation to the project workflow where appropriate
+- Run Android build and unit tests on every pull request and on pushes to `main`
+- On release publication, build Android and attach a debug APK to the GitHub Release for local device install
+
+### PR 25: Android release signing
+
+- Add release signing configuration for Android builds
+- Store keystore and signing credentials in GitHub secrets
+- Build and publish signed release APK (and optionally AAB for Play Store)
 
 ## Suggested Order
 
@@ -156,7 +164,7 @@ Android environment expectations for PR 2:
 2. PRs 4-6: Android project and native integration
 3. PRs 7-12: State, FFI, networking, and discovery
 4. PRs 13-20: UI port
-5. PRs 21-24: Completion and CI
+5. PRs 21-25: Completion and CI
 
 ## Parallel Work Opportunities
 
