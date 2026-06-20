@@ -1,9 +1,11 @@
 package com.joenoel.bloop.state
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 
 class AppStoreViewModelFactory(
+    private val appContext: Context,
     private val bloopHome: String,
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -13,6 +15,9 @@ class AppStoreViewModelFactory(
                 middlewares = listOf(
                     AppCodecMiddleware(),
                     ResponseMiddleware(),
+                    DiscoveryMiddleware(
+                        AndroidNsdServiceDiscoveryController(appContext)
+                    ),
                     LocalCoreMiddleware(bloopHome = bloopHome),
                     RemoteMiddleware(),
                 )

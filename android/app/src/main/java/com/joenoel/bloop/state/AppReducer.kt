@@ -37,7 +37,8 @@ object AppReducer {
             AppAction.Disconnect,
             is AppAction.UploadSample,
             is AppAction.UploadAck,
-            AppAction.RestartScan -> state
+            AppAction.RestartScan,
+            AppAction.StopScan -> state
         }
     }
 }
