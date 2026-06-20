@@ -93,7 +93,9 @@ Java_com_joenoel_bloop_core_BloopJNI_bloopInit(JNIEnv *env, jclass cls, jstring 
     (*env)->ReleaseStringUTFChars(env, bloop_home, bloop_home_utf8);
 
     JavaVM *jvm = NULL;
-    (*env)->GetJavaVM(env, &jvm);
+    if ((*env)->GetJavaVM(env, &jvm) != JNI_OK || !jvm) {
+        return 0L;
+    }
 
     if (!g_android_app_context) {
         g_android_app_context = (*env)->NewGlobalRef(env, app_context);
@@ -103,7 +105,6 @@ Java_com_joenoel_bloop_core_BloopJNI_bloopInit(JNIEnv *env, jclass cls, jstring 
     }
 
     bloop_set_android_context((void *)jvm, (void *)g_android_app_context);
-
     jclass callback_class = (*env)->GetObjectClass(env, callback);
     jmethodID on_response = (*env)->GetMethodID(env, callback_class, "onResponse", "([B)V");
     if (!on_response) {
