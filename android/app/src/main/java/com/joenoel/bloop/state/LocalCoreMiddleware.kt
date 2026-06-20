@@ -3,6 +3,14 @@ package com.joenoel.bloop.state
 import com.joenoel.bloop.core.BloopCore
 import kotlinx.coroutines.CancellationException
 
+fun interface AudioSessionController {
+    fun requestPlaybackSession(): ReleasableAudioSession?
+}
+
+interface ReleasableAudioSession {
+    fun release()
+}
+
 fun interface LocalCoreFactory {
     fun create(onResponse: (ByteArray) -> Unit): LocalCoreSession
 }
@@ -14,13 +22,13 @@ interface LocalCoreSession {
 
 class LocalCoreMiddleware(
     private val bloopHome: String,
-    private val coreFactory: LocalCoreFactory = LocalCoreFactory { onResponse ->
-        BloopCoreSession(BloopCore(bloopHome, onResponse))
-    }
+    private val audioSessionController: AudioSessionController,
+    private val coreFactory: LocalCoreFactory,
 ) : AppMiddleware {
 
     private val lock = Any()
     private var core: LocalCoreSession? = null
+    private var audioSession: ReleasableAudioSession? = null
 
     override suspend fun execute(state: AppState, action: AppAction, dispatch: (AppAction) -> Unit) {
         when (action) {
@@ -56,6 +64,13 @@ class LocalCoreMiddleware(
                 true
             } else {
                 try {
+                    val session = audioSessionController.requestPlaybackSession()
+                    if (session == null) {
+                        dispatch(AppAction.AddError("Failed to acquire Android audio focus"))
+                        return@synchronized false
+                    }
+
+                    audioSession = session
                     core = coreFactory.create { response ->
                         dispatch(AppAction.ReceivedRawResponse(response))
                     }
@@ -64,6 +79,7 @@ class LocalCoreMiddleware(
                     throw error
                 } catch (error: Throwable) {
                     if (error is CancellationException) throw error
+                    releaseAudioSession()
                     dispatch(AppAction.AddError("Failed to start local core: ${error.message ?: "unknown error"}"))
                     false
                 }
@@ -79,11 +95,17 @@ class LocalCoreMiddleware(
         synchronized(lock) {
             core?.close()
             core = null
+            releaseAudioSession()
         }
+    }
+
+    private fun releaseAudioSession() {
+        audioSession?.release()
+        audioSession = null
     }
 }
 
-private class BloopCoreSession(private val core: BloopCore) : LocalCoreSession {
+class BloopCoreSession(private val core: BloopCore) : LocalCoreSession {
     override fun sendRequest(request: ByteArray): Boolean = core.sendRequest(request)
 
     override fun close() {

@@ -12,7 +12,7 @@ impl Default for AppConfig {
         Self {
             root_directory: get_root_directory(),
             api_url: get_api_url(),
-            use_dummy_audio: cfg!(target_os = "android"),
+            use_dummy_audio: false,
             use_midi: true,
         }
     }

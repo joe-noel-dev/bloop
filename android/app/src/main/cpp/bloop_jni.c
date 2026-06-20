@@ -21,6 +21,7 @@ typedef void (*BloopResponseCallback)(void *context, const uint8_t *data, size_t
 extern BloopContext *bloop_init(BloopResponseCallback callback, void *context);
 extern BloopErrorCode bloop_add_request(BloopContext *ctx, const uint8_t *request, size_t size);
 extern void bloop_shutdown(BloopContext *ctx);
+extern void bloop_set_android_context(void *vm, void *context);
 
 // ---------------------------------------------------------------------------
 // JNI callback glue
@@ -63,6 +64,8 @@ static void jni_response_callback(void *ctx, const uint8_t *data, size_t size) {
     }
 }
 
+static jobject g_android_app_context = NULL;
+
 // Holds both the opaque Rust context and the JNI callback resources so that
 // shutdown can release everything in one shot.
 typedef struct {
@@ -76,8 +79,8 @@ typedef struct {
 // ---------------------------------------------------------------------------
 
 JNIEXPORT jlong JNICALL
-Java_com_joenoel_bloop_core_BloopJNI_bloopInit(JNIEnv *env, jclass cls, jstring bloop_home, jobject callback) {
-    if (!bloop_home) {
+Java_com_joenoel_bloop_core_BloopJNI_bloopInit(JNIEnv *env, jclass cls, jstring bloop_home, jobject app_context, jobject callback) {
+    if (!bloop_home || !app_context || !callback) {
         return 0L;
     }
 
@@ -91,6 +94,15 @@ Java_com_joenoel_bloop_core_BloopJNI_bloopInit(JNIEnv *env, jclass cls, jstring 
 
     JavaVM *jvm = NULL;
     (*env)->GetJavaVM(env, &jvm);
+
+    if (!g_android_app_context) {
+        g_android_app_context = (*env)->NewGlobalRef(env, app_context);
+        if (!g_android_app_context) {
+            return 0L;
+        }
+    }
+
+    bloop_set_android_context((void *)jvm, (void *)g_android_app_context);
 
     jclass callback_class = (*env)->GetObjectClass(env, callback);
     jmethodID on_response = (*env)->GetMethodID(env, callback_class, "onResponse", "([B)V");

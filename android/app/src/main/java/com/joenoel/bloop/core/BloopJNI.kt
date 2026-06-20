@@ -1,5 +1,7 @@
 package com.joenoel.bloop.core
 
+import android.content.Context
+
 /**
  * Low-level JNI declarations for the Rust core library.
  *
@@ -28,7 +30,7 @@ internal object BloopJNI {
       * @param callback Invoked on an arbitrary background thread for each response.
       * @return An opaque handle (> 0) on success, or 0 on failure.
       */
-     external fun bloopInit(bloopHome: String, callback: ResponseCallback): Long
+    external fun bloopInit(bloopHome: String, appContext: Context, callback: ResponseCallback): Long
 
     /**
      * Send a raw Protobuf-encoded request to the core.

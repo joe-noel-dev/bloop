@@ -574,6 +574,7 @@ dependencies = [
  "log",
  "mdns-sd",
  "midir",
+ "ndk-context",
  "num-traits",
  "protobuf 3.7.2",
  "protobuf-codegen 3.7.2",
