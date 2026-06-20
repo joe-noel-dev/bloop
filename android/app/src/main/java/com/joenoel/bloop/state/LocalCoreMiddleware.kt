@@ -63,7 +63,7 @@ class LocalCoreMiddleware(
                 } catch (error: CancellationException) {
                     throw error
                 } catch (error: Throwable) {
-                    if (error is kotlinx.coroutines.CancellationException) throw error
+                    if (error is CancellationException) throw error
                     dispatch(AppAction.AddError("Failed to start local core: ${error.message ?: "unknown error"}"))
                     false
                 }

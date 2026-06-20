@@ -11,7 +11,6 @@ import org.junit.Test
 class LocalCoreMiddlewareTest {
 
     private val bloopHome = "${System.getProperty("java.io.tmpdir")}/bloop-test"
-
     @Test
     fun `connect local starts core and marks local connection`() = runTest {
         val fakeCore = FakeCoreSession()

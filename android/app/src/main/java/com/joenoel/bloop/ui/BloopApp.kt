@@ -21,6 +21,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import bloop.Bloop
+import bloop.getRequest
+import bloop.request
 import com.joenoel.bloop.state.AppAction
 import com.joenoel.bloop.state.AppState
 import com.joenoel.bloop.state.AppStoreViewModel
@@ -34,7 +37,18 @@ fun BloopApp(store: AppStoreViewModel) {
     BloopAppContent(
         state = state,
         onStartCore = { store.dispatch(AppAction.ConnectLocal) },
-        onStopCore = { store.dispatch(AppAction.Disconnect) }
+        onStopCore = { store.dispatch(AppAction.Disconnect) },
+        onGetAll = {
+            store.dispatch(
+                AppAction.SendRequest(
+                    request {
+                        get = getRequest {
+                            entity = Bloop.Entity.ALL
+                        }
+                    }
+                )
+            )
+        }
     )
 }
 
@@ -42,9 +56,15 @@ fun BloopApp(store: AppStoreViewModel) {
 private fun BloopAppContent(
     state: AppState,
     onStartCore: () -> Unit = {},
-    onStopCore: () -> Unit = {}
+    onStopCore: () -> Unit = {},
+    onGetAll: () -> Unit = {}
 ) {
     val isCoreRunning = state.connected == ConnectionType.LOCAL
+    val getAllRequest = request {
+        get = getRequest {
+            entity = Bloop.Entity.ALL
+        }
+    }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(
@@ -93,6 +113,9 @@ private fun BloopAppContent(
                 Button(onClick = if (isCoreRunning) onStopCore else onStartCore) {
                     Text(if (isCoreRunning) "Stop Local Core" else "Start Local Core")
                 }
+                Button(onClick = onGetAll) {
+                    Text("Send Get All Request")
+                }
                 Text(
                     text = "Connection: ${connectionText(state.connected)}",
                     style = MaterialTheme.typography.bodyMedium,
@@ -113,6 +136,52 @@ private fun BloopAppContent(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
                 )
+                Text(
+                    text = "Latest error: ${state.errors.lastOrNull() ?: "(none)"}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
+                )
+                Text(
+                    text = "Latest response:",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = state.lastResponseText ?: "(none)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Serialized request",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = getAllRequest.toString(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
+                )
+                Text(
+                    text = "Received projects",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = serializedProjects(state.projects),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
+                )
+                Text(
+                    text = "Received cloud projects",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+                Text(
+                    text = serializedProjects(state.cloudProjects),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.72f)
+                )
             }
         }
     }
@@ -123,6 +192,14 @@ private fun connectionText(connected: ConnectionType?): String {
         ConnectionType.LOCAL -> "local"
         ConnectionType.REMOTE -> "remote"
         null -> "not connected"
+    }
+}
+
+private fun serializedProjects(projects: List<Bloop.ProjectInfo>): String {
+    return if (projects.isEmpty()) {
+        "(none)"
+    } else {
+        projects.joinToString(separator = "\n\n") { project -> project.toString() }
     }
 }
 

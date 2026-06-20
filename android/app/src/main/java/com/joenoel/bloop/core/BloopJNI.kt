@@ -21,14 +21,14 @@ internal object BloopJNI {
         fun onResponse(data: ByteArray)
     }
 
-    /**
-     * Initialise the Rust core.
-     *
-     * @param bloopHome App-owned directory used by core for local state.
-     * @param callback Invoked on an arbitrary background thread for each response.
-     * @return An opaque handle (> 0) on success, or 0 on failure.
-     */
-    external fun bloopInit(bloopHome: String, callback: ResponseCallback): Long
+     /**
+      * Initialise the Rust core.
+      *
+      * @param bloopHome App-owned directory used by core for local state.
+      * @param callback Invoked on an arbitrary background thread for each response.
+      * @return An opaque handle (> 0) on success, or 0 on failure.
+      */
+     external fun bloopInit(bloopHome: String, callback: ResponseCallback): Long
 
     /**
      * Send a raw Protobuf-encoded request to the core.
