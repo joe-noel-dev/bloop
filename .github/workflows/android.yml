@@ -32,6 +32,14 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install protobuf compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+
+      - name: Verify protoc
+        run: protoc --version
+
       - name: Install Rust nightly
         uses: actions-rs/toolchain@v1
         with:
@@ -90,6 +98,14 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install protobuf compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+
+      - name: Verify protoc
+        run: protoc --version
+
       - name: Install Rust nightly
         uses: actions-rs/toolchain@v1
         with:
@@ -108,11 +124,17 @@ jobs:
         working-directory: android
         run: ./gradlew --no-daemon assembleRelease
 
+      - name: Build release AAB
+        working-directory: android
+        run: ./gradlew --no-daemon bundleRelease
+
       - name: Attach APK to GitHub release
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.event.release.tag_name }}
-          files: android/app/build/outputs/apk/release/*.apk
+          files: |
+            android/app/build/outputs/apk/release/*.apk
+            android/app/build/outputs/bundle/release/*.aab
           fail_on_unmatched_files: true
