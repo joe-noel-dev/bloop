@@ -96,13 +96,22 @@ class AndroidNsdServiceDiscoveryController(
             discoveryListener = listener
         }
         try {
-            nsdManager.discoverServices(
-                serviceType,
-                NsdManager.PROTOCOL_DNS_SD,
-                null,
-                callbackExecutor,
-                listener
-            )
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                nsdManager.discoverServices(
+                    serviceType,
+                    NsdManager.PROTOCOL_DNS_SD,
+                    null,
+                    callbackExecutor,
+                    listener
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                nsdManager.discoverServices(
+                    serviceType,
+                    NsdManager.PROTOCOL_DNS_SD,
+                    listener
+                )
+            }
         } catch (securityException: SecurityException) {
             synchronized(lock) {
                 notifyScanningLocked(false)
