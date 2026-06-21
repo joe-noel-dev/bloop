@@ -1,37 +1,45 @@
 package com.joenoel.bloop.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Computer
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Wifi
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -41,19 +49,103 @@ import bloop.selectRequest
 import com.joenoel.bloop.state.AppAction
 import com.joenoel.bloop.state.AppState
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProjectScreen(
     state: AppState,
     onDispatch: (AppAction) -> Unit,
 ) {
+    var showSongsSheet by remember { mutableStateOf(false) }
+    var showServerSelectionSheet by remember { mutableStateOf(false) }
+    var showConnectionMenu by remember { mutableStateOf(false) }
+
+    val selectedSong = state.project.songsList.firstOrNull { it.id == state.project.selections.song }
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
             containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = selectedSong?.name?.takeIf { it.isNotBlank() } ?: "Bloop",
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { showSongsSheet = true }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.QueueMusic,
+                                contentDescription = "Songs",
+                            )
+                        }
+                    },
+                    actions = {
+                        Box {
+                            IconButton(onClick = { showConnectionMenu = true }) {
+                                Icon(
+                                    imageVector = Icons.Filled.MoreVert,
+                                    contentDescription = "More options",
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showConnectionMenu,
+                                onDismissRequest = { showConnectionMenu = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Connect to Server") },
+                                    leadingIcon = {
+                                        Icon(Icons.Outlined.Wifi, contentDescription = null)
+                                    },
+                                    onClick = {
+                                        showConnectionMenu = false
+                                        showServerSelectionSheet = true
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Connect Local") },
+                                    leadingIcon = {
+                                        Icon(Icons.Filled.Computer, contentDescription = null)
+                                    },
+                                    onClick = {
+                                        showConnectionMenu = false
+                                        onDispatch(AppAction.Disconnect)
+                                        onDispatch(AppAction.ConnectLocal)
+                                    },
+                                )
+                                HorizontalDivider()
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            "Disconnect",
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Filled.Close,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error,
+                                        )
+                                    },
+                                    onClick = {
+                                        showConnectionMenu = false
+                                        onDispatch(AppAction.Disconnect)
+                                    },
+                                )
+                            }
+                        }
+                    },
+                    scrollBehavior = scrollBehavior,
+                )
+            },
             bottomBar = {
                 TransportBar(
                     state = state,
@@ -61,7 +153,7 @@ fun ProjectScreen(
                 )
             },
         ) { innerPadding ->
-            ProjectContent(
+            SongView(
                 state = state,
                 onDispatch = onDispatch,
                 modifier = Modifier
@@ -70,16 +162,46 @@ fun ProjectScreen(
             )
         }
     }
+
+    if (showSongsSheet) {
+        SongsSheet(
+            state = state,
+            onDispatch = onDispatch,
+            onDismiss = { showSongsSheet = false },
+        )
+    }
+
+    if (showServerSelectionSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showServerSelectionSheet = false },
+        ) {
+            ServerSelectionScreen(
+                servers = state.servers,
+                scanning = state.scanning,
+                onLocalSelected = {
+                    showServerSelectionSheet = false
+                    onDispatch(AppAction.Disconnect)
+                    onDispatch(AppAction.ConnectLocal)
+                },
+                onServerSelected = { endpoint ->
+                    showServerSelectionSheet = false
+                    onDispatch(AppAction.Disconnect)
+                    onDispatch(AppAction.Connect(endpoint))
+                },
+                onRestartScan = { onDispatch(AppAction.RestartScan) },
+                onCancel = { showServerSelectionSheet = false },
+            )
+        }
+    }
 }
 
 @Composable
-private fun ProjectContent(
+private fun SongView(
     state: AppState,
     onDispatch: (AppAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val selectedSong = state.project.songsList.firstOrNull { it.id == state.project.selections.song }
-    val selectedSection = selectedSong?.sectionsList?.firstOrNull { it.id == state.project.selections.section }
 
     if (selectedSong == null) {
         Box(
@@ -96,138 +218,97 @@ private fun ProjectContent(
         return
     }
 
-    Column(
-        modifier = modifier.padding(horizontal = 20.dp, vertical = 20.dp),
-    ) {
-        Text(
-            text = selectedSong.name.takeIf { it.isNotBlank() } ?: "Untitled song",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+    val gridState = key(selectedSong.id) { rememberLazyGridState() }
+    val playingSectionId = state.playbackState.sectionId
 
-        BoxWithConstraints(
+    LaunchedEffect(playingSectionId, selectedSong.id) {
+        val index = selectedSong.sectionsList.indexOfFirst { it.id == playingSectionId }
+        if (index >= 0) {
+            gridState.animateScrollToItem(index)
+        }
+    }
+
+    BoxWithConstraints(modifier = modifier) {
+        val isCompact = maxWidth < 600.dp
+        val columnCount = if (isCompact) 1 else 2
+
+        LazyVerticalGrid(
+            state = gridState,
+            columns = GridCells.Fixed(columnCount),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-        ) {
-            val isCompact = maxWidth < 600.dp
-            val columnCount = if (isCompact) 1 else 2
-
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(columnCount),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(
-                    items = selectedSong.sectionsList,
-                    key = { it.id },
-                ) { section ->
-                    SectionCard(
-                        section = section,
-                        selections = state.project.selections,
-                        playbackState = state.playbackState,
-                        progress = state.progress,
-                        onSelect = {
-                            if (state.project.selections.section != section.id) {
-                                onDispatch(
-                                    AppAction.SendRequest(
-                                        request {
-                                            select = selectRequest {
-                                                entity = Bloop.Entity.SECTION
-                                                id = section.id
-                                            }
-                                        }
-                                    )
-                                )
+                .fillMaxSize()
+                .padding(horizontal = 20.dp, vertical = 20.dp)
+                .pointerInput(selectedSong.id, state.project.songsList.size) {
+                    var swipeAccumulator = 0f
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            val offset = when {
+                                swipeAccumulator < -60f -> 1
+                                swipeAccumulator > 60f -> -1
+                                else -> 0
                             }
+                            if (offset != 0) {
+                                selectSongWithOffset(state.project, offset, onDispatch)
+                            }
+                            swipeAccumulator = 0f
+                        },
+                        onHorizontalDrag = { _, amount ->
+                            swipeAccumulator += amount
                         },
                     )
-                }
+                },
+        ) {
+            items(
+                items = selectedSong.sectionsList,
+                key = { it.id },
+            ) { section ->
+                SectionCard(
+                    section = section,
+                    selections = state.project.selections,
+                    playbackState = state.playbackState,
+                    progress = state.progress,
+                    onSelect = {
+                        if (state.project.selections.section != section.id) {
+                            onDispatch(
+                                AppAction.SendRequest(
+                                    request {
+                                        select = selectRequest {
+                                            entity = Bloop.Entity.SECTION
+                                            id = section.id
+                                        }
+                                    }
+                                )
+                            )
+                        }
+                    },
+                )
             }
         }
     }
 }
 
-@Composable
-private fun SectionCard(
-    section: Bloop.Section,
-    selections: Bloop.Selections,
-    playbackState: Bloop.PlaybackState,
-    progress: Bloop.Progress,
-    onSelect: () -> Unit,
+private fun selectSongWithOffset(
+    project: Bloop.Project,
+    offset: Int,
+    onDispatch: (AppAction) -> Unit,
 ) {
-    val isSelected = selections.section == section.id
-    val isPlaying = playbackState.sectionId == section.id
-    val borderColor = when {
-        isPlaying -> MaterialTheme.colorScheme.primary
-        isSelected -> MaterialTheme.colorScheme.onSurfaceVariant
-        else -> Color.Transparent
-    }
+    val selectedSongIndex = project.songsList.indexOfFirst { it.id == project.selections.song }
+    if (selectedSongIndex == -1) return
 
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onSelect),
-        shape = RoundedCornerShape(4.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .defaultMinSize(minHeight = 64.dp)
-                .height(IntrinsicSize.Min),
-            contentAlignment = Alignment.CenterStart,
-        ) {
-            if (isPlaying) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(progress.sectionProgress.coerceIn(0.0, 1.0).toFloat())
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
-                )
-            }
+    val nextIndex = selectedSongIndex + offset
+    if (nextIndex !in project.songsList.indices) return
 
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(4.dp)
-                    .background(borderColor),
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = section.name.takeIf { it.isNotBlank() } ?: "Untitled section",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f),
-                )
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (section.loop) {
-                        Icon(
-                            imageVector = Icons.Filled.Repeat,
-                            contentDescription = "Loop section",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    if (section.metronome) {
-                        Icon(
-                            imageVector = Icons.Filled.GraphicEq,
-                            contentDescription = "Metronome enabled",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+    val nextSongId = project.songsList[nextIndex].id
+    onDispatch(
+        AppAction.SendRequest(
+            request {
+                select = selectRequest {
+                    entity = Bloop.Entity.SONG
+                    id = nextSongId
                 }
             }
-        }
-    }
+        )
+    )
 }
