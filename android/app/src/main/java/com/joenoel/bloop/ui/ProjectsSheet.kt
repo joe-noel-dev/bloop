@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -88,6 +87,15 @@ internal fun ProjectsSheet(
         state.projects + state.cloudProjects
     }
 
+    LaunchedEffect(state.projects, state.cloudProjects) {
+        selected?.let { sel ->
+            val exists = when (sel) {
+                is ProjectLocation.Local -> state.projects.any { it.id == sel.id }
+                is ProjectLocation.Cloud -> state.cloudProjects.any { it.id == sel.id }
+            }
+            if (!exists) selected = null
+        }
+    }
     LaunchedEffect(Unit) {
         onDispatch(
             AppAction.SendRequest(
@@ -376,16 +384,21 @@ private fun ProjectSyncNotificationItem(
         else -> "Unknown status"
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "sync_spin_$projectId")
-    val rotationAngle by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "rotation",
-    )
+    val rotationAngle = if (syncStatus == Bloop.SyncStatus.SYNC_STATUS_IN_PROGRESS) {
+        val infiniteTransition = rememberInfiniteTransition(label = "sync_spin_$projectId")
+        val angle by infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 2000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = "rotation",
+        )
+        angle
+    } else {
+        0f
+    }
 
     Surface(
         color = statusColor.copy(alpha = 0.1f),
@@ -440,13 +453,24 @@ private fun formatRelativeTime(rfc3339: String): String {
     return try {
         val instant = Instant.parse(rfc3339)
         val now = Instant.now()
-        val secondsAgo = now.epochSecond - instant.epochSecond
-        when {
-            secondsAgo < 60 -> "just now"
-            secondsAgo < 3600 -> "${secondsAgo / 60}m ago"
-            secondsAgo < 86400 -> "${secondsAgo / 3600}h ago"
-            secondsAgo < 604800 -> "${secondsAgo / 86400}d ago"
-            else -> "${secondsAgo / 604800}w ago"
+        val secondsDiff = now.epochSecond - instant.epochSecond
+        if (secondsDiff < 0) {
+            val secondsUntil = -secondsDiff
+            when {
+                secondsUntil < 60 -> "in <1m"
+                secondsUntil < 3600 -> "in ${secondsUntil / 60}m"
+                secondsUntil < 86400 -> "in ${secondsUntil / 3600}h"
+                secondsUntil < 604800 -> "in ${secondsUntil / 86400}d"
+                else -> "in ${secondsUntil / 604800}w"
+            }
+        } else {
+            when {
+                secondsDiff < 60 -> "just now"
+                secondsDiff < 3600 -> "${secondsDiff / 60}m ago"
+                secondsDiff < 86400 -> "${secondsDiff / 3600}h ago"
+                secondsDiff < 604800 -> "${secondsDiff / 86400}d ago"
+                else -> "${secondsDiff / 604800}w ago"
+            }
         }
     } catch (_: DateTimeParseException) {
         rfc3339
