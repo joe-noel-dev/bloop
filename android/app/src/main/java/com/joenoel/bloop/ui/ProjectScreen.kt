@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,17 +55,21 @@ fun ProjectScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = MaterialTheme.colorScheme.background,
+            bottomBar = {
+                TransportBar(
+                    state = state,
+                    onDispatch = onDispatch,
+                )
+            },
+        ) { innerPadding ->
             ProjectContent(
                 state = state,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = 236.dp),
-            )
-            TransportBar(
-                state = state,
-                onDispatch = onDispatch,
-                modifier = Modifier.align(Alignment.BottomCenter),
+                    .padding(innerPadding),
             )
         }
     }
@@ -441,16 +446,21 @@ private fun selectSongWithOffset(
 private fun queueState(state: AppState): QueueState {
     val playbackState = state.playbackState
     val selections = state.project.selections
+    val invalidId = 0L
 
     if (playbackState.playing != Bloop.PlayingState.PLAYING) {
         return QueueState.NOT_READY
     }
 
-    if (playbackState.queuedSectionId == selections.section) {
+    if (selections.section == invalidId) {
+        return QueueState.NOT_READY
+    }
+
+    if (playbackState.queuedSectionId != invalidId && playbackState.queuedSectionId == selections.section) {
         return QueueState.QUEUED
     }
 
-    if (selections.section != playbackState.sectionId) {
+    if (playbackState.sectionId != invalidId && selections.section != playbackState.sectionId) {
         return QueueState.READY
     }
 
