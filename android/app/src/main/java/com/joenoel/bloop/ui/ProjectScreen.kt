@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Computer
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.DropdownMenu
@@ -56,6 +57,7 @@ fun ProjectScreen(
     onDispatch: (AppAction) -> Unit,
 ) {
     var showSongsSheet by remember { mutableStateOf(false) }
+    var showProjectsSheet by remember { mutableStateOf(false) }
     var showServerSelectionSheet by remember { mutableStateOf(false) }
     var showConnectionMenu by remember { mutableStateOf(false) }
 
@@ -99,6 +101,16 @@ fun ProjectScreen(
                                 expanded = showConnectionMenu,
                                 onDismissRequest = { showConnectionMenu = false },
                             ) {
+                                DropdownMenuItem(
+                                    text = { Text("Projects") },
+                                    leadingIcon = {
+                                        Icon(Icons.Filled.Folder, contentDescription = null)
+                                    },
+                                    onClick = {
+                                        showConnectionMenu = false
+                                        showProjectsSheet = true
+                                    },
+                                )
                                 DropdownMenuItem(
                                     text = { Text("Connect to Server") },
                                     leadingIcon = {
@@ -168,6 +180,14 @@ fun ProjectScreen(
             state = state,
             onDispatch = onDispatch,
             onDismiss = { showSongsSheet = false },
+        )
+    }
+
+    if (showProjectsSheet) {
+        ProjectsSheet(
+            state = state,
+            onDispatch = onDispatch,
+            onDismiss = { showProjectsSheet = false },
         )
     }
 
