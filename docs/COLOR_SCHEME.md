@@ -21,29 +21,29 @@ The Bloop color scheme is centralized and synchronized across all platforms. The
 
 The theme provides 5 additional palette colors for variety and semantic meaning:
 
-| Color | Hex | Description | Editor | iOS | Core |
-|-------|-----|-------------|--------|-----|------|
-| Theme 1 | `#ffab91` | Coral/Peach (primary) | `colors.primary.main` | `theme1` | `PRIMARY` |
-| Theme 2 | `#bcd8c1` | Mint Green | `colors.palette.1` | `theme2` | `palette::COLOR_1` |
-| Theme 3 | `#388697` | Teal | `colors.palette.3` | `theme3` | `palette::COLOR_3` |
-| Theme 4 | `#cc2936` | Red | `colors.palette.4` | `theme4` | `palette::COLOR_4` |
-| Theme 5 | `#a93f55` | Burgundy | `colors.palette.5` | `theme5` | `palette::COLOR_5` |
+| Color | Hex | Description | Editor | iOS | Android | Core |
+|-------|-----|-------------|--------|-----|---------|------|
+| Theme 1 | `#ffab91` | Coral/Peach (primary) | `colors.primary.main` | `theme1` | `BloopTheme1` | `PRIMARY` |
+| Theme 2 | `#bcd8c1` | Mint Green | `colors.palette[1]` | `theme2` | `BloopTheme2` | `palette::COLOR_1` |
+| Theme 3 | `#388697` | Teal | `colors.palette[3]` | `theme3` | `BloopTheme3` | `palette::COLOR_3` |
+| Theme 4 | `#cc2936` | Red | `colors.palette[4]` | `theme4` | `BloopTheme4` | `palette::COLOR_4` |
+| Theme 5 | `#a93f55` | Burgundy | `colors.palette[5]` | `theme5` | `BloopTheme5` | `palette::COLOR_5` |
 
 ### Neutral Colors
 
 A grayscale palette with a subtle blue tint (hsl(240, 5%, X%)):
 
-| Level | HSL | Hex | Description | Editor | iOS | Core |
-|-------|-----|-----|-------------|--------|-----|------|
-| 0 | - | `#ffffff` | White | `colors.neutral.0` | `neutral0` | `neutral::N0` |
-| 1 | hsl(240, 5%, 88.5%) | `#e0e0e3` | Lightest gray | `colors.neutral.1` | `neutral1` | `neutral::N1` |
-| 2 | hsl(240, 5%, 75%) | `#bcbcc2` | Light gray | `colors.neutral.2` | `neutral2` | `neutral::N2` |
-| 3 | hsl(240, 5%, 67.5%) | `#a7a7b0` | Medium-light gray | `colors.neutral.3` | `neutral3` | `neutral::N3` |
-| 4 | hsl(240, 5%, 50%) | `#797985` | Medium gray | `colors.neutral.4` | `neutral4` | `neutral::N4` |
-| 5 | hsl(240, 5%, 37.5%) | `#5a5a64` | Medium-dark gray | `colors.neutral.5` | `neutral5` | `neutral::N5` |
-| 6 | hsl(240, 5%, 25%) | `#3c3c42` | Dark gray | `colors.neutral.6` | `neutral6` | `neutral::N6` |
-| 7 | hsl(240, 5%, 12.5%) | `#1e1e21` | Darkest gray | `colors.neutral.7` | `neutral7` | `neutral::N7` |
-| 8 | - | `#000000` | Black | `colors.neutral.8` | `neutral8` | `neutral::N8` |
+| Level | HSL | Hex | Description | Editor | iOS | Android | Core |
+|-------|-----|-----|-------------|--------|-----|---------|------|
+| 0 | - | `#ffffff` | White | `colors.neutral[0]` | `neutral0` | `BloopNeutral0` | `neutral::N0` |
+| 1 | hsl(240, 5%, 88.5%) | `#e0e0e3` | Lightest gray | `colors.neutral[1]` | `neutral1` | `BloopNeutral1` | `neutral::N1` |
+| 2 | hsl(240, 5%, 75%) | `#bcbcc2` | Light gray | `colors.neutral[2]` | `neutral2` | `BloopNeutral2` | `neutral::N2` |
+| 3 | hsl(240, 5%, 67.5%) | `#a7a7b0` | Medium-light gray | `colors.neutral[3]` | `neutral3` | `BloopNeutral3` | `neutral::N3` |
+| 4 | hsl(240, 5%, 50%) | `#797985` | Medium gray | `colors.neutral[4]` | `neutral4` | `BloopNeutral4` | `neutral::N4` |
+| 5 | hsl(240, 5%, 37.5%) | `#5a5a64` | Medium-dark gray | `colors.neutral[5]` | `neutral5` | `BloopNeutral5` | `neutral::N5` |
+| 6 | hsl(240, 5%, 25%) | `#3c3c42` | Dark gray | `colors.neutral[6]` | `neutral6` | `BloopNeutral6` | `neutral::N6` |
+| 7 | hsl(240, 5%, 12.5%) | `#1e1e21` | Darkest gray | `colors.neutral[7]` | `neutral7` | `BloopNeutral7` | `neutral::N7` |
+| 8 | - | `#000000` | Black | `colors.neutral[8]` | `neutral8` | `BloopNeutral8` | `neutral::N8` |
 
 ### Background Colors
 
@@ -94,6 +94,25 @@ Rectangle()
 ```
 
 Color assets are located in `ios/source/constants/Colours.xcassets/`.
+
+### Android App (Kotlin/Jetpack Compose)
+
+Android colors are defined in `android/app/src/main/java/com/joenoel/bloop/ui/theme/Color.kt`:
+
+```kotlin
+// Access colors via MaterialTheme in composables
+Text(
+  text = "Hello",
+  color = MaterialTheme.colorScheme.primary,      // BloopTheme1 (#ffab91)
+)
+
+// Named constants for direct use outside of composables
+val primary = BloopTheme1    // #ffab91
+val teal = BloopTheme3       // #388697
+val neutral = BloopNeutral4  // #797985
+```
+
+The `BloopTheme` in `Theme.kt` maps these to Material3 color roles for both light and dark modes.
 
 ### Core UI (Rust/Iced)
 

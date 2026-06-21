@@ -7,27 +7,37 @@ import androidx.compose.runtime.Composable
 import androidx.compose.foundation.isSystemInDarkTheme
 
 private val LightColors = lightColorScheme(
-    primary = Ember,
-    secondary = Moss,
-    tertiary = Sand,
-    background = Mist,
-    surface = Mist,
-    onPrimary = Mist,
-    onSecondary = Mist,
-    onBackground = Ink,
-    onSurface = Ink
+    primary = BloopTheme1,
+    onPrimary = BloopNeutral7,
+    secondary = BloopTheme3,
+    onSecondary = BloopNeutral0,
+    tertiary = BloopTheme2,
+    onTertiary = BloopNeutral7,
+    error = BloopTheme4,
+    onError = BloopNeutral0,
+    background = BloopBackgroundLight,
+    onBackground = BloopNeutral7,
+    surface = BloopNeutral1,
+    onSurface = BloopNeutral7,
+    surfaceVariant = BloopNeutral1,
+    onSurfaceVariant = BloopNeutral5,
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Sand,
-    secondary = Ember,
-    tertiary = Moss,
-    background = Ink,
-    surface = Ink,
-    onPrimary = Ink,
-    onSecondary = Mist,
-    onBackground = Mist,
-    onSurface = Mist
+    primary = BloopTheme1,
+    onPrimary = BloopNeutral7,
+    secondary = BloopTheme3,
+    onSecondary = BloopNeutral0,
+    tertiary = BloopTheme2,
+    onTertiary = BloopNeutral7,
+    error = BloopTheme4,
+    onError = BloopNeutral0,
+    background = BloopBackgroundDark,
+    onBackground = BloopNeutral0,
+    surface = BloopNeutral7,
+    onSurface = BloopNeutral1,
+    surfaceVariant = BloopNeutral6,
+    onSurfaceVariant = BloopNeutral2,
 )
 
 @Composable

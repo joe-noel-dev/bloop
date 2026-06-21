@@ -151,8 +151,11 @@ class AndroidNsdServiceDiscoveryController(
                     }
 
                     synchronized(lock) {
-                        servicesByName[serviceInfo.serviceName] =
-                            ServerEndpoint.HostPort(host = host, port = serviceInfo.port)
+                        servicesByName[serviceInfo.serviceName] = ServerEndpoint.HostPort(
+                            host = host,
+                            port = serviceInfo.port,
+                            displayName = serviceInfo.serviceName,
+                        )
                         notifyServersLocked()
                     }
                 }
