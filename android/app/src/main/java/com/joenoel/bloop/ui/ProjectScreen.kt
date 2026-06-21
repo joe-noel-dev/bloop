@@ -106,12 +106,6 @@ private fun ProjectContent(
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
         )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = selectedSection?.name?.takeIf { it.isNotBlank() } ?: "No section selected",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
         Spacer(modifier = Modifier.height(16.dp))
 
         BoxWithConstraints(
