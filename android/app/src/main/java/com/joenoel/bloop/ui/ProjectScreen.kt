@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MoreVert
@@ -59,6 +60,7 @@ fun ProjectScreen(
     var showSongsSheet by remember { mutableStateOf(false) }
     var showProjectsSheet by remember { mutableStateOf(false) }
     var showServerSelectionSheet by remember { mutableStateOf(false) }
+    var showPreferencesSheet by remember { mutableStateOf(false) }
     var showConnectionMenu by remember { mutableStateOf(false) }
 
     val selectedSong = state.project.songsList.firstOrNull { it.id == state.project.selections.song }
@@ -109,6 +111,16 @@ fun ProjectScreen(
                                     onClick = {
                                         showConnectionMenu = false
                                         showProjectsSheet = true
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Settings") },
+                                    leadingIcon = {
+                                        Icon(Icons.Filled.Settings, contentDescription = null)
+                                    },
+                                    onClick = {
+                                        showConnectionMenu = false
+                                        showPreferencesSheet = true
                                     },
                                 )
                                 DropdownMenuItem(
@@ -189,6 +201,18 @@ fun ProjectScreen(
             onDispatch = onDispatch,
             onDismiss = { showProjectsSheet = false },
         )
+    }
+
+    if (showPreferencesSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showPreferencesSheet = false },
+        ) {
+            PreferencesScreen(
+                state = state,
+                onDispatch = onDispatch,
+                onDismiss = { showPreferencesSheet = false },
+            )
+        }
     }
 
     if (showServerSelectionSheet) {

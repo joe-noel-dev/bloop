@@ -310,6 +310,7 @@ message Preferences {
     AudioPreferences audio = 1;
     MidiPreferences midi = 2;
     SwitchPreferences switch = 3;
+    bool switch_available = 4;
 }
 
 message AudioPreferences {

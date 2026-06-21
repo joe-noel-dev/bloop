@@ -73,7 +73,9 @@ impl crate::bloop::Response {
     }
 
     pub fn with_preferences(mut self, preferences: &crate::bloop::Preferences) -> Self {
-        self.preferences = Some(preferences.clone()).into();
+        let mut prefs = preferences.clone();
+        prefs.switch_available = cfg!(target_os = "linux");
+        self.preferences = Some(prefs).into();
         self
     }
 }
