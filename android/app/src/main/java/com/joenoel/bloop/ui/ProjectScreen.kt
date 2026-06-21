@@ -40,8 +40,7 @@ import bloop.request
 import bloop.selectRequest
 import com.joenoel.bloop.state.AppAction
 import com.joenoel.bloop.state.AppState
-import com.joenoel.bloop.ui.theme.BloopNeutral2
-import com.joenoel.bloop.ui.theme.BloopTheme1
+
 
 @Composable
 fun ProjectScreen(
@@ -162,8 +161,8 @@ private fun SectionCard(
     val isSelected = selections.section == section.id
     val isPlaying = playbackState.sectionId == section.id
     val borderColor = when {
-        isPlaying -> BloopTheme1
-        isSelected -> BloopNeutral2
+        isPlaying -> MaterialTheme.colorScheme.primary
+        isSelected -> MaterialTheme.colorScheme.onSurfaceVariant
         else -> Color.Transparent
     }
 
@@ -186,7 +185,7 @@ private fun SectionCard(
                     modifier = Modifier
                         .fillMaxHeight()
                         .fillMaxWidth(progress.sectionProgress.coerceIn(0.0, 1.0).toFloat())
-                        .background(BloopTheme1.copy(alpha = 0.3f)),
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
                 )
             }
 
