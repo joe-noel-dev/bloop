@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,6 +21,9 @@ fun BloopApp(store: AppStoreViewModel) {
     if (state.connected != null) {
         ConnectedPlaceholder()
     } else {
+        LaunchedEffect(Unit) {
+            store.dispatch(AppAction.RestartScan)
+        }
         ServerSelectionScreen(
             servers = state.servers,
             scanning = state.scanning,
@@ -33,7 +37,10 @@ fun BloopApp(store: AppStoreViewModel) {
 @Composable
 private fun ConnectedPlaceholder() {
     Surface(modifier = Modifier.fillMaxSize()) {
-        Box(contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
             Text(
                 text = "Connected",
                 style = MaterialTheme.typography.headlineMedium,

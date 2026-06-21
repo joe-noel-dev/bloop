@@ -1,6 +1,5 @@
 package com.joenoel.bloop.ui
 
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,11 +28,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.joenoel.bloop.BuildConfig
 import com.joenoel.bloop.state.ServerEndpoint
 import com.joenoel.bloop.ui.theme.BloopTheme
 
@@ -48,8 +47,6 @@ fun ServerSelectionScreen(
     onCancel: (() -> Unit)? = null,
 ) {
     val scrollState = rememberScrollState()
-    val context = LocalContext.current
-
     Scaffold(
         topBar = {
             if (onCancel != null) {
@@ -189,7 +186,7 @@ fun ServerSelectionScreen(
             }
 
             Text(
-                text = versionName(context),
+                text = versionName(),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 modifier = Modifier.padding(bottom = 16.dp),
@@ -231,13 +228,7 @@ private fun displayName(endpoint: ServerEndpoint): String = when (endpoint) {
     is ServerEndpoint.Opaque -> endpoint.value
 }
 
-private fun versionName(context: Context): String {
-    return try {
-        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.0.0"
-    } catch (_: Exception) {
-        "0.0.0"
-    }
-}
+private fun versionName(): String = BuildConfig.VERSION_NAME.ifBlank { "0.0.0" }
 
 @Preview(showBackground = true)
 @Composable
