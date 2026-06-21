@@ -8,12 +8,6 @@ struct SongsView: View {
         state.project.songs
     }
 
-    private func updateSongs(_ songs: [Bloop_Song]) {
-        var project = state.project
-        project.songs = songs
-        dispatch(updateProjectAction(project))
-    }
-
     var body: some View {
         NavigationView {
             List {
@@ -43,32 +37,9 @@ struct SongsView: View {
                         dispatch(selectSongAction(song.id))
                     }
                 }
-                .onDelete { indexSet in
-                    var newSongs = songs
-                    newSongs.remove(atOffsets: indexSet)
-                    updateSongs(newSongs)
-                }
-                .onMove { indices, newOffset in
-                    var newSongs = songs
-                    newSongs.move(fromOffsets: indices, toOffset: newOffset)
-                    updateSongs(newSongs)
-                }
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Songs")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    EditButton()
-                }
-
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        dispatch(addSongAction())
-                    } label: {
-                        Label("Add Song", systemImage: "plus")
-                    }
-                }
-            }
         }
     }
 }

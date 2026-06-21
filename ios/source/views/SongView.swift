@@ -5,19 +5,12 @@ struct SongView: View {
     var state: AppState
     var dispatch: Dispatch
 
-    @Environment(\.editMode) var editMode
-
-    @State var editSong: Bloop_Song
-
     @State private var editingEntity: EditingEntity?
-    @State private var newProjectName = ""
 
     init(song: Bloop_Song, state: AppState, dispatch: @escaping Dispatch) {
         self.song = song
         self.state = state
         self.dispatch = dispatch
-        self.editSong = song
-        self.newProjectName = state.projectInfo?.name ?? "Project"
     }
 
     #if os(iOS)
@@ -63,29 +56,13 @@ struct SongView: View {
         song.sample.id == 0 ? nil : song.sample.id
     }
 
-    private func onEditModeChanged(_ newValue: EditMode?) {
-        if newValue == .active {
-            editSong = song
-        }
-        else if newValue == .inactive {
-            if editSong != song {
-                let action = updateSongAction(editSong)
-                dispatch(action)
-            }
-        }
-    }
+
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(.vertical) {
                 VStack(alignment: .leading) {
-                    if editMode?.wrappedValue == .active {
-                        SongDetailsEditor(song: $editSong)
-
-                        SampleDetailsEditor(song: editSong, dispatch: dispatch)
-                    }
-
-                    SectionsList(editSong: $editSong, state: state, dispatch: dispatch)
+                    SectionsList(song: song, state: state, dispatch: dispatch)
 
                     Spacer()
                 }
@@ -115,10 +92,6 @@ struct SongView: View {
             songSwipeGesture
         )
         .toolbar {
-            ToolbarItemGroup(placement: .navigationBarLeading) {
-                EditButton()
-            }
-
             MainToolbar(
                 currentSong: song,
                 servers: state.servers,
@@ -147,13 +120,6 @@ struct SongView: View {
                 editingEntity = nil
             }
         }
-        .sheet(isPresented: editingEntityBinding(.projectName)) {
-            RenameProjectSheet(newProjectName: $newProjectName) {
-                saveProjectName()
-            }.onAppear {
-                newProjectName = state.projectInfo?.name ?? ""
-            }
-        }
         .sheet(isPresented: editingEntityBinding(.songs)) {
             SongsView(state: state, dispatch: dispatch)
         }
@@ -162,18 +128,7 @@ struct SongView: View {
                 editingEntity = nil
             }
         }
-        .navigationTitle(editMode?.wrappedValue == .active ? editSong.name : song.name)
-        .onChange(of: editMode?.wrappedValue) { oldValue, newValue in
-            onEditModeChanged(newValue)
-        }
-        .onChange(of: song) { oldSong, newSong in
-            if editMode?.wrappedValue != .active {
-                editSong = newSong
-            }
-            else if editSong == oldSong {
-                editSong = newSong
-            }
-        }
+        .navigationTitle(song.name)
     }
 
     private var songSwipeGesture: some Gesture {
@@ -230,15 +185,6 @@ struct SongView: View {
         selectSongWithOffset(-1)
     }
 
-    private func saveProjectName() {
-        let action = renameProjectAction(
-            projectId: state.projectInfo?.id ?? "",
-            name: newProjectName
-        )
-        dispatch(action)
-        editingEntity = nil
-    }
-
     private func scrollToPlayingSection(proxy: ScrollViewProxy) {
         guard let playingSection = playingSection else { return }
 
@@ -265,174 +211,10 @@ struct SongView: View {
     }
 }
 
-private struct SampleDetailsEditor: View {
-    var song: Bloop_Song
-    var dispatch: Dispatch
-
-    @State var editingSample: Bool = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Layout.units(2)) {
-            Text("Sample Details")
-                .font(.headline)
-                .foregroundStyle(.primary)
-
-            if song.hasSample {
-                SongDetailField(label: "Name") {
-                    Text(song.sample.name)
-                        .font(.body)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-
-            HStack(spacing: Layout.units(1)) {
-                Button(
-                    song.hasSample ? "Replace Sample" : "Add Sample",
-                    systemImage: song.hasSample ? "arrow.2.squarepath" : "plus"
-                ) {
-                    editingSample = true
-                }
-                .buttonStyle(.bordered)
-
-                if song.hasSample {
-                    Button(role: .destructive) {
-                        var newSong = song
-                        newSong.clearSample()
-                        dispatch(updateSongAction(newSong))
-                    } label: {
-                        Label("Remove Sample", systemImage: "trash")
-                    }
-                    .buttonStyle(.bordered)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Layout.units(2))
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(Layout.cornerRadiusXLarge)
-        .fileImporter(isPresented: $editingSample, allowedContentTypes: [.wav]) { result in
-            onSampleSelected(result)
-        }
-    }
-
-    private func onSampleSelected(_ result: Result<URL, any Error>) {
-        switch result {
-        case .success(let url):
-            print("Selected URL for upload: \(url)")
-            dispatch(.uploadSample((song.id, url)))
-        case .failure(let error):
-            print("Import failed: \(error)")
-        }
-    }
-}
-
-private struct SongDetailsEditor: View {
-    @Binding var song: Bloop_Song
-    @FocusState private var focusedField: Field?
-
-    private enum Field: Hashable {
-        case name
-        case tempo
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Layout.units(2)) {
-            Text("Song Details")
-                .font(.headline)
-                .foregroundStyle(.primary)
-
-            HStack(spacing: Layout.units(1.5)) {
-                SongDetailField(label: "Name") {
-                    TextField("Enter song name", text: $song.name)
-                        .font(.body)
-                        #if os(iOS)
-                            .textInputAutocapitalization(.words)
-                        #endif
-                        .disableAutocorrection(true)
-                        .focused($focusedField, equals: .name)
-                        .submitLabel(.next)
-                }
-
-                SongDetailField(label: "Tempo (BPM)", systemImage: "metronome") {
-                    TextField("120", value: $song.tempo.bpm, formatter: NumberFormatter())
-                        .font(.body.monospacedDigit())
-                        .keyboardType(.decimalPad)
-                        .focused($focusedField, equals: .tempo)
-                        .submitLabel(.done)
-                }
-                .frame(maxWidth: 160)
-            }
-        }
-        .padding(Layout.units(2))
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(Layout.cornerRadiusXLarge)
-        .onSubmit {
-            switch focusedField {
-            case .name:
-                focusedField = .tempo
-            default:
-                focusedField = nil
-            }
-        }
-    }
-}
-
-private struct SongDetailField<Content: View>: View {
-    let label: String
-    var systemImage: String? = nil
-    let content: Content
-
-    init(label: String, systemImage: String? = nil, @ViewBuilder content: () -> Content) {
-        self.label = label
-        self.systemImage = systemImage
-        self.content = content()
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Layout.units(0.75)) {
-            if let systemImage {
-                Label(label, systemImage: systemImage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .textCase(.uppercase)
-            } else {
-                Text(label)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .textCase(.uppercase)
-            }
-
-            content
-                .textFieldStyle(.plain)
-                .padding(.horizontal, Layout.units(1.5))
-                .padding(.vertical, Layout.units(1.25))
-                .background(Color(.systemBackground))
-                .cornerRadius(Layout.cornerRadiusLarge)
-        }
-    }
-}
-
-private struct RenameProjectSheet: View {
-    @Binding var newProjectName: String
-    var onSave: () -> Void
-
-    var body: some View {
-        Form {
-            Section("Project Name") {
-                TextField("Project Name", text: $newProjectName)
-            }
-
-            Button("Save", action: onSave)
-        }
-    }
-}
-
 struct SectionsList: View {
-    @Binding var editSong: Bloop_Song
+    var song: Bloop_Song
     var state: AppState
     var dispatch: Dispatch
-
-    @Environment(\.editMode) private var editMode
 
     #if os(iOS)
         @Environment(\.horizontalSizeClass) var horizontalSizeClass
@@ -450,7 +232,7 @@ struct SectionsList: View {
 
     var body: some View {
         LazyVGrid(columns: sectionColumns, spacing: Layout.units(2)) {
-            ForEach($editSong.sections) { section in
+            ForEach(song.sections, id: \.id) { section in
                 SectionView(
                     section: section,
                     selections: state.project.selections,
@@ -459,19 +241,6 @@ struct SectionsList: View {
                     dispatch: dispatch
                 )
                 .id(section.id)
-            }
-
-            if editMode?.wrappedValue == .active {
-                Button("Add Section") {
-                    let section = Bloop_Section.with {
-                        $0.id = randomId()
-                        $0.name = "Section"
-                        $0.start = (editSong.sections.last?.start ?? 0.0) + 16.0
-                    }
-
-                    editSong.sections.append(section)
-                }
-                .frame(minHeight: 64)
             }
         }
     }
