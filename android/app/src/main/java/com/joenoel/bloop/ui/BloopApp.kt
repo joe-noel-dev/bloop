@@ -3,13 +3,9 @@ package com.joenoel.bloop.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joenoel.bloop.state.AppAction
 import com.joenoel.bloop.state.AppStoreViewModel
@@ -19,7 +15,10 @@ fun BloopApp(store: AppStoreViewModel) {
     val state by store.state.collectAsStateWithLifecycle()
 
     if (state.connected != null) {
-        ConnectedPlaceholder()
+        ProjectScreen(
+            state = state,
+            onDispatch = store::dispatch,
+        )
     } else {
         LaunchedEffect(Unit) {
             store.dispatch(AppAction.RestartScan)
@@ -31,21 +30,5 @@ fun BloopApp(store: AppStoreViewModel) {
             onServerSelected = { endpoint -> store.dispatch(AppAction.Connect(endpoint)) },
             onRestartScan = { store.dispatch(AppAction.RestartScan) },
         )
-    }
-}
-
-@Composable
-private fun ConnectedPlaceholder() {
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "Connected",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
     }
 }
