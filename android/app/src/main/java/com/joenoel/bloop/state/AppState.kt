@@ -8,7 +8,7 @@ enum class ConnectionType {
 }
 
 sealed interface ServerEndpoint {
-    data class HostPort(val host: String, val port: Int) : ServerEndpoint
+    data class HostPort(val host: String, val port: Int, val displayName: String? = null) : ServerEndpoint
     data class Service(
         val name: String,
         val type: String,
