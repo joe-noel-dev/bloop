@@ -392,15 +392,27 @@ private fun queueState(state: AppState): QueueState {
         return QueueState.NOT_READY
     }
 
-    if (selections.section == invalidId) {
+    val selectedSongId = selections.song
+    val selectedSectionId = selections.section
+
+    if (selectedSongId == invalidId || selectedSectionId == invalidId) {
         return QueueState.NOT_READY
     }
 
-    if (playbackState.queuedSectionId != invalidId && playbackState.queuedSectionId == selections.section) {
+    if (
+        playbackState.queuedSongId != invalidId &&
+        playbackState.queuedSectionId != invalidId &&
+        playbackState.queuedSongId == selectedSongId &&
+        playbackState.queuedSectionId == selectedSectionId
+    ) {
         return QueueState.QUEUED
     }
 
-    if (playbackState.sectionId != invalidId && selections.section != playbackState.sectionId) {
+    if (
+        playbackState.songId != invalidId &&
+        playbackState.sectionId != invalidId &&
+        (playbackState.songId != selectedSongId || playbackState.sectionId != selectedSectionId)
+    ) {
         return QueueState.READY
     }
 
