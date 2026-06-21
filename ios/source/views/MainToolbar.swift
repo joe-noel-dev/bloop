@@ -19,7 +19,6 @@ struct MainToolbar: ToolbarContent {
     var scanning: Bool
 
     @Binding var editingEntity: EditingEntity?
-    @Environment(\.editMode) var editMode
     var onAction: (ToolbarAction) -> Void
 
     @State private var showingServerSelection = false
@@ -36,12 +35,6 @@ struct MainToolbar: ToolbarContent {
             Menu {
                 Button("Projects", systemImage: "folder") {
                     editingEntity = .projects
-                }
-
-                if editMode?.wrappedValue == .active {
-                    Button("Rename Project", systemImage: "pencil") {
-                        editingEntity = .projectName
-                    }
                 }
 
                 Divider()
