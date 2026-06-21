@@ -1,5 +1,8 @@
 package com.joenoel.bloop.state
 
+import bloop.Bloop
+import bloop.getRequest
+import bloop.request
 import com.joenoel.bloop.core.BloopCore
 import kotlinx.coroutines.CancellationException
 
@@ -88,6 +91,11 @@ class LocalCoreMiddleware(
 
         if (started) {
             dispatch(AppAction.SetConnected(ConnectionType.LOCAL))
+            dispatch(
+                AppAction.SendRequest(
+                    request { get = getRequest { entity = Bloop.Entity.ALL } }
+                )
+            )
         }
     }
 

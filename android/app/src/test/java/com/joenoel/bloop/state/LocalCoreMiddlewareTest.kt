@@ -1,5 +1,6 @@
 package com.joenoel.bloop.state
 
+import bloop.Bloop
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -42,6 +43,8 @@ class LocalCoreMiddlewareTest {
         assertEquals(1, created)
         assertEquals(1, audioController.requestCount)
         assertTrue(dispatched.contains(AppAction.SetConnected(ConnectionType.LOCAL)))
+        val loadAll = dispatched.filterIsInstance<AppAction.SendRequest>().single()
+        assertEquals(Bloop.Entity.ALL, loadAll.request.get.entity)
     }
 
     @Test
