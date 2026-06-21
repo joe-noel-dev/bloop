@@ -2,7 +2,6 @@ import SwiftUI
 
 enum EditingEntity {
     case projects
-    case projectName
     case songs
     case settings
 }
