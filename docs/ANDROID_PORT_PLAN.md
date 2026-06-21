@@ -122,7 +122,7 @@ Android environment expectations for PR 2:
 ### PR 19: Preferences UI
 
 - Port audio and MIDI settings first
-- Omit or defer Raspberry Pi switch mapping UI if it is not relevant on Android
+- Switch mappings UI is hidden on platforms where the core reports `switch_available = false` (switch support is Linux/Raspberry Pi only)
 
 ### PR 20: Waveform rendering
 

@@ -25,7 +25,9 @@ struct PreferencesView: View {
             Form {
                 audioSection
                 midiSection
-                switchSection
+                if editedPreferences.switchAvailable {
+                    switchSection
+                }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
