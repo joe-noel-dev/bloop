@@ -1,4 +1,6 @@
 use std::ffi::c_void;
+#[cfg(target_os = "android")]
+use std::sync::Once;
 
 use log::error;
 use protobuf::Message;
@@ -132,3 +134,22 @@ impl BloopResponseCallbackContext {
 
 unsafe impl Send for BloopResponseCallbackContext {}
 unsafe impl Sync for BloopResponseCallbackContext {}
+
+#[cfg(target_os = "android")]
+static ANDROID_CONTEXT_INIT: Once = Once::new();
+
+#[cfg(target_os = "android")]
+#[no_mangle]
+extern "C" fn bloop_set_android_context(vm: *mut c_void, context: *mut c_void) {
+    if vm.is_null() || context.is_null() {
+        error!("Ignoring Android context initialization with null JNI pointers");
+        return;
+    }
+
+    ANDROID_CONTEXT_INIT.call_once(|| {
+        // CPAL's Android backend requires JVM + Context to be initialized before use.
+        unsafe {
+            ndk_context::initialize_android_context(vm, context);
+        }
+    });
+}

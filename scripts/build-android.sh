@@ -8,7 +8,7 @@ output_root="${project_root}/target/android"
 library_name="libbloop.so"
 build_profile="${BUILD_PROFILE:-release}"
 if [ $# -eq 0 ]; then
-  targets=("aarch64-linux-android")
+  targets=("aarch64-linux-android" "x86_64-linux-android")
 else
   targets=("$@")
 fi

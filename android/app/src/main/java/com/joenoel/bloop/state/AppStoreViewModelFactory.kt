@@ -3,6 +3,7 @@ package com.joenoel.bloop.state
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.joenoel.bloop.core.BloopCore
 
 class AppStoreViewModelFactory(
     private val appContext: Context,
@@ -18,7 +19,13 @@ class AppStoreViewModelFactory(
                     DiscoveryMiddleware(
                         AndroidNsdServiceDiscoveryController(appContext)
                     ),
-                    LocalCoreMiddleware(bloopHome = bloopHome),
+                    LocalCoreMiddleware(
+                        bloopHome = bloopHome,
+                        audioSessionController = AndroidAudioSessionController(appContext),
+                        coreFactory = LocalCoreFactory { onResponse ->
+                            BloopCoreSession(BloopCore(appContext, bloopHome, onResponse))
+                        },
+                    ),
                     RemoteMiddleware(),
                 )
             ) as T
