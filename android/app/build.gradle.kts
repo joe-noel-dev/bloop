@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.joenoel.bloop"
-        minSdk = 26
+        minSdk = 31
         targetSdk = 35
         versionCode = 1200
         versionName = "0.12.0"

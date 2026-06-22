@@ -46,11 +46,11 @@ fi
 
 case "${tool_name}" in
   clang)
-    api_level="${ANDROID_MIN_SDK_VERSION:-26}"
+    api_level="${ANDROID_MIN_SDK_VERSION:-31}"
     tool_path="${bin_dir}/${clang_triple}${api_level}-clang"
     ;;
   clang++)
-    api_level="${ANDROID_MIN_SDK_VERSION:-26}"
+    api_level="${ANDROID_MIN_SDK_VERSION:-31}"
     tool_path="${bin_dir}/${clang_triple}${api_level}-clang++"
     ;;
   ar)
