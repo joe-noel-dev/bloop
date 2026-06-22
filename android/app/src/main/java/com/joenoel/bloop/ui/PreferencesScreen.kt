@@ -14,6 +14,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -38,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import bloop.Bloop
+import bloop.audioControlRequest
 import bloop.getRequest
 import bloop.request
 import bloop.switchMapping
@@ -59,11 +62,9 @@ fun PreferencesScreen(
     var saved by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        onDispatch(
-            AppAction.SendRequest(
-                request { get = getRequest { entity = Bloop.Entity.PREFERENCES } }
-            )
-        )
+        onDispatch(AppAction.SendRequest(request { get = getRequest { entity = Bloop.Entity.PREFERENCES } }))
+        onDispatch(AppAction.SendRequest(request { get = getRequest { entity = Bloop.Entity.AUDIO_DEVICES } }))
+        onDispatch(AppAction.SendRequest(request { get = getRequest { entity = Bloop.Entity.AUDIO_STATUS } }))
     }
 
     LaunchedEffect(state.preferences) {
@@ -112,19 +113,168 @@ fun PreferencesScreen(
 
         SectionHeader("Audio")
 
-        OutlinedTextField(
-            value = edited.audio.outputDevice,
-            onValueChange = { edited = edited.toBuilder().setAudio(edited.audio.toBuilder().setOutputDevice(it)).build() },
-            label = { Text("Output Device") },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-            singleLine = true,
-        )
+        val audioStatus = state.audioStatus
+        val isAudioIssue = audioStatus != null &&
+            audioStatus.engineStatus != Bloop.AudioEngineStatus.AUDIO_ENGINE_STATUS_RUNNING
 
-        NumberField(
-            label = "Sample Rate",
-            value = edited.audio.sampleRate.toLong(),
-            onValueChange = { edited = edited.toBuilder().setAudio(edited.audio.toBuilder().setSampleRate(it.toInt())).build() },
-        )
+        if (isAudioIssue && audioStatus != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        text = if (audioStatus.engineStatus == Bloop.AudioEngineStatus.AUDIO_ENGINE_STATUS_FAILED)
+                            "Audio engine failed" else "Audio engine stopped",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    if (audioStatus.error.isNotEmpty()) {
+                        Text(
+                            text = audioStatus.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(top = 2.dp),
+                        )
+                    }
+                    TextButton(
+                        onClick = {
+                            onDispatch(
+                                AppAction.SendRequest(
+                                    request {
+                                        audioControl = audioControlRequest {
+                                            method = Bloop.AudioControlMethod.AUDIO_CONTROL_METHOD_RESTART
+                                        }
+                                    }
+                                )
+                            )
+                        },
+                    ) {
+                        Text("Restart Audio", color = MaterialTheme.colorScheme.onErrorContainer)
+                    }
+                }
+            }
+        }
+
+        val audioDevices = state.audioDevices?.devicesList ?: emptyList()
+        val selectedDevice = audioDevices.firstOrNull { it.id == edited.audio.outputDevice }
+        var deviceExpanded by remember { mutableStateOf(false) }
+
+        ExposedDropdownMenuBox(
+            expanded = deviceExpanded,
+            onExpandedChange = { deviceExpanded = it },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        ) {
+            OutlinedTextField(
+                value = selectedDevice?.name ?: edited.audio.outputDevice.ifEmpty { "Default" },
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Output Device") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(deviceExpanded) },
+                modifier = Modifier.menuAnchor().fillMaxWidth(),
+            )
+            ExposedDropdownMenu(expanded = deviceExpanded, onDismissRequest = { deviceExpanded = false }) {
+                DropdownMenuItem(
+                    text = { Text("Default") },
+                    onClick = {
+                        edited = edited.toBuilder()
+                            .setAudio(edited.audio.toBuilder().setOutputDevice(""))
+                            .build()
+                        deviceExpanded = false
+                    },
+                )
+
+                if (audioDevices.isEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text("Loading…") },
+                        onClick = { deviceExpanded = false },
+                        enabled = false,
+                    )
+                } else {
+                    audioDevices.forEach { device ->
+                        DropdownMenuItem(
+                            text = { Text(device.name) },
+                            onClick = {
+                                edited = edited.toBuilder()
+                                    .setAudio(edited.audio.toBuilder().setOutputDevice(device.id))
+                                    .build()
+                                deviceExpanded = false
+                            },
+                        )
+                    }
+                }
+            }
+        }
+
+        val supportedSampleRates = selectedDevice?.supportedSampleRatesList ?: emptyList()
+        var sampleRateExpanded by remember { mutableStateOf(false) }
+
+        ExposedDropdownMenuBox(
+            expanded = sampleRateExpanded,
+            onExpandedChange = { sampleRateExpanded = it },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        ) {
+            OutlinedTextField(
+                value = if (edited.audio.sampleRate > 0) "${edited.audio.sampleRate} Hz" else "Default",
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Sample Rate") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(sampleRateExpanded) },
+                modifier = Modifier.menuAnchor().fillMaxWidth(),
+            )
+            ExposedDropdownMenu(
+                expanded = sampleRateExpanded,
+                onDismissRequest = { sampleRateExpanded = false },
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Default") },
+                    onClick = {
+                        edited = edited.toBuilder()
+                            .setAudio(edited.audio.toBuilder().setSampleRate(0))
+                            .build()
+                        sampleRateExpanded = false
+                    },
+                )
+
+                if (supportedSampleRates.isEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text(if (selectedDevice == null) "Select output device first" else "No sample rates reported") },
+                        onClick = { sampleRateExpanded = false },
+                        enabled = false,
+                    )
+                } else {
+                    supportedSampleRates.forEach { rate ->
+                        DropdownMenuItem(
+                            text = { Text("$rate Hz") },
+                            onClick = {
+                                edited = edited.toBuilder()
+                                    .setAudio(edited.audio.toBuilder().setSampleRate(rate.toInt()))
+                                    .build()
+                                sampleRateExpanded = false
+                            },
+                        )
+                    }
+                }
+            }
+        }
+
+        Button(
+            onClick = {
+                onDispatch(
+                    AppAction.SendRequest(
+                        request {
+                            audioControl = audioControlRequest {
+                                method = Bloop.AudioControlMethod.AUDIO_CONTROL_METHOD_RESTART
+                            }
+                        }
+                    )
+                )
+            },
+            modifier = Modifier.padding(vertical = 4.dp),
+        ) {
+            Text("Restart Audio")
+        }
 
         NumberField(
             label = "Buffer Size",

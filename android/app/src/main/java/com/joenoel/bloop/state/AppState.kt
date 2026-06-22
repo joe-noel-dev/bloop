@@ -35,6 +35,8 @@ data class AppState(
     val errors: List<String> = emptyList(),
     val preferences: Bloop.Preferences? = null,
     val lastResponseText: String? = null,
+    val audioDevices: Bloop.AudioDevices? = null,
+    val audioStatus: Bloop.AudioStatus? = null,
 )
 
 fun emptyProject(): Bloop.Project {

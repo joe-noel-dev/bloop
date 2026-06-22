@@ -64,5 +64,13 @@ class ResponseMiddleware : AppMiddleware {
         if (response.hasPreferences()) {
             dispatch(AppAction.SetPreferences(response.preferences))
         }
+
+        if (response.hasAudioDevices()) {
+            dispatch(AppAction.SetAudioDevices(response.audioDevices))
+        }
+
+        if (response.hasAudioStatus()) {
+            dispatch(AppAction.SetAudioStatus(response.audioStatus))
+        }
     }
 }

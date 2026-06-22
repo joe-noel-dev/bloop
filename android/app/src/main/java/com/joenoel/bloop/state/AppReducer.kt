@@ -27,6 +27,8 @@ object AppReducer {
             is AppAction.SetPreferences -> state.copy(preferences = action.preferences)
             is AppAction.SetLastResponseText -> state.copy(lastResponseText = action.text)
             is AppAction.SetConnected -> state.copy(connected = action.connected)
+            is AppAction.SetAudioDevices -> state.copy(audioDevices = action.audioDevices)
+            is AppAction.SetAudioStatus -> state.copy(audioStatus = action.audioStatus)
 
             is AppAction.SendRequest,
             is AppAction.ReceivedResponse,
