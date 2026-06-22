@@ -341,22 +341,21 @@ impl AudioProcessRunner for DummyProcess {
     // Implementation for dummy process
 }
 
-/// Returns `(process_runner, init_error)`. `init_error` is `None` when the
-/// real audio device was opened successfully, or `Some(reason)` when
-/// initialization failed and the runner fell back to `NoopProcess`.
+/// Returns the realtime audio process runner when the backend initialises
+/// successfully, or an error reason when it fails.
 pub fn create_audio_process(
     audio_process: Box<dyn AudioProcess + Send>,
     preferences: AudioPreferences,
-) -> (Box<dyn AudioProcessRunner>, Option<String>) {
+) -> Result<Box<dyn AudioProcessRunner>, String> {
     let created = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         Process::new(audio_process, preferences)
     }));
 
     match created {
-        Ok(Ok(process)) => (Box::new(process), None),
+        Ok(Ok(process)) => Ok(Box::new(process)),
         Ok(Err(err)) => {
             error!("Audio backend initialization failed; running without realtime audio output: {err}");
-            (Box::new(NoopProcess), Some(err))
+            Err(err)
         }
         Err(payload) => {
             let panic_message = if let Some(message) = payload.downcast_ref::<&str>() {
@@ -368,15 +367,15 @@ pub fn create_audio_process(
             };
 
             error!("Audio backend initialization panicked; running without realtime audio output: {panic_message}");
-            (Box::new(NoopProcess), Some(panic_message))
+            Err(panic_message)
         }
     }
 }
 
-/// Returns `(dummy_process_runner, None)` — always succeeds.
+/// Creates a dummy process runner. This always succeeds.
 pub fn create_dummy_process(
     audio_process: Box<dyn AudioProcess + Send>,
     preferences: AudioPreferences,
-) -> (Box<dyn AudioProcessRunner>, Option<String>) {
-    (Box::new(DummyProcess::new(audio_process, preferences)), None)
+) -> Box<dyn AudioProcessRunner> {
+    Box::new(DummyProcess::new(audio_process, preferences))
 }

@@ -1,6 +1,6 @@
 use super::{
     metronome::Metronome,
-    process::AudioProcessRunner,
+    process::{AudioProcessRunner, NoopProcess},
     sampler_converter::{SampleConversionResult, SampleConverter},
     sequencer::Sequencer,
 };
@@ -67,15 +67,19 @@ fn build_audio_engine(preferences: &AudioPreferences, use_dummy_audio: bool) -> 
 
     context.start();
 
-    let (realtime_process, init_error) = if use_dummy_audio {
-        create_dummy_process(process, preferences.clone())
+    let (realtime_process, state) = if use_dummy_audio {
+        (
+            create_dummy_process(process, preferences.clone()),
+            AudioEngineState::Running,
+        )
     } else {
-        create_audio_process(process, preferences.clone())
-    };
-
-    let state = match init_error {
-        None => AudioEngineState::Running,
-        Some(reason) => AudioEngineState::Failed { reason },
+        match create_audio_process(process, preferences.clone()) {
+            Ok(process) => (process, AudioEngineState::Running),
+            Err(reason) => (
+                Box::new(NoopProcess) as Box<dyn AudioProcessRunner>,
+                AudioEngineState::Failed { reason },
+            ),
+        }
     };
 
     (
