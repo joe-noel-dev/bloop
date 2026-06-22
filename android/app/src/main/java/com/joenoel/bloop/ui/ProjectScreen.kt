@@ -374,7 +374,7 @@ private fun SongView(
                     section = section,
                     selections = state.project.selections,
                     playbackState = state.playbackState,
-                    progress = state.progress,
+                    progress = if (state.playbackState.sectionId == section.id) state.progress else Bloop.Progress.getDefaultInstance(),
                     onSelect = {
                         if (state.project.selections.section != section.id) {
                             onDispatch(
