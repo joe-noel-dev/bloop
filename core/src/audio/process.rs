@@ -68,12 +68,10 @@ fn select_output_device(host: &Host, device_name: &str) -> Option<Device> {
 
 /// Selects the preferred channel count for `device` at the given `sample_rate`.
 ///
-/// Preference order:
-/// 1. 4 channels (the maximum the app generates)
-/// 2. Highest channel count > 2
-/// 3. 2 channels
-/// 4. 1 channel (rare)
-fn preferred_channel_count_for_device(device: &Device, sample_rate: u32) -> usize {
+/// Returns the smallest supported channel count that satisfies `min_required`.
+/// Falls back to 2 channels, or the smallest available count if `min_required`
+/// cannot be met.
+fn preferred_channel_count_for_device(device: &Device, sample_rate: u32, min_required: usize) -> usize {
     let mut counts: Vec<u16> = device
         .supported_output_configs()
         .ok()
@@ -92,10 +90,7 @@ fn preferred_channel_count_for_device(device: &Device, sample_rate: u32) -> usiz
             .unwrap_or(2);
     }
 
-    if counts.contains(&4) {
-        return 4;
-    }
-    if let Some(&best) = counts.iter().filter(|&&c| c > 2).max() {
+    if let Some(&best) = counts.iter().find(|&&c| c as usize >= min_required) {
         return best as usize;
     }
     if counts.contains(&2) {
@@ -105,7 +100,8 @@ fn preferred_channel_count_for_device(device: &Device, sample_rate: u32) -> usiz
 }
 
 /// Returns the preferred output channel count for the device selected by `preferences`.
-/// Applies the preference ordering: 4 channels > highest > 2 > 1.
+/// Selects the smallest supported channel count that satisfies the routing requirements
+/// for the configured main and click channel offsets.
 pub fn query_native_channel_count(preferences: &AudioPreferences) -> usize {
     #[cfg(target_os = "linux")]
     let host = if preferences.use_jack {
@@ -121,7 +117,9 @@ pub fn query_native_channel_count(preferences: &AudioPreferences) -> usize {
         return 2;
     };
 
-    preferred_channel_count_for_device(&device, preferences.sample_rate)
+    let min_required = (preferences.main_channel_offset as usize + 2)
+        .max(preferences.click_channel_offset as usize + 2);
+    preferred_channel_count_for_device(&device, preferences.sample_rate, min_required)
 }
 
 #[cfg(target_os = "linux")]
@@ -304,7 +302,9 @@ impl Process {
             });
         }
 
-        let channel_count = preferred_channel_count_for_device(&device, preferences.sample_rate);
+        let min_required = (preferences.main_channel_offset as usize + 2)
+            .max(preferences.click_channel_offset as usize + 2);
+        let channel_count = preferred_channel_count_for_device(&device, preferences.sample_rate, min_required);
         info!("Selected channel count: {}\n", channel_count);
 
         let selected_config = match select_stream_config(&preferences, &device, channel_count) {
