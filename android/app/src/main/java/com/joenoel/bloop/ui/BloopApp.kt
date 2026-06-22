@@ -1,11 +1,12 @@
 package com.joenoel.bloop.ui
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
+import android.app.Activity
+import android.view.WindowManager
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.joenoel.bloop.state.AppAction
 import com.joenoel.bloop.state.AppStoreViewModel
@@ -15,6 +16,7 @@ fun BloopApp(store: AppStoreViewModel) {
     val state by store.state.collectAsStateWithLifecycle()
 
     if (state.connected != null) {
+        KeepScreenOn()
         ProjectScreen(
             state = state,
             onDispatch = store::dispatch,
@@ -30,5 +32,26 @@ fun BloopApp(store: AppStoreViewModel) {
             onServerSelected = { endpoint -> store.dispatch(AppAction.Connect(endpoint)) },
             onRestartScan = { store.dispatch(AppAction.RestartScan) },
         )
+    }
+}
+
+@Composable
+private fun KeepScreenOn() {
+    val context = LocalContext.current
+    DisposableEffect(context) {
+        val activity =
+            generateSequence(context) { ctx ->
+                (ctx as? android.content.ContextWrapper)?.baseContext
+            }.filterIsInstance<Activity>().firstOrNull()
+
+        if (activity == null) {
+            return@DisposableEffect onDispose {}
+        }
+
+        val window = activity.window
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
     }
 }

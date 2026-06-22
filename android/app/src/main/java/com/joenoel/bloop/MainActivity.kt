@@ -8,8 +8,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.joenoel.bloop.state.AppStoreViewModel
 import com.joenoel.bloop.state.AppStoreViewModelFactory
 import com.joenoel.bloop.ui.BloopApp
@@ -17,6 +17,13 @@ import com.joenoel.bloop.ui.theme.BloopTheme
 import java.io.File
 
 class MainActivity : ComponentActivity() {
+    private val store: AppStoreViewModel by viewModels {
+        AppStoreViewModelFactory(
+            appContext = applicationContext,
+            bloopHome = File(filesDir, "bloop").absolutePath,
+        )
+    }
+
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
             if (result.values.any { it }) {
@@ -28,16 +35,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         ensureDiscoveryPermissions()
-        val bloopHome = File(filesDir, "bloop").absolutePath
 
         setContent {
-            val store: AppStoreViewModel = viewModel(
-                factory = AppStoreViewModelFactory(
-                    appContext = applicationContext,
-                    bloopHome = bloopHome,
-                )
-            )
-
             BloopTheme {
                 BloopApp(store)
             }
