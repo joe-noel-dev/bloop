@@ -101,6 +101,9 @@ dependencies {
 
     implementation("com.google.protobuf:protobuf-kotlin-lite:4.28.2")
 
+    // Android TrustManager bridge required by rustls-platform-verifier for TLS cert verification
+    implementation("rustls:rustls-platform-verifier:0.1.1")
+
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     implementation("androidx.core:core-ktx:1.13.1")

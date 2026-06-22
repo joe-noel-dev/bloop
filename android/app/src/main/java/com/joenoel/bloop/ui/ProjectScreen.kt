@@ -13,10 +13,12 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -46,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import bloop.Bloop
+import bloop.logoutRequest
 import bloop.request
 import bloop.selectRequest
 import com.joenoel.bloop.state.AppAction
@@ -62,6 +65,8 @@ fun ProjectScreen(
     var showServerSelectionSheet by remember { mutableStateOf(false) }
     var showPreferencesSheet by remember { mutableStateOf(false) }
     var showConnectionMenu by remember { mutableStateOf(false) }
+    var showAccountMenu by remember { mutableStateOf(false) }
+    var showLoginSheet by remember { mutableStateOf(false) }
 
     val selectedSong = state.project.songsList.firstOrNull { it.id == state.project.selections.song }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -92,6 +97,51 @@ fun ProjectScreen(
                         }
                     },
                     actions = {
+                        Box {
+                            IconButton(onClick = { showAccountMenu = true }) {
+                                Icon(
+                                    imageVector = if (state.user != null) Icons.Filled.Person else Icons.Outlined.PersonOutline,
+                                    contentDescription = "Account",
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showAccountMenu,
+                                onDismissRequest = { showAccountMenu = false },
+                            ) {
+                                if (state.user != null) {
+                                    DropdownMenuItem(
+                                        text = { Text(state.user.name) },
+                                        enabled = false,
+                                        onClick = {},
+                                    )
+                                    HorizontalDivider()
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                "Sign Out",
+                                                color = MaterialTheme.colorScheme.error,
+                                            )
+                                        },
+                                        onClick = {
+                                            showAccountMenu = false
+                                            onDispatch(
+                                                AppAction.SendRequest(
+                                                    request { logout = logoutRequest {} }
+                                                )
+                                            )
+                                        },
+                                    )
+                                } else {
+                                    DropdownMenuItem(
+                                        text = { Text("Sign In") },
+                                        onClick = {
+                                            showAccountMenu = false
+                                            showLoginSheet = true
+                                        },
+                                    )
+                                }
+                            }
+                        }
                         Box {
                             IconButton(onClick = { showConnectionMenu = true }) {
                                 Icon(
@@ -234,6 +284,18 @@ fun ProjectScreen(
                 },
                 onRestartScan = { onDispatch(AppAction.RestartScan) },
                 onCancel = { showServerSelectionSheet = false },
+            )
+        }
+    }
+
+    if (showLoginSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showLoginSheet = false },
+        ) {
+            LoginScreen(
+                state = state,
+                onDispatch = onDispatch,
+                onDismiss = { showLoginSheet = false },
             )
         }
     }
