@@ -1,5 +1,8 @@
 package com.joenoel.bloop.ui
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,6 +42,11 @@ internal fun SectionCard(
 ) {
     val isSelected = selections.section == section.id
     val isPlaying = playbackState.sectionId == section.id
+    val animatedProgress by animateFloatAsState(
+        targetValue = if (isPlaying) progress.sectionProgress.coerceIn(0.0, 1.0).toFloat() else 0f,
+        animationSpec = tween(durationMillis = 100, easing = LinearEasing),
+        label = "section_progress",
+    )
     val borderColor = when {
         isPlaying -> MaterialTheme.colorScheme.primary
         isSelected -> MaterialTheme.colorScheme.onSurfaceVariant
@@ -62,7 +71,7 @@ internal fun SectionCard(
                 Box(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .fillMaxWidth(progress.sectionProgress.coerceIn(0.0, 1.0).toFloat())
+                        .fillMaxWidth(animatedProgress)
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
                 )
             }
