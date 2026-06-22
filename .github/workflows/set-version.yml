@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   set-version:
@@ -33,23 +34,11 @@ jobs:
       - name: Run set-version script
         run: ./scripts/set-version.sh "${{ github.event.inputs.version }}"
 
-      - name: Commit and tag
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          TAG="v${VERSION}"
-
-          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null || git ls-remote --tags origin "refs/tags/${TAG}" | grep -q "refs/tags/${TAG}$"; then
-            echo "Error: Tag '${TAG}' already exists"
-            exit 1
-          fi
-
-          git add .
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-            exit 0
-          fi
-
-          git commit -m "Bump version to ${TAG}"
-          git tag "${TAG}"
-          git push origin HEAD:main
-          git push origin "${TAG}"
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: "release/v${{ github.event.inputs.version }}"
+          commit-message: "Bump version to v${{ github.event.inputs.version }}"
+          title: "Bump version to v${{ github.event.inputs.version }}"
+          body: "Automated version bump to v${{ github.event.inputs.version }}."
+          base: main

@@ -1,0 +1,27 @@
+name: Tag on Version Merge
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Create tag if version bump commit
+        run: |
+          MESSAGE=$(git log -1 --pretty=%s)
+          if [[ "$MESSAGE" =~ ^Bump\ version\ to\ (v[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            TAG="${BASH_REMATCH[1]}"
+            git tag "$TAG"
+            git push origin "$TAG"
+            echo "Created and pushed tag $TAG"
+          else
+            echo "Not a version bump commit, skipping."
+          fi
