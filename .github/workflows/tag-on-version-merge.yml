@@ -17,7 +17,7 @@ jobs:
       - name: Create tag if version bump commit
         run: |
           MESSAGE=$(git log -1 --pretty=%s)
-          if [[ "$MESSAGE" =~ ^Bump\ version\ to\ (v[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+          if [[ "$MESSAGE" =~ ^Bump\ version\ to\ (v[0-9]+\.[0-9]+\.[0-9]+) ]]; then
             TAG="${BASH_REMATCH[1]}"
             git tag "$TAG"
             git push origin "$TAG"
