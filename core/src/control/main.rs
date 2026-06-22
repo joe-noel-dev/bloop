@@ -236,7 +236,7 @@ impl MainController {
         }
 
         if let Some(audio_control) = request.audio_control.as_ref() {
-            self.handle_audio_control(audio_control);
+            self.handle_audio_control(audio_control)?;
         }
 
         self.set_project(project);
@@ -353,7 +353,13 @@ impl MainController {
                 self.send_response(Response::default().with_preferences(&self.preferences));
             }
             Entity::AUDIO_DEVICES => {
-                let audio_devices = enumerate_output_devices();
+                let fallback_audio_preferences = default_audio_preferences();
+                let audio_preferences = self
+                    .preferences
+                    .audio
+                    .as_ref()
+                    .unwrap_or(&fallback_audio_preferences);
+                let audio_devices = enumerate_output_devices(audio_preferences);
                 self.send_response(Response::default().with_audio_devices(&audio_devices));
             }
             Entity::AUDIO_STATUS => {
@@ -635,22 +641,27 @@ impl MainController {
         Ok(())
     }
 
-    fn handle_audio_control(&mut self, request: &AudioControlRequest) {
-        match request.method.enum_value_or_default() {
-            AudioControlMethod::AUDIO_CONTROL_STOP => {
+    fn handle_audio_control(&mut self, request: &AudioControlRequest) -> anyhow::Result<()> {
+        match request.method.enum_value() {
+            Ok(AudioControlMethod::AUDIO_CONTROL_STOP) => {
                 info!("AudioControlRequest: stopping audio engine");
                 self.audio_controller.stop_audio();
             }
-            AudioControlMethod::AUDIO_CONTROL_START => {
+            Ok(AudioControlMethod::AUDIO_CONTROL_START) => {
                 info!("AudioControlRequest: starting audio engine");
                 self.audio_controller.start_audio(&self.samples_cache);
             }
-            AudioControlMethod::AUDIO_CONTROL_RESTART => {
+            Ok(AudioControlMethod::AUDIO_CONTROL_RESTART) => {
                 info!("AudioControlRequest: restarting audio engine");
                 self.audio_controller.stop_audio();
                 self.audio_controller.start_audio(&self.samples_cache);
             }
+            Err(error) => {
+                return Err(anyhow!("Invalid audio control method: {error}"));
+            }
         }
+
+        Ok(())
     }
 
     async fn handle_project_sync(&mut self, project_sync: &ProjectSyncRequest) -> anyhow::Result<()> {

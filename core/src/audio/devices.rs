@@ -2,13 +2,17 @@ use cpal::traits::{DeviceTrait, HostTrait};
 use log::warn;
 use std::collections::HashSet;
 
-use crate::bloop::{AudioDevice, AudioDevices};
+use crate::bloop::{AudioDevice, AudioDevices, AudioPreferences};
 
-/// Enumerate all available output devices on the default cpal host and return
+/// Enumerate all available output devices on the selected cpal host and return
 /// them as an `AudioDevices` proto message.
-pub fn enumerate_output_devices() -> AudioDevices {
+pub fn enumerate_output_devices(preferences: &AudioPreferences) -> AudioDevices {
     #[cfg(target_os = "linux")]
-    let host = cpal::default_host();
+    let host = if preferences.use_jack {
+        cpal::host_from_id(cpal::HostId::Jack).unwrap_or_else(|_| cpal::default_host())
+    } else {
+        cpal::default_host()
+    };
 
     #[cfg(not(target_os = "linux"))]
     let host = cpal::default_host();
@@ -119,7 +123,7 @@ mod tests {
     #[test]
     #[cfg_attr(not(feature = "audio_device_tests"), ignore = "requires audio_device_tests feature")]
     fn enumerate_output_devices_reports_at_least_one_device() {
-        let devices = enumerate_output_devices();
+        let devices = enumerate_output_devices(&AudioPreferences::default());
         assert!(
             !devices.devices.is_empty(),
             "Expected at least one output device but found none"
@@ -129,6 +133,6 @@ mod tests {
     #[test]
     fn enumerate_output_devices_does_not_panic() {
         // Always runs — just ensures enumeration completes without panicking.
-        let _ = enumerate_output_devices();
+        let _ = enumerate_output_devices(&AudioPreferences::default());
     }
 }
