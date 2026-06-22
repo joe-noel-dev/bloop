@@ -25,6 +25,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import bloop.Bloop
+import bloop.audioControlRequest
 import bloop.queueRequest
 import bloop.request
 import bloop.selectRequest
@@ -66,6 +68,9 @@ fun TransportBar(
     val hasPreviousSong = selectedSongIndex > 0
     val hasNextSong = selectedSongIndex >= 0 && selectedSongIndex < project.songsList.lastIndex
     val queueState = queueState(state)
+    val audioStatus = state.audioStatus
+    val isAudioIssue = audioStatus != null &&
+        audioStatus.engineStatus != Bloop.AudioEngineStatus.AUDIO_ENGINE_STATUS_RUNNING
 
     Surface(
         modifier = modifier
@@ -82,6 +87,42 @@ fun TransportBar(
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            if (isAudioIssue && audioStatus != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            MaterialTheme.colorScheme.errorContainer,
+                            RoundedCornerShape(8.dp),
+                        )
+                        .padding(start = 12.dp, top = 4.dp, bottom = 4.dp, end = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = if (audioStatus.engineStatus == Bloop.AudioEngineStatus.AUDIO_ENGINE_STATUS_FAILED)
+                            "Audio engine failed" else "Audio engine stopped",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(
+                        onClick = {
+                            onDispatch(
+                                AppAction.SendRequest(
+                                    request {
+                                        audioControl = audioControlRequest {
+                                            method = Bloop.AudioControlMethod.AUDIO_CONTROL_METHOD_RESTART
+                                        }
+                                    }
+                                )
+                            )
+                        },
+                    ) {
+                        Text("Restart", color = MaterialTheme.colorScheme.onErrorContainer)
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
             Box(
                 modifier = Modifier
                     .size(width = 44.dp, height = 4.dp)
