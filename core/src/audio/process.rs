@@ -6,13 +6,23 @@ use cpal::{
 use log::debug;
 use log::{error, info, warn};
 use rawdio::{AudioBuffer, AudioProcess, BorrowedAudioBuffer, MutableBorrowedAudioBuffer, OwnedAudioBuffer};
+use std::sync::{
+    atomic::{AtomicU64, Ordering},
+    Arc,
+};
 
-pub trait AudioProcessRunner {}
+pub trait AudioProcessRunner {
+    /// Returns the cumulative number of times the audio callback has been invoked.
+    /// Implementations that never invoke a real callback (e.g. `NoopProcess`) must
+    /// always return the same value.
+    fn callback_count(&self) -> u64;
+}
 
 #[allow(dead_code)]
 pub struct Process {
     output_stream: Stream,
     output_channel_count: usize,
+    callback_count: Arc<AtomicU64>,
 }
 
 fn print_output_devices(host: &Host) {
@@ -152,6 +162,7 @@ fn build_output_stream<T>(
     config: &StreamConfig,
     mut audio_process: Box<dyn AudioProcess + Send>,
     preferences: &AudioPreferences,
+    callback_counter: Arc<AtomicU64>,
 ) -> Result<Stream, String>
 where
     T: Sample + SizedSample + cpal::FromSample<f32>,
@@ -169,6 +180,7 @@ where
     let mut interleaved_f32 = vec![0.0f32; maximum_buffer_size * stream_channel_count.max(1)];
 
     let audio_callback = move |data: &mut [T], _: &cpal::OutputCallbackInfo| {
+        callback_counter.fetch_add(1, Ordering::Relaxed);
         if stream_channel_count == 0 {
             return;
         }
@@ -278,10 +290,29 @@ impl Process {
 
         info!("Config sample format: {:?}\n", selected_config.sample_format);
 
+        let callback_count = Arc::new(AtomicU64::new(0));
         let stream = match selected_config.sample_format {
-            SampleFormat::F32 => build_output_stream::<f32>(&device, &config, audio_process, &preferences),
-            SampleFormat::I16 => build_output_stream::<i16>(&device, &config, audio_process, &preferences),
-            SampleFormat::U16 => build_output_stream::<u16>(&device, &config, audio_process, &preferences),
+            SampleFormat::F32 => build_output_stream::<f32>(
+                &device,
+                &config,
+                audio_process,
+                &preferences,
+                Arc::clone(&callback_count),
+            ),
+            SampleFormat::I16 => build_output_stream::<i16>(
+                &device,
+                &config,
+                audio_process,
+                &preferences,
+                Arc::clone(&callback_count),
+            ),
+            SampleFormat::U16 => build_output_stream::<u16>(
+                &device,
+                &config,
+                audio_process,
+                &preferences,
+                Arc::clone(&callback_count),
+            ),
             unsupported => Err(format!("Unsupported output sample format: {unsupported:?}")),
         }?;
 
@@ -292,23 +323,29 @@ impl Process {
         Ok(Self {
             output_stream: stream,
             output_channel_count: config.channels as usize,
+            callback_count,
         })
     }
 }
 impl AudioProcessRunner for Process {
-    // Implementation for real process
+    fn callback_count(&self) -> u64 {
+        self.callback_count.load(Ordering::Relaxed)
+    }
 }
 
 pub struct NoopProcess;
 
 impl AudioProcessRunner for NoopProcess {
-    // Keeps the core alive when realtime audio backend init fails.
+    fn callback_count(&self) -> u64 {
+        0
+    }
 }
 
 /// Dummy audio process for testing - runs audio processing without actual hardware
 pub struct DummyProcess {
     #[allow(dead_code)]
     audio_thread: std::thread::JoinHandle<()>,
+    callback_count: Arc<AtomicU64>,
 }
 
 impl DummyProcess {
@@ -326,19 +363,27 @@ impl DummyProcess {
             preferences.sample_rate as usize,
         );
 
+        let callback_count = Arc::new(AtomicU64::new(0));
+        let counter_clone = Arc::clone(&callback_count);
         let audio_thread = std::thread::spawn(move || loop {
             let interval = std::time::Duration::from_millis(1);
             std::thread::sleep(interval);
             output_buffer.clear();
             audio_process.process(&input_buffer, &mut output_buffer);
+            counter_clone.fetch_add(1, Ordering::Relaxed);
         });
 
-        DummyProcess { audio_thread }
+        DummyProcess {
+            audio_thread,
+            callback_count,
+        }
     }
 }
 
 impl AudioProcessRunner for DummyProcess {
-    // Implementation for dummy process
+    fn callback_count(&self) -> u64 {
+        self.callback_count.load(Ordering::Relaxed)
+    }
 }
 
 /// Returns the realtime audio process runner when the backend initialises

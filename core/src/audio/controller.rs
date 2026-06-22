@@ -23,6 +23,9 @@ use std::{
 };
 use tokio::sync::broadcast;
 
+/// How long the callback counter must be stalled before the engine is marked as Failed.
+const STALL_WINDOW: Duration = Duration::from_secs(1);
+
 /// Tracks whether the audio backend is healthy, stopped, or failed to initialise.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AudioEngineState {
@@ -44,6 +47,10 @@ struct AudioEngine {
     #[allow(dead_code)]
     realtime_process: Box<dyn AudioProcessRunner>,
     tick_interval: tokio::time::Interval,
+    /// Snapshot of the callback counter from the last liveness check.
+    last_callback_count: u64,
+    /// When we first noticed the callback count had stopped advancing (if at all).
+    stall_since: Option<std::time::Instant>,
 }
 
 fn build_audio_engine(preferences: &AudioPreferences, use_dummy_audio: bool) -> (AudioEngine, AudioEngineState) {
@@ -91,6 +98,8 @@ fn build_audio_engine(preferences: &AudioPreferences, use_dummy_audio: bool) -> 
             sequencer: Sequencer::default(),
             realtime_process,
             tick_interval: tokio::time::interval(Duration::from_secs_f64(1.0 / 60.0)),
+            last_callback_count: 0,
+            stall_since: None,
         },
         state,
     )
@@ -343,8 +352,26 @@ impl AudioController {
     }
 
     fn interval_tick(&mut self) {
+        // Capture engine_state before taking the engine borrow (borrow checker requires disjoint access).
+        let is_running = matches!(self.engine_state, AudioEngineState::Running);
+
         let Some(engine) = self.engine.as_mut() else {
             return;
+        };
+
+        // Stall detection: verify the callback counter is advancing while the engine is Running.
+        let stalled = if is_running {
+            let current_count = engine.realtime_process.callback_count();
+            if current_count > engine.last_callback_count {
+                engine.last_callback_count = current_count;
+                engine.stall_since = None;
+                false
+            } else {
+                let since = engine.stall_since.get_or_insert_with(std::time::Instant::now);
+                since.elapsed() >= STALL_WINDOW
+            }
+        } else {
+            false
         };
 
         let current_time = engine.context.current_time();
@@ -355,6 +382,15 @@ impl AudioController {
         let playback_state = engine.sequencer.get_playback_state();
         let progress = engine.sequencer.get_progress();
         // NLL ends the engine borrow here; safe to access other self fields below.
+
+        if stalled {
+            info!("Audio callback stall detected; marking engine as failed");
+            self.engine_state = AudioEngineState::Failed {
+                reason: "callback not running".to_string(),
+            };
+            self.broadcast_stopped_playback();
+            return;
+        }
 
         if self.playback_state != playback_state {
             self.playback_state = playback_state;
@@ -476,7 +512,7 @@ mod tests {
             .expect("run() timed out after stop/start cycle");
     }
 
-    // --- PR 2 tests ---
+    // --- Playback reset tests ---
 
     #[tokio::test]
     async fn new_with_dummy_audio_has_running_state() {
@@ -556,6 +592,126 @@ mod tests {
         assert!(
             !stopped_broadcasts.is_empty(),
             "Expected at least one STOPPED PlaybackState during stop/start cycle"
+        );
+    }
+
+    // --- Stall detection tests ---
+
+    /// Build a controller that is in the `Running` state but backed by a `NoopProcess`
+    /// (which never increments its callback counter). Used to test stall detection.
+    fn test_controller_with_noop_engine() -> AudioController {
+        use crate::audio::process::NoopProcess;
+        use futures_channel::mpsc;
+        let preferences = default_audio_preferences();
+        let (response_tx, _) = broadcast::channel(100);
+        let (conversion_tx, conversion_rx) = mpsc::channel(64);
+
+        let (mut context, _audio_process) = create_engine_with_options(
+            EngineOptions::default()
+                .with_sample_rate(preferences.sample_rate as usize)
+                .with_maximum_channel_count(preferences.output_channel_count as usize),
+        );
+        let mixer = Mixer::unity(context.as_ref(), preferences.output_channel_count as usize);
+        connect_nodes!(mixer => "output");
+        let metronome = Metronome::new(context.as_ref());
+        context.start();
+
+        let engine = AudioEngine {
+            context,
+            mixer,
+            metronome,
+            samplers: HashMap::new(),
+            sequencer: Sequencer::default(),
+            realtime_process: Box::new(NoopProcess),
+            tick_interval: tokio::time::interval(Duration::from_secs_f64(1.0 / 60.0)),
+            last_callback_count: 0,
+            stall_since: None,
+        };
+
+        AudioController {
+            engine: Some(engine),
+            engine_state: AudioEngineState::Running,
+            use_dummy_audio: false,
+            sample_converter: SampleConverter::new(conversion_tx, preferences.sample_rate as usize),
+            conversion_rx,
+            response_tx,
+            samples_being_converted: HashSet::new(),
+            playback_state: PlaybackState::default(),
+            progress: Progress::default(),
+            project: Project::empty(),
+            preferences,
+        }
+    }
+
+    #[tokio::test]
+    async fn dummy_process_callback_count_advances() {
+        let controller = test_controller();
+        // Give the dummy thread a moment to fire several callbacks.
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        let count = controller.engine.as_ref().unwrap().realtime_process.callback_count();
+        assert!(count > 0, "DummyProcess callback count should advance; got {count}");
+    }
+
+    #[tokio::test]
+    async fn noop_process_callback_count_is_zero() {
+        let controller = test_controller_with_noop_engine();
+        assert_eq!(
+            controller.engine.as_ref().unwrap().realtime_process.callback_count(),
+            0,
+            "NoopProcess callback count must always be 0"
+        );
+    }
+
+    #[tokio::test]
+    async fn dummy_process_engine_stays_running_through_stall_window() {
+        let mut controller = test_controller();
+        assert_eq!(*controller.engine_state(), AudioEngineState::Running);
+
+        let deadline = std::time::Instant::now() + STALL_WINDOW + Duration::from_millis(200);
+        loop {
+            tokio::time::timeout(Duration::from_millis(50), controller.run())
+                .await
+                .ok();
+            if std::time::Instant::now() >= deadline {
+                break;
+            }
+        }
+
+        assert_eq!(
+            *controller.engine_state(),
+            AudioEngineState::Running,
+            "Dummy process engine must remain Running through the full stall window"
+        );
+    }
+
+    #[tokio::test]
+    async fn noop_process_transitions_to_failed_within_stall_window() {
+        let mut controller = test_controller_with_noop_engine();
+        assert_eq!(*controller.engine_state(), AudioEngineState::Running);
+
+        let deadline = std::time::Instant::now() + STALL_WINDOW + Duration::from_millis(500);
+        loop {
+            tokio::time::timeout(Duration::from_millis(50), controller.run())
+                .await
+                .ok();
+
+            if matches!(controller.engine_state(), AudioEngineState::Failed { .. }) {
+                break;
+            }
+
+            assert!(
+                std::time::Instant::now() < deadline,
+                "Engine did not transition to Failed within the expected window"
+            );
+        }
+
+        assert!(
+            matches!(
+                controller.engine_state(),
+                AudioEngineState::Failed { reason } if reason == "callback not running"
+            ),
+            "Expected Failed {{ reason: \"callback not running\" }}, got {:?}",
+            controller.engine_state()
         );
     }
 }
