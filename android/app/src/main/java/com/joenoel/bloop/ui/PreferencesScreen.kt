@@ -175,16 +175,34 @@ fun PreferencesScreen(
                 modifier = Modifier.menuAnchor().fillMaxWidth(),
             )
             ExposedDropdownMenu(expanded = deviceExpanded, onDismissRequest = { deviceExpanded = false }) {
-                audioDevices.forEach { device ->
+                DropdownMenuItem(
+                    text = { Text("Default") },
+                    onClick = {
+                        edited = edited.toBuilder()
+                            .setAudio(edited.audio.toBuilder().setOutputDevice(""))
+                            .build()
+                        deviceExpanded = false
+                    },
+                )
+
+                if (audioDevices.isEmpty()) {
                     DropdownMenuItem(
-                        text = { Text(device.name) },
-                        onClick = {
-                            edited = edited.toBuilder()
-                                .setAudio(edited.audio.toBuilder().setOutputDevice(device.id))
-                                .build()
-                            deviceExpanded = false
-                        },
+                        text = { Text("Loading…") },
+                        onClick = { deviceExpanded = false },
+                        enabled = false,
                     )
+                } else {
+                    audioDevices.forEach { device ->
+                        DropdownMenuItem(
+                            text = { Text(device.name) },
+                            onClick = {
+                                edited = edited.toBuilder()
+                                    .setAudio(edited.audio.toBuilder().setOutputDevice(device.id))
+                                    .build()
+                                deviceExpanded = false
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -209,9 +227,19 @@ fun PreferencesScreen(
                 expanded = sampleRateExpanded,
                 onDismissRequest = { sampleRateExpanded = false },
             ) {
+                DropdownMenuItem(
+                    text = { Text("Default") },
+                    onClick = {
+                        edited = edited.toBuilder()
+                            .setAudio(edited.audio.toBuilder().setSampleRate(0))
+                            .build()
+                        sampleRateExpanded = false
+                    },
+                )
+
                 if (supportedSampleRates.isEmpty()) {
                     DropdownMenuItem(
-                        text = { Text("Loading…") },
+                        text = { Text(if (selectedDevice == null) "Select output device first" else "No sample rates reported") },
                         onClick = { sampleRateExpanded = false },
                         enabled = false,
                     )
@@ -228,7 +256,6 @@ fun PreferencesScreen(
                         )
                     }
                 }
-            }
         }
 
         Button(
