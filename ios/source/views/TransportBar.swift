@@ -11,6 +11,8 @@ struct TransportBar: View {
     var body: some View {
         VStack(spacing: Layout.units(2)) {
 
+            audioWarningBanner
+
             MetronomeView(
                 isPlaying: playbackState.playing == .playing,
                 sectionBeat: progress.sectionBeat
@@ -48,6 +50,29 @@ struct TransportBar: View {
 
     private var progress: Bloop_Progress {
         state.progress
+    }
+
+    @ViewBuilder
+    private var audioWarningBanner: some View {
+        if let status = state.audioStatus, status.engineStatus != .audioEngineRunning {
+            HStack(spacing: Layout.units(1)) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.yellow)
+                Text(status.engineStatus == .audioEngineFailed ? "Audio engine failed" : "Audio engine stopped")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                Spacer()
+                Button("Restart") {
+                    dispatch(audioControlAction(method: .audioControlRestart))
+                }
+                .font(.caption)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.mini)
+            }
+            .padding(.horizontal, Layout.units(2))
+            .padding(.vertical, Layout.units(1))
+            .background(Color.yellow.opacity(0.15))
+        }
     }
 
     private var playingSong: Bloop_Song? {
