@@ -2,9 +2,6 @@ package com.joenoel.bloop.ui
 
 import android.app.Activity
 import android.view.WindowManager
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
