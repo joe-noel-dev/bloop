@@ -98,58 +98,36 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(48.dp))
 
-        Column(
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
             modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.Start,
-        ) {
-            Text(
-                text = "Email",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Enter your email") },
-                singleLine = true,
-                enabled = !isLoggingIn,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Next,
-                ),
-            )
-        }
+            label = { Text("Email") },
+            placeholder = { Text("Enter your email") },
+            singleLine = true,
+            enabled = !isLoggingIn,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next,
+            ),
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Column(
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
             modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.Start,
-        ) {
-            Text(
-                text = "Password",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Enter your password") },
-                singleLine = true,
-                enabled = !isLoggingIn,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done,
-                ),
-            )
-        }
+            label = { Text("Password") },
+            placeholder = { Text("Enter your password") },
+            singleLine = true,
+            enabled = !isLoggingIn,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done,
+            ),
+        )
 
         Spacer(modifier = Modifier.height(32.dp))
 

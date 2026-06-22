@@ -13,24 +13,25 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
-        mavenCentral()
 
-        // rustls-platform-verifier bundles a local Maven repo with the Android AAR that provides
+        // rustls-platform-verifier-android bundles a local Maven repo with the Android AAR that provides
         // the Kotlin/Java TrustManager bridge required for TLS certificate verification.
-        // We locate it via cargo metadata so the path stays correct across machines.
+        // We locate it by searching the Cargo registry sources under CARGO_HOME so the path stays correct across machines.
         val cargoHome = providers.environmentVariable("CARGO_HOME")
             .orElse("${System.getProperty("user.home")}/.cargo")
-        val rustlsAndroidMaven = cargoHome.map { home ->
+        val rustlsAndroidMavenRepos = cargoHome.map { home ->
             java.io.File(home, "registry/src")
                 .walkTopDown()
                 .maxDepth(2)
-                .firstOrNull { it.isDirectory && it.name.startsWith("rustls-platform-verifier-android-") }
-                ?.resolve("maven")
-                ?.takeIf { it.exists() }
-                ?.toURI()
-                ?.toString()
+                .filter { it.isDirectory && it.name.startsWith("rustls-platform-verifier-android-") }
+                .mapNotNull { it.resolve("maven").takeIf { mavenDir -> mavenDir.exists() } }
+                .toList()
         }
-        rustlsAndroidMaven.orNull?.let { maven { url = uri(it) } }
+        rustlsAndroidMavenRepos.orNull?.forEach { repo ->
+            maven { url = repo.toURI() }
+        }
+
+        mavenCentral()
     }
 }
 
