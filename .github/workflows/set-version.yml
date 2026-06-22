@@ -36,8 +36,20 @@ jobs:
       - name: Commit and tag
         run: |
           VERSION="${{ github.event.inputs.version }}"
+          TAG="v${VERSION}"
+
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null || git ls-remote --tags origin "refs/tags/${TAG}" | grep -q "refs/tags/${TAG}$"; then
+            echo "Error: Tag '${TAG}' already exists"
+            exit 1
+          fi
+
           git add .
-          git commit -m "Bump version to v${VERSION}"
-          git tag "v${VERSION}"
-          git push origin main
-          git push origin "v${VERSION}"
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "Bump version to ${TAG}"
+          git tag "${TAG}"
+          git push origin HEAD:main
+          git push origin "${TAG}"
