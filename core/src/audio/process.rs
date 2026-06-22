@@ -341,38 +341,41 @@ impl AudioProcessRunner for DummyProcess {
     // Implementation for dummy process
 }
 
-pub fn create_dummy_process(
-    audio_process: Box<dyn AudioProcess + Send>,
-    preferences: AudioPreferences,
-) -> Box<dyn AudioProcessRunner> {
-    Box::new(DummyProcess::new(audio_process, preferences))
-}
-
+/// Returns the realtime audio process runner when the backend initialises
+/// successfully, or an error reason when it fails.
 pub fn create_audio_process(
     audio_process: Box<dyn AudioProcess + Send>,
     preferences: AudioPreferences,
-) -> Box<dyn AudioProcessRunner> {
+) -> Result<Box<dyn AudioProcessRunner>, String> {
     let created = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         Process::new(audio_process, preferences)
     }));
 
     match created {
-        Ok(Ok(process)) => Box::new(process),
+        Ok(Ok(process)) => Ok(Box::new(process)),
         Ok(Err(err)) => {
             error!("Audio backend initialization failed; running without realtime audio output: {err}");
-            Box::new(NoopProcess)
+            Err(err)
         }
         Err(payload) => {
             let panic_message = if let Some(message) = payload.downcast_ref::<&str>() {
-                *message
+                message.to_string()
             } else if let Some(message) = payload.downcast_ref::<String>() {
-                message.as_str()
+                message.clone()
             } else {
-                "unknown panic payload"
+                "unknown panic payload".to_string()
             };
 
             error!("Audio backend initialization panicked; running without realtime audio output: {panic_message}");
-            Box::new(NoopProcess)
+            Err(panic_message)
         }
     }
+}
+
+/// Creates a dummy process runner. This always succeeds.
+pub fn create_dummy_process(
+    audio_process: Box<dyn AudioProcess + Send>,
+    preferences: AudioPreferences,
+) -> Box<dyn AudioProcessRunner> {
+    Box::new(DummyProcess::new(audio_process, preferences))
 }

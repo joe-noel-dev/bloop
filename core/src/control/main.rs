@@ -384,6 +384,36 @@ impl MainController {
 
         let mut save_interval = time::interval(Duration::from_secs(2));
 
+        // Temporary debug channels for manual start/stop testing (removed in PR 7).
+        // On Unix: send SIGUSR1 to stop the audio engine, SIGUSR2 to restart it.
+        let (debug_stop_tx, mut debug_stop_rx) = tokio::sync::mpsc::channel::<()>(1);
+        let (debug_start_tx, mut debug_start_rx) = tokio::sync::mpsc::channel::<()>(1);
+
+        #[cfg(unix)]
+        {
+            let stop_tx = debug_stop_tx.clone();
+            tokio::spawn(async move {
+                let mut sig = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::user_defined1())
+                    .expect("Failed to register SIGUSR1 handler");
+                while sig.recv().await.is_some() {
+                    let _ = stop_tx.send(()).await;
+                }
+            });
+
+            let start_tx = debug_start_tx.clone();
+            tokio::spawn(async move {
+                let mut sig = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::user_defined2())
+                    .expect("Failed to register SIGUSR2 handler");
+                while sig.recv().await.is_some() {
+                    let _ = start_tx.send(()).await;
+                }
+            });
+        }
+
+        // Suppress unused-variable warnings on non-Unix platforms.
+        let _ = debug_stop_tx;
+        let _ = debug_start_tx;
+
         loop {
             tokio::select! {
                 Some(request) = self.request_rx.recv() => {
@@ -395,6 +425,14 @@ impl MainController {
                 _ = self.audio_controller.run() => (),
                 Some(action) = self.action_rx.recv() => self.handle_action(action),
                 _ = save_interval.tick() => self.auto_save_project().await,
+                Some(()) = debug_stop_rx.recv() => {
+                    info!("Debug request: stopping audio engine");
+                    self.audio_controller.stop_audio();
+                },
+                Some(()) = debug_start_rx.recv() => {
+                    info!("Debug request: starting audio engine");
+                    self.audio_controller.start_audio(&self.samples_cache);
+                },
                 else => break,
             }
         }
