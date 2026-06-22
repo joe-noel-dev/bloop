@@ -1,6 +1,6 @@
 use super::{
     metronome::Metronome,
-    process::{AudioProcessRunner, NoopProcess},
+    process::{query_native_channel_count, AudioProcessRunner, NoopProcess},
     sampler_converter::{SampleConversionResult, SampleConverter},
     sequencer::Sequencer,
 };
@@ -16,7 +16,7 @@ use crate::{
 };
 use futures::StreamExt;
 use futures_channel::mpsc;
-use log::{error, info};
+use log::{error, info, warn};
 use rawdio::{connect_nodes, create_engine_with_options, AudioBuffer, Context, EngineOptions, Mixer, Sampler};
 use std::{
     collections::{HashMap, HashSet},
@@ -45,22 +45,38 @@ struct AudioEngine {
     #[allow(dead_code)]
     realtime_process: Box<dyn AudioProcessRunner>,
     tick_interval: tokio::time::Interval,
+    /// Actual output channel count reported by the device (or 2 for dummy audio).
+    output_channel_count: usize,
 }
 
 fn build_audio_engine(preferences: &AudioPreferences, use_dummy_audio: bool) -> (AudioEngine, AudioEngineState) {
+    let output_channel_count = if use_dummy_audio {
+        2
+    } else {
+        query_native_channel_count(preferences)
+    };
+
+    let main_offset = preferences.main_channel_offset as usize;
+    if main_offset >= output_channel_count {
+        warn!(
+            "main_channel_offset {} >= output channel count {}, audio routing may be silent",
+            main_offset, output_channel_count
+        );
+    }
+
     let (mut context, process) = create_engine_with_options(
         EngineOptions::default()
             .with_sample_rate(preferences.sample_rate as usize)
-            .with_maximum_channel_count(preferences.output_channel_count as usize),
+            .with_maximum_channel_count(output_channel_count),
     );
 
-    let mixer = Mixer::unity(context.as_ref(), preferences.output_channel_count as usize);
+    let mixer = Mixer::unity(context.as_ref(), output_channel_count);
     connect_nodes!(mixer => "output");
 
     let metronome = Metronome::new(context.as_ref());
 
     let click_offset = preferences.click_channel_offset as usize;
-    if preferences.output_channel_count as usize >= click_offset + 2 {
+    if output_channel_count >= click_offset + 2 {
         metronome
             .output_node()
             .connect_channels_to(&mixer.node, 0, click_offset, 2);
@@ -70,7 +86,7 @@ fn build_audio_engine(preferences: &AudioPreferences, use_dummy_audio: bool) -> 
 
     let (realtime_process, state) = if use_dummy_audio {
         (
-            create_dummy_process(process, preferences.clone()),
+            create_dummy_process(process, preferences.clone(), output_channel_count),
             AudioEngineState::Running,
         )
     } else {
@@ -92,6 +108,7 @@ fn build_audio_engine(preferences: &AudioPreferences, use_dummy_audio: bool) -> 
             sequencer: Sequencer::default(),
             realtime_process,
             tick_interval: tokio::time::interval(Duration::from_secs_f64(1.0 / 60.0)),
+            output_channel_count,
         },
         state,
     )
@@ -148,6 +165,8 @@ fn remove_samples_from_engine(engine: &mut AudioEngine, project: &Project) {
 pub struct AudioController {
     engine: Option<AudioEngine>,
     engine_state: AudioEngineState,
+    /// Output channel count from the last successful engine build.
+    output_channel_count: usize,
     use_dummy_audio: bool,
     sample_converter: SampleConverter,
     conversion_rx: mpsc::Receiver<SampleConversionResult>,
@@ -163,10 +182,12 @@ impl AudioController {
     pub fn new(response_tx: broadcast::Sender<Response>, preferences: AudioPreferences, use_dummy_audio: bool) -> Self {
         let (conversion_tx, conversion_rx) = mpsc::channel(64);
         let (engine, engine_state) = build_audio_engine(&preferences, use_dummy_audio);
+        let output_channel_count = engine.output_channel_count;
 
         Self {
             engine: Some(engine),
             engine_state,
+            output_channel_count,
             use_dummy_audio,
             sample_converter: SampleConverter::new(conversion_tx, preferences.sample_rate as usize),
             conversion_rx,
@@ -197,7 +218,7 @@ impl AudioController {
             current_device_id: self.preferences.output_device.clone(),
             current_device_name: self.preferences.output_device.clone(),
             current_sample_rate: self.preferences.sample_rate,
-            current_channel_count: self.preferences.output_channel_count,
+            current_channel_count: self.output_channel_count as u32,
             current_buffer_size: self.preferences.buffer_size,
             engine_status: engine_status.into(),
             error,
@@ -219,6 +240,7 @@ impl AudioController {
         }
 
         let (engine, state) = build_audio_engine(&self.preferences, self.use_dummy_audio);
+        self.output_channel_count = engine.output_channel_count;
         self.engine = Some(engine);
         self.engine_state = state;
 
@@ -255,9 +277,37 @@ impl AudioController {
 
         self.engine_state = AudioEngineState::Stopped;
         self.samples_being_converted.clear();
-        self.broadcast_stopped_playback();
         self.broadcast_audio_status();
+        self.broadcast_stopped_playback();
         info!("Audio engine stopped");
+    }
+
+    /// Apply updated audio preferences, restarting the engine if any
+    /// audio-relevant field (device, sample rate, buffer size, channel offsets,
+    /// JACK toggle) has changed. Preferences that are already equal are a no-op.
+    pub fn update_audio_preferences(&mut self, new_prefs: AudioPreferences, samples_cache: &SamplesCache) {
+        let audio_changed = self.preferences.output_device != new_prefs.output_device
+            || self.preferences.sample_rate != new_prefs.sample_rate
+            || self.preferences.buffer_size != new_prefs.buffer_size
+            || self.preferences.use_jack != new_prefs.use_jack
+            || self.preferences.main_channel_offset != new_prefs.main_channel_offset
+            || self.preferences.click_channel_offset != new_prefs.click_channel_offset;
+
+        if !audio_changed {
+            return;
+        }
+
+        info!("Audio preferences changed, restarting engine");
+
+        if self.preferences.sample_rate != new_prefs.sample_rate {
+            let (conversion_tx, conversion_rx) = mpsc::channel(64);
+            self.sample_converter = SampleConverter::new(conversion_tx, new_prefs.sample_rate as usize);
+            self.conversion_rx = conversion_rx;
+        }
+
+        self.preferences = new_prefs;
+        self.stop_audio();
+        self.start_audio(samples_cache);
     }
 
     /// Reset playback/progress state to stopped and broadcast both to clients.
@@ -410,7 +460,7 @@ impl AudioController {
 
         // Extract preferences values before taking the engine borrow.
         let main_offset = self.preferences.main_channel_offset as usize;
-        let output_channel_count = self.preferences.output_channel_count as usize;
+        let output_channel_count = self.output_channel_count;
 
         let Some(engine) = self.engine.as_mut() else {
             info!(
@@ -423,7 +473,15 @@ impl AudioController {
         info!("Sample converted: {}", result.sample_id);
 
         let audio_channel_count = audio_data.channel_count();
-        let channel_count = audio_channel_count.min(output_channel_count - main_offset);
+        let channel_count = if main_offset < output_channel_count {
+            audio_channel_count.min(output_channel_count - main_offset)
+        } else {
+            warn!(
+                "main_channel_offset {} >= output channel count {}, sample will be silent",
+                main_offset, output_channel_count
+            );
+            0
+        };
 
         let sampler = Sampler::new_with_event_capacity(engine.context.as_ref(), audio_data, 1024);
         sampler
@@ -673,5 +731,61 @@ mod tests {
             first_running.unwrap() < last_stopped.unwrap(),
             "Expected RUNNING before final STOPPED"
         );
+    }
+
+    #[tokio::test]
+    async fn update_audio_preferences_restarts_engine_on_change() {
+        let dir = tempdir().unwrap();
+        let samples_cache = SamplesCache::new(dir.path());
+
+        let (response_tx, mut response_rx) = broadcast::channel(100);
+        let mut controller = AudioController::new(response_tx, default_audio_preferences(), true);
+
+        let mut new_prefs = default_audio_preferences();
+        new_prefs.sample_rate = 44100;
+
+        controller.update_audio_preferences(new_prefs, &samples_cache);
+
+        assert_eq!(*controller.engine_state(), AudioEngineState::Running);
+        assert_eq!(controller.preferences.sample_rate, 44100);
+
+        let statuses: Vec<_> = std::iter::from_fn(|| response_rx.try_recv().ok())
+            .filter_map(|r| r.audio_status.into_option())
+            .map(|s| s.engine_status.enum_value_or_default())
+            .collect();
+
+        assert!(
+            statuses
+                .iter()
+                .any(|s| *s == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STOPPED),
+            "Expected AUDIO_ENGINE_STOPPED during preference-driven restart"
+        );
+        assert!(
+            statuses
+                .last()
+                .map(|s| *s == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_RUNNING)
+                .unwrap_or(false),
+            "Expected final AudioStatus to be AUDIO_ENGINE_RUNNING"
+        );
+    }
+
+    #[tokio::test]
+    async fn update_audio_preferences_no_op_when_unchanged() {
+        let dir = tempdir().unwrap();
+        let samples_cache = SamplesCache::new(dir.path());
+
+        let (response_tx, mut response_rx) = broadcast::channel(100);
+        let mut controller = AudioController::new(response_tx, default_audio_preferences(), true);
+        // drain initial construction broadcasts
+        while response_rx.try_recv().is_ok() {}
+
+        controller.update_audio_preferences(default_audio_preferences(), &samples_cache);
+
+        // No broadcasts expected since nothing changed.
+        assert!(
+            response_rx.try_recv().is_err(),
+            "Expected no broadcasts when preferences are unchanged"
+        );
+        assert_eq!(*controller.engine_state(), AudioEngineState::Running);
     }
 }

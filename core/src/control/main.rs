@@ -354,11 +354,7 @@ impl MainController {
             }
             Entity::AUDIO_DEVICES => {
                 let fallback_audio_preferences = default_audio_preferences();
-                let audio_preferences = self
-                    .preferences
-                    .audio
-                    .as_ref()
-                    .unwrap_or(&fallback_audio_preferences);
+                let audio_preferences = self.preferences.audio.as_ref().unwrap_or(&fallback_audio_preferences);
                 let audio_devices = enumerate_output_devices(audio_preferences);
                 self.send_response(Response::default().with_audio_devices(&audio_devices));
             }
@@ -531,6 +527,10 @@ impl MainController {
         }
 
         if let Some(preferences) = update_request.preferences.as_ref() {
+            if let Some(new_audio_prefs) = preferences.audio.as_ref() {
+                self.audio_controller
+                    .update_audio_preferences(new_audio_prefs.clone(), &self.samples_cache);
+            }
             self.preferences = preferences.clone();
             if let Err(error) = preferences::write_preferences(&self.preferences, &self.directories.root) {
                 warn!("Unable to write preferences: {error}");

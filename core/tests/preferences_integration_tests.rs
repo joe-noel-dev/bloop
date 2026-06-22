@@ -24,7 +24,6 @@ async fn get_preferences_returns_defaults() {
     let audio = preferences.audio.unwrap();
     assert_eq!(audio.sample_rate, 48_000);
     assert_eq!(audio.buffer_size, 512);
-    assert_eq!(audio.output_channel_count, 2);
     assert_eq!(audio.main_channel_offset, 0);
     assert_eq!(audio.click_channel_offset, 2);
     assert!(!audio.use_jack);
@@ -42,7 +41,6 @@ async fn update_audio_preferences_persists() {
         output_device: "Test Device".to_string(),
         sample_rate: 96_000,
         buffer_size: 1024,
-        output_channel_count: 4,
         use_jack: true,
         main_channel_offset: 2,
         click_channel_offset: 4,
@@ -81,7 +79,6 @@ async fn update_audio_preferences_persists() {
     assert_eq!(loaded_audio.output_device, "Test Device");
     assert_eq!(loaded_audio.sample_rate, 96_000);
     assert_eq!(loaded_audio.buffer_size, 1024);
-    assert_eq!(loaded_audio.output_channel_count, 4);
     assert!(loaded_audio.use_jack);
     assert_eq!(loaded_audio.main_channel_offset, 2);
     assert_eq!(loaded_audio.click_channel_offset, 4);
@@ -215,7 +212,6 @@ async fn update_partial_preferences_preserves_others() {
         output_device: "Initial Device".to_string(),
         sample_rate: 96_000,
         buffer_size: 1024,
-        output_channel_count: 4,
         use_jack: true,
         main_channel_offset: 2,
         click_channel_offset: 4,
@@ -300,7 +296,6 @@ async fn preferences_persist_across_restarts() {
         output_device: "Persistent Device".to_string(),
         sample_rate: 88_200,
         buffer_size: 256,
-        output_channel_count: 8,
         use_jack: false,
         main_channel_offset: 4,
         click_channel_offset: 6,
@@ -345,7 +340,6 @@ async fn preferences_persist_across_restarts() {
     assert_eq!(loaded_audio.output_device, "Persistent Device");
     assert_eq!(loaded_audio.sample_rate, 88_200);
     assert_eq!(loaded_audio.buffer_size, 256);
-    assert_eq!(loaded_audio.output_channel_count, 8);
     assert!(!loaded_audio.use_jack);
     assert_eq!(loaded_audio.main_channel_offset, 4);
     assert_eq!(loaded_audio.click_channel_offset, 6);

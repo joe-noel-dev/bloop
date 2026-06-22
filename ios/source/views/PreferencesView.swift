@@ -98,17 +98,6 @@ struct PreferencesView: View {
                 .keyboardType(.numberPad)
             }
 
-            HStack {
-                Text("Output Channel Count")
-                Spacer()
-                TextField("Channel Count", value: Binding(
-                    get: { editedPreferences.audio.outputChannelCount },
-                    set: { editedPreferences.audio.outputChannelCount = $0 }
-                ), format: .number)
-                .multilineTextAlignment(.trailing)
-                .keyboardType(.numberPad)
-            }
-
             Toggle("Use Jack", isOn: Binding(
                 get: { editedPreferences.audio.useJack },
                 set: { editedPreferences.audio.useJack = $0 }

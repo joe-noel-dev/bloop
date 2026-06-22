@@ -132,12 +132,6 @@ fun PreferencesScreen(
             onValueChange = { edited = edited.toBuilder().setAudio(edited.audio.toBuilder().setBufferSize(it.toInt())).build() },
         )
 
-        NumberField(
-            label = "Output Channel Count",
-            value = edited.audio.outputChannelCount.toLong(),
-            onValueChange = { edited = edited.toBuilder().setAudio(edited.audio.toBuilder().setOutputChannelCount(it.toInt())).build() },
-        )
-
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
