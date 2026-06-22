@@ -41,8 +41,17 @@ fun BloopApp(store: AppStoreViewModel) {
 @Composable
 private fun KeepScreenOn() {
     val context = LocalContext.current
-    DisposableEffect(Unit) {
-        val window = (context as Activity).window
+    DisposableEffect(context) {
+        val activity =
+            generateSequence(context) { ctx ->
+                (ctx as? android.content.ContextWrapper)?.baseContext
+            }.filterIsInstance<Activity>().firstOrNull()
+
+        if (activity == null) {
+            return@DisposableEffect onDispose {}
+        }
+
+        val window = activity.window
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         onDispose {
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
