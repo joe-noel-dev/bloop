@@ -54,16 +54,16 @@ struct TransportBar: View {
 
     @ViewBuilder
     private var audioWarningBanner: some View {
-        if let status = state.audioStatus, status.engineStatus != .audioEngineRunning {
+        if let status = state.audioStatus, status.engineStatus != .running {
             HStack(spacing: Layout.units(1)) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundColor(.yellow)
-                Text(status.engineStatus == .audioEngineFailed ? "Audio engine failed" : "Audio engine stopped")
+                Text(status.engineStatus == .failed ? "Audio engine failed" : "Audio engine stopped")
                     .font(.caption)
                     .fontWeight(.semibold)
                 Spacer()
                 Button("Restart") {
-                    dispatch(audioControlAction(method: .audioControlRestart))
+                    dispatch(audioControlAction(method: .restart))
                 }
                 .font(.caption)
                 .buttonStyle(.borderedProminent)

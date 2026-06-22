@@ -643,15 +643,15 @@ impl MainController {
 
     fn handle_audio_control(&mut self, request: &AudioControlRequest) -> anyhow::Result<()> {
         match request.method.enum_value() {
-            Ok(AudioControlMethod::AUDIO_CONTROL_STOP) => {
+            Ok(AudioControlMethod::AUDIO_CONTROL_METHOD_STOP) => {
                 info!("AudioControlRequest: stopping audio engine");
                 self.audio_controller.stop_audio();
             }
-            Ok(AudioControlMethod::AUDIO_CONTROL_START) => {
+            Ok(AudioControlMethod::AUDIO_CONTROL_METHOD_START) => {
                 info!("AudioControlRequest: starting audio engine");
                 self.audio_controller.start_audio(&self.samples_cache);
             }
-            Ok(AudioControlMethod::AUDIO_CONTROL_RESTART) => {
+            Ok(AudioControlMethod::AUDIO_CONTROL_METHOD_RESTART) => {
                 info!("AudioControlRequest: restarting audio engine");
                 self.audio_controller.stop_audio();
                 self.audio_controller.start_audio(&self.samples_cache);

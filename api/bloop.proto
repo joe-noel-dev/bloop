@@ -312,9 +312,9 @@ message ProjectSyncResponse {
 }
 
 enum AudioEngineStatus {
-    AUDIO_ENGINE_STOPPED = 0;
-    AUDIO_ENGINE_RUNNING = 1;
-    AUDIO_ENGINE_FAILED = 2;
+    AUDIO_ENGINE_STATUS_STOPPED = 0;
+    AUDIO_ENGINE_STATUS_RUNNING = 1;
+    AUDIO_ENGINE_STATUS_FAILED = 2;
 }
 
 message AudioStatus {
@@ -328,9 +328,9 @@ message AudioStatus {
 }
 
 enum AudioControlMethod {
-    AUDIO_CONTROL_START = 0;
-    AUDIO_CONTROL_STOP = 1;
-    AUDIO_CONTROL_RESTART = 2;
+    AUDIO_CONTROL_METHOD_START = 0;
+    AUDIO_CONTROL_METHOD_STOP = 1;
+    AUDIO_CONTROL_METHOD_RESTART = 2;
 }
 
 message AudioControlRequest {

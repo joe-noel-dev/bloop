@@ -83,14 +83,14 @@ struct PreferencesView: View {
     @ViewBuilder
     private var audioStatusSection: some View {
         if let status = audioStatus {
-            let isNotRunning = status.engineStatus != .audioEngineRunning
+            let isNotRunning = status.engineStatus != .running
             if isNotRunning {
                 Section {
                     HStack(spacing: Layout.units(1.5)) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundColor(.yellow)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(status.engineStatus == .audioEngineFailed ? "Audio engine failed" : "Audio engine stopped")
+                            Text(status.engineStatus == .failed ? "Audio engine failed" : "Audio engine stopped")
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
                             if !status.error.isEmpty {
@@ -101,7 +101,7 @@ struct PreferencesView: View {
                         }
                         Spacer()
                         Button("Restart") {
-                            dispatch(audioControlAction(method: .audioControlRestart))
+                            dispatch(audioControlAction(method: .restart))
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.small)
