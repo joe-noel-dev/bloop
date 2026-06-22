@@ -80,7 +80,7 @@ update_android_version() {
     # Compute versionCode from semver: MAJOR * 10000 + MINOR * 100 + PATCH
     local major minor patch version_code
     IFS='.' read -r major minor patch <<< "$version"
-    version_code=$(( major * 10000 + minor * 100 + patch ))
+    version_code=$(( 10#$major * 10000 + 10#$minor * 100 + 10#$patch ))
 
     sed -i '' "s/versionCode = [0-9]*/versionCode = $version_code/" "$gradle_file"
     sed -i '' "s/versionName = \"[^\"]*\"/versionName = \"$version\"/" "$gradle_file"
