@@ -65,5 +65,13 @@ class ResponseMiddleware: Middleware {
         if response.hasPreferences {
             self.dispatch?(.setPreferences(response.preferences))
         }
+
+        if response.hasAudioDevices {
+            self.dispatch?(.setAudioDevices(response.audioDevices))
+        }
+
+        if response.hasAudioStatus {
+            self.dispatch?(.setAudioStatus(response.audioStatus))
+        }
     }
 }

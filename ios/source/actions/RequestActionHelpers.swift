@@ -267,3 +267,23 @@ func updatePreferencesAction(_ preferences: Bloop_Preferences) -> Action {
         }
     )
 }
+
+func getAudioDevicesAction() -> Action {
+    .sendRequest(
+        .with {
+            $0.get = .with {
+                $0.entity = .audioDevices
+            }
+        }
+    )
+}
+
+func audioControlAction(method: Bloop_AudioControlMethod) -> Action {
+    .sendRequest(
+        .with {
+            $0.audioControl = .with {
+                $0.method = method
+            }
+        }
+    )
+}

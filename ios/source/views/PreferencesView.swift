@@ -2,6 +2,8 @@ import SwiftUI
 
 struct PreferencesView: View {
     var preferences: Bloop_Preferences?
+    var audioDevices: Bloop_AudioDevices?
+    var audioStatus: Bloop_AudioStatus?
     var dispatch: Dispatch
     var onDismiss: () -> Void
 
@@ -11,10 +13,14 @@ struct PreferencesView: View {
 
     init(
         preferences: Bloop_Preferences?,
+        audioDevices: Bloop_AudioDevices?,
+        audioStatus: Bloop_AudioStatus?,
         dispatch: @escaping Dispatch,
         onDismiss: @escaping () -> Void
     ) {
         self.preferences = preferences
+        self.audioDevices = audioDevices
+        self.audioStatus = audioStatus
         self.dispatch = dispatch
         self.onDismiss = onDismiss
         self._editedPreferences = State(initialValue: preferences ?? Bloop_Preferences())
@@ -23,6 +29,7 @@ struct PreferencesView: View {
     var body: some View {
         NavigationStack {
             Form {
+                audioStatusSection
                 audioSection
                 midiSection
                 if editedPreferences.switchAvailable {
@@ -48,6 +55,7 @@ struct PreferencesView: View {
             }
             .onAppear {
                 dispatch(getPreferencesAction())
+                dispatch(getAudioDevicesAction())
             }
             .onChange(of: preferences) { oldValue, newValue in
                 if let newValue = newValue {
@@ -57,6 +65,10 @@ struct PreferencesView: View {
                         isSaving = false
                     }
                 }
+            }
+            .refreshable {
+                dispatch(getAudioDevicesAction())
+                dispatch(getPreferencesAction())
             }
             .alert("Saved", isPresented: $showingSaveConfirmation) {
                 Button("OK") {
@@ -69,22 +81,99 @@ struct PreferencesView: View {
     }
 
     @ViewBuilder
+    private var audioStatusSection: some View {
+        if let status = audioStatus {
+            let isNotRunning = status.engineStatus != .running
+            if isNotRunning {
+                Section {
+                    HStack(spacing: Layout.units(1.5)) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.yellow)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(status.engineStatus == .failed ? "Audio engine failed" : "Audio engine stopped")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                            if !status.error.isEmpty {
+                                Text(status.error)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        Spacer()
+                        Button("Restart") {
+                            dispatch(audioControlAction(method: .restart))
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                    }
+                    .padding(.vertical, 4)
+                }
+            } else {
+                Section(header: Text("Audio Status")) {
+                    LabeledContent("Device", value: status.currentDeviceName)
+                    LabeledContent("Sample Rate", value: "\(status.currentSampleRate) Hz")
+                    LabeledContent("Channels", value: "\(status.currentChannelCount)")
+                }
+            }
+        }
+    }
+
+    private var selectedDevice: Bloop_AudioDevice? {
+        audioDevices?.devices.first { $0.id == editedPreferences.audio.outputDevice }
+    }
+
+    private var availableSampleRates: [UInt32] {
+        selectedDevice?.supportedSampleRates.sorted() ?? []
+    }
+
+    @ViewBuilder
     private var audioSection: some View {
         Section(header: Text("Audio")) {
-            TextField("Output Device", text: Binding(
-                get: { editedPreferences.audio.outputDevice },
-                set: { editedPreferences.audio.outputDevice = $0 }
-            ))
+            if let devices = audioDevices, !devices.devices.isEmpty {
+                Picker("Output Device", selection: Binding(
+                    get: { editedPreferences.audio.outputDevice },
+                    set: { newId in
+                        editedPreferences.audio.outputDevice = newId
+                        if let device = devices.devices.first(where: { $0.id == newId }),
+                           !device.supportedSampleRates.isEmpty,
+                           !device.supportedSampleRates.contains(editedPreferences.audio.sampleRate) {
+                            editedPreferences.audio.sampleRate = device.supportedSampleRates.min() ?? editedPreferences.audio.sampleRate
+                        }
+                    }
+                )) {
+                    ForEach(devices.devices, id: \.id) { device in
+                        Text(device.name).tag(device.id)
+                    }
+                }
+                .pickerStyle(.menu)
+            } else {
+                TextField("Output Device", text: Binding(
+                    get: { editedPreferences.audio.outputDevice },
+                    set: { editedPreferences.audio.outputDevice = $0 }
+                ))
+            }
 
-            HStack {
-                Text("Sample Rate")
-                Spacer()
-                TextField("Sample Rate", value: Binding(
+            if !availableSampleRates.isEmpty {
+                Picker("Sample Rate", selection: Binding(
                     get: { editedPreferences.audio.sampleRate },
                     set: { editedPreferences.audio.sampleRate = $0 }
-                ), format: .number)
-                .multilineTextAlignment(.trailing)
-                .keyboardType(.numberPad)
+                )) {
+                    ForEach(availableSampleRates, id: \.self) { rate in
+                        Text("\(rate) Hz").tag(rate)
+                    }
+                }
+                .pickerStyle(.menu)
+            } else {
+                HStack {
+                    Text("Sample Rate")
+                    Spacer()
+                    TextField("Sample Rate", value: Binding(
+                        get: { editedPreferences.audio.sampleRate },
+                        set: { editedPreferences.audio.sampleRate = $0 }
+                    ), format: .number)
+                    .multilineTextAlignment(.trailing)
+                    .keyboardType(.numberPad)
+                }
             }
 
             HStack {

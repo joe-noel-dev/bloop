@@ -26,6 +26,8 @@ enum Action {
     case clearUser
     case addError(String)
     case setPreferences(Bloop_Preferences)
+    case setAudioDevices(Bloop_AudioDevices)
+    case setAudioStatus(Bloop_AudioStatus)
 
     case connect(Server)
     case connectLocal

@@ -15,6 +15,8 @@ struct AppState {
     var user: Bloop_User? = .none
     var errors: [String] = []
     var preferences: Bloop_Preferences? = .none
+    var audioDevices: Bloop_AudioDevices? = .none
+    var audioStatus: Bloop_AudioStatus? = .none
 }
 
 func emptyProject() -> Bloop_Project {

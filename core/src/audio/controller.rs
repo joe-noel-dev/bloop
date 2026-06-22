@@ -210,9 +210,9 @@ impl AudioController {
     /// preferences.
     pub fn get_audio_status(&self) -> AudioStatus {
         let (engine_status, error) = match &self.engine_state {
-            AudioEngineState::Running => (AudioEngineStatus::AUDIO_ENGINE_RUNNING, String::new()),
-            AudioEngineState::Stopped => (AudioEngineStatus::AUDIO_ENGINE_STOPPED, String::new()),
-            AudioEngineState::Failed { reason } => (AudioEngineStatus::AUDIO_ENGINE_FAILED, reason.clone()),
+            AudioEngineState::Running => (AudioEngineStatus::AUDIO_ENGINE_STATUS_RUNNING, String::new()),
+            AudioEngineState::Stopped => (AudioEngineStatus::AUDIO_ENGINE_STATUS_STOPPED, String::new()),
+            AudioEngineState::Failed { reason } => (AudioEngineStatus::AUDIO_ENGINE_STATUS_FAILED, reason.clone()),
         };
         AudioStatus {
             current_device_id: self.preferences.output_device.clone(),
@@ -649,7 +649,7 @@ mod tests {
         let status = controller.get_audio_status();
         assert_eq!(
             status.engine_status.enum_value_or_default(),
-            crate::bloop::AudioEngineStatus::AUDIO_ENGINE_RUNNING
+            crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STATUS_RUNNING
         );
     }
 
@@ -668,8 +668,8 @@ mod tests {
             statuses
                 .iter()
                 .any(|s| s.engine_status.enum_value_or_default()
-                    == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STOPPED),
-            "Expected an AUDIO_ENGINE_STOPPED AudioStatus after stop_audio"
+                    == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STATUS_STOPPED),
+            "Expected an AUDIO_ENGINE_STATUS_STOPPED AudioStatus after stop_audio"
         );
     }
 
@@ -695,8 +695,8 @@ mod tests {
             statuses
                 .iter()
                 .any(|s| s.engine_status.enum_value_or_default()
-                    == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_RUNNING),
-            "Expected an AUDIO_ENGINE_RUNNING AudioStatus after start_audio"
+                    == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STATUS_RUNNING),
+            "Expected an AUDIO_ENGINE_STATUS_RUNNING AudioStatus after start_audio"
         );
     }
 
@@ -720,10 +720,10 @@ mod tests {
         // Must contain at least one STOPPED and one RUNNING in order.
         let first_running = statuses
             .iter()
-            .position(|s| *s == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_RUNNING);
+            .position(|s| *s == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STATUS_RUNNING);
         let last_stopped = statuses
             .iter()
-            .rposition(|s| *s == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STOPPED);
+            .rposition(|s| *s == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STATUS_STOPPED);
 
         assert!(first_running.is_some(), "No RUNNING status found");
         assert!(last_stopped.is_some(), "No STOPPED status found");
@@ -757,15 +757,15 @@ mod tests {
         assert!(
             statuses
                 .iter()
-                .any(|s| *s == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STOPPED),
-            "Expected AUDIO_ENGINE_STOPPED during preference-driven restart"
+                .any(|s| *s == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STATUS_STOPPED),
+            "Expected AUDIO_ENGINE_STATUS_STOPPED during preference-driven restart"
         );
         assert!(
             statuses
                 .last()
-                .map(|s| *s == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_RUNNING)
+                .map(|s| *s == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STATUS_RUNNING)
                 .unwrap_or(false),
-            "Expected final AudioStatus to be AUDIO_ENGINE_RUNNING"
+            "Expected final AudioStatus to be AUDIO_ENGINE_STATUS_RUNNING"
         );
     }
 

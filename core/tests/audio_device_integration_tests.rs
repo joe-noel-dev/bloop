@@ -65,7 +65,7 @@ async fn audio_control_stop_broadcasts_stopped_status() {
     let mut fixture = IntegrationFixture::new().await;
 
     fixture
-        .send_request(Request::audio_control_request(AudioControlMethod::AUDIO_CONTROL_STOP))
+        .send_request(Request::audio_control_request(AudioControlMethod::AUDIO_CONTROL_METHOD_STOP))
         .await;
 
     let response = fixture
@@ -73,15 +73,15 @@ async fn audio_control_stop_broadcasts_stopped_status() {
             response
                 .audio_status
                 .as_ref()
-                .map(|s| s.engine_status.enum_value_or_default() == AudioEngineStatus::AUDIO_ENGINE_STOPPED)
+                .map(|s| s.engine_status.enum_value_or_default() == AudioEngineStatus::AUDIO_ENGINE_STATUS_STOPPED)
                 .unwrap_or(false)
         })
         .await
-        .expect("Did not receive STOPPED AudioStatus after AUDIO_CONTROL_STOP");
+        .expect("Did not receive STOPPED AudioStatus after AUDIO_CONTROL_METHOD_STOP");
 
     assert_eq!(
         response.audio_status.unwrap().engine_status.enum_value_or_default(),
-        AudioEngineStatus::AUDIO_ENGINE_STOPPED
+        AudioEngineStatus::AUDIO_ENGINE_STATUS_STOPPED
     );
 }
 
@@ -90,7 +90,7 @@ async fn audio_control_start_after_stop_broadcasts_running_status() {
     let mut fixture = IntegrationFixture::new().await;
 
     fixture
-        .send_request(Request::audio_control_request(AudioControlMethod::AUDIO_CONTROL_STOP))
+        .send_request(Request::audio_control_request(AudioControlMethod::AUDIO_CONTROL_METHOD_STOP))
         .await;
 
     fixture
@@ -98,14 +98,14 @@ async fn audio_control_start_after_stop_broadcasts_running_status() {
             response
                 .audio_status
                 .as_ref()
-                .map(|s| s.engine_status.enum_value_or_default() == AudioEngineStatus::AUDIO_ENGINE_STOPPED)
+                .map(|s| s.engine_status.enum_value_or_default() == AudioEngineStatus::AUDIO_ENGINE_STATUS_STOPPED)
                 .unwrap_or(false)
         })
         .await
         .expect("Did not receive STOPPED status");
 
     fixture
-        .send_request(Request::audio_control_request(AudioControlMethod::AUDIO_CONTROL_START))
+        .send_request(Request::audio_control_request(AudioControlMethod::AUDIO_CONTROL_METHOD_START))
         .await;
 
     let response = fixture
@@ -113,15 +113,15 @@ async fn audio_control_start_after_stop_broadcasts_running_status() {
             response
                 .audio_status
                 .as_ref()
-                .map(|s| s.engine_status.enum_value_or_default() == AudioEngineStatus::AUDIO_ENGINE_RUNNING)
+                .map(|s| s.engine_status.enum_value_or_default() == AudioEngineStatus::AUDIO_ENGINE_STATUS_RUNNING)
                 .unwrap_or(false)
         })
         .await
-        .expect("Did not receive RUNNING AudioStatus after AUDIO_CONTROL_START");
+        .expect("Did not receive RUNNING AudioStatus after AUDIO_CONTROL_METHOD_START");
 
     assert_eq!(
         response.audio_status.unwrap().engine_status.enum_value_or_default(),
-        AudioEngineStatus::AUDIO_ENGINE_RUNNING
+        AudioEngineStatus::AUDIO_ENGINE_STATUS_RUNNING
     );
 }
 
@@ -131,7 +131,7 @@ async fn audio_control_restart_broadcasts_running_status() {
 
     fixture
         .send_request(Request::audio_control_request(
-            AudioControlMethod::AUDIO_CONTROL_RESTART,
+            AudioControlMethod::AUDIO_CONTROL_METHOD_RESTART,
         ))
         .await;
 
@@ -140,14 +140,14 @@ async fn audio_control_restart_broadcasts_running_status() {
             response
                 .audio_status
                 .as_ref()
-                .map(|s| s.engine_status.enum_value_or_default() == AudioEngineStatus::AUDIO_ENGINE_RUNNING)
+                .map(|s| s.engine_status.enum_value_or_default() == AudioEngineStatus::AUDIO_ENGINE_STATUS_RUNNING)
                 .unwrap_or(false)
         })
         .await
-        .expect("Did not receive RUNNING AudioStatus after AUDIO_CONTROL_RESTART");
+        .expect("Did not receive RUNNING AudioStatus after AUDIO_CONTROL_METHOD_RESTART");
 
     assert_eq!(
         response.audio_status.unwrap().engine_status.enum_value_or_default(),
-        AudioEngineStatus::AUDIO_ENGINE_RUNNING
+        AudioEngineStatus::AUDIO_ENGINE_STATUS_RUNNING
     );
 }
