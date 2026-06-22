@@ -12,8 +12,8 @@ android {
         applicationId = "com.joenoel.bloop"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1100
-        versionName = "0.11.0"
+        versionCode = 1200
+        versionName = "0.12.0"
 
         ndk {
             abiFilters += listOf("arm64-v8a", "x86_64")
