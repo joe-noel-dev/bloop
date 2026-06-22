@@ -151,6 +151,9 @@ jobs:
         working-directory: android
         run: ./gradlew --no-daemon assembleRelease
 
+      - name: Rename APK
+        run: mv android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/bloop-${{ github.ref_name }}.apk
+
       - name: Attach release APK to GitHub release
         uses: softprops/action-gh-release@v2
         env:
