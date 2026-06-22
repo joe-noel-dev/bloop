@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
 use crate::bloop::{
-    PlaybackState, Progress, Project, ProjectInfo, ProjectSyncResponse, UploadAck, User, UserStatusResponse,
-    WaveformResponse,
+    AudioDevices, AudioStatus, PlaybackState, Progress, Project, ProjectInfo, ProjectSyncResponse, UploadAck, User,
+    UserStatusResponse, WaveformResponse,
 };
 
 impl crate::bloop::Response {
@@ -76,6 +76,16 @@ impl crate::bloop::Response {
         let mut prefs = preferences.clone();
         prefs.switch_available = cfg!(target_os = "linux");
         self.preferences = Some(prefs).into();
+        self
+    }
+
+    pub fn with_audio_devices(mut self, audio_devices: &AudioDevices) -> Self {
+        self.audio_devices = Some(audio_devices.clone()).into();
+        self
+    }
+
+    pub fn with_audio_status(mut self, audio_status: &AudioStatus) -> Self {
+        self.audio_status = Some(audio_status.clone()).into();
         self
     }
 }

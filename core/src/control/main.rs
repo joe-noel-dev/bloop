@@ -1,7 +1,7 @@
 use super::{directories::Directories, project_store::ProjectStore, waveform_store::WaveformStore};
 
 use crate::{
-    audio::AudioController,
+    audio::{devices::enumerate_output_devices, AudioController},
     backend::{create_filesystem_backend, create_pocketbase_auth, create_pocketbase_backend, sync_project, Backend},
     bloop::*,
     config::AppConfig,
@@ -235,6 +235,10 @@ impl MainController {
             self.handle_project_sync(project_sync).await?;
         }
 
+        if let Some(audio_control) = request.audio_control.as_ref() {
+            self.handle_audio_control(audio_control);
+        }
+
         self.set_project(project);
         Ok(())
     }
@@ -321,7 +325,8 @@ impl MainController {
                         .with_playback_state(self.audio_controller.get_playback_state())
                         .with_project_info(&self.project_info)
                         .with_user(self.user.clone())
-                        .with_preferences(&self.preferences),
+                        .with_preferences(&self.preferences)
+                        .with_audio_status(&self.audio_controller.get_audio_status()),
                 )
             }
             Entity::PROJECTS => {
@@ -346,6 +351,14 @@ impl MainController {
             }
             Entity::PREFERENCES => {
                 self.send_response(Response::default().with_preferences(&self.preferences));
+            }
+            Entity::AUDIO_DEVICES => {
+                let audio_devices = enumerate_output_devices();
+                self.send_response(Response::default().with_audio_devices(&audio_devices));
+            }
+            Entity::AUDIO_STATUS => {
+                let status = self.audio_controller.get_audio_status();
+                self.send_response(Response::default().with_audio_status(&status));
             }
             _ => (),
         };
@@ -384,36 +397,6 @@ impl MainController {
 
         let mut save_interval = time::interval(Duration::from_secs(2));
 
-        // Temporary debug channels for manual start/stop testing (removed in PR 7).
-        // On Unix: send SIGUSR1 to stop the audio engine, SIGUSR2 to restart it.
-        let (debug_stop_tx, mut debug_stop_rx) = tokio::sync::mpsc::channel::<()>(1);
-        let (debug_start_tx, mut debug_start_rx) = tokio::sync::mpsc::channel::<()>(1);
-
-        #[cfg(unix)]
-        {
-            let stop_tx = debug_stop_tx.clone();
-            tokio::spawn(async move {
-                let mut sig = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::user_defined1())
-                    .expect("Failed to register SIGUSR1 handler");
-                while sig.recv().await.is_some() {
-                    let _ = stop_tx.send(()).await;
-                }
-            });
-
-            let start_tx = debug_start_tx.clone();
-            tokio::spawn(async move {
-                let mut sig = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::user_defined2())
-                    .expect("Failed to register SIGUSR2 handler");
-                while sig.recv().await.is_some() {
-                    let _ = start_tx.send(()).await;
-                }
-            });
-        }
-
-        // Suppress unused-variable warnings on non-Unix platforms.
-        let _ = debug_stop_tx;
-        let _ = debug_start_tx;
-
         loop {
             tokio::select! {
                 Some(request) = self.request_rx.recv() => {
@@ -425,14 +408,6 @@ impl MainController {
                 _ = self.audio_controller.run() => (),
                 Some(action) = self.action_rx.recv() => self.handle_action(action),
                 _ = save_interval.tick() => self.auto_save_project().await,
-                Some(()) = debug_stop_rx.recv() => {
-                    info!("Debug request: stopping audio engine");
-                    self.audio_controller.stop_audio();
-                },
-                Some(()) = debug_start_rx.recv() => {
-                    info!("Debug request: starting audio engine");
-                    self.audio_controller.start_audio(&self.samples_cache);
-                },
                 else => break,
             }
         }
@@ -658,6 +633,24 @@ impl MainController {
         }
 
         Ok(())
+    }
+
+    fn handle_audio_control(&mut self, request: &AudioControlRequest) {
+        match request.method.enum_value_or_default() {
+            AudioControlMethod::AUDIO_CONTROL_STOP => {
+                info!("AudioControlRequest: stopping audio engine");
+                self.audio_controller.stop_audio();
+            }
+            AudioControlMethod::AUDIO_CONTROL_START => {
+                info!("AudioControlRequest: starting audio engine");
+                self.audio_controller.start_audio(&self.samples_cache);
+            }
+            AudioControlMethod::AUDIO_CONTROL_RESTART => {
+                info!("AudioControlRequest: restarting audio engine");
+                self.audio_controller.stop_audio();
+                self.audio_controller.start_audio(&self.samples_cache);
+            }
+        }
     }
 
     async fn handle_project_sync(&mut self, project_sync: &ProjectSyncRequest) -> anyhow::Result<()> {

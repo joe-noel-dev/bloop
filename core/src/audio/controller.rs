@@ -4,10 +4,11 @@ use super::{
     sampler_converter::{SampleConversionResult, SampleConverter},
     sequencer::Sequencer,
 };
+use crate::bloop::AudioEngineStatus;
 use crate::bloop::AudioPreferences;
 use crate::{
     audio::process::{create_audio_process, create_dummy_process},
-    bloop::Response,
+    bloop::{AudioStatus, Response},
 };
 use crate::{
     model::{PlaybackState, PlayingState, Progress, Project, ID},
@@ -184,6 +185,31 @@ impl AudioController {
         &self.engine_state
     }
 
+    /// Build an `AudioStatus` proto reflecting the current engine state and
+    /// preferences.
+    pub fn get_audio_status(&self) -> AudioStatus {
+        let (engine_status, error) = match &self.engine_state {
+            AudioEngineState::Running => (AudioEngineStatus::AUDIO_ENGINE_RUNNING, String::new()),
+            AudioEngineState::Stopped => (AudioEngineStatus::AUDIO_ENGINE_STOPPED, String::new()),
+            AudioEngineState::Failed { reason } => (AudioEngineStatus::AUDIO_ENGINE_FAILED, reason.clone()),
+        };
+        AudioStatus {
+            current_device_id: self.preferences.output_device.clone(),
+            current_device_name: self.preferences.output_device.clone(),
+            current_sample_rate: self.preferences.sample_rate,
+            current_channel_count: self.preferences.output_channel_count,
+            current_buffer_size: self.preferences.buffer_size,
+            engine_status: engine_status.into(),
+            error,
+            ..Default::default()
+        }
+    }
+
+    fn broadcast_audio_status(&self) {
+        let status = self.get_audio_status();
+        let _ = self.response_tx.send(Response::default().with_audio_status(&status));
+    }
+
     /// Build and start a fresh audio engine, re-triggering sample conversions
     /// for the current project. No-ops if the engine is already running.
     pub fn start_audio(&mut self, samples_cache: &SamplesCache) {
@@ -200,6 +226,7 @@ impl AudioController {
             self.broadcast_stopped_playback();
         }
 
+        self.broadcast_audio_status();
         self.samples_being_converted.clear();
         let project = self.project.clone();
         if let Some(engine) = self.engine.as_mut() {
@@ -229,6 +256,7 @@ impl AudioController {
         self.engine_state = AudioEngineState::Stopped;
         self.samples_being_converted.clear();
         self.broadcast_stopped_playback();
+        self.broadcast_audio_status();
         info!("Audio engine stopped");
     }
 
@@ -476,8 +504,6 @@ mod tests {
             .expect("run() timed out after stop/start cycle");
     }
 
-    // --- PR 2 tests ---
-
     #[tokio::test]
     async fn new_with_dummy_audio_has_running_state() {
         let controller = test_controller();
@@ -556,6 +582,96 @@ mod tests {
         assert!(
             !stopped_broadcasts.is_empty(),
             "Expected at least one STOPPED PlaybackState during stop/start cycle"
+        );
+    }
+
+    #[tokio::test]
+    async fn get_audio_status_reflects_running_engine() {
+        let controller = test_controller();
+        let status = controller.get_audio_status();
+        assert_eq!(
+            status.engine_status.enum_value_or_default(),
+            crate::bloop::AudioEngineStatus::AUDIO_ENGINE_RUNNING
+        );
+    }
+
+    #[tokio::test]
+    async fn stop_audio_broadcasts_audio_status_stopped() {
+        let (response_tx, mut response_rx) = broadcast::channel(100);
+        let mut controller = AudioController::new(response_tx, default_audio_preferences(), true);
+
+        controller.stop_audio();
+
+        let statuses: Vec<_> = std::iter::from_fn(|| response_rx.try_recv().ok())
+            .filter_map(|r| r.audio_status.into_option())
+            .collect();
+
+        assert!(
+            statuses
+                .iter()
+                .any(|s| s.engine_status.enum_value_or_default()
+                    == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STOPPED),
+            "Expected an AUDIO_ENGINE_STOPPED AudioStatus after stop_audio"
+        );
+    }
+
+    #[tokio::test]
+    async fn start_audio_broadcasts_audio_status_running() {
+        let dir = tempdir().unwrap();
+        let samples_cache = SamplesCache::new(dir.path());
+
+        let (response_tx, mut response_rx) = broadcast::channel(100);
+        let mut controller = AudioController::new(response_tx, default_audio_preferences(), true);
+
+        controller.stop_audio();
+        // drain
+        while response_rx.try_recv().is_ok() {}
+
+        controller.start_audio(&samples_cache);
+
+        let statuses: Vec<_> = std::iter::from_fn(|| response_rx.try_recv().ok())
+            .filter_map(|r| r.audio_status.into_option())
+            .collect();
+
+        assert!(
+            statuses
+                .iter()
+                .any(|s| s.engine_status.enum_value_or_default()
+                    == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_RUNNING),
+            "Expected an AUDIO_ENGINE_RUNNING AudioStatus after start_audio"
+        );
+    }
+
+    #[tokio::test]
+    async fn stop_start_stop_produces_correct_status_sequence() {
+        let dir = tempdir().unwrap();
+        let samples_cache = SamplesCache::new(dir.path());
+
+        let (response_tx, mut response_rx) = broadcast::channel(100);
+        let mut controller = AudioController::new(response_tx, default_audio_preferences(), true);
+
+        controller.stop_audio();
+        controller.start_audio(&samples_cache);
+        controller.stop_audio();
+
+        let statuses: Vec<_> = std::iter::from_fn(|| response_rx.try_recv().ok())
+            .filter_map(|r| r.audio_status.into_option())
+            .map(|s| s.engine_status.enum_value_or_default())
+            .collect();
+
+        // Must contain at least one STOPPED and one RUNNING in order.
+        let first_running = statuses
+            .iter()
+            .position(|s| *s == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_RUNNING);
+        let last_stopped = statuses
+            .iter()
+            .rposition(|s| *s == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STOPPED);
+
+        assert!(first_running.is_some(), "No RUNNING status found");
+        assert!(last_stopped.is_some(), "No STOPPED status found");
+        assert!(
+            first_running.unwrap() < last_stopped.unwrap(),
+            "Expected RUNNING before final STOPPED"
         );
     }
 }

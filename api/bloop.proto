@@ -88,6 +88,7 @@ message Request {
     LoginRequest login = 22;
     LogoutRequest logout = 23;
     ProjectSyncRequest project_sync = 24;
+    AudioControlRequest audio_control = 25;
 }
 
 message GetRequest {
@@ -104,6 +105,8 @@ enum Entity {
     SONG = 5;
     WAVEFORM = 6;
     PREFERENCES = 7;
+    AUDIO_DEVICES = 8;
+    AUDIO_STATUS = 9;
 }
 
 message AddRequest {
@@ -206,6 +209,8 @@ message Response {
     ProjectSyncResponse project_sync = 12;
     repeated ProjectInfo cloud_projects = 13;
     Preferences preferences = 14;
+    AudioDevices audio_devices = 15;
+    AudioStatus audio_status = 16;
 } 
 
 message WaveformResponse {
@@ -304,6 +309,47 @@ enum SyncStatus {
 message ProjectSyncResponse {
     string project_id = 1;
     SyncStatus status = 2;
+}
+
+enum AudioEngineStatus {
+    AUDIO_ENGINE_STOPPED = 0;
+    AUDIO_ENGINE_RUNNING = 1;
+    AUDIO_ENGINE_FAILED = 2;
+}
+
+message AudioStatus {
+    string current_device_id = 1;
+    string current_device_name = 2;
+    uint32 current_sample_rate = 3;
+    uint32 current_channel_count = 4;
+    uint32 current_buffer_size = 5;
+    AudioEngineStatus engine_status = 6;
+    string error = 7;
+}
+
+enum AudioControlMethod {
+    AUDIO_CONTROL_START = 0;
+    AUDIO_CONTROL_STOP = 1;
+    AUDIO_CONTROL_RESTART = 2;
+}
+
+message AudioControlRequest {
+    AudioControlMethod method = 1;
+}
+
+message AudioDevice {
+    string id = 1;
+    string name = 2;
+    bool is_default = 3;
+    repeated uint32 supported_sample_rates = 4;
+    repeated uint32 supported_channel_counts = 5;
+    uint32 min_buffer_size = 6;
+    uint32 max_buffer_size = 7;
+}
+
+message AudioDevices {
+    repeated AudioDevice devices = 1;
+    string host_name = 2;
 }
 
 message Preferences {
