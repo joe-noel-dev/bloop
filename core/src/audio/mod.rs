@@ -1,5 +1,6 @@
 mod controller;
 pub mod convert;
+pub mod devices;
 mod metronome;
 mod process;
 mod sampler_converter;

@@ -65,4 +65,15 @@ impl Request {
             ..Default::default()
         }
     }
+
+    pub fn audio_control_request(method: AudioControlMethod) -> Self {
+        Self {
+            audio_control: Some(AudioControlRequest {
+                method: method.into(),
+                ..Default::default()
+            })
+            .into(),
+            ..Default::default()
+        }
+    }
 }
