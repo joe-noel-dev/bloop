@@ -15,14 +15,6 @@ pub fn read_preferences_from_str(preferences_str: &str) -> anyhow::Result<Prefer
 
 fn validate_preferences(preferences: &mut Preferences) {
     if let Some(audio_prefs) = preferences.audio.as_mut() {
-        if audio_prefs.output_channel_count == 0 || audio_prefs.output_channel_count > 64 {
-            info!(
-                "Invalid output channel count of {}, resetting to 2",
-                audio_prefs.output_channel_count
-            );
-            audio_prefs.output_channel_count = 2;
-        }
-
         if audio_prefs.buffer_size == 0 || audio_prefs.buffer_size > 8192 {
             info!("Invalid buffer size of {}, resetting to 512", audio_prefs.buffer_size);
             audio_prefs.buffer_size = 512;
@@ -77,7 +69,6 @@ pub fn default_audio_preferences() -> AudioPreferences {
         output_device: String::new(),
         sample_rate: 48_000,
         buffer_size: 512,
-        output_channel_count: 2,
         use_jack: false,
         main_channel_offset: 0,
         click_channel_offset: 2,
@@ -100,7 +91,6 @@ mod tests {
         let audio_prefs = prefs.audio.unwrap();
         assert_eq!(audio_prefs.sample_rate, 48_000);
         assert_eq!(audio_prefs.buffer_size, 512);
-        assert_eq!(audio_prefs.output_channel_count, 2);
         assert_eq!(audio_prefs.main_channel_offset, 0);
         assert_eq!(audio_prefs.click_channel_offset, 2);
         assert!(!audio_prefs.use_jack);
@@ -125,5 +115,14 @@ mod tests {
         let audio_prefs = prefs.audio.unwrap();
         assert_eq!(audio_prefs.main_channel_offset, 2);
         assert_eq!(audio_prefs.click_channel_offset, 4);
+    }
+
+    #[test]
+    fn stale_output_channel_count_field_is_silently_ignored() {
+        let json = r#"{"audio": {"outputChannelCount": 8, "sampleRate": 44100}}"#;
+        let prefs = read_preferences_from_str(json).unwrap();
+        let audio_prefs = prefs.audio.unwrap();
+        // The removed field must not cause a parse error; other fields still load.
+        assert_eq!(audio_prefs.sample_rate, 44100);
     }
 }
