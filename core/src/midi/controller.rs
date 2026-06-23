@@ -8,14 +8,14 @@ use tokio::sync::mpsc;
 #[derive(Default)]
 #[allow(dead_code)]
 pub struct MidiController {
-    input_connection: Option<MidiInputConnection<Context>>,
+    input_connections: Vec<MidiInputConnection<Context>>,
 }
 
 struct Context {
     action_tx: mpsc::Sender<Action>,
 }
 
-const DEFAULT_DEVICE_NAME: &str = "iCON G_Boar V1.03";
+const DEFAULT_ENABLED_DEVICE: &str = "iCON G_Boar";
 
 fn on_midi_input(_: u64, message: &[u8], mappings: &[Mapping], context: &mut Context) {
     mappings
@@ -47,11 +47,7 @@ fn print_midi_inputs(midi_input: &MidiInput) {
 }
 
 impl MidiController {
-    pub fn new(
-        action_tx: mpsc::Sender<Action>,
-        preferences: MidiPreferences,
-        midi_mappings_dir: &Path,
-    ) -> Self {
+    pub fn new(action_tx: mpsc::Sender<Action>, preferences: MidiPreferences, midi_mappings_dir: &Path) -> Self {
         let midi_input = match MidiInput::new("Bloop") {
             Ok(input) => input,
             Err(error) => {
@@ -60,47 +56,76 @@ impl MidiController {
             }
         };
 
-        let desired_input_device_name = if preferences.input_device.is_empty() {
-            DEFAULT_DEVICE_NAME.to_string()
+        let enabled_patterns: Vec<String> = if preferences.enabled_devices.is_empty() {
+            vec![DEFAULT_ENABLED_DEVICE.to_string()]
         } else {
-            preferences.input_device.clone()
+            preferences.enabled_devices.clone()
         };
 
         print_midi_inputs(&midi_input);
 
         let ports = midi_input.ports();
-        let port = ports.iter().find(|port| match midi_input.port_name(port) {
-            Ok(name) => name.contains(&desired_input_device_name),
-            Err(_) => false,
-        });
 
-        let mut input_connection: Option<MidiInputConnection<Context>> = None;
+        let mut input_connections: Vec<MidiInputConnection<Context>> = Vec::new();
 
-        if let Some(port) = port {
-            let port_name = midi_input.port_name(port).unwrap();
-            info!("Connecting to {port_name}");
+        for port in &ports {
+            let name = match midi_input.port_name(port) {
+                Ok(name) => name,
+                Err(_) => continue,
+            };
 
-            let all_device_mappings = load_mappings(midi_mappings_dir);
-            let mappings: Vec<Mapping> = all_device_mappings
+            let matches = enabled_patterns.iter().any(|pattern| name.contains(pattern.as_str()));
+            if !matches {
+                continue;
+            }
+
+            info!("Connecting to {name}");
+
+            // Each connection needs its own MidiInput, so we create a new one for every
+            // port after the first. For the first matching port we consume `midi_input`
+            // directly by breaking after the loop; for additional ports we create a
+            // fresh `MidiInput`. To keep the code simple we collect port indices first
+            // and reconstruct `MidiInput` per connection.
+            let port_name = name;
+            let port_mappings: Vec<Mapping> = load_mappings(midi_mappings_dir)
                 .into_iter()
                 .filter(|dm| dm.device_regex.is_match(&port_name))
                 .flat_map(|dm| dm.mappings)
                 .collect();
+            let action_tx_clone = action_tx.clone();
 
-            input_connection = match midi_input.connect(
-                port,
-                "Bloop Input",
-                move |timestamp, message, context| on_midi_input(timestamp, message, &mappings, context),
-                Context { action_tx },
-            ) {
-                Ok(connection) => Some(connection),
+            let fresh_input = match MidiInput::new("Bloop") {
+                Ok(input) => input,
                 Err(error) => {
-                    error!("Unable to connect to MIDI input: {error}");
-                    None
+                    error!("Unable to create MIDI input for {port_name}: {error}");
+                    continue;
+                }
+            };
+
+            let fresh_ports = fresh_input.ports();
+            let fresh_port = fresh_ports
+                .iter()
+                .find(|p| fresh_input.port_name(p).ok().as_deref() == Some(&port_name));
+
+            if let Some(fresh_port) = fresh_port {
+                match fresh_input.connect(
+                    fresh_port,
+                    "Bloop Input",
+                    move |timestamp, message, context| on_midi_input(timestamp, message, &port_mappings, context),
+                    Context {
+                        action_tx: action_tx_clone,
+                    },
+                ) {
+                    Ok(connection) => {
+                        input_connections.push(connection);
+                    }
+                    Err(error) => {
+                        error!("Unable to connect to MIDI input {port_name}: {error}");
+                    }
                 }
             }
         }
 
-        Self { input_connection }
+        Self { input_connections }
     }
 }

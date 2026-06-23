@@ -220,8 +220,8 @@ struct PreferencesView: View {
     private var midiSection: some View {
         Section(header: Text("MIDI")) {
             TextField("Input Device", text: Binding(
-                get: { editedPreferences.midi.inputDevice },
-                set: { editedPreferences.midi.inputDevice = $0 }
+                get: { editedPreferences.midi.enabledDevices.first ?? "" },
+                set: { editedPreferences.midi.enabledDevices = $0.isEmpty ? [] : [$0] }
             ))
         }
     }

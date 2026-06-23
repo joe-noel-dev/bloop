@@ -14,7 +14,7 @@ final class PreferencesTests: XCTestCase {
                 $0.bufferSize = 512
             }
             $0.midi = Bloop_MidiPreferences.with {
-                $0.inputDevice = "Test MIDI"
+                $0.enabledDevices = ["Test MIDI"]
             }
         }
 
@@ -27,7 +27,7 @@ final class PreferencesTests: XCTestCase {
         XCTAssertEqual(newState.preferences?.audio.outputDevice, "Test Device")
         XCTAssertEqual(newState.preferences?.audio.sampleRate, 48000)
         XCTAssertEqual(newState.preferences?.audio.bufferSize, 512)
-        XCTAssertEqual(newState.preferences?.midi.inputDevice, "Test MIDI")
+        XCTAssertEqual(newState.preferences?.midi.enabledDevices, ["Test MIDI"])
     }
 
     func testGetPreferencesActionCreation() {

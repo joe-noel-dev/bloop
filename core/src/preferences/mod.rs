@@ -77,7 +77,10 @@ pub fn default_audio_preferences() -> AudioPreferences {
 }
 
 pub fn default_midi_preferences() -> MidiPreferences {
-    MidiPreferences { ..Default::default() }
+    MidiPreferences {
+        enabled_devices: vec!["iCON G_Boar".to_string()],
+        ..Default::default()
+    }
 }
 
 #[cfg(test)]
@@ -124,5 +127,30 @@ mod tests {
         let audio_prefs = prefs.audio.unwrap();
         // The removed field must not cause a parse error; other fields still load.
         assert_eq!(audio_prefs.sample_rate, 44100);
+    }
+
+    #[test]
+    fn default_midi_preferences_has_icon_g_boar_pattern() {
+        let midi = default_midi_preferences();
+        assert_eq!(midi.enabled_devices, vec!["iCON G_Boar".to_string()]);
+    }
+
+    #[test]
+    fn old_input_device_field_is_silently_ignored() {
+        let json = r#"{"midi": {"inputDevice": "Some Device"}}"#;
+        let prefs = read_preferences_from_str(json).unwrap();
+        let midi_prefs = prefs.midi.unwrap();
+        assert!(midi_prefs.enabled_devices.is_empty());
+    }
+
+    #[test]
+    fn enabled_devices_round_trips() {
+        let json = r#"{"midi": {"enabledDevices": ["iCON G_Boar", "Launchpad"]}}"#;
+        let prefs = read_preferences_from_str(json).unwrap();
+        let midi_prefs = prefs.midi.unwrap();
+        assert_eq!(
+            midi_prefs.enabled_devices,
+            vec!["iCON G_Boar".to_string(), "Launchpad".to_string()]
+        );
     }
 }
