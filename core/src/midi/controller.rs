@@ -112,9 +112,7 @@ impl MidiController {
             match fresh_input.connect(
                 fresh_port,
                 "Bloop Input",
-                move |timestamp, message, context| {
-                    on_midi_input(timestamp, message, mappings_clone.as_slice(), context)
-                },
+                move |timestamp, message, context| on_midi_input(timestamp, message, &port_mappings, context),
                 Context {
                     action_tx: action_tx_clone,
                 },

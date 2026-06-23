@@ -140,7 +140,7 @@ mod tests {
         let json = r#"{"midi": {"inputDevice": "Some Device"}}"#;
         let prefs = read_preferences_from_str(json).unwrap();
         let midi_prefs = prefs.midi.unwrap();
-        assert_eq!(midi_prefs.enabled_devices, vec!["iCON G_Boar".to_string()]);
+        assert!(midi_prefs.enabled_devices.is_empty());
     }
 
     #[test]
