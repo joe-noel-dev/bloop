@@ -39,7 +39,7 @@ struct MainController {
     project: Project,
     audio_controller: AudioController,
     waveform_store: WaveformStore,
-    _midi_controller: Option<MidiController>,
+    midi_controller: Option<MidiController>,
     action_rx: mpsc::Receiver<Action>,
     action_tx: mpsc::Sender<Action>,
     should_save: bool,
@@ -85,6 +85,7 @@ impl MainController {
                 action_tx.clone(),
                 midi_preferences,
                 &directories.root.join("midi_mappings"),
+                response_tx.clone(),
             ))
         } else {
             None
@@ -99,7 +100,7 @@ impl MainController {
             project: Project::empty().with_songs(1, 1),
             audio_controller: AudioController::new(response_tx.clone(), audio_preferences, app_config.use_dummy_audio),
             waveform_store: WaveformStore::new(response_tx),
-            _midi_controller: midi_controller,
+            midi_controller,
             action_rx,
             action_tx,
             should_save: false,
@@ -538,6 +539,11 @@ impl MainController {
             if let Some(new_audio_prefs) = preferences.audio.as_ref() {
                 self.audio_controller
                     .update_audio_preferences(new_audio_prefs.clone(), &self.samples_cache);
+            }
+            if let Some(new_midi_prefs) = preferences.midi.as_ref() {
+                if let Some(midi_controller) = &self.midi_controller {
+                    midi_controller.update_preferences(new_midi_prefs.clone());
+                }
             }
             self.preferences = preferences.clone();
             if let Err(error) = preferences::write_preferences(&self.preferences, &self.directories.root) {

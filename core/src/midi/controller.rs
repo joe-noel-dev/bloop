@@ -1,131 +1,302 @@
 use super::mappings::{load_mappings, Mapping};
-use crate::bloop::{Action, MidiPreferences};
+use crate::bloop::{Action, MidiDevices, MidiPreferences, Response};
 use log::{error, info};
 use midir::{MidiInput, MidiInputConnection};
-use std::path::Path;
-use tokio::sync::mpsc;
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
+use tokio::sync::{broadcast, mpsc};
+use tokio::time::{self, Duration};
 
-#[derive(Default)]
-#[allow(dead_code)]
-pub struct MidiController {
-    input_connections: Vec<MidiInputConnection<Context>>,
-}
+const DEFAULT_ENABLED_DEVICE: &str = "iCON G_Boar";
+const POLL_INTERVAL_SECS: u64 = 2;
 
 struct Context {
     action_tx: mpsc::Sender<Action>,
 }
 
-const DEFAULT_ENABLED_DEVICE: &str = "iCON G_Boar";
-
-fn on_midi_input(_: u64, message: &[u8], mappings: &[Mapping], context: &mut Context) {
-    mappings
-        .iter()
-        .filter(|mapping| mapping.matches(message))
-        .for_each(|mapping| {
-            let _ = context.action_tx.try_send(mapping.action);
-        });
+struct SharedState {
+    enabled_patterns: Vec<String>,
+    midi_mappings_dir: PathBuf,
+    action_tx: mpsc::Sender<Action>,
+    /// Active connections, keyed by port name.
+    input_connections: Vec<(String, MidiInputConnection<Context>)>,
+    /// All port names visible at the last poll.
+    known_port_names: Vec<String>,
 }
 
-fn print_midi_inputs(midi_input: &MidiInput) {
-    info!("MIDI Input ports:");
+#[allow(dead_code)]
+pub struct MidiController {
+    shared: Arc<Mutex<SharedState>>,
+    _poller: tokio::task::JoinHandle<()>,
+}
+
+fn enumerate_port_names() -> Vec<String> {
+    let names = super::devices::get_midi_devices().port_names;
+    if names.is_empty() {
+        info!("No MIDI input devices found");
+    } else {
+        names.iter().enumerate().for_each(|(i, n)| info!("MIDI port {i}: {n}"));
+    }
+    names
+}
+
+fn try_connect(
+    port_name: &str,
+    midi_mappings_dir: &Path,
+    action_tx: &mpsc::Sender<Action>,
+) -> Option<MidiInputConnection<Context>> {
+    let port_mappings: Vec<Mapping> = load_mappings(midi_mappings_dir)
+        .into_iter()
+        .filter(|dm| dm.device_regex.is_match(port_name))
+        .flat_map(|dm| dm.mappings)
+        .collect();
+
+    let midi_input = match MidiInput::new("Bloop") {
+        Ok(input) => input,
+        Err(error) => {
+            error!("Unable to create MIDI input for {port_name}: {error}");
+            return None;
+        }
+    };
 
     let ports = midi_input.ports();
+    let port = ports
+        .iter()
+        .find(|p| midi_input.port_name(p).ok().as_deref() == Some(port_name))?;
 
-    if ports.is_empty() {
-        info!("No MIDI input devices found");
-        return;
+    match midi_input.connect(
+        port,
+        "Bloop Input",
+        move |_timestamp, message, context| {
+            port_mappings
+                .iter()
+                .filter(|m| m.matches(message))
+                .for_each(|m| {
+                    let _ = context.action_tx.try_send(m.action);
+                });
+        },
+        Context { action_tx: action_tx.clone() },
+    ) {
+        Ok(connection) => {
+            info!("Connected to MIDI port: {port_name}");
+            Some(connection)
+        }
+        Err(error) => {
+            error!("Unable to connect to MIDI port {port_name}: {error}");
+            None
+        }
+    }
+}
+
+/// Returns port names from `current_ports` that should have a new connection opened:
+/// they are not already connected and match at least one enabled pattern.
+pub(crate) fn ports_to_connect<'a>(
+    current_ports: &'a [String],
+    connected_ports: &[String],
+    enabled_patterns: &[String],
+) -> Vec<&'a str> {
+    current_ports
+        .iter()
+        .filter(|name| !connected_ports.contains(name))
+        .filter(|name| enabled_patterns.iter().any(|p| name.contains(p.as_str())))
+        .map(|s| s.as_str())
+        .collect()
+}
+
+/// Returns port names from `connected_ports` that should be disconnected because
+/// they no longer appear in `current_ports`.
+pub(crate) fn ports_to_disconnect<'a>(
+    connected_ports: &'a [String],
+    current_ports: &[String],
+) -> Vec<&'a str> {
+    connected_ports
+        .iter()
+        .filter(|name| !current_ports.contains(name))
+        .map(|s| s.as_str())
+        .collect()
+}
+
+/// Synchronise `state.input_connections` with `current_ports`: drop connections for
+/// ports that have disappeared, open new connections for newly visible matching ports.
+fn sync_connections(state: &mut SharedState, current_ports: &[String]) {
+    let connected: Vec<String> = state.input_connections.iter().map(|(n, _)| n.clone()).collect();
+
+    let to_disconnect = ports_to_disconnect(&connected, current_ports);
+    if !to_disconnect.is_empty() {
+        info!("Disconnecting MIDI ports: {:?}", to_disconnect);
+        state
+            .input_connections
+            .retain(|(name, _)| !to_disconnect.contains(&name.as_str()));
     }
 
-    ports.iter().enumerate().for_each(|(index, port)| {
-        let name = match midi_input.port_name(port) {
-            Ok(name) => name,
-            Err(_) => return,
+    let connected_after: Vec<String> = state.input_connections.iter().map(|(n, _)| n.clone()).collect();
+    let to_connect = ports_to_connect(current_ports, &connected_after, &state.enabled_patterns);
+    for port_name in to_connect {
+        if let Some(conn) = try_connect(port_name, &state.midi_mappings_dir.clone(), &state.action_tx.clone()) {
+            state.input_connections.push((port_name.to_string(), conn));
+        }
+    }
+
+    state.known_port_names = current_ports.to_vec();
+}
+
+async fn run_poller(shared: Arc<Mutex<SharedState>>, response_tx: broadcast::Sender<Response>) {
+    let mut interval = time::interval(Duration::from_secs(POLL_INTERVAL_SECS));
+    loop {
+        interval.tick().await;
+
+        let current_ports = enumerate_port_names();
+
+        let changed = {
+            let state = shared.lock().unwrap();
+            state.known_port_names != current_ports
         };
 
-        info!("{index}: {name}");
-    });
+        if changed {
+            let mut state = shared.lock().unwrap();
+            sync_connections(&mut state, &current_ports);
+            let _ = response_tx.send(
+                Response::default().with_midi_devices(&MidiDevices {
+                    port_names: current_ports,
+                    ..Default::default()
+                }),
+            );
+        }
+    }
 }
 
 impl MidiController {
-    pub fn new(action_tx: mpsc::Sender<Action>, preferences: MidiPreferences, midi_mappings_dir: &Path) -> Self {
-        let midi_input = match MidiInput::new("Bloop") {
-            Ok(input) => input,
-            Err(error) => {
-                error!("Unable to connect to MIDI backend: {error}");
-                return Self::default();
-            }
-        };
-
-        let enabled_patterns: Vec<String> = if preferences.enabled_devices.is_empty() {
+    pub fn new(
+        action_tx: mpsc::Sender<Action>,
+        preferences: MidiPreferences,
+        midi_mappings_dir: &Path,
+        response_tx: broadcast::Sender<Response>,
+    ) -> Self {
+        let enabled_patterns = if preferences.enabled_devices.is_empty() {
             vec![DEFAULT_ENABLED_DEVICE.to_string()]
         } else {
             preferences.enabled_devices.clone()
         };
 
-        print_midi_inputs(&midi_input);
+        let current_ports = enumerate_port_names();
 
-        let ports = midi_input.ports();
+        let mut state = SharedState {
+            enabled_patterns,
+            midi_mappings_dir: midi_mappings_dir.to_path_buf(),
+            action_tx,
+            input_connections: Vec::new(),
+            known_port_names: Vec::new(),
+        };
+        sync_connections(&mut state, &current_ports);
 
-        let mut input_connections: Vec<MidiInputConnection<Context>> = Vec::new();
+        let shared = Arc::new(Mutex::new(state));
+        let poller = tokio::spawn(run_poller(shared.clone(), response_tx));
 
-        for port in &ports {
-            let name = match midi_input.port_name(port) {
-                Ok(name) => name,
-                Err(_) => continue,
-            };
-
-            let matches = enabled_patterns.iter().any(|pattern| name.contains(pattern.as_str()));
-            if !matches {
-                continue;
-            }
-
-            info!("Connecting to {name}");
-
-            // `MidiInput::connect` consumes the `MidiInput`, so each connection needs its own instance.
-            // Create a fresh `MidiInput` per matching port and keep the resulting connections alive.
-            let port_name = name;
-            let port_mappings: Vec<Mapping> = load_mappings(midi_mappings_dir)
-                .into_iter()
-                .filter(|dm| dm.device_regex.is_match(&port_name))
-                .flat_map(|dm| dm.mappings)
-                .collect();
-            let action_tx_clone = action_tx.clone();
-
-            let fresh_input = match MidiInput::new("Bloop") {
-                Ok(input) => input,
-                Err(error) => {
-                    error!("Unable to create MIDI input for {port_name}: {error}");
-                    continue;
-                }
-            };
-
-            let fresh_ports = fresh_input.ports();
-            let fresh_port = fresh_ports
-                .iter()
-                .find(|p| fresh_input.port_name(p).ok().as_deref() == Some(port_name.as_str()));
-
-            let Some(fresh_port) = fresh_port else {
-                error!("MIDI input port {port_name} disappeared before connecting");
-                continue;
-            };
-
-            match fresh_input.connect(
-                fresh_port,
-                "Bloop Input",
-                move |timestamp, message, context| on_midi_input(timestamp, message, &port_mappings, context),
-                Context {
-                    action_tx: action_tx_clone,
-                },
-            ) {
-                Ok(connection) => {
-                    input_connections.push(connection);
-                }
-                Err(error) => {
-                    error!("Unable to connect to MIDI input {port_name}: {error}");
-                }
-            }
+        Self {
+            shared,
+            _poller: poller,
         }
+    }
 
-        Self { input_connections }
+    /// Update the enabled device patterns and immediately re-evaluate connections
+    /// against the last-known port list.
+    pub fn update_preferences(&self, preferences: MidiPreferences) {
+        let enabled_patterns = if preferences.enabled_devices.is_empty() {
+            vec![DEFAULT_ENABLED_DEVICE.to_string()]
+        } else {
+            preferences.enabled_devices.clone()
+        };
+
+        let mut state = self.shared.lock().unwrap();
+        state.enabled_patterns = enabled_patterns;
+        let current_ports = state.known_port_names.clone();
+        sync_connections(&mut state, &current_ports);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ports_to_connect_returns_new_matching_ports() {
+        let current = vec!["iCON G_Boar V1.03".to_string(), "Generic MIDI".to_string()];
+        let connected: Vec<String> = vec![];
+        let patterns = vec!["iCON G_Boar".to_string()];
+
+        let result = ports_to_connect(&current, &connected, &patterns);
+
+        assert_eq!(result, vec!["iCON G_Boar V1.03"]);
+    }
+
+    #[test]
+    fn ports_to_connect_skips_already_connected_ports() {
+        let current = vec!["iCON G_Boar V1.03".to_string()];
+        let connected = vec!["iCON G_Boar V1.03".to_string()];
+        let patterns = vec!["iCON G_Boar".to_string()];
+
+        let result = ports_to_connect(&current, &connected, &patterns);
+
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn ports_to_connect_skips_non_matching_ports() {
+        let current = vec!["Generic MIDI".to_string()];
+        let connected: Vec<String> = vec![];
+        let patterns = vec!["iCON G_Boar".to_string()];
+
+        let result = ports_to_connect(&current, &connected, &patterns);
+
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn ports_to_disconnect_returns_removed_ports() {
+        let connected = vec!["iCON G_Boar V1.03".to_string()];
+        let current: Vec<String> = vec![];
+
+        let result = ports_to_disconnect(&connected, &current);
+
+        assert_eq!(result, vec!["iCON G_Boar V1.03"]);
+    }
+
+    #[test]
+    fn ports_to_disconnect_keeps_still_present_ports() {
+        let connected = vec!["iCON G_Boar V1.03".to_string()];
+        let current = vec!["iCON G_Boar V1.03".to_string()];
+
+        let result = ports_to_disconnect(&connected, &current);
+
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn ports_to_connect_with_updated_patterns_matches_newly_enabled_port() {
+        let known_ports = vec!["Launchpad Mini".to_string(), "Generic MIDI".to_string()];
+        let connected: Vec<String> = vec![];
+        let new_patterns = vec!["Launchpad".to_string()];
+
+        let result = ports_to_connect(&known_ports, &connected, &new_patterns);
+
+        assert_eq!(result, vec!["Launchpad Mini"]);
+    }
+
+    #[test]
+    fn ports_to_connect_with_updated_patterns_drops_no_longer_matching_port() {
+        // Simulate: "iCON G_Boar" was connected under old patterns.
+        // New patterns only include "Launchpad"; the old port should appear in
+        // ports_to_disconnect (it's still in current) but not in ports_to_connect.
+        let known_ports = vec!["iCON G_Boar V1.03".to_string()];
+        let connected = vec!["iCON G_Boar V1.03".to_string()];
+        let new_patterns = vec!["Launchpad".to_string()];
+
+        // Still present → not in ports_to_disconnect
+        let to_disconnect = ports_to_disconnect(&connected, &known_ports);
+        assert!(to_disconnect.is_empty(), "port is still visible, should not disconnect");
+
+        // But should not be re-connected under new patterns
+        let to_connect = ports_to_connect(&known_ports, &connected, &new_patterns);
+        assert!(to_connect.is_empty(), "port does not match new pattern, should not connect");
     }
 }
