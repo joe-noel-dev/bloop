@@ -2,7 +2,10 @@ use log::info;
 use std::path::Path;
 use tokio::sync::{broadcast, mpsc};
 
-use crate::{bloop::{MidiPreferences, Response}, model::Action};
+use crate::{
+    bloop::{MidiPreferences, Response},
+    model::Action,
+};
 
 pub struct MidiController {}
 

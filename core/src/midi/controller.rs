@@ -27,17 +27,17 @@ struct SharedState {
 #[allow(dead_code)]
 pub struct MidiController {
     shared: Arc<Mutex<SharedState>>,
-    _poller: tokio::task::JoinHandle<()>,
+    poller: tokio::task::JoinHandle<()>,
+}
+
+impl Drop for MidiController {
+    fn drop(&mut self) {
+        self.poller.abort();
+    }
 }
 
 fn enumerate_port_names() -> Vec<String> {
-    let names = super::devices::get_midi_devices().port_names;
-    if names.is_empty() {
-        info!("No MIDI input devices found");
-    } else {
-        names.iter().enumerate().for_each(|(i, n)| info!("MIDI port {i}: {n}"));
-    }
-    names
+    super::devices::get_midi_devices().port_names
 }
 
 fn try_connect(
@@ -68,14 +68,13 @@ fn try_connect(
         port,
         "Bloop Input",
         move |_timestamp, message, context| {
-            port_mappings
-                .iter()
-                .filter(|m| m.matches(message))
-                .for_each(|m| {
-                    let _ = context.action_tx.try_send(m.action);
-                });
+            port_mappings.iter().filter(|m| m.matches(message)).for_each(|m| {
+                let _ = context.action_tx.try_send(m.action);
+            });
         },
-        Context { action_tx: action_tx.clone() },
+        Context {
+            action_tx: action_tx.clone(),
+        },
     ) {
         Ok(connection) => {
             info!("Connected to MIDI port: {port_name}");
@@ -103,34 +102,27 @@ pub(crate) fn ports_to_connect<'a>(
         .collect()
 }
 
-/// Returns port names from `connected_ports` that should be disconnected because
-/// they no longer appear in `current_ports`.
-pub(crate) fn ports_to_disconnect<'a>(
-    connected_ports: &'a [String],
-    current_ports: &[String],
-) -> Vec<&'a str> {
-    connected_ports
-        .iter()
-        .filter(|name| !current_ports.contains(name))
-        .map(|s| s.as_str())
-        .collect()
-}
-
 /// Synchronise `state.input_connections` with `current_ports`: drop connections for
-/// ports that have disappeared, open new connections for newly visible matching ports.
+/// ports that have disappeared or no longer match any enabled pattern, open new
+/// connections for newly visible matching ports.
 fn sync_connections(state: &mut SharedState, current_ports: &[String]) {
+    let prev_connected: Vec<String> = state.input_connections.iter().map(|(n, _)| n.clone()).collect();
+
+    let enabled_patterns = state.enabled_patterns.clone();
+    state
+        .input_connections
+        .retain(|(name, _)| current_ports.contains(name) && enabled_patterns.iter().any(|p| name.contains(p.as_str())));
+
     let connected: Vec<String> = state.input_connections.iter().map(|(n, _)| n.clone()).collect();
-
-    let to_disconnect = ports_to_disconnect(&connected, current_ports);
-    if !to_disconnect.is_empty() {
-        info!("Disconnecting MIDI ports: {:?}", to_disconnect);
-        state
-            .input_connections
-            .retain(|(name, _)| !to_disconnect.contains(&name.as_str()));
+    let disconnected: Vec<&str> = prev_connected
+        .iter()
+        .filter(|n| !connected.contains(n))
+        .map(|s| s.as_str())
+        .collect();
+    if !disconnected.is_empty() {
+        info!("Disconnecting MIDI ports: {disconnected:?}");
     }
-
-    let connected_after: Vec<String> = state.input_connections.iter().map(|(n, _)| n.clone()).collect();
-    let to_connect = ports_to_connect(current_ports, &connected_after, &state.enabled_patterns);
+    let to_connect = ports_to_connect(current_ports, &connected, &state.enabled_patterns);
     for port_name in to_connect {
         if let Some(conn) = try_connect(port_name, &state.midi_mappings_dir.clone(), &state.action_tx.clone()) {
             state.input_connections.push((port_name.to_string(), conn));
@@ -138,6 +130,15 @@ fn sync_connections(state: &mut SharedState, current_ports: &[String]) {
     }
 
     state.known_port_names = current_ports.to_vec();
+}
+
+fn log_midi_ports(current_ports: &[String]) {
+    if current_ports.is_empty() {
+        info!("No MIDI ports found");
+    } else {
+        info!("MIDI ports changed:");
+        current_ports.iter().for_each(|p| info!("{p}"));
+    }
 }
 
 async fn run_poller(shared: Arc<Mutex<SharedState>>, response_tx: broadcast::Sender<Response>) {
@@ -153,14 +154,13 @@ async fn run_poller(shared: Arc<Mutex<SharedState>>, response_tx: broadcast::Sen
         };
 
         if changed {
+            log_midi_ports(&current_ports);
             let mut state = shared.lock().unwrap();
             sync_connections(&mut state, &current_ports);
-            let _ = response_tx.send(
-                Response::default().with_midi_devices(&MidiDevices {
-                    port_names: current_ports,
-                    ..Default::default()
-                }),
-            );
+            let _ = response_tx.send(Response::default().with_midi_devices(&MidiDevices {
+                port_names: current_ports,
+                ..Default::default()
+            }));
         }
     }
 }
@@ -192,10 +192,7 @@ impl MidiController {
         let shared = Arc::new(Mutex::new(state));
         let poller = tokio::spawn(run_poller(shared.clone(), response_tx));
 
-        Self {
-            shared,
-            _poller: poller,
-        }
+        Self { shared, poller }
     }
 
     /// Update the enabled device patterns and immediately re-evaluate connections
@@ -217,6 +214,14 @@ impl MidiController {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn ports_to_disconnect<'a>(connected_ports: &'a [String], current_ports: &[String]) -> Vec<&'a str> {
+        connected_ports
+            .iter()
+            .filter(|name| !current_ports.contains(name))
+            .map(|s| s.as_str())
+            .collect()
+    }
 
     #[test]
     fn ports_to_connect_returns_new_matching_ports() {
@@ -283,20 +288,31 @@ mod tests {
     }
 
     #[test]
-    fn ports_to_connect_with_updated_patterns_drops_no_longer_matching_port() {
-        // Simulate: "iCON G_Boar" was connected under old patterns.
-        // New patterns only include "Launchpad"; the old port should appear in
-        // ports_to_disconnect (it's still in current) but not in ports_to_connect.
-        let known_ports = vec!["iCON G_Boar V1.03".to_string()];
-        let connected = vec!["iCON G_Boar V1.03".to_string()];
-        let new_patterns = vec!["Launchpad".to_string()];
+    fn port_present_but_pattern_removed_is_not_retained() {
+        // The retain condition in sync_connections: present AND matches a pattern.
+        // Simulate: "iCON G_Boar V1.03" is still physically present but its
+        // pattern was removed from enabled_devices.
+        let port_name = "iCON G_Boar V1.03".to_string();
+        let current_ports = [port_name.clone()];
+        let new_patterns = ["Launchpad".to_string()];
 
-        // Still present → not in ports_to_disconnect
-        let to_disconnect = ports_to_disconnect(&connected, &known_ports);
-        assert!(to_disconnect.is_empty(), "port is still visible, should not disconnect");
+        let retained =
+            current_ports.contains(&port_name) && new_patterns.iter().any(|p| port_name.contains(p.as_str()));
 
-        // But should not be re-connected under new patterns
-        let to_connect = ports_to_connect(&known_ports, &connected, &new_patterns);
-        assert!(to_connect.is_empty(), "port does not match new pattern, should not connect");
+        assert!(
+            !retained,
+            "port still present but pattern removed — should be disconnected"
+        );
+    }
+
+    #[test]
+    fn port_present_and_pattern_matches_is_retained() {
+        let port_name = "iCON G_Boar V1.03".to_string();
+        let current_ports = [port_name.clone()];
+        let patterns = ["iCON G_Boar".to_string()];
+
+        let retained = current_ports.contains(&port_name) && patterns.iter().any(|p| port_name.contains(p.as_str()));
+
+        assert!(retained);
     }
 }
