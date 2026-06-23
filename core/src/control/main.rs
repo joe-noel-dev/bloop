@@ -398,6 +398,7 @@ impl MainController {
         let switch_task = switch::run(self.action_tx.clone(), switch_preferences);
 
         let mut save_interval = time::interval(Duration::from_secs(2));
+        let mut device_topology_interval = time::interval(Duration::from_secs(5));
 
         loop {
             tokio::select! {
@@ -410,6 +411,7 @@ impl MainController {
                 _ = self.audio_controller.run() => (),
                 Some(action) = self.action_rx.recv() => self.handle_action(action),
                 _ = save_interval.tick() => self.auto_save_project().await,
+                _ = device_topology_interval.tick() => self.audio_controller.check_device_topology(),
                 else => break,
             }
         }

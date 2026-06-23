@@ -1,4 +1,5 @@
 use super::{
+    devices::enumerate_output_devices,
     metronome::Metronome,
     process::{query_native_channel_count, AudioProcessRunner, NoopProcess},
     sampler_converter::{SampleConversionResult, SampleConverter},
@@ -8,7 +9,7 @@ use crate::bloop::AudioEngineStatus;
 use crate::bloop::AudioPreferences;
 use crate::{
     audio::process::{create_audio_process, create_dummy_process},
-    bloop::{AudioStatus, Response},
+    bloop::{AudioDevices, AudioStatus, Response},
 };
 use crate::{
     model::{PlaybackState, PlayingState, Progress, Project, ID},
@@ -172,6 +173,7 @@ pub struct AudioController {
     conversion_rx: mpsc::Receiver<SampleConversionResult>,
     response_tx: broadcast::Sender<Response>,
     samples_being_converted: HashSet<ID>,
+    known_device_names: HashSet<String>,
     playback_state: PlaybackState,
     progress: Progress,
     project: Project,
@@ -193,6 +195,7 @@ impl AudioController {
             conversion_rx,
             response_tx,
             samples_being_converted: HashSet::new(),
+            known_device_names: HashSet::new(),
             playback_state: PlaybackState::default(),
             progress: Progress::default(),
             project: Project::empty(),
@@ -308,6 +311,40 @@ impl AudioController {
         self.preferences = new_prefs;
         self.stop_audio();
         self.start_audio(samples_cache);
+    }
+
+    /// Enumerate output devices and check whether the topology has changed since
+    /// the last call. Broadcasts `AudioDevices` on change and stops the engine if
+    /// the currently-selected device has disappeared.
+    pub fn check_device_topology(&mut self) {
+        let devices = enumerate_output_devices(&self.preferences);
+        self.check_device_topology_with_devices(devices);
+    }
+
+    /// Core topology-check logic, separated so it can be driven with a fake
+    /// device list in unit tests.
+    pub(crate) fn check_device_topology_with_devices(&mut self, devices: AudioDevices) {
+        let current_names: HashSet<String> = devices.devices.iter().map(|d| d.name.clone()).collect();
+        if current_names == self.known_device_names {
+            return;
+        }
+
+        let selected = self.preferences.output_device.clone();
+        let device_disappeared = !selected.is_empty()
+            && self.known_device_names.contains(selected.as_str())
+            && !current_names.contains(selected.as_str());
+
+        self.known_device_names = current_names;
+
+        let _ = self.response_tx.send(Response::default().with_audio_devices(&devices));
+
+        if device_disappeared && matches!(self.engine_state, AudioEngineState::Running) {
+            info!(
+                "Selected audio device '{}' is no longer available, stopping engine",
+                selected
+            );
+            self.stop_audio();
+        }
     }
 
     /// Reset playback/progress state to stopped and broadcast both to clients.
@@ -787,5 +824,109 @@ mod tests {
             "Expected no broadcasts when preferences are unchanged"
         );
         assert_eq!(*controller.engine_state(), AudioEngineState::Running);
+    }
+
+    // ── hot-plug / topology tests ─────────────────────────────────────────────
+
+    fn make_device(name: &str) -> crate::bloop::AudioDevice {
+        crate::bloop::AudioDevice {
+            id: name.to_string(),
+            name: name.to_string(),
+            ..Default::default()
+        }
+    }
+
+    fn devices_list(names: &[&str]) -> crate::bloop::AudioDevices {
+        crate::bloop::AudioDevices {
+            devices: names.iter().map(|n| make_device(n)).collect(),
+            ..Default::default()
+        }
+    }
+
+    #[tokio::test]
+    async fn device_topology_first_check_broadcasts_audio_devices() {
+        let (response_tx, mut response_rx) = broadcast::channel(100);
+        let mut controller = AudioController::new(response_tx, default_audio_preferences(), true);
+        while response_rx.try_recv().is_ok() {}
+
+        controller.check_device_topology_with_devices(devices_list(&["DeviceA"]));
+
+        let broadcasts: Vec<_> = std::iter::from_fn(|| response_rx.try_recv().ok()).collect();
+        assert!(
+            broadcasts.iter().any(|r| r.audio_devices.is_some()),
+            "Expected AudioDevices broadcast on first topology check"
+        );
+    }
+
+    #[tokio::test]
+    async fn device_topology_no_change_produces_no_broadcast() {
+        let (response_tx, mut response_rx) = broadcast::channel(100);
+        let mut controller = AudioController::new(response_tx, default_audio_preferences(), true);
+
+        let list = devices_list(&["DeviceA"]);
+        controller.check_device_topology_with_devices(list.clone());
+        while response_rx.try_recv().is_ok() {}
+
+        controller.check_device_topology_with_devices(list);
+
+        assert!(
+            response_rx.try_recv().is_err(),
+            "Expected no broadcast when device topology is unchanged"
+        );
+    }
+
+    #[tokio::test]
+    async fn selected_device_disappears_stops_engine_and_broadcasts() {
+        let (response_tx, mut response_rx) = broadcast::channel(100);
+        let mut prefs = default_audio_preferences();
+        prefs.output_device = "DeviceA".to_string();
+        let mut controller = AudioController::new(response_tx, prefs, true);
+        assert_eq!(*controller.engine_state(), AudioEngineState::Running);
+
+        // Seed: DeviceA is present.
+        controller.check_device_topology_with_devices(devices_list(&["DeviceA"]));
+        while response_rx.try_recv().is_ok() {}
+
+        // DeviceA disappears.
+        controller.check_device_topology_with_devices(devices_list(&[]));
+
+        assert_eq!(
+            *controller.engine_state(),
+            AudioEngineState::Stopped,
+            "Engine should stop when the selected device disappears"
+        );
+
+        let broadcasts: Vec<_> = std::iter::from_fn(|| response_rx.try_recv().ok()).collect();
+        assert!(
+            broadcasts.iter().any(|r| r.audio_devices.is_some()),
+            "Expected AudioDevices broadcast when device topology changes"
+        );
+    }
+
+    #[tokio::test]
+    async fn unselected_device_disappears_does_not_stop_engine() {
+        let (response_tx, mut response_rx) = broadcast::channel(100);
+        let mut prefs = default_audio_preferences();
+        prefs.output_device = "DeviceA".to_string();
+        let mut controller = AudioController::new(response_tx, prefs, true);
+
+        // Seed: DeviceA and DeviceB are present.
+        controller.check_device_topology_with_devices(devices_list(&["DeviceA", "DeviceB"]));
+        while response_rx.try_recv().is_ok() {}
+
+        // Only DeviceB disappears; DeviceA (selected) remains.
+        controller.check_device_topology_with_devices(devices_list(&["DeviceA"]));
+
+        assert_eq!(
+            *controller.engine_state(),
+            AudioEngineState::Running,
+            "Engine should keep running when an unselected device disappears"
+        );
+
+        let broadcasts: Vec<_> = std::iter::from_fn(|| response_rx.try_recv().ok()).collect();
+        assert!(
+            broadcasts.iter().any(|r| r.audio_devices.is_some()),
+            "Expected AudioDevices broadcast when an unselected device disappears"
+        );
     }
 }
