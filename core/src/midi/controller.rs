@@ -81,11 +81,8 @@ impl MidiController {
 
             info!("Connecting to {name}");
 
-            // Each connection needs its own MidiInput, so we create a new one for every
-            // port after the first. For the first matching port we consume `midi_input`
-            // directly by breaking after the loop; for additional ports we create a
-            // fresh `MidiInput`. To keep the code simple we collect port indices first
-            // and reconstruct `MidiInput` per connection.
+            // `MidiInput::connect` consumes the `MidiInput`, so each connection needs its own instance.
+            // Create a fresh `MidiInput` per matching port and keep the resulting connections alive.
             let port_name = name;
             let port_mappings: Vec<Mapping> = load_mappings(midi_mappings_dir)
                 .into_iter()
@@ -105,23 +102,28 @@ impl MidiController {
             let fresh_ports = fresh_input.ports();
             let fresh_port = fresh_ports
                 .iter()
-                .find(|p| fresh_input.port_name(p).ok().as_deref() == Some(&port_name));
+                .find(|p| fresh_input.port_name(p).ok().as_deref() == Some(port_name.as_str()));
 
-            if let Some(fresh_port) = fresh_port {
-                match fresh_input.connect(
-                    fresh_port,
-                    "Bloop Input",
-                    move |timestamp, message, context| on_midi_input(timestamp, message, &port_mappings, context),
-                    Context {
-                        action_tx: action_tx_clone,
-                    },
-                ) {
-                    Ok(connection) => {
-                        input_connections.push(connection);
-                    }
-                    Err(error) => {
-                        error!("Unable to connect to MIDI input {port_name}: {error}");
-                    }
+            let Some(fresh_port) = fresh_port else {
+                error!("MIDI input port {port_name} disappeared before connecting");
+                continue;
+            };
+
+            match fresh_input.connect(
+                fresh_port,
+                "Bloop Input",
+                move |timestamp, message, context| {
+                    on_midi_input(timestamp, message, mappings_clone.as_slice(), context)
+                },
+                Context {
+                    action_tx: action_tx_clone,
+                },
+            ) {
+                Ok(connection) => {
+                    input_connections.push(connection);
+                }
+                Err(error) => {
+                    error!("Unable to connect to MIDI input {port_name}: {error}");
                 }
             }
         }
