@@ -47,4 +47,60 @@ final class MidiDevicesTests: XCTestCase {
             return false
         }))
     }
+
+    func testMidiPreferencesTogglesAddPort() {
+        var editedPreferences = Bloop_Preferences()
+        let portName = "iCON G_Boar V1.03"
+
+        XCTAssertFalse(editedPreferences.midi.enabledDevices.contains(portName))
+
+        if !editedPreferences.midi.enabledDevices.contains(portName) {
+            editedPreferences.midi.enabledDevices.append(portName)
+        }
+
+        XCTAssertTrue(editedPreferences.midi.enabledDevices.contains(portName))
+        XCTAssertEqual(editedPreferences.midi.enabledDevices.count, 1)
+    }
+
+    func testMidiPreferencesTogglesRemovePort() {
+        var editedPreferences = Bloop_Preferences.with {
+            $0.midi = Bloop_MidiPreferences.with {
+                $0.enabledDevices = ["iCON G_Boar V1.03", "USB MIDI Interface"]
+            }
+        }
+
+        editedPreferences.midi.enabledDevices.removeAll { $0 == "iCON G_Boar V1.03" }
+
+        XCTAssertEqual(editedPreferences.midi.enabledDevices, ["USB MIDI Interface"])
+    }
+
+    func testUpdatePreferencesActionWithTwoEnabledDevices() {
+        let preferences = Bloop_Preferences.with {
+            $0.midi = Bloop_MidiPreferences.with {
+                $0.enabledDevices = ["iCON G_Boar V1.03", "USB MIDI Interface"]
+            }
+        }
+
+        let action = updatePreferencesAction(preferences)
+
+        if case .sendRequest(let request) = action {
+            XCTAssertTrue(request.hasUpdate)
+            XCTAssertTrue(request.update.hasPreferences)
+            XCTAssertEqual(request.update.preferences.midi.enabledDevices, ["iCON G_Boar V1.03", "USB MIDI Interface"])
+        } else {
+            XCTFail("Expected sendRequest action")
+        }
+    }
+
+    func testMidiDevicesTwoPortNamesAreStoredInState() {
+        let initialState = AppState()
+        let devices = Bloop_MidiDevices.with {
+            $0.portNames = ["iCON G_Boar V1.03", "USB MIDI Interface"]
+        }
+
+        let newState = rootReducer(state: initialState, action: .setMidiDevices(devices))
+
+        XCTAssertEqual(newState.midiDevices?.portNames.count, 2)
+        XCTAssertEqual(newState.midiDevices?.portNames, ["iCON G_Boar V1.03", "USB MIDI Interface"])
+    }
 }

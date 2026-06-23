@@ -124,7 +124,7 @@ struct SongView: View {
             SongsView(state: state, dispatch: dispatch)
         }
         .sheet(isPresented: editingEntityBinding(.settings)) {
-            PreferencesView(preferences: state.preferences, audioDevices: state.audioDevices, audioStatus: state.audioStatus, dispatch: dispatch) {
+            PreferencesView(preferences: state.preferences, audioDevices: state.audioDevices, audioStatus: state.audioStatus, midiDevices: state.midiDevices, dispatch: dispatch) {
                 editingEntity = nil
             }
         }
