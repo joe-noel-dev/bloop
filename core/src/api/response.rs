@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::bloop::{
-    AudioDevices, AudioStatus, PlaybackState, Progress, Project, ProjectInfo, ProjectSyncResponse, UploadAck, User,
+    AudioDevices, AudioStatus, MidiDevices, PlaybackState, Progress, Project, ProjectInfo, ProjectSyncResponse, UploadAck, User,
     UserStatusResponse, WaveformResponse,
 };
 
@@ -86,6 +86,11 @@ impl crate::bloop::Response {
 
     pub fn with_audio_status(mut self, audio_status: &AudioStatus) -> Self {
         self.audio_status = Some(audio_status.clone()).into();
+        self
+    }
+
+    pub fn with_midi_devices(mut self, midi_devices: &MidiDevices) -> Self {
+        self.midi_devices = Some(midi_devices.clone()).into();
         self
     }
 }

@@ -65,6 +65,9 @@ func rootReducer(state: AppState, action: Action) -> AppState {
     case .setAudioStatus(let audioStatus):
         state.audioStatus = audioStatus
 
+    case .setMidiDevices(let midiDevices):
+        state.midiDevices = midiDevices
+
     default:
         break
     }

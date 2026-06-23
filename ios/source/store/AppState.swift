@@ -17,6 +17,7 @@ struct AppState {
     var preferences: Bloop_Preferences? = .none
     var audioDevices: Bloop_AudioDevices? = .none
     var audioStatus: Bloop_AudioStatus? = .none
+    var midiDevices: Bloop_MidiDevices? = .none
 }
 
 func emptyProject() -> Bloop_Project {

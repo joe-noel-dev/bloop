@@ -37,6 +37,7 @@ data class AppState(
     val lastResponseText: String? = null,
     val audioDevices: Bloop.AudioDevices? = null,
     val audioStatus: Bloop.AudioStatus? = null,
+    val midiDevices: Bloop.MidiDevices? = null,
 )
 
 fun emptyProject(): Bloop.Project {

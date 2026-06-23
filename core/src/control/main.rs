@@ -366,6 +366,10 @@ impl MainController {
                 let status = self.audio_controller.get_audio_status();
                 self.send_response(Response::default().with_audio_status(&status));
             }
+            Entity::MIDI_DEVICES => {
+                let midi_devices = crate::midi::get_midi_devices();
+                self.send_response(Response::default().with_midi_devices(&midi_devices));
+            }
             _ => (),
         };
 

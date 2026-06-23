@@ -12,3 +12,7 @@ impl MidiController {
         Self {}
     }
 }
+
+pub fn get_midi_devices() -> crate::bloop::MidiDevices {
+    crate::bloop::MidiDevices::default()
+}
