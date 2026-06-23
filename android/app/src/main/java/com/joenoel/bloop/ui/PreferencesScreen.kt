@@ -310,8 +310,11 @@ fun PreferencesScreen(
         SectionHeader("MIDI")
 
         OutlinedTextField(
-            value = edited.midi.inputDevice,
-            onValueChange = { edited = edited.toBuilder().setMidi(edited.midi.toBuilder().setInputDevice(it)).build() },
+            value = edited.midi.enabledDevicesList.firstOrNull() ?: "",
+            onValueChange = {
+                val newDevices = if (it.isEmpty()) emptyList() else listOf(it)
+                edited = edited.toBuilder().setMidi(edited.midi.toBuilder().clearEnabledDevices().addAllEnabledDevices(newDevices)).build()
+            },
             label = { Text("Input Device") },
             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             singleLine = true,

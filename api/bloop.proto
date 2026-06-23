@@ -370,7 +370,7 @@ message AudioPreferences {
 }
 
 message MidiPreferences {
-    string input_device = 1;
+    repeated string enabled_devices = 1;
 }
 
 message SwitchPreferences {

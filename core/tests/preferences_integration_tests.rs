@@ -90,7 +90,7 @@ async fn update_midi_preferences_persists() {
 
     // Create custom midi preferences
     let custom_midi = MidiPreferences {
-        input_device: "Test MIDI Input".to_string(),
+        enabled_devices: vec!["Test MIDI Input".to_string()],
         ..Default::default()
     };
 
@@ -123,7 +123,7 @@ async fn update_midi_preferences_persists() {
     let loaded_midi = loaded_preferences.midi.unwrap();
 
     // Verify custom MIDI device was persisted
-    assert_eq!(loaded_midi.input_device, "Test MIDI Input");
+    assert_eq!(loaded_midi.enabled_devices, vec!["Test MIDI Input".to_string()]);
 }
 
 #[tokio::test]
@@ -219,7 +219,7 @@ async fn update_partial_preferences_preserves_others() {
     };
 
     let initial_midi = MidiPreferences {
-        input_device: "Initial MIDI".to_string(),
+        enabled_devices: vec!["Initial MIDI".to_string()],
         ..Default::default()
     };
 
@@ -247,7 +247,7 @@ async fn update_partial_preferences_preserves_others() {
 
     // Now update only the MIDI preferences
     let updated_midi = MidiPreferences {
-        input_device: "Updated MIDI".to_string(),
+        enabled_devices: vec!["Updated MIDI".to_string()],
         ..Default::default()
     };
 
@@ -283,7 +283,7 @@ async fn update_partial_preferences_preserves_others() {
     assert_eq!(loaded_audio.buffer_size, 1024);
 
     // Verify MIDI preferences were updated
-    assert_eq!(loaded_midi.input_device, "Updated MIDI");
+    assert_eq!(loaded_midi.enabled_devices, vec!["Updated MIDI".to_string()]);
 }
 
 #[tokio::test]
