@@ -1,9 +1,7 @@
 package com.joenoel.bloop.state
 
 import bloop.Bloop
-import bloop.audioDevices
 import bloop.audioPreferences
-import bloop.audioStatus
 import bloop.midiDevices
 import bloop.playbackState
 import bloop.preferences
