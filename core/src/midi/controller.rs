@@ -69,6 +69,11 @@ fn print_midi_inputs(midi_input: &MidiInput) {
 
     let ports = midi_input.ports();
 
+    if ports.is_empty() {
+        info!("No MIDI input devices found");
+        return;
+    }
+
     ports.iter().enumerate().for_each(|(index, port)| {
         let name = match midi_input.port_name(port) {
             Ok(name) => name,
@@ -77,8 +82,6 @@ fn print_midi_inputs(midi_input: &MidiInput) {
 
         info!("{index}: {name}");
     });
-
-    info!("");
 }
 
 impl MidiController {
