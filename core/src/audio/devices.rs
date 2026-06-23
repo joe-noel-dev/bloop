@@ -6,6 +6,7 @@ use crate::bloop::{AudioDevice, AudioDevices, AudioPreferences};
 
 /// Enumerate all available output devices on the selected cpal host and return
 /// them as an `AudioDevices` proto message.
+#[cfg_attr(not(target_os = "linux"), allow(unused_variables))]
 pub fn enumerate_output_devices(preferences: &AudioPreferences) -> AudioDevices {
     #[cfg(target_os = "linux")]
     let host = if preferences.use_jack {

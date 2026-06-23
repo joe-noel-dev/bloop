@@ -702,10 +702,8 @@ mod tests {
             .collect();
 
         assert!(
-            statuses
-                .iter()
-                .any(|s| s.engine_status.enum_value_or_default()
-                    == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STATUS_STOPPED),
+            statuses.iter().any(|s| s.engine_status.enum_value_or_default()
+                == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STATUS_STOPPED),
             "Expected an AUDIO_ENGINE_STATUS_STOPPED AudioStatus after stop_audio"
         );
     }
@@ -729,10 +727,8 @@ mod tests {
             .collect();
 
         assert!(
-            statuses
-                .iter()
-                .any(|s| s.engine_status.enum_value_or_default()
-                    == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STATUS_RUNNING),
+            statuses.iter().any(|s| s.engine_status.enum_value_or_default()
+                == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STATUS_RUNNING),
             "Expected an AUDIO_ENGINE_STATUS_RUNNING AudioStatus after start_audio"
         );
     }
@@ -792,9 +788,7 @@ mod tests {
             .collect();
 
         assert!(
-            statuses
-                .iter()
-                .any(|s| *s == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STATUS_STOPPED),
+            statuses.contains(&crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STATUS_STOPPED),
             "Expected AUDIO_ENGINE_STATUS_STOPPED during preference-driven restart"
         );
         assert!(
