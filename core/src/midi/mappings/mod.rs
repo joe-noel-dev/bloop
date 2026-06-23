@@ -168,4 +168,30 @@ mod tests {
         let mappings = load_mappings(dir.path());
         assert_eq!(mappings.len(), 1);
     }
+
+    #[test]
+    fn load_mappings_skips_unknown_action_file() {
+        let dir = TempDir::new().unwrap();
+        std::fs::write(
+            dir.path().join("unknown-action.json"),
+            r#"{"device_regex":"Test Device","mappings":[{"message":[176,10,127],"action":"ACTION_NOT_REAL"}]}"#,
+        )
+        .unwrap();
+
+        let mappings = load_mappings(dir.path());
+        assert_eq!(mappings.len(), 1);
+    }
+
+    #[test]
+    fn load_mappings_skips_invalid_regex_file() {
+        let dir = TempDir::new().unwrap();
+        std::fs::write(
+            dir.path().join("invalid-regex.json"),
+            r#"{"device_regex":"(","mappings":[{"message":[176,10,127],"action":"ACTION_TOGGLE_PLAY"}]}"#,
+        )
+        .unwrap();
+
+        let mappings = load_mappings(dir.path());
+        assert_eq!(mappings.len(), 1);
+    }
 }
