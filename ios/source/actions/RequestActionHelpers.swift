@@ -278,6 +278,16 @@ func getAudioDevicesAction() -> Action {
     )
 }
 
+func getMidiDevicesAction() -> Action {
+    .sendRequest(
+        .with {
+            $0.get = .with {
+                $0.entity = .midiDevices
+            }
+        }
+    )
+}
+
 func audioControlAction(method: Bloop_AudioControlMethod) -> Action {
     .sendRequest(
         .with {

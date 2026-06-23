@@ -75,4 +75,18 @@ class AppReducerTest {
         val withoutWaveform = AppReducer.reduce(withWaveform, AppAction.RemoveWaveform(55L))
         assertFalse(withoutWaveform.waveforms.containsKey(55L))
     }
+
+    @Test
+    fun `set midi devices stores devices in state`() {
+        val midiDevices = Bloop.MidiDevices
+            .newBuilder()
+            .addPortNames("iCON G_Boar V1.03")
+            .addPortNames("USB MIDI Interface")
+            .build()
+
+        val nextState = AppReducer.reduce(AppState(), AppAction.SetMidiDevices(midiDevices))
+
+        assertEquals(2, nextState.midiDevices?.portNamesList?.size)
+        assertEquals("iCON G_Boar V1.03", nextState.midiDevices?.portNamesList?.first())
+    }
 }

@@ -107,6 +107,7 @@ enum Entity {
     PREFERENCES = 7;
     AUDIO_DEVICES = 8;
     AUDIO_STATUS = 9;
+    MIDI_DEVICES = 10;
 }
 
 message AddRequest {
@@ -211,6 +212,7 @@ message Response {
     Preferences preferences = 14;
     AudioDevices audio_devices = 15;
     AudioStatus audio_status = 16;
+    MidiDevices midi_devices = 17;
 } 
 
 message WaveformResponse {
@@ -371,6 +373,10 @@ message AudioPreferences {
 
 message MidiPreferences {
     repeated string enabled_devices = 1;
+}
+
+message MidiDevices {
+    repeated string port_names = 1;
 }
 
 message SwitchPreferences {

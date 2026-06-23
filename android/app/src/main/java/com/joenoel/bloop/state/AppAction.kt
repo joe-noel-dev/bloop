@@ -26,6 +26,7 @@ sealed interface AppAction {
     data class SetLastResponseText(val text: String) : AppAction
     data class SetAudioDevices(val audioDevices: Bloop.AudioDevices) : AppAction
     data class SetAudioStatus(val audioStatus: Bloop.AudioStatus) : AppAction
+    data class SetMidiDevices(val midiDevices: Bloop.MidiDevices) : AppAction
 
     data class Connect(val server: ServerEndpoint) : AppAction
     data object ConnectLocal : AppAction

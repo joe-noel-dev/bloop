@@ -73,5 +73,9 @@ class ResponseMiddleware: Middleware {
         if response.hasAudioStatus {
             self.dispatch?(.setAudioStatus(response.audioStatus))
         }
+
+        if response.hasMidiDevices {
+            self.dispatch?(.setMidiDevices(response.midiDevices))
+        }
     }
 }

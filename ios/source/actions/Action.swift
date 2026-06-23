@@ -28,6 +28,7 @@ enum Action {
     case setPreferences(Bloop_Preferences)
     case setAudioDevices(Bloop_AudioDevices)
     case setAudioStatus(Bloop_AudioStatus)
+    case setMidiDevices(Bloop_MidiDevices)
 
     case connect(Server)
     case connectLocal

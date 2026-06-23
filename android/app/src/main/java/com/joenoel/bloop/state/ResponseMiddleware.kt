@@ -72,5 +72,9 @@ class ResponseMiddleware : AppMiddleware {
         if (response.hasAudioStatus()) {
             dispatch(AppAction.SetAudioStatus(response.audioStatus))
         }
+
+        if (response.hasMidiDevices()) {
+            dispatch(AppAction.SetMidiDevices(response.midiDevices))
+        }
     }
 }

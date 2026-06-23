@@ -2,6 +2,7 @@ package com.joenoel.bloop.state
 
 import bloop.Bloop
 import bloop.audioPreferences
+import bloop.midiDevices
 import bloop.playbackState
 import bloop.preferences
 import bloop.progress
@@ -107,5 +108,21 @@ class ResponseMiddlewareTest {
         assertEquals(2, dispatched.size)
         assertEquals(AppAction.SetLastResponseText(response.toString()), dispatched.first())
         assertEquals(AppAction.ClearUser, dispatched.last())
+    }
+
+    @Test
+    fun `received response with midi devices dispatches set midi devices`() = runTest {
+        val middleware = ResponseMiddleware()
+        val dispatched = mutableListOf<AppAction>()
+        val response = response {
+            midiDevices = midiDevices {
+                portNames += "iCON G_Boar V1.03"
+                portNames += "USB MIDI Interface"
+            }
+        }
+
+        middleware.execute(AppState(), AppAction.ReceivedResponse(response)) { dispatched += it }
+
+        assertTrue(dispatched.contains(AppAction.SetMidiDevices(response.midiDevices)))
     }
 }
