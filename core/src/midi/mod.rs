@@ -1,6 +1,8 @@
 #[cfg(feature = "midi")]
 mod controller;
 #[cfg(feature = "midi")]
+mod mappings;
+#[cfg(feature = "midi")]
 mod matcher;
 
 #[cfg(not(feature = "midi"))]

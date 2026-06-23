@@ -1,8 +1,8 @@
-use super::matcher::Matcher;
+use super::mappings::{load_mappings, Mapping};
 use crate::bloop::{Action, MidiPreferences};
-use crate::midi::matcher::ExactMatcher;
 use log::{error, info};
 use midir::{MidiInput, MidiInputConnection};
+use std::path::Path;
 use tokio::sync::mpsc;
 
 #[derive(Default)]
@@ -11,54 +11,16 @@ pub struct MidiController {
     input_connection: Option<MidiInputConnection<Context>>,
 }
 
-struct Mapping {
-    pub matcher: Box<dyn Matcher + Send>,
-    pub action: Action,
-}
-
 struct Context {
     action_tx: mpsc::Sender<Action>,
 }
 
 const DEFAULT_DEVICE_NAME: &str = "iCON G_Boar V1.03";
 
-fn get_mappings() -> Vec<Mapping> {
-    vec![
-        Mapping {
-            matcher: Box::new(ExactMatcher::new(&[176_u8, 40_u8, 127_u8])),
-            action: Action::ACTION_PREVIOUS_SONG,
-        },
-        Mapping {
-            matcher: Box::new(ExactMatcher::new(&[176_u8, 41_u8, 127_u8])),
-            action: Action::ACTION_NEXT_SONG,
-        },
-        Mapping {
-            matcher: Box::new(ExactMatcher::new(&[176_u8, 42_u8, 127_u8])),
-            action: Action::ACTION_QUEUE_SELECTED,
-        },
-        Mapping {
-            matcher: Box::new(ExactMatcher::new(&[176_u8, 44_u8, 127_u8])),
-            action: Action::ACTION_PREVIOUS_SECTION,
-        },
-        Mapping {
-            matcher: Box::new(ExactMatcher::new(&[176_u8, 45_u8, 127_u8])),
-            action: Action::ACTION_NEXT_SECTION,
-        },
-        Mapping {
-            matcher: Box::new(ExactMatcher::new(&[176_u8, 46_u8, 127_u8])),
-            action: Action::ACTION_TOGGLE_LOOP,
-        },
-        Mapping {
-            matcher: Box::new(ExactMatcher::new(&[176_u8, 47_u8, 127_u8])),
-            action: Action::ACTION_TOGGLE_PLAY,
-        },
-    ]
-}
-
 fn on_midi_input(_: u64, message: &[u8], mappings: &[Mapping], context: &mut Context) {
     mappings
         .iter()
-        .filter(|mapping| mapping.matcher.matches(message))
+        .filter(|mapping| mapping.matches(message))
         .for_each(|mapping| {
             let _ = context.action_tx.try_send(mapping.action);
         });
@@ -85,7 +47,11 @@ fn print_midi_inputs(midi_input: &MidiInput) {
 }
 
 impl MidiController {
-    pub fn new(action_tx: mpsc::Sender<Action>, preferences: MidiPreferences) -> Self {
+    pub fn new(
+        action_tx: mpsc::Sender<Action>,
+        preferences: MidiPreferences,
+        midi_mappings_dir: &Path,
+    ) -> Self {
         let midi_input = match MidiInput::new("Bloop") {
             Ok(input) => input,
             Err(error) => {
@@ -109,10 +75,17 @@ impl MidiController {
         });
 
         let mut input_connection: Option<MidiInputConnection<Context>> = None;
-        let mappings = get_mappings();
 
         if let Some(port) = port {
-            info!("Connecting to {}", midi_input.port_name(port).unwrap());
+            let port_name = midi_input.port_name(port).unwrap();
+            info!("Connecting to {port_name}");
+
+            let all_device_mappings = load_mappings(midi_mappings_dir);
+            let mappings: Vec<Mapping> = all_device_mappings
+                .into_iter()
+                .filter(|dm| dm.device_regex.is_match(&port_name))
+                .flat_map(|dm| dm.mappings)
+                .collect();
 
             input_connection = match midi_input.connect(
                 port,
