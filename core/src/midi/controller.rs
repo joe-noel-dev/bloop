@@ -83,7 +83,13 @@ fn print_midi_inputs(midi_input: &MidiInput) {
 
 impl MidiController {
     pub fn new(action_tx: mpsc::Sender<Action>, preferences: MidiPreferences) -> Self {
-        let midi_input = MidiInput::new("Bloop").expect("Unable to connect to MIDI backend");
+        let midi_input = match MidiInput::new("Bloop") {
+            Ok(input) => input,
+            Err(error) => {
+                error!("Unable to connect to MIDI backend: {error}");
+                return Self::default();
+            }
+        };
 
         let desired_input_device_name = if preferences.input_device.is_empty() {
             DEFAULT_DEVICE_NAME.to_string()

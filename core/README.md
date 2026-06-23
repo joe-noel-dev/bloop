@@ -10,7 +10,7 @@ cargo build
 
 ## Build for Android
 
-Use no default features for Android so desktop UI and MIDI remain disabled.
+Use no default features for Android so the desktop UI remains disabled. The `midi` feature is enabled for Android builds.
 
 Run the following from the **repo root**:
 
@@ -28,7 +28,7 @@ Optional targets can be passed explicitly, for example (run from repo root):
 
 Android builds look for the NDK in this order: `ANDROID_NDK_HOME`, `ANDROID_NDK_ROOT`, then the latest version under `ANDROID_SDK_ROOT`, `ANDROID_HOME`, or `~/Library/Android/sdk/ndk`.
 
-The default Android API level is `26` because the current audio stack links against `aaudio`. Override it with `ANDROID_MIN_SDK_VERSION` if the Android app build needs a newer API level.
+The default Android API level is `31`. Override it with `ANDROID_MIN_SDK_VERSION` if needed.
 
 Android runtime expectation: the app layer must set `BLOOP_HOME` before core startup. On Android, core now treats a missing `BLOOP_HOME` as a startup error.
 

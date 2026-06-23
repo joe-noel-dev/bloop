@@ -58,7 +58,7 @@ build_target() {
   linker_path="$(${project_root}/scripts/android-toolchain-path.sh "${target}" clang)"
   ar_path="$(${project_root}/scripts/android-toolchain-path.sh "${target}" ar)"
 
-  local cargo_args=(build --target "${target}" --no-default-features)
+  local cargo_args=(build --target "${target}" --no-default-features --features midi)
   if [ "${build_profile}" = "release" ]; then
     cargo_args+=(--release)
   fi
