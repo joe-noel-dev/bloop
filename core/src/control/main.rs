@@ -81,7 +81,11 @@ impl MainController {
         let local_backend = create_filesystem_backend(&directories.projects);
 
         let midi_controller = if app_config.use_midi {
-            Some(MidiController::new(action_tx.clone(), midi_preferences))
+            Some(MidiController::new(
+                action_tx.clone(),
+                midi_preferences,
+                &directories.root.join("midi_mappings"),
+            ))
         } else {
             None
         };
