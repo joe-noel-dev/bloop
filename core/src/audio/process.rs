@@ -117,8 +117,8 @@ pub fn query_native_channel_count(preferences: &AudioPreferences) -> usize {
         return 2;
     };
 
-    let min_required = (preferences.main_channel_offset as usize + 2)
-        .max(preferences.click_channel_offset as usize + 2);
+    let min_required =
+        (preferences.main_channel_offset as usize + 2).max(preferences.click_channel_offset as usize + 2);
     preferred_channel_count_for_device(&device, preferences.sample_rate, min_required)
 }
 
@@ -169,8 +169,7 @@ fn select_stream_config_for_channel_count(
 
     if let Ok(configs) = device.supported_output_configs() {
         for config in configs {
-            if config.min_sample_rate() > preferences.sample_rate
-                || config.max_sample_rate() < preferences.sample_rate
+            if config.min_sample_rate() > preferences.sample_rate || config.max_sample_rate() < preferences.sample_rate
             {
                 continue;
             }
@@ -194,8 +193,10 @@ fn select_stream_config_for_channel_count(
         }
     }
 
-    channel_match.or(f32_rate_match).or(rate_match).or_else(|| {
-        match device.default_output_config() {
+    channel_match
+        .or(f32_rate_match)
+        .or(rate_match)
+        .or_else(|| match device.default_output_config() {
             Ok(config) => Some(SelectedStreamConfig {
                 config: config.config(),
                 sample_format: config.sample_format(),
@@ -204,8 +205,7 @@ fn select_stream_config_for_channel_count(
                 error!("Unable to determine default output config: {err}");
                 None
             }
-        }
-    })
+        })
 }
 
 fn build_output_stream<T>(
@@ -302,8 +302,8 @@ impl Process {
             });
         }
 
-        let min_required = (preferences.main_channel_offset as usize + 2)
-            .max(preferences.click_channel_offset as usize + 2);
+        let min_required =
+            (preferences.main_channel_offset as usize + 2).max(preferences.click_channel_offset as usize + 2);
         let channel_count = preferred_channel_count_for_device(&device, preferences.sample_rate, min_required);
         info!("Selected channel count: {}\n", channel_count);
 

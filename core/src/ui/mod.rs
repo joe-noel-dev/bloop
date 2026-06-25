@@ -3,6 +3,7 @@ mod control;
 mod icons;
 mod message;
 mod metronome;
+mod power;
 mod project;
 mod sections;
 mod state;
@@ -19,6 +20,7 @@ use crate::bloop::{Request, Response};
 
 pub fn run_ui(response_tx: broadcast::Sender<Response>, request_tx: mpsc::Sender<Request>) -> iced::Result {
     let state = Mutex::new(Some(State::new(response_tx, request_tx)));
+    let _sleep_inhibitor = power::SleepInhibitor::new();
 
     let window_settings = iced::window::Settings {
         size: Size::new(1024.0, 600.0),

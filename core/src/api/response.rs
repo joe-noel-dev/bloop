@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
 use crate::bloop::{
-    AudioDevices, AudioStatus, MidiDevices, PlaybackState, Progress, Project, ProjectInfo, ProjectSyncResponse, UploadAck, User,
-    UserStatusResponse, WaveformResponse,
+    AudioDevices, AudioStatus, MidiDevices, PlaybackState, Progress, Project, ProjectInfo, ProjectSyncResponse,
+    UploadAck, User, UserStatusResponse, WaveformResponse,
 };
 
 impl crate::bloop::Response {

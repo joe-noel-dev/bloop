@@ -1,7 +1,10 @@
 use std::hash::{Hash, Hasher};
 
 use futures::stream::unfold;
-use iced::Subscription;
+use iced::{
+    keyboard::{self, key},
+    Subscription,
+};
 use tokio::sync::{broadcast, mpsc};
 
 use crate::bloop::{Entity, Request, Response, TransportMethod};
@@ -19,8 +22,20 @@ pub fn update(state: &mut State, message: Message) {
             let request = Request::transport_request(TransportMethod::STOP);
             send_request(state.request_tx.clone(), request);
         }
+        Message::TogglePlayback => {
+            let method = if state.playback_state.is_playing() {
+                TransportMethod::STOP
+            } else {
+                TransportMethod::PLAY
+            };
+
+            let request = Request::transport_request(method);
+            send_request(state.request_tx.clone(), request);
+        }
         Message::SelectPreviousSong => select_song_with_offset(state, -1),
         Message::SelectNextSong => select_song_with_offset(state, 1),
+        Message::SelectPreviousSection => select_section_with_offset(state, -1),
+        Message::SelectNextSection => select_section_with_offset(state, 1),
         Message::SelectSection(id) => {
             let request = Request::select_request(Entity::SECTION, id);
             send_request(state.request_tx.clone(), request);
@@ -56,6 +71,35 @@ fn select_song_with_offset(state: &State, offset: i64) {
     send_request(state.request_tx.clone(), request);
 }
 
+fn select_section_with_offset(state: &State, offset: i64) {
+    let song = match state.project.selected_song() {
+        Some(song) => song,
+        None => return,
+    };
+
+    let current_section_index = match song
+        .sections
+        .iter()
+        .position(|section| section.id == state.project.selections.section)
+    {
+        Some(index) => index,
+        None => return,
+    };
+
+    let next_section_index = current_section_index as i64 + offset;
+    if next_section_index < 0 || next_section_index >= song.sections.len() as i64 {
+        return;
+    }
+
+    let section = match song.sections.get(next_section_index as usize) {
+        Some(section) => section,
+        None => return,
+    };
+
+    let request = Request::select_request(Entity::SECTION, section.id);
+    send_request(state.request_tx.clone(), request);
+}
+
 struct ResponseSubscription(broadcast::Sender<Response>);
 
 impl Hash for ResponseSubscription {
@@ -74,7 +118,37 @@ fn build_response_stream(data: &ResponseSubscription) -> impl futures::Stream<It
 }
 
 pub fn subscription(state: &State) -> Subscription<Message> {
-    Subscription::run_with(ResponseSubscription(state.response_tx.clone()), build_response_stream)
+    Subscription::batch([
+        Subscription::run_with(ResponseSubscription(state.response_tx.clone()), build_response_stream),
+        keyboard::listen().filter_map(playback_shortcut),
+    ])
+}
+
+fn playback_shortcut(event: keyboard::Event) -> Option<Message> {
+    match event {
+        keyboard::Event::KeyPressed {
+            key: keyboard::Key::Named(key::Named::Space),
+            repeat: false,
+            ..
+        } => Some(Message::TogglePlayback),
+        keyboard::Event::KeyPressed {
+            key: keyboard::Key::Named(key::Named::ArrowUp),
+            ..
+        } => Some(Message::SelectPreviousSection),
+        keyboard::Event::KeyPressed {
+            key: keyboard::Key::Named(key::Named::ArrowDown),
+            ..
+        } => Some(Message::SelectNextSection),
+        keyboard::Event::KeyPressed {
+            key: keyboard::Key::Named(key::Named::ArrowLeft),
+            ..
+        } => Some(Message::SelectPreviousSong),
+        keyboard::Event::KeyPressed {
+            key: keyboard::Key::Named(key::Named::ArrowRight),
+            ..
+        } => Some(Message::SelectNextSong),
+        _ => None,
+    }
 }
 
 fn handle_api_response(state: &mut State, response: Response) {
