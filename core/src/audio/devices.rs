@@ -14,6 +14,8 @@ pub fn enumerate_output_devices(preferences: &AudioPreferences) -> AudioDevices 
         cpal::default_host()
     };
 
+    let _ = preferences;
+
     #[cfg(not(target_os = "linux"))]
     let host = cpal::default_host();
 
