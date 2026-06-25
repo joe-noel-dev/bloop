@@ -5,7 +5,9 @@ use log::warn;
 use regex::Regex;
 use std::path::Path;
 
+mod footctrl_bluetooth;
 mod icon_g_boar;
+mod sinco;
 
 /// A single MIDI message-to-action binding.
 pub struct Mapping {
@@ -23,6 +25,14 @@ impl Mapping {
 pub struct MidiDeviceMapping {
     pub device_regex: Regex,
     pub mappings: Vec<Mapping>,
+}
+
+fn default_mappings() -> Vec<MidiDeviceMapping> {
+    vec![
+        icon_g_boar::device_mapping(),
+        sinco::device_mapping(),
+        footctrl_bluetooth::device_mapping(),
+    ]
 }
 
 /// Returns all device mappings: compiled-in defaults merged with any valid `.json`
@@ -63,7 +73,7 @@ pub struct MidiDeviceMapping {
 /// Files that are not valid JSON, contain an invalid regex, or reference an
 /// unknown action are skipped with a warning; all other files still load.
 pub fn load_mappings(midi_mappings_dir: &Path) -> Vec<MidiDeviceMapping> {
-    let mut result = vec![icon_g_boar::device_mapping()];
+    let mut result = default_mappings();
 
     let entries = match std::fs::read_dir(midi_mappings_dir) {
         Ok(entries) => entries,
@@ -142,7 +152,7 @@ mod tests {
         let dir = TempDir::new().unwrap();
         let missing = dir.path().join("nonexistent");
         let mappings = load_mappings(&missing);
-        assert_eq!(mappings.len(), 1);
+        assert_eq!(mappings.len(), default_mappings().len());
     }
 
     #[test]
@@ -158,7 +168,7 @@ mod tests {
         std::fs::write(dir.path().join("bad.json"), r#"not valid json"#).unwrap();
 
         let mappings = load_mappings(dir.path());
-        assert_eq!(mappings.len(), 2); // 1 built-in + 1 valid user file
+        assert_eq!(mappings.len(), default_mappings().len() + 1); // 1 built-in + 1 valid user file
     }
 
     #[test]
@@ -166,7 +176,7 @@ mod tests {
         let dir = TempDir::new().unwrap();
         std::fs::write(dir.path().join("ignore.txt"), r#"irrelevant"#).unwrap();
         let mappings = load_mappings(dir.path());
-        assert_eq!(mappings.len(), 1);
+        assert_eq!(mappings.len(), default_mappings().len());
     }
 
     #[test]
@@ -179,7 +189,7 @@ mod tests {
         .unwrap();
 
         let mappings = load_mappings(dir.path());
-        assert_eq!(mappings.len(), 1);
+        assert_eq!(mappings.len(), default_mappings().len());
     }
 
     #[test]
@@ -192,6 +202,6 @@ mod tests {
         .unwrap();
 
         let mappings = load_mappings(dir.path());
-        assert_eq!(mappings.len(), 1);
+        assert_eq!(mappings.len(), default_mappings().len());
     }
 }

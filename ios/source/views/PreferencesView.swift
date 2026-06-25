@@ -4,6 +4,7 @@ struct PreferencesView: View {
     var preferences: Bloop_Preferences?
     var audioDevices: Bloop_AudioDevices?
     var audioStatus: Bloop_AudioStatus?
+    var midiDevices: Bloop_MidiDevices?
     var dispatch: Dispatch
     var onDismiss: () -> Void
 
@@ -15,12 +16,14 @@ struct PreferencesView: View {
         preferences: Bloop_Preferences?,
         audioDevices: Bloop_AudioDevices?,
         audioStatus: Bloop_AudioStatus?,
+        midiDevices: Bloop_MidiDevices?,
         dispatch: @escaping Dispatch,
         onDismiss: @escaping () -> Void
     ) {
         self.preferences = preferences
         self.audioDevices = audioDevices
         self.audioStatus = audioStatus
+        self.midiDevices = midiDevices
         self.dispatch = dispatch
         self.onDismiss = onDismiss
         self._editedPreferences = State(initialValue: preferences ?? Bloop_Preferences())
@@ -56,6 +59,7 @@ struct PreferencesView: View {
             .onAppear {
                 dispatch(getPreferencesAction())
                 dispatch(getAudioDevicesAction())
+                dispatch(getMidiDevicesAction())
             }
             .onChange(of: preferences) { oldValue, newValue in
                 if let newValue = newValue {
@@ -67,8 +71,9 @@ struct PreferencesView: View {
                 }
             }
             .refreshable {
-                dispatch(getAudioDevicesAction())
                 dispatch(getPreferencesAction())
+                dispatch(getAudioDevicesAction())
+                dispatch(getMidiDevicesAction())
             }
             .alert("Saved", isPresented: $showingSaveConfirmation) {
                 Button("OK") {
@@ -219,10 +224,25 @@ struct PreferencesView: View {
     @ViewBuilder
     private var midiSection: some View {
         Section(header: Text("MIDI")) {
-            TextField("Input Device", text: Binding(
-                get: { editedPreferences.midi.enabledDevices.first ?? "" },
-                set: { editedPreferences.midi.enabledDevices = $0.isEmpty ? [] : [$0] }
-            ))
+            if let ports = midiDevices?.portNames, !ports.isEmpty {
+                ForEach(ports, id: \.self) { portName in
+                    Toggle(portName, isOn: Binding(
+                        get: { editedPreferences.midi.enabledDevices.contains(portName) },
+                        set: { enabled in
+                            if enabled {
+                                if !editedPreferences.midi.enabledDevices.contains(portName) {
+                                    editedPreferences.midi.enabledDevices.append(portName)
+                                }
+                            } else {
+                                editedPreferences.midi.enabledDevices.removeAll { $0 == portName }
+                            }
+                        }
+                    ))
+                }
+            } else {
+                Text("No MIDI devices found")
+                    .foregroundColor(.secondary)
+            }
         }
     }
 

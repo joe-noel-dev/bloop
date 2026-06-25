@@ -1,6 +1,9 @@
 package com.joenoel.bloop.state
 
 import bloop.Bloop
+import bloop.midiDevices
+import bloop.midiPreferences
+import bloop.preferences
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -78,15 +81,58 @@ class AppReducerTest {
 
     @Test
     fun `set midi devices stores devices in state`() {
-        val midiDevices = Bloop.MidiDevices
-            .newBuilder()
-            .addPortNames("iCON G_Boar V1.03")
-            .addPortNames("USB MIDI Interface")
-            .build()
+        val devices = midiDevices {
+            portNames += "iCON G_Boar V1.03"
+            portNames += "USB MIDI Interface"
+        }
 
-        val nextState = AppReducer.reduce(AppState(), AppAction.SetMidiDevices(midiDevices))
+        val nextState = AppReducer.reduce(AppState(), AppAction.SetMidiDevices(devices))
 
         assertEquals(2, nextState.midiDevices?.portNamesList?.size)
         assertEquals("iCON G_Boar V1.03", nextState.midiDevices?.portNamesList?.first())
+    }
+
+    @Test
+    fun `toggling midi device on adds it to enabled devices list`() {
+        val portName = "iCON G_Boar V1.03"
+        val initialPreferences = preferences {
+            midi = midiPreferences { }
+        }
+        val state = AppState(preferences = initialPreferences)
+
+        val updated = initialPreferences.toBuilder()
+            .setMidi(
+                initialPreferences.midi.toBuilder()
+                    .clearEnabledDevices()
+                    .addAllEnabledDevices(listOf(portName))
+            )
+            .build()
+        val nextState = AppReducer.reduce(state, AppAction.SetPreferences(updated))
+
+        assertTrue(nextState.preferences!!.midi.enabledDevicesList.contains(portName))
+    }
+
+    @Test
+    fun `toggling midi device off removes it from enabled devices list`() {
+        val portName = "iCON G_Boar V1.03"
+        val initialPreferences = preferences {
+            midi = midiPreferences {
+                enabledDevices += portName
+                enabledDevices += "USB MIDI Interface"
+            }
+        }
+        val state = AppState(preferences = initialPreferences)
+
+        val updated = initialPreferences.toBuilder()
+            .setMidi(
+                initialPreferences.midi.toBuilder()
+                    .clearEnabledDevices()
+                    .addAllEnabledDevices(listOf("USB MIDI Interface"))
+            )
+            .build()
+        val nextState = AppReducer.reduce(state, AppAction.SetPreferences(updated))
+
+        assertFalse(nextState.preferences!!.midi.enabledDevicesList.contains(portName))
+        assertEquals(1, nextState.preferences!!.midi.enabledDevicesList.size)
     }
 }
