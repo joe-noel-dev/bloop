@@ -10,31 +10,31 @@ pub fn device_mapping() -> MidiDeviceMapping {
         device_regex: Regex::new(DEVICE_REGEX).expect("valid regex"),
         mappings: vec![
             Mapping {
-                matcher: Box::new(ExactMatcher::new(&[176, 40, 127])),
+                matcher: Box::new(ExactMatcher::new(&[0xB0, 0x28, 0x7F])),
                 action: Action::ACTION_PREVIOUS_SONG,
             },
             Mapping {
-                matcher: Box::new(ExactMatcher::new(&[176, 41, 127])),
+                matcher: Box::new(ExactMatcher::new(&[0xB0, 0x29, 0x7F])),
                 action: Action::ACTION_NEXT_SONG,
             },
             Mapping {
-                matcher: Box::new(ExactMatcher::new(&[176, 42, 127])),
+                matcher: Box::new(ExactMatcher::new(&[0xB0, 0x2A, 0x7F])),
                 action: Action::ACTION_QUEUE_SELECTED,
             },
             Mapping {
-                matcher: Box::new(ExactMatcher::new(&[176, 44, 127])),
+                matcher: Box::new(ExactMatcher::new(&[0xB0, 0x2C, 0x7F])),
                 action: Action::ACTION_PREVIOUS_SECTION,
             },
             Mapping {
-                matcher: Box::new(ExactMatcher::new(&[176, 45, 127])),
+                matcher: Box::new(ExactMatcher::new(&[0xB0, 0x2D, 0x7F])),
                 action: Action::ACTION_NEXT_SECTION,
             },
             Mapping {
-                matcher: Box::new(ExactMatcher::new(&[176, 46, 127])),
+                matcher: Box::new(ExactMatcher::new(&[0xB0, 0x2E, 0x7F])),
                 action: Action::ACTION_TOGGLE_LOOP,
             },
             Mapping {
-                matcher: Box::new(ExactMatcher::new(&[176, 47, 127])),
+                matcher: Box::new(ExactMatcher::new(&[0xB0, 0x2F, 0x7F])),
                 action: Action::ACTION_TOGGLE_PLAY,
             },
         ],

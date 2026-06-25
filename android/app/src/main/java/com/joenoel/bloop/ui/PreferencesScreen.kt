@@ -66,6 +66,7 @@ fun PreferencesScreen(
         onDispatch(AppAction.SendRequest(request { get = getRequest { entity = Bloop.Entity.PREFERENCES } }))
         onDispatch(AppAction.SendRequest(request { get = getRequest { entity = Bloop.Entity.AUDIO_DEVICES } }))
         onDispatch(AppAction.SendRequest(request { get = getRequest { entity = Bloop.Entity.AUDIO_STATUS } }))
+        onDispatch(AppAction.SendRequest(request { get = getRequest { entity = Bloop.Entity.MIDI_DEVICES } }))
     }
 
     LaunchedEffect(state.preferences) {
@@ -309,16 +310,35 @@ fun PreferencesScreen(
 
         SectionHeader("MIDI")
 
-        OutlinedTextField(
-            value = edited.midi.enabledDevicesList.firstOrNull() ?: "",
-            onValueChange = {
-                val newDevices = if (it.isEmpty()) emptyList() else listOf(it)
-                edited = edited.toBuilder().setMidi(edited.midi.toBuilder().clearEnabledDevices().addAllEnabledDevices(newDevices)).build()
-            },
-            label = { Text("Input Device") },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-            singleLine = true,
-        )
+        val midiPortNames = state.midiDevices?.portNamesList ?: emptyList()
+        if (midiPortNames.isEmpty()) {
+            Text(
+                text = "No MIDI devices found",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 8.dp),
+            )
+        } else {
+            midiPortNames.forEach { portName ->
+                val enabled = edited.midi.enabledDevicesList.contains(portName)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                ) {
+                    Text(portName, modifier = Modifier.weight(1f))
+                    Switch(
+                        checked = enabled,
+                        onCheckedChange = { isChecked ->
+                            val updated = edited.midi.enabledDevicesList.toMutableList()
+                            if (isChecked) updated.add(portName) else updated.remove(portName)
+                            edited = edited.toBuilder()
+                                .setMidi(edited.midi.toBuilder().clearEnabledDevices().addAllEnabledDevices(updated))
+                                .build()
+                        },
+                    )
+                }
+            }
+        }
 
         if (edited.switchAvailable) {
             SectionHeader("Switches")
