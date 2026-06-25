@@ -168,7 +168,7 @@ mod tests {
         std::fs::write(dir.path().join("bad.json"), r#"not valid json"#).unwrap();
 
         let mappings = load_mappings(dir.path());
-        assert_eq!(mappings.len(), default_mappings().len() + 1); // 1 built-in + 1 valid user file
+        assert_eq!(mappings.len(), default_mappings().len() + 1);
     }
 
     #[test]

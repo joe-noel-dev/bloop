@@ -35,7 +35,6 @@ Configure audio output settings.
 | `outputDevice` | string | `""` | Name of the audio output device |
 | `sampleRate` | number | `48000` | Sample rate in Hz (valid: 1–192000) |
 | `bufferSize` | number | `512` | Audio buffer size in samples (valid: 1–8192) |
-| `outputChannelCount` | number | `2` | Number of output channels (valid: 1–64) |
 | `useJack` | boolean | `false` | Use JACK audio server (Linux only) |
 | `mainChannelOffset` | number | `0` | Output channel offset for main audio |
 | `clickChannelOffset` | number | `2` | Output channel offset for click/metronome |
@@ -48,7 +47,6 @@ Configure audio output settings.
     "outputDevice": "Built-in Output",
     "sampleRate": 48000,
     "bufferSize": 512,
-    "outputChannelCount": 4,
     "useJack": false,
     "mainChannelOffset": 0,
     "clickChannelOffset": 2
@@ -56,31 +54,44 @@ Configure audio output settings.
 }
 ```
 
+The output channel count is determined from the selected native audio device and
+reported in audio status. The old `outputChannelCount` preference field is
+ignored.
+
 ### Validation
 
 Invalid values are automatically reset to defaults:
 
-- `outputChannelCount`: Reset to 2 if 0 or > 64
 - `bufferSize`: Reset to 512 if 0 or > 8192
 - `sampleRate`: Reset to 48000 if 0 or > 192000
 
 ## MIDI Preferences
 
-Configure MIDI input settings.
+Configure MIDI input settings. Bloop can connect to multiple MIDI input ports at once.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `inputDevice` | string | `""` | Name of the MIDI input device |
+| `enabledDevices` | array of strings | `["iCON G_Boar"]` | MIDI input device name patterns to enable |
 
 ### Example
 
 ```json
 {
   "midi": {
-    "inputDevice": "USB MIDI Controller"
+    "enabledDevices": [
+      "iCON G_Boar",
+      "USB MIDI Controller"
+    ]
   }
 }
 ```
+
+Each entry is matched as a substring against the full MIDI port name. Any connected
+port whose name contains one of the enabled device patterns is opened, so multiple
+matching devices can be active at the same time.
+
+The old `inputDevice` field is ignored. Use `enabledDevices` for new or migrated
+preferences files.
 
 ## Switch Preferences
 
@@ -159,13 +170,15 @@ Each mapping in the `mappings` array has:
     "outputDevice": "USB Audio Device",
     "sampleRate": 48000,
     "bufferSize": 256,
-    "outputChannelCount": 4,
     "useJack": false,
     "mainChannelOffset": 0,
     "clickChannelOffset": 2
   },
   "midi": {
-    "inputDevice": "MIDI Keyboard"
+    "enabledDevices": [
+      "iCON G_Boar",
+      "MIDI Keyboard"
+    ]
   },
   "switch": {
     "mappings": [
