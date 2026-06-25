@@ -76,9 +76,7 @@ impl SleepInhibitor {
 
     #[cfg(target_os = "windows")]
     fn new_platform() -> Self {
-        let result = unsafe {
-            SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED)
-        };
+        let result = unsafe { SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED) };
 
         if result == 0 {
             log::warn!("Failed to inhibit system sleep: SetThreadExecutionState returned 0");

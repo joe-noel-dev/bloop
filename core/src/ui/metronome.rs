@@ -13,7 +13,7 @@ pub fn metronome(playback_state: &PlaybackState, progress: &Progress) -> Element
         let size = display_units(8.0);
         let color = match (is_playing, is_active) {
             (true, true) => theme::PRIMARY,
-            (true, false) => theme::palette::COLOR_4,
+            (true, false) => theme::neutral::N4,
             (false, _) => theme::neutral::N6,
         };
         let border_radius = display_units(1.0);

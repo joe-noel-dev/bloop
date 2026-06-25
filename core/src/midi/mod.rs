@@ -16,6 +16,6 @@ pub use controller::MidiController;
 pub use devices::get_midi_devices;
 
 #[cfg(not(feature = "midi"))]
-pub use fallback::MidiController;
-#[cfg(not(feature = "midi"))]
 pub use fallback::get_midi_devices;
+#[cfg(not(feature = "midi"))]
+pub use fallback::MidiController;

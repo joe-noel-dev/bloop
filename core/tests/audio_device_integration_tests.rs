@@ -65,7 +65,9 @@ async fn audio_control_stop_broadcasts_stopped_status() {
     let mut fixture = IntegrationFixture::new().await;
 
     fixture
-        .send_request(Request::audio_control_request(AudioControlMethod::AUDIO_CONTROL_METHOD_STOP))
+        .send_request(Request::audio_control_request(
+            AudioControlMethod::AUDIO_CONTROL_METHOD_STOP,
+        ))
         .await;
 
     let response = fixture
@@ -90,7 +92,9 @@ async fn audio_control_start_after_stop_broadcasts_running_status() {
     let mut fixture = IntegrationFixture::new().await;
 
     fixture
-        .send_request(Request::audio_control_request(AudioControlMethod::AUDIO_CONTROL_METHOD_STOP))
+        .send_request(Request::audio_control_request(
+            AudioControlMethod::AUDIO_CONTROL_METHOD_STOP,
+        ))
         .await;
 
     fixture
@@ -105,7 +109,9 @@ async fn audio_control_start_after_stop_broadcasts_running_status() {
         .expect("Did not receive STOPPED status");
 
     fixture
-        .send_request(Request::audio_control_request(AudioControlMethod::AUDIO_CONTROL_METHOD_START))
+        .send_request(Request::audio_control_request(
+            AudioControlMethod::AUDIO_CONTROL_METHOD_START,
+        ))
         .await;
 
     let response = fixture

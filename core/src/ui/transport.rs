@@ -27,13 +27,7 @@ pub fn transport_view(playback_state: &PlaybackState, progress: &Progress) -> El
         } else {
             Message::EnterLoop
         })
-        .style(move |theme, status| {
-            if is_looping {
-                return button::primary(theme, status).with_background(theme::PRIMARY);
-            }
-
-            button::primary(theme, status)
-        });
+        .style(move |theme, status| loop_button_style(theme, status, is_looping));
 
     let play_button = button(play_icon.to_svg_with_size(icon_dimension))
         .on_press(play_message)
@@ -57,4 +51,18 @@ pub fn transport_view(playback_state: &PlaybackState, progress: &Progress) -> El
     .align_x(Center)
     .padding(display_units(2.0))
     .into()
+}
+
+fn loop_button_style(theme: &iced::Theme, status: button::Status, is_looping: bool) -> button::Style {
+    if is_looping {
+        return button::primary(theme, status).with_background(theme::PRIMARY);
+    }
+
+    let background = match status {
+        button::Status::Hovered => theme::neutral::N1,
+        button::Status::Disabled => theme::neutral::N4,
+        button::Status::Active | button::Status::Pressed => theme::neutral::N2,
+    };
+
+    button::primary(theme, status).with_background(background)
 }
