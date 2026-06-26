@@ -156,11 +156,15 @@ func getProjectsAction() -> Action {
     )
 }
 
-func removeProjectAction(_ projectId: String) -> Action {
+func removeProjectAction(
+    _ projectId: String,
+    targets: [Bloop_ProjectRemovalTarget] = [.local, .remote]
+) -> Action {
     .sendRequest(
         .with {
             $0.removeProject = .with {
                 $0.projectID = projectId
+                $0.targets = targets
             }
         }
     )

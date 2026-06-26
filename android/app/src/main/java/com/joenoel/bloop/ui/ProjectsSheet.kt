@@ -164,7 +164,10 @@ internal fun ProjectsSheet(
                                     onDispatch(
                                         AppAction.SendRequest(
                                             request {
-                                                removeProject = removeProjectRequest { projectId = project.id }
+                                                removeProject = removeProjectRequest {
+                                                    projectId = project.id
+                                                    targets += Bloop.ProjectRemovalTarget.PROJECT_REMOVAL_TARGET_LOCAL
+                                                }
                                             }
                                         )
                                     )

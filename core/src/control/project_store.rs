@@ -1,6 +1,6 @@
 use crate::{
     backend::Backend,
-    bloop::AudioFileFormat,
+    bloop::{AudioFileFormat, ProjectRemovalTarget},
     model::{Project, ProjectInfo, ID},
     samples::SamplesCache,
 };
@@ -102,20 +102,37 @@ impl ProjectStore {
         projects_from_backend(self.remote_backend.clone()).await
     }
 
-    pub async fn remove_project(&self, project_id: &str) -> anyhow::Result<()> {
-        self.backend
-            .remove_project(project_id)
-            .await
-            .context(format!("Removing project: {project_id}"))?;
+    pub async fn remove_project(&self, project_id: &str, targets: &[ProjectRemovalTarget]) -> anyhow::Result<()> {
+        let remove_local = targets.is_empty() || targets.contains(&ProjectRemovalTarget::PROJECT_REMOVAL_TARGET_LOCAL);
+        let remove_remote =
+            targets.is_empty() || targets.contains(&ProjectRemovalTarget::PROJECT_REMOVAL_TARGET_REMOTE);
 
-        match self.remote_backend.remove_project(project_id).await {
-            Ok(_) => info!("Project removed from remote backend: id = {project_id}"),
-            Err(e) => {
-                warn!("Failed to remove project from remote backend: {e}");
+        if !remove_local && !remove_remote {
+            anyhow::bail!("No project removal targets specified");
+        }
+
+        if remove_local {
+            self.backend
+                .remove_project(project_id)
+                .await
+                .context(format!("Removing local project: {project_id}"))?;
+        }
+
+        if remove_remote && !remove_local {
+            self.remote_backend
+                .remove_project(project_id)
+                .await
+                .context(format!("Removing remote project: {project_id}"))?;
+        } else if remove_remote {
+            match self.remote_backend.remove_project(project_id).await {
+                Ok(_) => info!("Project removed from remote backend: id = {project_id}"),
+                Err(e) => {
+                    warn!("Failed to remove project from remote backend: {e}");
+                }
             }
         }
 
-        info!("Project removed: id = {project_id}");
+        info!("Project removed: id = {project_id}, targets = {targets:?}");
         Ok(())
     }
 
@@ -276,4 +293,154 @@ async fn projects_from_backend(backend: Arc<dyn Backend>) -> anyhow::Result<Vec<
         .collect();
 
     Ok(projects_info)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::backend::DbProject;
+    use std::sync::Mutex;
+
+    #[derive(Default)]
+    struct RecordingBackend {
+        removed_projects: Mutex<Vec<String>>,
+    }
+
+    #[async_trait::async_trait]
+    impl Backend for RecordingBackend {
+        async fn get_projects(&self) -> anyhow::Result<Vec<DbProject>> {
+            Ok(Vec::new())
+        }
+
+        async fn read_project(&self, _project_id: &str) -> anyhow::Result<DbProject> {
+            anyhow::bail!("Unexpected read_project call")
+        }
+
+        async fn create_project(&self, _user_id: &str, _project_id: Option<String>) -> anyhow::Result<DbProject> {
+            anyhow::bail!("Unexpected create_project call")
+        }
+
+        async fn update_project_name(&self, _project_id: &str, _name: &str) -> anyhow::Result<DbProject> {
+            anyhow::bail!("Unexpected update_project_name call")
+        }
+
+        async fn update_project_file(&self, _project_id: &str, _project_bytes: &[u8]) -> anyhow::Result<DbProject> {
+            anyhow::bail!("Unexpected update_project_file call")
+        }
+
+        async fn add_project_sample(
+            &self,
+            _project_id: &str,
+            _sample_bytes: &[u8],
+            _sample_name: &str,
+        ) -> anyhow::Result<DbProject> {
+            anyhow::bail!("Unexpected add_project_sample call")
+        }
+
+        async fn remove_project_sample(&self, _project_id: &str, _sample_name: &str) -> anyhow::Result<DbProject> {
+            anyhow::bail!("Unexpected remove_project_sample call")
+        }
+
+        async fn remove_project(&self, project_id: &str) -> anyhow::Result<()> {
+            self.removed_projects.lock().unwrap().push(project_id.to_string());
+            Ok(())
+        }
+
+        async fn get_samples(&self, _project_id: &str) -> anyhow::Result<Vec<String>> {
+            anyhow::bail!("Unexpected get_samples call")
+        }
+
+        async fn read_sample(&self, _project_id: &str, _sample_name: &str) -> anyhow::Result<Vec<u8>> {
+            anyhow::bail!("Unexpected read_sample call")
+        }
+
+        async fn read_project_file(&self, _project_id: &str) -> anyhow::Result<Vec<u8>> {
+            anyhow::bail!("Unexpected read_project_file call")
+        }
+    }
+
+    #[tokio::test]
+    async fn remove_project_local_target_only_removes_local_project() {
+        let local_backend = Arc::new(RecordingBackend::default());
+        let remote_backend = Arc::new(RecordingBackend::default());
+        let root_directory = tempfile::tempdir().unwrap();
+        let store = ProjectStore::new(root_directory.path(), local_backend.clone(), remote_backend.clone());
+
+        store
+            .remove_project("project-id", &[ProjectRemovalTarget::PROJECT_REMOVAL_TARGET_LOCAL])
+            .await
+            .unwrap();
+
+        assert_eq!(
+            local_backend.removed_projects.lock().unwrap().as_slice(),
+            ["project-id"]
+        );
+        assert!(remote_backend.removed_projects.lock().unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn remove_project_remote_target_only_removes_remote_project() {
+        let local_backend = Arc::new(RecordingBackend::default());
+        let remote_backend = Arc::new(RecordingBackend::default());
+        let root_directory = tempfile::tempdir().unwrap();
+        let store = ProjectStore::new(root_directory.path(), local_backend.clone(), remote_backend.clone());
+
+        store
+            .remove_project("project-id", &[ProjectRemovalTarget::PROJECT_REMOVAL_TARGET_REMOTE])
+            .await
+            .unwrap();
+
+        assert!(local_backend.removed_projects.lock().unwrap().is_empty());
+        assert_eq!(
+            remote_backend.removed_projects.lock().unwrap().as_slice(),
+            ["project-id"]
+        );
+    }
+
+    #[tokio::test]
+    async fn remove_project_local_and_remote_targets_remove_local_and_remote_projects() {
+        let local_backend = Arc::new(RecordingBackend::default());
+        let remote_backend = Arc::new(RecordingBackend::default());
+        let root_directory = tempfile::tempdir().unwrap();
+        let store = ProjectStore::new(root_directory.path(), local_backend.clone(), remote_backend.clone());
+
+        store
+            .remove_project(
+                "project-id",
+                &[
+                    ProjectRemovalTarget::PROJECT_REMOVAL_TARGET_LOCAL,
+                    ProjectRemovalTarget::PROJECT_REMOVAL_TARGET_REMOTE,
+                ],
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(
+            local_backend.removed_projects.lock().unwrap().as_slice(),
+            ["project-id"]
+        );
+        assert_eq!(
+            remote_backend.removed_projects.lock().unwrap().as_slice(),
+            ["project-id"]
+        );
+    }
+
+    #[tokio::test]
+    async fn remove_project_empty_targets_remove_local_and_remote_projects_for_compatibility() {
+        let local_backend = Arc::new(RecordingBackend::default());
+        let remote_backend = Arc::new(RecordingBackend::default());
+        let root_directory = tempfile::tempdir().unwrap();
+        let store = ProjectStore::new(root_directory.path(), local_backend.clone(), remote_backend.clone());
+
+        store.remove_project("project-id", &[]).await.unwrap();
+
+        assert_eq!(
+            local_backend.removed_projects.lock().unwrap().as_slice(),
+            ["project-id"]
+        );
+        assert_eq!(
+            remote_backend.removed_projects.lock().unwrap().as_slice(),
+            ["project-id"]
+        );
+    }
 }

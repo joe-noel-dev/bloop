@@ -26,7 +26,7 @@ struct PreferencesView: View {
         self.midiDevices = midiDevices
         self.dispatch = dispatch
         self.onDismiss = onDismiss
-        self._editedPreferences = State(initialValue: preferences ?? Bloop_Preferences())
+        self._editedPreferences = State(initialValue: Self.editablePreferences(from: preferences))
     }
 
     var body: some View {
@@ -51,6 +51,7 @@ struct PreferencesView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
                         isSaving = true
+                        AudioSessionConfigurator.activate(preferences: editedPreferences.audio)
                         dispatch(updatePreferencesAction(editedPreferences))
                     }
                     .disabled(isSaving)
@@ -63,7 +64,7 @@ struct PreferencesView: View {
             }
             .onChange(of: preferences) { oldValue, newValue in
                 if let newValue = newValue {
-                    editedPreferences = newValue
+                    editedPreferences = Self.editablePreferences(from: newValue)
                     if isSaving {
                         showingSaveConfirmation = true
                         isSaving = false
@@ -115,7 +116,7 @@ struct PreferencesView: View {
                 }
             } else {
                 Section(header: Text("Audio Status")) {
-                    LabeledContent("Device", value: status.currentDeviceName)
+                    LabeledContent("Device", value: status.currentDeviceName.isEmpty ? "Default Device" : status.currentDeviceName)
                     LabeledContent("Sample Rate", value: "\(status.currentSampleRate) Hz")
                     LabeledContent("Channels", value: "\(status.currentChannelCount)")
                 }
@@ -124,11 +125,53 @@ struct PreferencesView: View {
     }
 
     private var selectedDevice: Bloop_AudioDevice? {
-        audioDevices?.devices.first { $0.id == editedPreferences.audio.outputDevice }
+        if editedPreferences.audio.outputDevice.isEmpty {
+            return audioDevices?.devices.first { $0.isDefault } ?? audioDevices?.devices.first
+        }
+
+        return audioDevices?.devices.first { $0.id == editedPreferences.audio.outputDevice }
     }
 
     private var availableSampleRates: [UInt32] {
-        selectedDevice?.supportedSampleRates.sorted() ?? []
+        var rates = Set(selectedDevice?.supportedSampleRates ?? [])
+
+        if editedPreferences.audio.sampleRate > 0 {
+            rates.insert(editedPreferences.audio.sampleRate)
+        }
+
+        if let currentSampleRate = audioStatus?.currentSampleRate, currentSampleRate > 0 {
+            rates.insert(currentSampleRate)
+        }
+
+        return rates.sorted()
+    }
+
+    private static func editablePreferences(from preferences: Bloop_Preferences?) -> Bloop_Preferences {
+        var preferences = preferences ?? Bloop_Preferences()
+
+        if preferences.audio.sampleRate == 0 {
+            preferences.audio.sampleRate = 48_000
+        }
+
+        if preferences.audio.bufferSize == 0 {
+            preferences.audio.bufferSize = 512
+        }
+
+        return preferences
+    }
+
+    private func fallbackSampleRate(for device: Bloop_AudioDevice?) -> UInt32 {
+        let supportedRates = Set(device?.supportedSampleRates ?? [])
+
+        if let currentSampleRate = audioStatus?.currentSampleRate, supportedRates.contains(currentSampleRate) {
+            return currentSampleRate
+        }
+
+        if supportedRates.contains(48_000) {
+            return 48_000
+        }
+
+        return supportedRates.min() ?? editedPreferences.audio.sampleRate
     }
 
     @ViewBuilder
@@ -139,13 +182,17 @@ struct PreferencesView: View {
                     get: { editedPreferences.audio.outputDevice },
                     set: { newId in
                         editedPreferences.audio.outputDevice = newId
-                        if let device = devices.devices.first(where: { $0.id == newId }),
+                        let device = newId.isEmpty
+                            ? devices.devices.first { $0.isDefault } ?? devices.devices.first
+                            : devices.devices.first { $0.id == newId }
+                        if let device,
                            !device.supportedSampleRates.isEmpty,
                            !device.supportedSampleRates.contains(editedPreferences.audio.sampleRate) {
-                            editedPreferences.audio.sampleRate = device.supportedSampleRates.min() ?? editedPreferences.audio.sampleRate
+                            editedPreferences.audio.sampleRate = fallbackSampleRate(for: device)
                         }
                     }
                 )) {
+                    Text("System Default").tag("")
                     ForEach(devices.devices, id: \.id) { device in
                         Text(device.name).tag(device.id)
                     }

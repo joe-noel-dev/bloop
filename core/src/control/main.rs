@@ -183,8 +183,14 @@ impl MainController {
         }
 
         if let Some(remove_project_request) = request.remove_project.as_ref() {
+            let removal_targets = remove_project_request
+                .targets
+                .iter()
+                .map(|target| target.enum_value_or_default())
+                .collect::<Vec<_>>();
+
             self.project_store
-                .remove_project(&remove_project_request.project_id)
+                .remove_project(&remove_project_request.project_id, &removal_targets)
                 .await?;
             let projects = self.project_store.projects().await?;
             self.send_response(Response::default().with_projects(&projects));

@@ -215,7 +215,7 @@ struct ProjectsView: View {
                                 }
 
                                 for projectId in projectIds {
-                                    let action = removeProjectAction(projectId)
+                                    let action = removeProjectAction(projectId, targets: [.local])
                                     dispatch(action)
                                 }
                             }

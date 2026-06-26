@@ -254,6 +254,13 @@ message UploadAck {
 
 message RemoveProjectRequest {
     string project_id = 1;
+    repeated ProjectRemovalTarget targets = 2;
+}
+
+enum ProjectRemovalTarget {
+    PROJECT_REMOVAL_TARGET_UNSPECIFIED = 0;
+    PROJECT_REMOVAL_TARGET_LOCAL = 1;
+    PROJECT_REMOVAL_TARGET_REMOTE = 2;
 }
 
 message DuplicateProjectRequest {

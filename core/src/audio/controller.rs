@@ -1,6 +1,6 @@
 use super::{
     metronome::Metronome,
-    process::{query_native_channel_count, AudioProcessRunner, NoopProcess},
+    process::{query_native_channel_count, query_native_sample_rate, AudioProcessRunner, NoopProcess},
     sampler_converter::{SampleConversionResult, SampleConverter},
     sequencer::Sequencer,
 };
@@ -47,6 +47,8 @@ struct AudioEngine {
     tick_interval: tokio::time::Interval,
     /// Actual output channel count reported by the device (or 2 for dummy audio).
     output_channel_count: usize,
+    /// Effective sample rate used by the rawdio engine and realtime output.
+    output_sample_rate: u32,
 }
 
 fn build_audio_engine(preferences: &AudioPreferences, use_dummy_audio: bool) -> (AudioEngine, AudioEngineState) {
@@ -55,6 +57,13 @@ fn build_audio_engine(preferences: &AudioPreferences, use_dummy_audio: bool) -> 
     } else {
         query_native_channel_count(preferences)
     };
+    let output_sample_rate = if use_dummy_audio {
+        preferences.sample_rate
+    } else {
+        query_native_sample_rate(preferences, output_channel_count)
+    };
+    let mut effective_preferences = preferences.clone();
+    effective_preferences.sample_rate = output_sample_rate;
 
     let main_offset = preferences.main_channel_offset as usize;
     if main_offset >= output_channel_count {
@@ -66,7 +75,7 @@ fn build_audio_engine(preferences: &AudioPreferences, use_dummy_audio: bool) -> 
 
     let (mut context, process) = create_engine_with_options(
         EngineOptions::default()
-            .with_sample_rate(preferences.sample_rate as usize)
+            .with_sample_rate(output_sample_rate as usize)
             .with_maximum_channel_count(output_channel_count),
     );
 
@@ -86,11 +95,11 @@ fn build_audio_engine(preferences: &AudioPreferences, use_dummy_audio: bool) -> 
 
     let (realtime_process, state) = if use_dummy_audio {
         (
-            create_dummy_process(process, preferences.clone(), output_channel_count),
+            create_dummy_process(process, effective_preferences, output_channel_count),
             AudioEngineState::Running,
         )
     } else {
-        match create_audio_process(process, preferences.clone()) {
+        match create_audio_process(process, effective_preferences) {
             Ok(process) => (process, AudioEngineState::Running),
             Err(reason) => (
                 Box::new(NoopProcess) as Box<dyn AudioProcessRunner>,
@@ -109,6 +118,7 @@ fn build_audio_engine(preferences: &AudioPreferences, use_dummy_audio: bool) -> 
             realtime_process,
             tick_interval: tokio::time::interval(Duration::from_secs_f64(1.0 / 60.0)),
             output_channel_count,
+            output_sample_rate,
         },
         state,
     )
@@ -176,6 +186,7 @@ pub struct AudioController {
     progress: Progress,
     project: Project,
     preferences: AudioPreferences,
+    current_sample_rate: u32,
 }
 
 impl AudioController {
@@ -183,13 +194,14 @@ impl AudioController {
         let (conversion_tx, conversion_rx) = mpsc::channel(64);
         let (engine, engine_state) = build_audio_engine(&preferences, use_dummy_audio);
         let output_channel_count = engine.output_channel_count;
+        let current_sample_rate = engine.output_sample_rate;
 
         Self {
             engine: Some(engine),
             engine_state,
             output_channel_count,
             use_dummy_audio,
-            sample_converter: SampleConverter::new(conversion_tx, preferences.sample_rate as usize),
+            sample_converter: SampleConverter::new(conversion_tx, current_sample_rate as usize),
             conversion_rx,
             response_tx,
             samples_being_converted: HashSet::new(),
@@ -197,6 +209,7 @@ impl AudioController {
             progress: Progress::default(),
             project: Project::empty(),
             preferences,
+            current_sample_rate,
         }
     }
 
@@ -217,7 +230,7 @@ impl AudioController {
         AudioStatus {
             current_device_id: self.preferences.output_device.clone(),
             current_device_name: self.preferences.output_device.clone(),
-            current_sample_rate: self.preferences.sample_rate,
+            current_sample_rate: self.current_sample_rate,
             current_channel_count: self.output_channel_count as u32,
             current_buffer_size: self.preferences.buffer_size,
             engine_status: engine_status.into(),
@@ -241,6 +254,7 @@ impl AudioController {
 
         let (engine, state) = build_audio_engine(&self.preferences, self.use_dummy_audio);
         self.output_channel_count = engine.output_channel_count;
+        self.set_current_sample_rate(engine.output_sample_rate);
         self.engine = Some(engine);
         self.engine_state = state;
 
@@ -299,15 +313,20 @@ impl AudioController {
 
         info!("Audio preferences changed, restarting engine");
 
-        if self.preferences.sample_rate != new_prefs.sample_rate {
-            let (conversion_tx, conversion_rx) = mpsc::channel(64);
-            self.sample_converter = SampleConverter::new(conversion_tx, new_prefs.sample_rate as usize);
-            self.conversion_rx = conversion_rx;
-        }
-
         self.preferences = new_prefs;
         self.stop_audio();
         self.start_audio(samples_cache);
+    }
+
+    fn set_current_sample_rate(&mut self, sample_rate: u32) {
+        if self.current_sample_rate == sample_rate {
+            return;
+        }
+
+        self.current_sample_rate = sample_rate;
+        let (conversion_tx, conversion_rx) = mpsc::channel(64);
+        self.sample_converter = SampleConverter::new(conversion_tx, sample_rate as usize);
+        self.conversion_rx = conversion_rx;
     }
 
     /// Reset playback/progress state to stopped and broadcast both to clients.
