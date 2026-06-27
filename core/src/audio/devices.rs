@@ -2,23 +2,13 @@ use cpal::traits::{DeviceTrait, HostTrait};
 use log::warn;
 use std::collections::HashSet;
 
+use super::process::get_host_from_preferences;
 use crate::bloop::{AudioDevice, AudioDevices, AudioPreferences};
 
 /// Enumerate all available output devices on the selected cpal host and return
 /// them as an `AudioDevices` proto message.
 pub fn enumerate_output_devices(preferences: &AudioPreferences) -> AudioDevices {
-    #[cfg(target_os = "linux")]
-    let host = if preferences.use_jack {
-        cpal::host_from_id(cpal::HostId::Jack).unwrap_or_else(|_| cpal::default_host())
-    } else {
-        cpal::default_host()
-    };
-
-    let _ = preferences;
-
-    #[cfg(not(target_os = "linux"))]
-    let host = cpal::default_host();
-
+    let host = get_host_from_preferences(preferences);
     let host_name = host.id().name().to_string();
 
     let default_device_name = host

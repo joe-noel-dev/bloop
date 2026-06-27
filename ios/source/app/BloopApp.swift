@@ -7,8 +7,8 @@ struct BloopApp: App {
         reducer: rootReducer,
         state: AppState(),
         middlewares: [
-            ApiMiddleware(), UploadMiddleware(), FFIMiddleware(),
-            ApiCodecMiddleware(), ResponseMiddleware(), AudioSessionMiddleware(),
+            ApiMiddleware(), UploadMiddleware(), AudioSessionMiddleware(),
+            FFIMiddleware(), ApiCodecMiddleware(), ResponseMiddleware(),
         ]
     )
 

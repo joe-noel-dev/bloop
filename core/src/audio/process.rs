@@ -43,6 +43,18 @@ struct SelectedStreamConfig {
     sample_format: SampleFormat,
 }
 
+pub(super) fn get_host_from_preferences(preferences: &AudioPreferences) -> Host {
+    #[cfg(target_os = "linux")]
+    {
+        if preferences.use_jack {
+            return cpal::host_from_id(cpal::HostId::Jack).unwrap_or_else(|_| cpal::default_host());
+        }
+    }
+
+    let _ = preferences;
+    cpal::default_host()
+}
+
 /// Selects the preferred output device from `host` based on the name in `device_name`.
 /// Falls back to the system default when the name is empty or not found.
 fn select_output_device(host: &Host, device_name: &str) -> Option<Device> {
@@ -103,16 +115,7 @@ fn preferred_channel_count_for_device(device: &Device, sample_rate: u32, min_req
 /// Selects the smallest supported channel count that satisfies the routing requirements
 /// for the configured main and click channel offsets.
 pub fn query_native_channel_count(preferences: &AudioPreferences) -> usize {
-    #[cfg(target_os = "linux")]
-    let host = if preferences.use_jack {
-        cpal::host_from_id(cpal::HostId::Jack).unwrap_or_else(|_| cpal::default_host())
-    } else {
-        cpal::default_host()
-    };
-
-    #[cfg(not(target_os = "linux"))]
-    let host = cpal::default_host();
-
+    let host = get_host_from_preferences(preferences);
     let Some(device) = select_output_device(&host, &preferences.output_device) else {
         return 2;
     };
@@ -120,6 +123,21 @@ pub fn query_native_channel_count(preferences: &AudioPreferences) -> usize {
     let min_required =
         (preferences.main_channel_offset as usize + 2).max(preferences.click_channel_offset as usize + 2);
     preferred_channel_count_for_device(&device, preferences.sample_rate, min_required)
+}
+
+/// Returns the sample rate that would be used for the selected native stream.
+///
+/// This normally matches `preferences.sample_rate`, but may differ if the
+/// backend falls back to the device's default output config.
+pub fn query_native_sample_rate(preferences: &AudioPreferences, channel_count: usize) -> u32 {
+    let host = get_host_from_preferences(preferences);
+    let Some(device) = select_output_device(&host, &preferences.output_device) else {
+        return preferences.sample_rate;
+    };
+
+    select_stream_config(preferences, &device, channel_count)
+        .map(|selected| selected.config.sample_rate)
+        .unwrap_or(preferences.sample_rate)
 }
 
 #[cfg(target_os = "linux")]
@@ -260,16 +278,7 @@ where
 impl Process {
     #[allow(dead_code)]
     pub fn new(audio_process: Box<dyn AudioProcess + Send>, preferences: AudioPreferences) -> Result<Self, String> {
-        #[cfg(target_os = "linux")]
-        let host = if preferences.use_jack {
-            cpal::host_from_id(cpal::HostId::Jack).unwrap_or_else(|_| cpal::default_host())
-        } else {
-            cpal::default_host()
-        };
-
-        #[cfg(not(target_os = "linux"))]
-        let host = cpal::default_host();
-
+        let host = get_host_from_preferences(&preferences);
         info!("Using audio host: {}", host.id().name());
 
         print_output_devices(&host);
