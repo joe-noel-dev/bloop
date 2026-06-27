@@ -49,11 +49,10 @@ struct PreferencesView: View {
                 }
 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        isSaving = true
-                        AudioSessionConfigurator.activate(preferences: editedPreferences.audio)
-                        dispatch(updatePreferencesAction(editedPreferences))
-                    }
+Button("Save") {
+    isSaving = true
+    dispatch(updatePreferencesAction(editedPreferences))
+}
                     .disabled(isSaving)
                 }
             }
