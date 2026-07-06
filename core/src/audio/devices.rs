@@ -28,6 +28,7 @@ pub fn enumerate_output_devices(preferences: &AudioPreferences) -> AudioDevices 
     };
 
     let mut proto_devices = Vec::new();
+    let mut seen_device_names = HashSet::new();
 
     for device in devices {
         let description = match device.description() {
@@ -39,6 +40,10 @@ pub fn enumerate_output_devices(preferences: &AudioPreferences) -> AudioDevices 
         };
 
         let name = description.name().to_string();
+        if !seen_device_names.insert(name.clone()) {
+            continue;
+        }
+
         let is_default = default_device_name.as_deref() == Some(name.as_str());
 
         let mut supported_sample_rates: HashSet<u32> = HashSet::new();

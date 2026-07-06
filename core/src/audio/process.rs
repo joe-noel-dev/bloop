@@ -43,6 +43,12 @@ struct SelectedStreamConfig {
     sample_format: SampleFormat,
 }
 
+struct SelectedOutputDevice {
+    device: Device,
+    channel_count: usize,
+    stream_config: SelectedStreamConfig,
+}
+
 pub(super) fn get_host_from_preferences(preferences: &AudioPreferences) -> Host {
     #[cfg(target_os = "linux")]
     {
@@ -55,27 +61,83 @@ pub(super) fn get_host_from_preferences(preferences: &AudioPreferences) -> Host 
     cpal::default_host()
 }
 
-/// Selects the preferred output device from `host` based on the name in `device_name`.
-/// Falls back to the system default when the name is empty or not found.
-fn select_output_device(host: &Host, device_name: &str) -> Option<Device> {
-    if !device_name.is_empty() {
-        match host.output_devices() {
-            Ok(mut devices) => devices
-                .find(|d| {
-                    d.description()
-                        .ok()
-                        .map(|desc| desc.name().contains(device_name))
-                        .unwrap_or(false)
-                })
-                .or_else(|| host.default_output_device()),
-            Err(err) => {
-                warn!("Unable to enumerate output devices for selection: {err}");
-                host.default_output_device()
-            }
+fn output_device_candidates(host: &Host, device_name: &str, preferences: &AudioPreferences) -> Vec<Device> {
+    let mut devices = match host.output_devices() {
+        Ok(devices) => devices.collect::<Vec<_>>(),
+        Err(err) => {
+            warn!("Unable to enumerate output devices for selection: {err}");
+            Vec::new()
         }
-    } else {
-        host.default_output_device()
+    };
+
+    if !device_name.is_empty() {
+        devices.retain(|device| {
+            device
+                .description()
+                .ok()
+                .map(|desc| desc.name().contains(device_name))
+                .unwrap_or(false)
+        });
     }
+
+    if devices.is_empty() {
+        if let Some(default_device) = host.default_output_device() {
+            devices.push(default_device);
+        }
+    }
+
+    let min_required =
+        (preferences.main_channel_offset as usize + 2).max(preferences.click_channel_offset as usize + 2);
+
+    devices.sort_by_key(|device| std::cmp::Reverse(output_device_score(device, preferences, min_required)));
+    devices
+}
+
+fn output_device_score(device: &Device, preferences: &AudioPreferences, min_required: usize) -> u8 {
+    let mut supports_sample_rate = false;
+    let mut supports_required_channels = false;
+    let mut supports_required_channels_f32 = false;
+    let mut supports_stereo = false;
+    let mut supports_f32 = false;
+
+    if let Ok(configs) = device.supported_output_configs() {
+        for config in configs {
+            if config.min_sample_rate() > preferences.sample_rate || config.max_sample_rate() < preferences.sample_rate
+            {
+                continue;
+            }
+
+            supports_sample_rate = true;
+            let has_required_channels = config.channels() as usize >= min_required;
+            supports_required_channels |= has_required_channels;
+            supports_required_channels_f32 |= has_required_channels && config.sample_format() == SampleFormat::F32;
+            supports_stereo |= config.channels() == 2;
+            supports_f32 |= config.sample_format() == SampleFormat::F32;
+        }
+    }
+
+    (supports_sample_rate as u8) * 16
+        + (supports_required_channels as u8) * 8
+        + (supports_required_channels_f32 as u8) * 4
+        + (supports_f32 as u8) * 2
+        + (supports_stereo as u8)
+}
+
+fn select_output_device(host: &Host, preferences: &AudioPreferences) -> Option<SelectedOutputDevice> {
+    let min_required =
+        (preferences.main_channel_offset as usize + 2).max(preferences.click_channel_offset as usize + 2);
+
+    output_device_candidates(host, &preferences.output_device, preferences)
+        .into_iter()
+        .find_map(|device| {
+            let channel_count = preferred_channel_count_for_device(&device, preferences.sample_rate, min_required);
+            let stream_config = select_stream_config(preferences, &device, channel_count)?;
+            Some(SelectedOutputDevice {
+                device,
+                channel_count,
+                stream_config,
+            })
+        })
 }
 
 /// Selects the preferred channel count for `device` at the given `sample_rate`.
@@ -116,13 +178,11 @@ fn preferred_channel_count_for_device(device: &Device, sample_rate: u32, min_req
 /// for the configured main and click channel offsets.
 pub fn query_native_channel_count(preferences: &AudioPreferences) -> usize {
     let host = get_host_from_preferences(preferences);
-    let Some(device) = select_output_device(&host, &preferences.output_device) else {
+    let Some(selected) = select_output_device(&host, preferences) else {
         return 2;
     };
 
-    let min_required =
-        (preferences.main_channel_offset as usize + 2).max(preferences.click_channel_offset as usize + 2);
-    preferred_channel_count_for_device(&device, preferences.sample_rate, min_required)
+    selected.channel_count
 }
 
 /// Returns the sample rate that would be used for the selected native stream.
@@ -131,11 +191,11 @@ pub fn query_native_channel_count(preferences: &AudioPreferences) -> usize {
 /// backend falls back to the device's default output config.
 pub fn query_native_sample_rate(preferences: &AudioPreferences, channel_count: usize) -> u32 {
     let host = get_host_from_preferences(preferences);
-    let Some(device) = select_output_device(&host, &preferences.output_device) else {
+    let Some(selected) = select_output_device(&host, preferences) else {
         return preferences.sample_rate;
     };
 
-    select_stream_config(preferences, &device, channel_count)
+    select_stream_config(preferences, &selected.device, channel_count)
         .map(|selected| selected.config.sample_rate)
         .unwrap_or(preferences.sample_rate)
 }
@@ -283,9 +343,10 @@ impl Process {
 
         print_output_devices(&host);
 
-        let Some(device) = select_output_device(&host, &preferences.output_device) else {
+        let Some(selected_device) = select_output_device(&host, &preferences) else {
             return Err("Couldn't connect to output audio device".to_string());
         };
+        let device = selected_device.device;
         let device_name = device
             .description()
             .map(|description| description.name().to_string())
@@ -311,15 +372,10 @@ impl Process {
             });
         }
 
-        let min_required =
-            (preferences.main_channel_offset as usize + 2).max(preferences.click_channel_offset as usize + 2);
-        let channel_count = preferred_channel_count_for_device(&device, preferences.sample_rate, min_required);
+        let channel_count = selected_device.channel_count;
         info!("Selected channel count: {}\n", channel_count);
 
-        let selected_config = match select_stream_config(&preferences, &device, channel_count) {
-            Some(config) => config,
-            None => return Err("Unable to select a usable output stream config".to_string()),
-        };
+        let selected_config = selected_device.stream_config;
         let config = selected_config.config;
 
         info!("Preferences buffer size: {}\n", preferences.buffer_size);
