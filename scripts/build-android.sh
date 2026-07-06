@@ -5,6 +5,7 @@ set -euo pipefail
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 core_dir="${project_root}/core"
 output_root="${project_root}/target/android"
+build_root="${CARGO_TARGET_DIR:-${core_dir}/target}"
 library_name="libbloop.so"
 build_profile="${BUILD_PROFILE:-release}"
 if [ $# -eq 0 ]; then
@@ -14,6 +15,10 @@ else
 fi
 
 mkdir -p "${output_root}/jniLibs"
+
+if [[ "${build_root}" != /* ]]; then
+  build_root="${core_dir}/${build_root}"
+fi
 
 android_abi_for_target() {
   case "$1" in
@@ -73,7 +78,7 @@ build_target() {
       cargo "${cargo_args[@]}"
   )
 
-  local artifact_dir="${core_dir}/target/${target}/${build_profile}"
+  local artifact_dir="${build_root}/${target}/${build_profile}"
   local source_lib="${artifact_dir}/${library_name}"
   if [ ! -f "${source_lib}" ]; then
     echo "Expected Android library not found: ${source_lib}" >&2

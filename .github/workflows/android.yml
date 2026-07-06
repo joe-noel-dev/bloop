@@ -77,7 +77,18 @@ jobs:
             ${{ runner.os }}-cargo-git-
 
       - name: Build Android Rust libraries
-        run: ./scripts/build-android.sh aarch64-linux-android x86_64-linux-android
+        run: |
+          pids=()
+          for target in aarch64-linux-android x86_64-linux-android; do
+            CARGO_TARGET_DIR="${GITHUB_WORKSPACE}/core/target/android-${target}" ./scripts/build-android.sh "${target}" &
+            pids+=("$!")
+          done
+
+          status=0
+          for pid in "${pids[@]}"; do
+            wait "${pid}" || status=$?
+          done
+          exit "${status}"
 
       - name: Run Android unit tests
         working-directory: android
@@ -137,7 +148,18 @@ jobs:
           rustup target add x86_64-linux-android
 
       - name: Build Android Rust libraries
-        run: ./scripts/build-android.sh aarch64-linux-android x86_64-linux-android
+        run: |
+          pids=()
+          for target in aarch64-linux-android x86_64-linux-android; do
+            CARGO_TARGET_DIR="${GITHUB_WORKSPACE}/core/target/android-${target}" ./scripts/build-android.sh "${target}" &
+            pids+=("$!")
+          done
+
+          status=0
+          for pid in "${pids[@]}"; do
+            wait "${pid}" || status=$?
+          done
+          exit "${status}"
 
       - name: Decode keystore
         run: |
