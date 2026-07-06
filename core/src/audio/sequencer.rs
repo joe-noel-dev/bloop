@@ -178,7 +178,7 @@ impl Sequencer {
                 continue;
             }
 
-            self.schedule_sequence_point(point, samplers);
+            self.schedule_sequence_point_for_samplers(point, samplers);
 
             if point.loop_enabled {
                 break;
@@ -188,24 +188,44 @@ impl Sequencer {
         self.sequence = sequence;
     }
 
-    fn schedule_sequence_point(
-        &mut self,
+    pub fn schedule_sampler(&self, sample_id: ID, sampler: &mut Sampler) {
+        sampler.cancel_all();
+
+        for point in self.sequence.points.iter() {
+            if point.end_time() < self.current_time || point.data.sample_id != Some(sample_id) {
+                continue;
+            }
+
+            self.schedule_sequence_point(point, sampler);
+
+            if point.loop_enabled {
+                break;
+            }
+        }
+    }
+
+    fn schedule_sequence_point(&self, sequence_point: &SequencePoint<SequenceData>, sampler: &mut Sampler) {
+        sampler.start_from_position_at_time(sequence_point.start_time, sequence_point.data.position_in_sample);
+
+        if sequence_point.loop_enabled {
+            let loop_start = sequence_point.data.position_in_sample;
+            let loop_end = sequence_point.data.position_in_sample + sequence_point.duration;
+
+            sampler.enable_loop_at_time(sequence_point.start_time, loop_start, loop_end);
+        } else {
+            // Adjust the stop time to ensure that stop events are processed before start events
+            sampler.stop_at_time(sequence_point.end_time() - Timestamp::from_seconds(0.001));
+        }
+    }
+
+    fn schedule_sequence_point_for_samplers(
+        &self,
         sequence_point: &SequencePoint<SequenceData>,
         samplers: &mut HashMap<ID, Sampler>,
     ) {
         if let Some(sample_id) = &sequence_point.data.sample_id {
             if let Some(sampler) = samplers.get_mut(sample_id) {
-                sampler.start_from_position_at_time(sequence_point.start_time, sequence_point.data.position_in_sample);
-
-                if sequence_point.loop_enabled {
-                    let loop_start = sequence_point.data.position_in_sample;
-                    let loop_end = sequence_point.data.position_in_sample + sequence_point.duration;
-
-                    sampler.enable_loop_at_time(sequence_point.start_time, loop_start, loop_end);
-                } else {
-                    // Adjust the stop time to ensure that stop events are processed before start events
-                    sampler.stop_at_time(sequence_point.end_time() - Timestamp::from_seconds(0.001));
-                }
+                self.schedule_sequence_point(sequence_point, sampler);
             }
         }
     }

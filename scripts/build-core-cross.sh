@@ -9,7 +9,7 @@ DOCKERFILE="Dockerfile"
 PLATFORM="linux/${ARCH}"
 
 # Use the official multi-arch rust image for all architectures
-BASE_IMAGE="rust:1.88.0"
+BASE_IMAGE="rust:1.96.0"
 
 docker build --file ${DOCKERFILE} --build-arg BASE_IMAGE=${BASE_IMAGE} --tag ${CONTAINER_TAG} --platform ${PLATFORM} .
 

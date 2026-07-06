@@ -41,6 +41,7 @@ struct AudioEngine {
     mixer: Mixer,
     metronome: Metronome,
     samplers: HashMap<ID, Sampler>,
+    main_splitters: HashMap<ID, Mixer>,
     sequencer: Sequencer,
     #[allow(dead_code)]
     realtime_process: Box<dyn AudioProcessRunner>,
@@ -114,6 +115,7 @@ fn build_audio_engine(preferences: &AudioPreferences, use_dummy_audio: bool) -> 
             mixer,
             metronome,
             samplers: HashMap::new(),
+            main_splitters: HashMap::new(),
             sequencer: Sequencer::default(),
             realtime_process,
             tick_interval: tokio::time::interval(Duration::from_secs_f64(1.0 / 60.0)),
@@ -139,9 +141,17 @@ fn add_samples_from_project(
             continue;
         }
         let Some(cached_sample) = samples_cache.get_sample(sample.id) else {
+            warn!(
+                "Project references sample {}, but it is missing from the sample cache; main audio for song {} will be silent",
+                sample.id, song.id
+            );
             continue;
         };
         if !cached_sample.is_cached() {
+            warn!(
+                "Project references sample {}, but it is not cached yet; main audio for song {} will be silent",
+                sample.id, song.id
+            );
             continue;
         }
         if samples_being_converted.contains(&sample.id) {
@@ -165,6 +175,7 @@ fn remove_samples_from_engine(engine: &mut AudioEngine, project: &Project) {
             sampler.node.disconnect_from_node(&engine.mixer.node);
             sampler.stop_now();
         }
+        engine.main_splitters.remove(&sample_id);
     }
 }
 
@@ -367,6 +378,26 @@ impl AudioController {
         let Some(engine) = self.engine.as_mut() else {
             return;
         };
+
+        let selected_sample = self
+            .project
+            .song_with_id(self.project.selections.song)
+            .and_then(|song| song.sample.as_ref());
+
+        if let Some(sample) = selected_sample {
+            if !engine.samplers.contains_key(&sample.id) {
+                warn!(
+                    "Playback started before sample {} was loaded into the audio engine; click may play while main audio is silent",
+                    sample.id
+                );
+            }
+        } else {
+            warn!(
+                "Playback started for song {}, but no sample is assigned; click may play while main audio is silent",
+                self.project.selections.song
+            );
+        }
+
         let lookahead = engine.context.current_time().incremented_by_seconds(0.001);
         engine
             .sequencer
@@ -492,8 +523,8 @@ impl AudioController {
         info!("Sample converted: {}", result.sample_id);
 
         let audio_channel_count = audio_data.channel_count();
-        let channel_count = if main_offset < output_channel_count {
-            audio_channel_count.min(output_channel_count - main_offset)
+        let available_output_channels = if main_offset < output_channel_count {
+            output_channel_count - main_offset
         } else {
             warn!(
                 "main_channel_offset {} >= output channel count {}, sample will be silent",
@@ -502,11 +533,20 @@ impl AudioController {
             0
         };
 
-        let sampler = Sampler::new_with_event_capacity(engine.context.as_ref(), audio_data, 1024);
-        sampler
-            .node
-            .connect_channels_to(&engine.mixer.node, 0, main_offset, channel_count);
+        let mut sampler = Sampler::new_with_event_capacity(engine.context.as_ref(), audio_data, 1024);
+        if audio_channel_count == 1 && available_output_channels >= 2 {
+            let splitter = Mixer::mono_to_stereo_splitter(engine.context.as_ref());
+            sampler.node.connect_to(&splitter.node);
+            splitter.node.connect_channels_to(&engine.mixer.node, 0, main_offset, 2);
+            engine.main_splitters.insert(result.sample_id, splitter);
+        } else {
+            let channel_count = audio_channel_count.min(available_output_channels);
+            sampler
+                .node
+                .connect_channels_to(&engine.mixer.node, 0, main_offset, channel_count);
+        }
 
+        engine.sequencer.schedule_sampler(result.sample_id, &mut sampler);
         engine.samplers.insert(result.sample_id, sampler);
     }
 }
