@@ -62,7 +62,15 @@ export const backendMiddleware =
       case SIGN_IN: {
         const {userId, password} = action as SignInAction;
 
+        const requestId = createRequestId('SIGN_IN');
+
+        if (pendingRequests.has(requestId)) {
+          console.debug('Sign-in already in progress, skipping duplicate request');
+          break;
+        }
+
         try {
+          pendingRequests.add(requestId);
           const user = await backend.signIn(userId, password);
           console.debug('Signed in user:', user);
           await api.dispatch(loadProjectsAction());
@@ -78,6 +86,8 @@ export const backendMiddleware =
               'Failed to sign in. Please check your credentials and try again.'
             )
           );
+        } finally {
+          pendingRequests.delete(requestId);
         }
 
         break;
