@@ -270,9 +270,13 @@ where
 
     let error_callback = move |err| error!("Stream error: {err:?}");
 
-    device
-        .build_output_stream(config, audio_callback, error_callback, timeout)
-        .map_err(|err| format!("Couldn't create output stream: {err}"))
+    #[cfg(target_os = "linux")]
+    let stream_result = device.build_output_stream(config.clone(), audio_callback, error_callback, timeout);
+
+    #[cfg(not(target_os = "linux"))]
+    let stream_result = device.build_output_stream(config, audio_callback, error_callback, timeout);
+
+    stream_result.map_err(|err| format!("Couldn't create output stream: {err}"))
 }
 
 impl Process {
