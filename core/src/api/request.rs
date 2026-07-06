@@ -76,4 +76,15 @@ impl Request {
             ..Default::default()
         }
     }
+
+    pub fn update_preferences_request(preferences: Preferences) -> Self {
+        Self {
+            update: Some(UpdateRequest {
+                preferences: Some(preferences).into(),
+                ..Default::default()
+            })
+            .into(),
+            ..Default::default()
+        }
+    }
 }

@@ -7,13 +7,49 @@ use iced::{
 };
 use tokio::sync::{broadcast, mpsc};
 
-use crate::bloop::{Entity, Request, Response, TransportMethod};
+use crate::bloop::{AudioControlMethod, Entity, Request, Response, TransportMethod};
 
 use super::{message::Message, state::State};
 
 pub fn update(state: &mut State, message: Message) {
     match message {
         Message::ApiResponse(response) => handle_api_response(state, *response),
+        Message::OpenSettings => {
+            state.settings.open(state.preferences.clone());
+            request_settings_data(state);
+        }
+        Message::CloseSettings => state.settings.close(),
+        Message::RefreshSettings => request_settings_data(state),
+        Message::SelectSettingsTab(tab) => {
+            state.settings.active_tab = tab;
+        }
+        Message::SaveSettings => {
+            if let Some(preferences) = state.settings.draft_preferences_for_save() {
+                state.settings.is_saving = true;
+                let request = Request::update_preferences_request(preferences);
+                send_request(state.request_tx.clone(), request);
+            }
+        }
+        Message::RestartAudio => {
+            let request = Request::audio_control_request(AudioControlMethod::AUDIO_CONTROL_METHOD_RESTART);
+            send_request(state.request_tx.clone(), request);
+        }
+        Message::SetSettingsAudioDevice(option) => state.settings.set_audio_device(option),
+        Message::SetSettingsSampleRate(option) => state.settings.set_sample_rate(option),
+        Message::SetSettingsAudioNumber(field, value) => state.settings.set_audio_number(field, value),
+        Message::SetSettingsUseJack(use_jack) => state.settings.set_use_jack(use_jack),
+        Message::SetSettingsMidiPortEnabled(port_name, enabled) => {
+            state.settings.set_midi_port_enabled(port_name, enabled);
+        }
+        Message::AddSettingsSwitchMapping => state.settings.add_switch_mapping(),
+        Message::RemoveSettingsSwitchMapping(index) => state.settings.remove_switch_mapping(index),
+        Message::SetSettingsSwitchNumber(index, field, value) => {
+            state.settings.set_switch_number(index, field, value);
+        }
+        Message::SetSettingsSwitchPick(index, field, gesture, action) => match field {
+            super::settings::SwitchPickField::Gesture => state.settings.set_switch_gesture(index, gesture),
+            super::settings::SwitchPickField::Action => state.settings.set_switch_action(index, action),
+        },
         Message::StartPlayback => {
             let request = Request::transport_request(TransportMethod::PLAY);
             send_request(state.request_tx.clone(), request);
@@ -48,6 +84,17 @@ pub fn update(state: &mut State, message: Message) {
             let request = Request::transport_request(TransportMethod::EXIT_LOOP);
             send_request(state.request_tx.clone(), request);
         }
+    }
+}
+
+fn request_settings_data(state: &State) {
+    for entity in [
+        Entity::PREFERENCES,
+        Entity::AUDIO_DEVICES,
+        Entity::AUDIO_STATUS,
+        Entity::MIDI_DEVICES,
+    ] {
+        send_request(state.request_tx.clone(), Request::get_request(entity, 0));
     }
 }
 
@@ -162,6 +209,29 @@ fn handle_api_response(state: &mut State, response: Response) {
 
     if let Some(progress) = response.progress.as_ref() {
         state.progress = progress.clone();
+    }
+
+    if let Some(preferences) = response.preferences.as_ref() {
+        state.preferences = Some(preferences.clone());
+        if state.settings.is_open {
+            if state.settings.is_saving {
+                state.settings.close();
+            } else {
+                state.settings.set_draft(preferences.clone());
+            }
+        }
+    }
+
+    if let Some(audio_devices) = response.audio_devices.as_ref() {
+        state.audio_devices = Some(audio_devices.clone());
+    }
+
+    if let Some(audio_status) = response.audio_status.as_ref() {
+        state.audio_status = Some(audio_status.clone());
+    }
+
+    if let Some(midi_devices) = response.midi_devices.as_ref() {
+        state.midi_devices = Some(midi_devices.clone());
     }
 }
 
