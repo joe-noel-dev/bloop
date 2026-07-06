@@ -8,23 +8,84 @@
 import AVFoundation
 
 enum AudioSessionConfigurator {
+    private static let defaultSampleRate: UInt32 = 48_000
+    private static let defaultBufferSize: UInt32 = 512
+    private static let defaultMainChannelOffset: UInt32 = 0
+    private static let defaultClickChannelOffset: UInt32 = 2
+
     static func activate(preferences: Bloop_AudioPreferences? = nil) {
         let session = AVAudioSession.sharedInstance()
+        let audioPreferences = resolvedPreferences(preferences)
 
         do {
             try session.setCategory(.playback, mode: .default)
-
-            if let preferences, preferences.sampleRate > 0 {
-                try session.setPreferredSampleRate(Double(preferences.sampleRate))
-
-                if preferences.bufferSize > 0 {
-                    try session.setPreferredIOBufferDuration(Double(preferences.bufferSize) / Double(preferences.sampleRate))
-                }
-            }
+            try session.setPreferredSampleRate(Double(audioPreferences.sampleRate))
+            try session.setPreferredIOBufferDuration(
+                Double(audioPreferences.bufferSize) / Double(audioPreferences.sampleRate)
+            )
 
             try session.setActive(true)
+            configureOutputChannelCount(session: session, preferences: audioPreferences)
         } catch {
             print("Unable to configure audio session: \(error)")
+        }
+    }
+
+    private static func resolvedPreferences(_ preferences: Bloop_AudioPreferences?) -> Bloop_AudioPreferences {
+        guard let preferences else {
+            return defaultPreferences()
+        }
+
+        var resolved = preferences
+
+        if resolved.sampleRate <= 0 {
+            resolved.sampleRate = defaultSampleRate
+        }
+
+        if resolved.bufferSize <= 0 {
+            resolved.bufferSize = defaultBufferSize
+        }
+
+        return resolved
+    }
+
+    private static func defaultPreferences() -> Bloop_AudioPreferences {
+        .with {
+            $0.sampleRate = defaultSampleRate
+            $0.bufferSize = defaultBufferSize
+            $0.mainChannelOffset = defaultMainChannelOffset
+            $0.clickChannelOffset = defaultClickChannelOffset
+        }
+    }
+
+    private static func configureOutputChannelCount(
+        session: AVAudioSession,
+        preferences: Bloop_AudioPreferences
+    ) {
+        let requiredChannelCount = max(
+            Int(preferences.mainChannelOffset) + 2,
+            Int(preferences.clickChannelOffset) + 2
+        )
+
+        guard requiredChannelCount > 0 else {
+            return
+        }
+
+        let maximumChannelCount = session.maximumOutputNumberOfChannels
+        let preferredChannelCount = maximumChannelCount > 0
+            ? min(requiredChannelCount, maximumChannelCount)
+            : requiredChannelCount
+
+        guard session.outputNumberOfChannels != preferredChannelCount else {
+            return
+        }
+
+        do {
+            try session.setPreferredOutputNumberOfChannels(preferredChannelCount)
+            try session.setActive(false)
+            try session.setActive(true)
+        } catch {
+            print("Unable to configure audio session channel count: \(error)")
         }
     }
 }
