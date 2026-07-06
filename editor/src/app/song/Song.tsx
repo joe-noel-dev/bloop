@@ -1,6 +1,6 @@
 import {Button, Grid, Stack, Typography, Box} from '@mui/joy';
 import {useSong} from '../../model-hooks/song-hooks';
-import {shadows, transitions} from '../../theme';
+import {shadows, spacing, transitions} from '../../theme';
 import {
   Add,
   ArrowDownward,
@@ -121,6 +121,24 @@ const SongDetails = ({
             </Typography>
           }
         />
+      </Stack>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Typography
+          level="body-sm"
+          sx={{color: 'text.secondary', minWidth: spacing.xxl}}
+        >
+          Sample
+        </Typography>
+        <Typography
+          level="body-sm"
+          sx={{
+            color: song.sample ? 'text.primary' : 'text.tertiary',
+            fontStyle: song.sample ? 'normal' : 'italic',
+            overflowWrap: 'anywhere',
+          }}
+        >
+          {song.sample?.name ?? 'No sample selected'}
+        </Typography>
       </Stack>
 
       <Stack direction="row" spacing={1}>
