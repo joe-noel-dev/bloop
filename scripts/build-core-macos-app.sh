@@ -32,7 +32,7 @@ if [[ ! -f "${ICON_SOURCE}" ]]; then
     exit 1
 fi
 
-mkdir -p "${WORK_DIR}"
+mkdir -p "${WORK_DIR}" "${CARGO_PACKAGER_CACHE_DIR}" "${SWIFT_MODULE_CACHE}" "${PACKAGER_HOME}"
 export XDG_CACHE_HOME="${CARGO_PACKAGER_CACHE_DIR}"
 
 VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' "${CORE_DIR}/Cargo.toml" | head -n 1)"

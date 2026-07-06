@@ -3,6 +3,11 @@ import Foundation
 import ImageIO
 import UniformTypeIdentifiers
 
+guard CommandLine.arguments.count == 3 else {
+    fputs("Usage: flatten-icon.swift <input.png> <output.png>\n", stderr)
+    exit(2)
+}
+
 let input = URL(fileURLWithPath: CommandLine.arguments[1]) as CFURL
 let output = URL(fileURLWithPath: CommandLine.arguments[2]) as CFURL
 let source = CGImageSourceCreateWithURL(input, nil)!
