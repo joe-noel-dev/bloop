@@ -810,9 +810,7 @@ mod tests {
             .collect();
 
         assert!(
-            statuses
-                .iter()
-                .any(|s| *s == crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STATUS_STOPPED),
+            statuses.contains(&crate::bloop::AudioEngineStatus::AUDIO_ENGINE_STATUS_STOPPED),
             "Expected AUDIO_ENGINE_STATUS_STOPPED during preference-driven restart"
         );
         assert!(

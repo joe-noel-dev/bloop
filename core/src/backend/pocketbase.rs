@@ -331,6 +331,6 @@ pub(crate) async fn handle_error_response(response: Response, request_name: &str
         request_name, response.status, response.message
     );
 
-    warn!("{}", &error_message);
-    anyhow::anyhow!("{}", &error_message)
+    warn!("{}", error_message);
+    anyhow::anyhow!("{}", error_message)
 }
