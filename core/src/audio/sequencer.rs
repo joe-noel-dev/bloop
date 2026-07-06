@@ -169,7 +169,7 @@ impl Sequencer {
     }
 
     fn set_sequence(&mut self, sequence: Sequence<SequenceData>, samplers: &mut HashMap<ID, Sampler>) {
-        for (_, sampler) in samplers.iter_mut() {
+        for sampler in samplers.values_mut() {
             sampler.cancel_all();
         }
 
