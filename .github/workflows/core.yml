@@ -88,3 +88,77 @@ jobs:
       with:
         files: core/target/debian/*.deb
         generate_release_notes: true
+
+  build-core-macos:
+
+    runs-on: macos-latest
+
+    concurrency:
+      group: macos-${{ github.head_ref || github.run_id }}
+      cancel-in-progress: true
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Rust Nightly
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+
+    - name: Add macOS Rust target
+      run: rustup target add aarch64-apple-darwin
+
+    - name: Install protobuf compiler
+      run: |
+        brew install protobuf
+        protoc --version
+
+    - name: Cache Cargo registry
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+
+    - name: Cache Cargo index
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-index-
+
+    - name: Cache Cargo build
+      uses: actions/cache@v4
+      with:
+        path: core/target
+        key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-build-
+
+    - name: Install cargo-packager
+      run: cargo install cargo-packager --locked
+
+    - name: Run tests
+      working-directory: core
+      run: cargo test --verbose
+
+    - name: Build macOS app bundle
+      run: ./scripts/build-core-macos-app.sh
+
+    - name: Verify macOS app bundle
+      run: |
+        APP_PATH="$(find target/macos-app/package -maxdepth 4 -type d -name 'Bloop.app' -print -quit)"
+        test -n "$APP_PATH"
+        test -x "$APP_PATH/Contents/MacOS/bloop-core"
+        file "$APP_PATH/Contents/MacOS/bloop-core" | grep 'arm64'
+        find "$APP_PATH/Contents/Resources" -name '*.icns' -type f | grep .
+
+    - name: Upload macOS app bundle
+      uses: actions/upload-artifact@v4
+      with:
+        name: bloop-core-macos-arm64-app
+        path: target/macos-app/package/**/*.app

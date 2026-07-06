@@ -34,6 +34,20 @@ update_cargo_toml() {
     echo "Updated version in $cargo_file to $version"
 }
 
+# Function to update macOS packager config
+update_core_packager() {
+    local version=$1
+    local packager_file="./core/Packager.toml"
+
+    if [ ! -f "$packager_file" ]; then
+        echo "Warning: $packager_file not found, skipping macOS packager version update"
+        return
+    fi
+
+    sed -i '' "s/^version = \".*\"/version = \"$version\"/" "$packager_file"
+    echo "Updated version in $packager_file to $version"
+}
+
 # Function to update Cargo.lock
 update_cargo_lock() {
     local version=$1
@@ -123,6 +137,9 @@ main() {
     
     # Update Cargo.toml
     update_cargo_toml "$version"
+
+    # Update macOS packager config
+    update_core_packager "$version"
     
     # Update Cargo.lock
     update_cargo_lock "$version"
@@ -141,4 +158,3 @@ main() {
 
 # Run main function with all arguments
 main "$@"
-

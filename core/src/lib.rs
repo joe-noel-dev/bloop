@@ -1,5 +1,7 @@
 include!(concat!(env!("OUT_DIR"), "/protos/mod.rs"));
 
+use std::fs;
+
 mod api;
 mod audio;
 pub mod backend;
@@ -34,10 +36,16 @@ pub use crate::config::AppConfig;
 const GIT_SHA: &str = git_version!();
 
 pub fn run_main() {
+    let app_config = AppConfig::default();
+    let log_directory = app_config.root_directory.join("logs");
+    if let Err(error) = fs::create_dir_all(&log_directory) {
+        eprintln!("Unable to create log directory {}: {error}", log_directory.display());
+    }
+
     let options = LogOptions::default()
         .log_to_console(true)
-        .log_to_file("bloop.log".into())
-        .log_dependencies_to_file("bloop.deps.log".into());
+        .log_to_file(log_directory.join("bloop.log"))
+        .log_dependencies_to_file(log_directory.join("bloop.deps.log"));
 
     set_up_logger(options);
 
@@ -48,7 +56,6 @@ pub fn run_main() {
     let (request_tx, request_rx) = mpsc::channel(128);
     let (response_tx, _) = broadcast::channel(128);
 
-    let app_config = AppConfig::default();
     let core_thread = run_core(request_rx, request_tx.clone(), response_tx.clone(), app_config);
 
     #[cfg(feature = "ui")]

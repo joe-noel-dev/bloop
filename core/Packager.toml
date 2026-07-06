@@ -1,0 +1,17 @@
+name = "bloop-core"
+product-name = "Bloop"
+version = "0.14.0"
+identifier = "com.joenoel.bloop"
+formats = ["app"]
+out-dir = "../target/macos-app/package"
+binaries-dir = "target/aarch64-apple-darwin/release"
+target-triple = "aarch64-apple-darwin"
+icons = ["../target/macos-app/Bloop-512x512@2x.png"]
+
+[[binaries]]
+path = "bloop-core"
+main = true
+
+[macos]
+info-plist-path = "../target/macos-app/Info.plist"
+entitlements = "packaging/macos/entitlements.plist"
