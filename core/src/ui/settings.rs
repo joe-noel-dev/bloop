@@ -685,12 +685,7 @@ fn button_padding() -> Padding {
 
 fn backdrop_style(_theme: &Theme) -> container::Style {
     container::Style {
-        background: Some(Background::Color(Color {
-            r: 0.0,
-            g: 0.0,
-            b: 0.0,
-            a: 0.55,
-        })),
+        background: Some(Background::Color(Color { a: 0.55, ..theme::neutral::N8 })),
         ..Default::default()
     }
 }
@@ -705,12 +700,7 @@ fn panel_style(_theme: &Theme) -> container::Style {
             color: theme::neutral::N5,
         },
         shadow: Shadow {
-            color: Color {
-                r: 0.0,
-                g: 0.0,
-                b: 0.0,
-                a: 0.35,
-            },
+            color: Color { a: 0.35, ..theme::neutral::N8 },
             offset: iced::Vector::new(0.0, 12.0),
             blur_radius: 24.0,
         },
@@ -783,17 +773,25 @@ fn parse_u32(value: &str, _label: &str) -> Option<u32> {
 }
 
 fn validate_audio_number(value: &str, field: AudioNumberField) -> Option<String> {
-    let (min, max, label) = match field {
-        AudioNumberField::SampleRate => (1, 192_000, "Sample rate"),
-        AudioNumberField::BufferSize => (1, 8192, "Buffer size"),
-        AudioNumberField::MainChannelOffset => (0, u32::MAX, "Main channel offset"),
-        AudioNumberField::ClickChannelOffset => (0, u32::MAX, "Click channel offset"),
-    };
-
     let parsed = value.trim().parse::<u32>().ok();
-    match parsed {
-        Some(number) if number >= min && number <= max => None,
-        _ => Some(format!("{label} must be between {min} and {max}")),
+
+    match field {
+        AudioNumberField::SampleRate => match parsed {
+            Some(number) if (1..=192_000).contains(&number) => None,
+            _ => Some("Sample rate must be between 1 and 192000".to_string()),
+        },
+        AudioNumberField::BufferSize => match parsed {
+            Some(number) if (1..=8192).contains(&number) => None,
+            _ => Some("Buffer size must be between 1 and 8192".to_string()),
+        },
+        AudioNumberField::MainChannelOffset => match parsed {
+            Some(_) => None,
+            None => Some("Main channel offset must be a whole number".to_string()),
+        },
+        AudioNumberField::ClickChannelOffset => match parsed {
+            Some(_) => None,
+            None => Some("Click channel offset must be a whole number".to_string()),
+        },
     }
 }
 
