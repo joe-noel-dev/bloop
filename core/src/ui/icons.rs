@@ -7,6 +7,7 @@ pub enum Icon {
     Play,
     Stop,
     Loop,
+    Gear,
     #[allow(unused)]
     Metronome,
 }
@@ -19,6 +20,7 @@ impl Icon {
             Icon::Play => include_bytes!("./resources/play.svg").as_slice(),
             Icon::Stop => include_bytes!("./resources/stop.svg").as_slice(),
             Icon::Loop => include_bytes!("./resources/loop.svg").as_slice(),
+            Icon::Gear => include_bytes!("./resources/gear.svg").as_slice(),
             Icon::Metronome => include_bytes!("./resources/metronome.svg").as_slice(),
         };
 

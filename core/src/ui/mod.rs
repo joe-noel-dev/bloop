@@ -6,6 +6,7 @@ mod metronome;
 mod power;
 mod project;
 mod sections;
+mod settings;
 mod state;
 mod theme;
 mod transport;
