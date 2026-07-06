@@ -63,7 +63,7 @@ ui = [ "dep:iced" ]
 midi = [ "dep:midir" ]
 
 [target.'cfg(target_os = "linux")'.dependencies]
-cpal = { version = "0.17.1", features = ["jack"] }
+cpal = { version = "0.18.1", features = ["jack"] }
 rppal = "0.22.1"
 
 [target.'cfg(not(target_os = "linux"))'.dependencies]
