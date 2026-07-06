@@ -24,8 +24,8 @@ enum AudioSessionConfigurator {
                 Double(audioPreferences.bufferSize) / Double(audioPreferences.sampleRate)
             )
 
-            try session.setActive(true)
             configureOutputChannelCount(session: session, preferences: audioPreferences)
+            try session.setActive(true)
         } catch {
             print("Unable to configure audio session: \(error)")
         }
@@ -82,8 +82,6 @@ enum AudioSessionConfigurator {
 
         do {
             try session.setPreferredOutputNumberOfChannels(preferredChannelCount)
-            try session.setActive(false)
-            try session.setActive(true)
         } catch {
             print("Unable to configure audio session channel count: \(error)")
         }
