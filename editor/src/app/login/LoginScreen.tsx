@@ -15,17 +15,27 @@ export const LoginScreen = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const dispatch = useDispatcher();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSigningIn) {
+      return;
+    }
+
     if (!username || !password) {
       setError('Please enter both username and password.');
       return;
     }
     setError('');
+    setIsSigningIn(true);
 
-    dispatch(signInAction(username, password));
+    try {
+      await dispatch(signInAction(username, password));
+    } finally {
+      setIsSigningIn(false);
+    }
   };
 
   return (
@@ -68,8 +78,15 @@ export const LoginScreen = () => {
             {error}
           </Alert>
         )}
-        <Button type="submit" fullWidth variant="solid" color="primary">
-          Log In
+        <Button
+          type="submit"
+          fullWidth
+          variant="solid"
+          color="primary"
+          loading={isSigningIn}
+          disabled={isSigningIn}
+        >
+          {isSigningIn ? 'Logging in...' : 'Log In'}
         </Button>
       </form>
     </Box>
