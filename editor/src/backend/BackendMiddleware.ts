@@ -39,6 +39,18 @@ const createRequestId = (
   return `${type}:${params.join(':')}`;
 };
 
+const isAbortError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  if ('isAbort' in error && error.isAbort === true) {
+    return true;
+  }
+
+  return 'name' in error && error.name === 'AbortError';
+};
+
 export const backendMiddleware =
   (api: MiddlewareAPI) =>
   (next: DispatchFunction) =>
@@ -53,7 +65,13 @@ export const backendMiddleware =
         try {
           const user = await backend.signIn(userId, password);
           console.debug('Signed in user:', user);
+          await api.dispatch(loadProjectsAction());
         } catch (error) {
+          if (isAbortError(error)) {
+            console.debug('Ignored cancelled sign-in request:', error);
+            break;
+          }
+
           console.error('Failed to sign in:', error);
           api.dispatch(
             showErrorNotificationAction(
