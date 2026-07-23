@@ -43,7 +43,10 @@ class LocalCoreMiddlewareTest {
         assertEquals(1, created)
         assertEquals(1, audioController.requestCount)
         assertTrue(dispatched.contains(AppAction.SetConnected(ConnectionType.LOCAL)))
-        val loadAll = dispatched.filterIsInstance<AppAction.SendRequest>().single()
+        val requests = dispatched.filterIsInstance<AppAction.SendRequest>()
+        assertEquals(2, requests.size)
+        assertEquals(60, requests[0].request.configureClient.progressUpdatesPerSecond)
+        val loadAll = requests[1]
         assertEquals(Bloop.Entity.ALL, loadAll.request.get.entity)
     }
 

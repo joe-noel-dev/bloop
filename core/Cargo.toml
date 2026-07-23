@@ -63,6 +63,7 @@ ui = [ "dep:iced" ]
 midi = [ "dep:midir" ]
 
 [target.'cfg(target_os = "linux")'.dependencies]
+bluer = { version = "0.17.4", features = ["bluetoothd"] }
 cpal = { version = "0.18.1", features = ["jack"] }
 rppal = "0.22.1"
 
@@ -77,7 +78,7 @@ rustls-platform-verifier = "0.6"
 
 [package.metadata.deb]
 maintainer = "Joe Noël <joe@joenoel.co.uk>"
-depends = ["libc6 (>= 2.7)", "jackd"]
+depends = ["libc6 (>= 2.7)", "jackd", "bluez", "dbus", "libdbus-1-3"]
 section = "sound"
 assets = [
     ["target/release/bloop-core", "usr/bin/", "755"],

@@ -11,6 +11,7 @@ RUN apt-get update && \
     apt-get install -y \
         libasound2-dev \
         libudev-dev \
+        libdbus-1-dev \
         jackd2 \
         libjack-jackd2-dev \
         libgl1-mesa-dev \
