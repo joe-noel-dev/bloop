@@ -89,4 +89,29 @@ final class PreferencesTests: XCTestCase {
         XCTAssertEqual(newState.preferences?.switch.mappings.first?.gesture, .press)
         XCTAssertEqual(newState.preferences?.switch.mappings.first?.action, .togglePlay)
     }
+
+    func testAppearanceModeColorScheme() {
+        XCTAssertNil(AppearanceMode.system.colorScheme)
+        XCTAssertEqual(AppearanceMode.light.colorScheme, .light)
+        XCTAssertEqual(AppearanceMode.dark.colorScheme, .dark)
+    }
+
+    func testAppearanceModeLabels() {
+        XCTAssertEqual(AppearanceMode.system.label, "System")
+        XCTAssertEqual(AppearanceMode.light.label, "Light")
+        XCTAssertEqual(AppearanceMode.dark.label, "Dark")
+    }
+
+    func testAppearanceModeAllCases() {
+        XCTAssertEqual(AppearanceMode.allCases.count, 3)
+        XCTAssertTrue(AppearanceMode.allCases.contains(.system))
+        XCTAssertTrue(AppearanceMode.allCases.contains(.light))
+        XCTAssertTrue(AppearanceMode.allCases.contains(.dark))
+    }
+
+    func testAppearanceModeRawValues() {
+        XCTAssertEqual(AppearanceMode.system.rawValue, "system")
+        XCTAssertEqual(AppearanceMode.light.rawValue, "light")
+        XCTAssertEqual(AppearanceMode.dark.rawValue, "dark")
+    }
 }
