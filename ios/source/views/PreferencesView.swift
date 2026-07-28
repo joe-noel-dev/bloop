@@ -8,6 +8,7 @@ struct PreferencesView: View {
     var dispatch: Dispatch
     var onDismiss: () -> Void
 
+    @AppStorage("appearanceMode") private var appearanceMode = AppearanceMode.system
     @State private var editedPreferences: Bloop_Preferences
     @State private var showingSaveConfirmation = false
     @State private var isSaving = false
@@ -32,6 +33,7 @@ struct PreferencesView: View {
     var body: some View {
         NavigationStack {
             Form {
+                appearanceSection
                 audioStatusSection
                 audioSection
                 midiSection
@@ -82,6 +84,18 @@ Button("Save") {
             } message: {
                 Text("Preferences have been saved successfully.")
             }
+        }
+    }
+
+    @ViewBuilder
+    private var appearanceSection: some View {
+        Section(header: Text("Appearance")) {
+            Picker("Color Scheme", selection: $appearanceMode) {
+                ForEach(AppearanceMode.allCases, id: \.self) { mode in
+                    Text(mode.label).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
         }
     }
 
