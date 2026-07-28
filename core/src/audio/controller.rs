@@ -24,6 +24,9 @@ use std::{
 };
 use tokio::sync::broadcast;
 
+const SCHEDULER_TICK_RATE_HZ: f64 = 60.0;
+const PLAYBACK_START_LOOKAHEAD_SECONDS: f64 = 0.05;
+
 /// Tracks whether the audio backend is healthy, stopped, or failed to initialise.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AudioEngineState {
@@ -118,7 +121,7 @@ fn build_audio_engine(preferences: &AudioPreferences, use_dummy_audio: bool) -> 
             main_splitters: HashMap::new(),
             sequencer: Sequencer::default(),
             realtime_process,
-            tick_interval: tokio::time::interval(Duration::from_secs_f64(1.0 / 60.0)),
+            tick_interval: tokio::time::interval(Duration::from_secs_f64(1.0 / SCHEDULER_TICK_RATE_HZ)),
             output_channel_count,
             output_sample_rate,
         },
@@ -398,7 +401,10 @@ impl AudioController {
             );
         }
 
-        let lookahead = engine.context.current_time().incremented_by_seconds(0.001);
+        let lookahead = engine
+            .context
+            .current_time()
+            .incremented_by_seconds(PLAYBACK_START_LOOKAHEAD_SECONDS);
         engine
             .sequencer
             .play(lookahead, self.project.clone(), &mut engine.samplers);
@@ -562,6 +568,13 @@ mod tests {
     fn test_controller() -> AudioController {
         let (response_tx, _) = broadcast::channel(100);
         AudioController::new(response_tx, default_audio_preferences(), true)
+    }
+
+    #[test]
+    fn playback_lookahead_exceeds_scheduler_interval() {
+        let scheduler_interval = 1.0 / SCHEDULER_TICK_RATE_HZ;
+
+        assert!(PLAYBACK_START_LOOKAHEAD_SECONDS > scheduler_interval);
     }
 
     #[tokio::test]
