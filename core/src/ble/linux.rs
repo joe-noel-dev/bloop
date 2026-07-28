@@ -90,7 +90,7 @@ async fn serve_once(request_tx: mpsc::Sender<Request>, response_tx: broadcast::S
     adapter.set_powered(true).await?;
 
     let advertisement = Advertisement {
-        service_uuids: [service_uuid].into_iter().collect(),
+        service_uuids: std::iter::once(service_uuid).collect(),
         discoverable: Some(true),
         local_name: Some("Bloop".to_string()),
         ..Default::default()
