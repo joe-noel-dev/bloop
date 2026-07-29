@@ -12,6 +12,10 @@ A looping audio workstation that runs on Raspberry Pi, controlled via iOS app or
 
 Each component has its own README with build and run instructions.
 
+## Releasing
+
+Follow the [release checklist](docs/RELEASING.md).
+
 ## Learn More
 
 Read the [blog post](https://www.joenoel.co.uk/blog/bloop) for more information about the project.
