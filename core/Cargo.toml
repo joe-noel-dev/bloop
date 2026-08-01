@@ -73,7 +73,7 @@ cpal = { version = "0.17.1" }
 android_logger = "0.15.1"
 ndk-context = "0.1.1"
 jni = { version = "0.21", default-features = false }
-rustls-platform-verifier = "0.6"
+rustls-platform-verifier = "0.7"
 
 [package.metadata.deb]
 maintainer = "Joe Noël <joe@joenoel.co.uk>"
