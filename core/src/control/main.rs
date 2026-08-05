@@ -13,7 +13,7 @@ use crate::{
     switch,
 };
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use log::{error, info, warn};
 use std::{sync::Arc, time::Duration};
 use tokio::{
@@ -192,8 +192,7 @@ impl MainController {
             self.project_store
                 .remove_project(&remove_project_request.project_id, &removal_targets)
                 .await?;
-            let projects = self.project_store.projects().await?;
-            self.send_response(Response::default().with_projects(&projects));
+            self.send_response(self.projects_response().await?);
         }
 
         if let Some(duplicate_project_request) = request.duplicate_project.as_ref() {
@@ -307,6 +306,28 @@ impl MainController {
         }
     }
 
+    async fn projects_response(&self) -> anyhow::Result<Response> {
+        let projects = self.project_store.projects().await?;
+        let (cloud_projects, cloud_available) = match self.project_store.cloud_projects().await {
+            Ok(cloud_projects) => (cloud_projects, true),
+            Err(error) => {
+                warn!("Error getting cloud projects: {error}");
+                (vec![], false)
+            }
+        };
+        let snapshot = ProjectsSnapshot {
+            local_projects: projects.clone(),
+            cloud_projects: cloud_projects.clone(),
+            cloud_available,
+            ..Default::default()
+        };
+
+        Ok(Response::default()
+            .with_projects(&projects)
+            .with_cloud_projects(&cloud_projects)
+            .with_projects_snapshot(snapshot))
+    }
+
     async fn handle_get(&mut self, get_request: &GetRequest) -> anyhow::Result<()> {
         let entity = match get_request.entity.enum_value() {
             Ok(entity) => entity,
@@ -341,21 +362,7 @@ impl MainController {
                 )
             }
             Entity::PROJECTS => {
-                let projects = self.project_store.projects().await?;
-
-                let cloud_projects = match self.project_store.cloud_projects().await {
-                    Ok(cloud_projects) => cloud_projects,
-                    Err(error) => {
-                        warn!("Error getting cloud projects: {error}");
-                        vec![]
-                    }
-                };
-
-                self.send_response(
-                    Response::default()
-                        .with_projects(&projects)
-                        .with_cloud_projects(&cloud_projects),
-                );
+                self.send_response(self.projects_response().await?);
             }
             Entity::WAVEFORM => {
                 self.waveform_store.get_waveform(get_request.id, &self.samples_cache)?;
@@ -562,6 +569,53 @@ impl MainController {
     }
 
     async fn handle_load(&mut self, request: &LoadProjectRequest) -> anyhow::Result<Project> {
+        let local_available = self.local_backend.read_project(&request.project_id).await.is_ok();
+        let is_cloud_mirror = self.project_store.is_cloud_mirror(&request.project_id);
+
+        match self.remote_backend.get_projects().await {
+            Ok(projects) if projects.iter().any(|project| project.id == request.project_id) => {
+                self.send_response(Response::default().with_project_sync(&ProjectSyncResponse {
+                    project_id: request.project_id.clone(),
+                    status: SyncStatus::SYNC_STATUS_IN_PROGRESS.into(),
+                    ..Default::default()
+                }));
+                let user_id = self.user.as_ref().map(|user| user.id.as_str()).unwrap_or_default();
+
+                if let Err(error) = self
+                    .project_store
+                    .refresh_from_cloud(&request.project_id, user_id)
+                    .await
+                {
+                    self.send_response(Response::default().with_project_sync(&ProjectSyncResponse {
+                        project_id: request.project_id.clone(),
+                        status: SyncStatus::SYNC_STATUS_ERROR.into(),
+                        ..Default::default()
+                    }));
+                    if !local_available {
+                        return Err(error).context("Unable to download cloud project");
+                    }
+                    warn!("Unable to refresh cloud project; opening local copy: {error}");
+                } else {
+                    self.send_response(Response::default().with_project_sync(&ProjectSyncResponse {
+                        project_id: request.project_id.clone(),
+                        status: SyncStatus::SYNC_STATUS_COMPLETE.into(),
+                        ..Default::default()
+                    }));
+                }
+            }
+            Ok(_) => {}
+            Err(error) if local_available && is_cloud_mirror => {
+                warn!("Cloud unavailable; opening local project: {error}");
+                self.send_response(Response::default().with_project_sync(&ProjectSyncResponse {
+                    project_id: request.project_id.clone(),
+                    status: SyncStatus::SYNC_STATUS_ERROR.into(),
+                    ..Default::default()
+                }));
+            }
+            Err(_) if local_available => {}
+            Err(error) => return Err(error).context("Cloud unavailable and project is not stored locally"),
+        }
+
         let (project, project_info) = self
             .project_store
             .load(&request.project_id, &mut self.samples_cache)

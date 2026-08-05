@@ -17,6 +17,7 @@ enum Action {
     case setProgress(Bloop_Progress)
     case setProjects([Bloop_ProjectInfo])
     case setCloudProjects([Bloop_ProjectInfo])
+    case setProjectsSnapshot([Bloop_ProjectInfo], [Bloop_ProjectInfo], Bool)
     case setProjectInfo(Bloop_ProjectInfo)
     case setProjectSync(String, Bloop_SyncStatus)
     case dismissProjectSync(String)

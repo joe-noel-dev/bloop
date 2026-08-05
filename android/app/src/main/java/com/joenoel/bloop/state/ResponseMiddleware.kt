@@ -24,11 +24,19 @@ class ResponseMiddleware : AppMiddleware {
             dispatch(AppAction.SetProgress(response.progress))
         }
 
-        if (response.projectsList.isNotEmpty()) {
+        if (response.hasProjectsSnapshot()) {
+            dispatch(
+                AppAction.SetProjectsSnapshot(
+                    response.projectsSnapshot.localProjectsList,
+                    response.projectsSnapshot.cloudProjectsList,
+                    response.projectsSnapshot.cloudAvailable,
+                )
+            )
+        } else if (response.projectsList.isNotEmpty()) {
             dispatch(AppAction.SetProjects(response.projectsList))
         }
 
-        if (response.cloudProjectsList.isNotEmpty()) {
+        if (!response.hasProjectsSnapshot() && response.cloudProjectsList.isNotEmpty()) {
             dispatch(AppAction.SetCloudProjects(response.cloudProjectsList))
         }
 

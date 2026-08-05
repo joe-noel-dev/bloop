@@ -15,6 +15,12 @@ message ProjectInfo {
     string last_saved = 4;
 }
 
+message ProjectsSnapshot {
+    repeated ProjectInfo local_projects = 1;
+    repeated ProjectInfo cloud_projects = 2;
+    bool cloud_available = 3;
+}
+
 message Selections {
     uint64 song = 1;
     uint64 section = 2;
@@ -213,6 +219,7 @@ message Response {
     AudioDevices audio_devices = 15;
     AudioStatus audio_status = 16;
     MidiDevices midi_devices = 17;
+    ProjectsSnapshot projects_snapshot = 18;
 } 
 
 message WaveformResponse {

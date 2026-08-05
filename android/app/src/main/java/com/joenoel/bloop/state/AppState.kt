@@ -25,6 +25,7 @@ data class AppState(
     val servers: List<ServerEndpoint> = emptyList(),
     val projects: List<Bloop.ProjectInfo> = emptyList(),
     val cloudProjects: List<Bloop.ProjectInfo> = emptyList(),
+    val cloudProjectsAvailable: Boolean = false,
     val project: Bloop.Project = emptyProject(),
     val projectInfo: Bloop.ProjectInfo? = null,
     val projectSyncStatuses: Map<String, Bloop.SyncStatus> = emptyMap(),

@@ -22,6 +22,11 @@ func rootReducer(state: AppState, action: Action) -> AppState {
     case .setCloudProjects(let cloudProjects):
         state.cloudProjects = cloudProjects
 
+    case .setProjectsSnapshot(let projects, let cloudProjects, let cloudAvailable):
+        state.projects = projects
+        state.cloudProjects = cloudProjects
+        state.cloudProjectsAvailable = cloudAvailable
+
     case .setProjectInfo(let projectInfo):
         state.projectInfo = projectInfo
 

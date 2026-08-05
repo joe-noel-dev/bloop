@@ -5,9 +5,10 @@ use crate::{
     samples::SamplesCache,
 };
 use anyhow::{anyhow, Context};
-use log::{debug, error, info, warn};
+use log::{debug, error, info};
 use protobuf::Message;
 use std::{
+    collections::HashSet,
     fs,
     path::{Path, PathBuf},
 };
@@ -20,18 +21,49 @@ pub struct ProjectStore {
     remote_backend: Arc<dyn Backend>,
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum CloudRefresh {
+    Current,
+    Updated,
+}
+
 impl ProjectStore {
     pub fn new(root_directory: &Path, backend: Arc<dyn Backend>, remote_backend: Arc<dyn Backend>) -> Self {
         if !root_directory.exists() {
             fs::create_dir_all(root_directory)
                 .unwrap_or_else(|_| panic!("Couldn't create directory: {}", root_directory.to_str().unwrap()));
         }
+        Self::recover_interrupted_refreshes(root_directory);
 
         Self {
             root_directory: PathBuf::from(root_directory),
             temporary_directory: tempfile::TempDir::new().expect("Unable to create temporary directory"),
             backend,
             remote_backend,
+        }
+    }
+
+    fn recover_interrupted_refreshes(root_directory: &Path) {
+        let Ok(entries) = fs::read_dir(root_directory) else {
+            return;
+        };
+
+        for entry in entries.flatten() {
+            let filename = entry.file_name().to_string_lossy().to_string();
+            if filename.starts_with(".cloud-project-") {
+                let _ = fs::remove_dir_all(entry.path());
+                continue;
+            }
+
+            let Some(project_id) = filename.strip_prefix('.').and_then(|name| name.strip_suffix(".backup")) else {
+                continue;
+            };
+            let destination = root_directory.join(project_id);
+            if destination.exists() {
+                let _ = fs::remove_dir_all(entry.path());
+            } else {
+                let _ = fs::rename(entry.path(), destination);
+            }
         }
     }
 
@@ -71,7 +103,8 @@ impl ProjectStore {
     ) -> anyhow::Result<(Project, ProjectInfo)> {
         let (project, project_info) = self.read_project_file(project_id).await?;
         info!("Project loaded: id = {}", project_info.id);
-        self.load_samples_into_cache(project_id, samples_cache).await?;
+        self.load_samples_into_cache(project_id, &project, samples_cache)
+            .await?;
         self.save_last_project(project_id).await?;
         Ok((project, project_info))
     }
@@ -102,6 +135,127 @@ impl ProjectStore {
         projects_from_backend(self.remote_backend.clone()).await
     }
 
+    pub fn is_cloud_mirror(&self, project_id: &str) -> bool {
+        self.directory_for_project(project_id).join("cloud_revision").is_file()
+    }
+
+    pub async fn refresh_from_cloud(&self, project_id: &str, user_id: &str) -> anyhow::Result<CloudRefresh> {
+        let cloud_project = self
+            .remote_backend
+            .read_project(project_id)
+            .await
+            .context("Reading cloud project metadata")?;
+        let cloud_revision = cloud_project.updated.to_rfc3339();
+
+        if self.cloud_revision(project_id).await.as_deref() == Some(cloud_revision.as_str())
+            && self.backend.read_project(project_id).await.is_ok()
+        {
+            return Ok(CloudRefresh::Current);
+        }
+
+        let project_bytes = self
+            .remote_backend
+            .read_project_file(project_id)
+            .await
+            .context("Downloading cloud project")?;
+        let project = Project::parse_from_bytes(&project_bytes).context("Parsing cloud project")?;
+        let referenced_samples = project
+            .songs
+            .iter()
+            .filter_map(|song| song.sample.as_ref().map(|sample| sample.id.to_string()))
+            .collect::<HashSet<_>>();
+        let cloud_samples = self
+            .remote_backend
+            .get_samples(project_id)
+            .await
+            .context("Listing cloud project audio")?;
+
+        let staging_root = tempfile::Builder::new()
+            .prefix(".cloud-project-")
+            .tempdir_in(&self.root_directory)
+            .context("Creating cloud project staging directory")?;
+        let staging_backend = crate::backend::FilesystemBackend::new(staging_root.path());
+        staging_backend
+            .create_project(user_id, Some(project_id.to_string()))
+            .await?;
+        staging_backend
+            .update_project_name(project_id, &cloud_project.name)
+            .await?;
+
+        for sample_id in &referenced_samples {
+            let cloud_sample = cloud_samples
+                .iter()
+                .find(|sample_name| *sample_name == sample_id)
+                .with_context(|| format!("Cloud project is missing referenced audio: {sample_id}"))?;
+            let sample_bytes = self
+                .remote_backend
+                .read_sample(project_id, cloud_sample)
+                .await
+                .with_context(|| format!("Downloading cloud project audio: {sample_id}"))?;
+            staging_backend
+                .add_project_sample(project_id, &sample_bytes, sample_id)
+                .await?;
+        }
+
+        staging_backend.update_project_file(project_id, &project_bytes).await?;
+        tokio::fs::write(
+            staging_root.path().join(project_id).join("cloud_revision"),
+            cloud_revision.as_bytes(),
+        )
+        .await
+        .context("Writing cloud project revision")?;
+
+        self.replace_local_project(project_id, staging_root.path().join(project_id))
+            .await?;
+        Ok(CloudRefresh::Updated)
+    }
+
+    async fn cloud_revision(&self, project_id: &str) -> Option<String> {
+        tokio::fs::read_to_string(self.directory_for_project(project_id).join("cloud_revision"))
+            .await
+            .ok()
+    }
+
+    fn directory_for_project(&self, project_id: &str) -> PathBuf {
+        self.root_directory.join(project_id)
+    }
+
+    async fn replace_local_project(&self, project_id: &str, staged_project: PathBuf) -> anyhow::Result<()> {
+        let destination = self.directory_for_project(project_id);
+        let backup = self.root_directory.join(format!(".{project_id}.backup"));
+
+        if backup.exists() {
+            if destination.exists() {
+                tokio::fs::remove_dir_all(&backup)
+                    .await
+                    .context("Removing stale project backup")?;
+            } else {
+                tokio::fs::rename(&backup, &destination)
+                    .await
+                    .context("Recovering interrupted project refresh")?;
+            }
+        }
+        if destination.exists() {
+            tokio::fs::rename(&destination, &backup)
+                .await
+                .context("Backing up local project before refresh")?;
+        }
+
+        if let Err(error) = tokio::fs::rename(&staged_project, &destination).await {
+            if backup.exists() {
+                let _ = tokio::fs::rename(&backup, &destination).await;
+            }
+            return Err(error).context("Installing refreshed cloud project");
+        }
+
+        if backup.exists() {
+            tokio::fs::remove_dir_all(&backup)
+                .await
+                .context("Removing replaced local project")?;
+        }
+        Ok(())
+    }
+
     pub async fn remove_project(&self, project_id: &str, targets: &[ProjectRemovalTarget]) -> anyhow::Result<()> {
         let remove_local = targets.is_empty() || targets.contains(&ProjectRemovalTarget::PROJECT_REMOVAL_TARGET_LOCAL);
         let remove_remote =
@@ -111,25 +265,18 @@ impl ProjectStore {
             anyhow::bail!("No project removal targets specified");
         }
 
+        if remove_remote {
+            self.remote_backend
+                .remove_project(project_id)
+                .await
+                .context(format!("Removing remote project: {project_id}"))?;
+        }
+
         if remove_local {
             self.backend
                 .remove_project(project_id)
                 .await
                 .context(format!("Removing local project: {project_id}"))?;
-        }
-
-        if remove_remote && !remove_local {
-            self.remote_backend
-                .remove_project(project_id)
-                .await
-                .context(format!("Removing remote project: {project_id}"))?;
-        } else if remove_remote {
-            match self.remote_backend.remove_project(project_id).await {
-                Ok(_) => info!("Project removed from remote backend: id = {project_id}"),
-                Err(e) => {
-                    warn!("Failed to remove project from remote backend: {e}");
-                }
-            }
         }
 
         info!("Project removed: id = {project_id}, targets = {targets:?}");
@@ -196,7 +343,7 @@ impl ProjectStore {
 
             let sample_id = samples
                 .iter()
-                .find(|sample_name| sample_name.contains(&sample.id.to_string()));
+                .find(|sample_name| *sample_name == &sample.id.to_string());
 
             if sample_id.is_some() {
                 continue;
@@ -232,6 +379,7 @@ impl ProjectStore {
     async fn load_samples_into_cache(
         &mut self,
         project_id: &str,
+        project: &Project,
         samples_cache: &mut SamplesCache,
     ) -> anyhow::Result<()> {
         let samples = self
@@ -240,8 +388,18 @@ impl ProjectStore {
             .await
             .context("Failed to get samples from cache")?;
 
-        for sample_id_str in samples.iter() {
-            let sample_id = match ID::from_str(sample_id_str) {
+        let referenced_sample_ids = project
+            .songs
+            .iter()
+            .filter_map(|song| song.sample.as_ref().map(|sample| sample.id))
+            .collect::<HashSet<_>>();
+
+        for sample_id in &referenced_sample_ids {
+            let sample_id_str = samples
+                .iter()
+                .find(|sample_name| *sample_name == &sample_id.to_string())
+                .with_context(|| format!("Project is missing referenced audio: {sample_id}"))?;
+            let parsed_sample_id = match ID::from_str(sample_id_str) {
                 std::result::Result::Ok(id) => id,
                 Err(error) => {
                     error!("Invalid sample ID ({sample_id_str}): {error}");
@@ -249,12 +407,12 @@ impl ProjectStore {
                 }
             };
 
-            if samples_cache.get_sample(sample_id).is_some() {
-                debug!("Sample already in cache: {sample_id}");
+            if samples_cache.get_sample(parsed_sample_id).is_some() {
+                debug!("Sample already in cache: {parsed_sample_id}");
                 continue;
             }
 
-            debug!("Fetching sample: {sample_id}");
+            debug!("Fetching sample: {parsed_sample_id}");
 
             let sample_bytes = self
                 .backend
@@ -262,7 +420,7 @@ impl ProjectStore {
                 .await
                 .context(format!("Error getting project file: {sample_id_str}"))?;
 
-            let sample_path = self.temporary_directory.path().join(format!("{sample_id}.wav"));
+            let sample_path = self.temporary_directory.path().join(format!("{parsed_sample_id}.wav"));
 
             tokio::fs::write(&sample_path, &sample_bytes)
                 .await
@@ -271,9 +429,11 @@ impl ProjectStore {
             debug!("Adding sample to cache: {sample_id}");
 
             samples_cache
-                .add_sample_from_file(sample_id, AudioFileFormat::WAV, &sample_path)
+                .add_sample_from_file(parsed_sample_id, AudioFileFormat::WAV, &sample_path)
                 .await?;
         }
+
+        samples_cache.retain(&referenced_sample_ids);
 
         Ok(())
     }
@@ -298,12 +458,17 @@ async fn projects_from_backend(backend: Arc<dyn Backend>) -> anyhow::Result<Vec<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::backend::DbProject;
-    use std::sync::Mutex;
+    use crate::{backend::DbProject, bloop::Sample};
+    use protobuf::Message;
+    use std::sync::{
+        atomic::{AtomicBool, Ordering},
+        Mutex,
+    };
 
     #[derive(Default)]
     struct RecordingBackend {
         removed_projects: Mutex<Vec<String>>,
+        fail_remove: AtomicBool,
     }
 
     #[async_trait::async_trait]
@@ -342,6 +507,9 @@ mod tests {
         }
 
         async fn remove_project(&self, project_id: &str) -> anyhow::Result<()> {
+            if self.fail_remove.load(Ordering::Relaxed) {
+                anyhow::bail!("Configured removal failure");
+            }
             self.removed_projects.lock().unwrap().push(project_id.to_string());
             Ok(())
         }
@@ -441,6 +609,128 @@ mod tests {
         assert_eq!(
             remote_backend.removed_projects.lock().unwrap().as_slice(),
             ["project-id"]
+        );
+    }
+
+    #[tokio::test]
+    async fn failed_remote_removal_preserves_local_project() {
+        let local_backend = Arc::new(RecordingBackend::default());
+        let remote_backend = Arc::new(RecordingBackend::default());
+        remote_backend.fail_remove.store(true, Ordering::Relaxed);
+        let root_directory = tempfile::tempdir().unwrap();
+        let store = ProjectStore::new(root_directory.path(), local_backend.clone(), remote_backend);
+
+        let result = store
+            .remove_project(
+                "project-id",
+                &[
+                    ProjectRemovalTarget::PROJECT_REMOVAL_TARGET_LOCAL,
+                    ProjectRemovalTarget::PROJECT_REMOVAL_TARGET_REMOTE,
+                ],
+            )
+            .await;
+
+        assert!(result.is_err());
+        assert!(local_backend.removed_projects.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn project_store_recovers_interrupted_refresh_backup() {
+        let root_directory = tempfile::tempdir().unwrap();
+        let backup = root_directory.path().join(".project-id.backup");
+        fs::create_dir_all(&backup).unwrap();
+        fs::write(backup.join("project.bin"), b"project").unwrap();
+
+        let _store = ProjectStore::new(
+            root_directory.path(),
+            Arc::new(RecordingBackend::default()),
+            Arc::new(RecordingBackend::default()),
+        );
+
+        assert!(!backup.exists());
+        assert_eq!(
+            fs::read(root_directory.path().join("project-id/project.bin")).unwrap(),
+            b"project"
+        );
+    }
+
+    fn project_bytes_with_sample(sample_id: ID) -> Vec<u8> {
+        let mut project = Project::empty().with_songs(1, 1);
+        project.songs[0].sample = Some(Sample {
+            id: sample_id,
+            ..Default::default()
+        })
+        .into();
+        project.write_to_bytes().unwrap()
+    }
+
+    #[tokio::test]
+    async fn cloud_refresh_is_transactional_and_only_copies_referenced_audio() {
+        let local_root = tempfile::tempdir().unwrap();
+        let remote_root = tempfile::tempdir().unwrap();
+        let local_backend = Arc::new(crate::backend::FilesystemBackend::new(local_root.path()));
+        let remote_backend = Arc::new(crate::backend::FilesystemBackend::new(remote_root.path()));
+        remote_backend
+            .create_project("user-id", Some("project-id".to_string()))
+            .await
+            .unwrap();
+        let original_bytes = project_bytes_with_sample(42);
+        remote_backend
+            .add_project_sample("project-id", b"referenced", "42")
+            .await
+            .unwrap();
+        remote_backend
+            .add_project_sample("project-id", b"stale", "77")
+            .await
+            .unwrap();
+        remote_backend
+            .update_project_file("project-id", &original_bytes)
+            .await
+            .unwrap();
+        let store = ProjectStore::new(local_root.path(), local_backend.clone(), remote_backend.clone());
+
+        assert_eq!(
+            store.refresh_from_cloud("project-id", "user-id").await.unwrap(),
+            CloudRefresh::Updated
+        );
+        assert_eq!(local_backend.get_samples("project-id").await.unwrap(), ["42"]);
+
+        let broken_bytes = project_bytes_with_sample(99);
+        remote_backend
+            .update_project_file("project-id", &broken_bytes)
+            .await
+            .unwrap();
+        assert!(store.refresh_from_cloud("project-id", "user-id").await.is_err());
+        assert_eq!(
+            local_backend.read_project_file("project-id").await.unwrap(),
+            original_bytes
+        );
+        assert_eq!(local_backend.get_samples("project-id").await.unwrap(), ["42"]);
+    }
+
+    #[tokio::test]
+    async fn unchanged_cloud_revision_uses_existing_local_mirror() {
+        let local_root = tempfile::tempdir().unwrap();
+        let remote_root = tempfile::tempdir().unwrap();
+        let local_backend = Arc::new(crate::backend::FilesystemBackend::new(local_root.path()));
+        let remote_backend = Arc::new(crate::backend::FilesystemBackend::new(remote_root.path()));
+        remote_backend
+            .create_project("user-id", Some("project-id".to_string()))
+            .await
+            .unwrap();
+        remote_backend
+            .update_project_file("project-id", &Project::empty().write_to_bytes().unwrap())
+            .await
+            .unwrap();
+        let store = ProjectStore::new(local_root.path(), local_backend, remote_backend);
+        store.refresh_from_cloud("project-id", "user-id").await.unwrap();
+        tokio::fs::remove_file(remote_root.path().join("project-id/project.bin"))
+            .await
+            .unwrap();
+
+        assert_eq!(
+            store.refresh_from_cloud("project-id", "user-id").await.unwrap(),
+            CloudRefresh::Current
         );
     }
 }

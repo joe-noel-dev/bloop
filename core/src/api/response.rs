@@ -2,7 +2,7 @@
 
 use crate::bloop::{
     AudioDevices, AudioStatus, MidiDevices, PlaybackState, Progress, Project, ProjectInfo, ProjectSyncResponse,
-    UploadAck, User, UserStatusResponse, WaveformResponse,
+    ProjectsSnapshot, UploadAck, User, UserStatusResponse, WaveformResponse,
 };
 
 impl crate::bloop::Response {
@@ -23,6 +23,11 @@ impl crate::bloop::Response {
 
     pub fn with_cloud_projects(mut self, projects: &[ProjectInfo]) -> Self {
         self.cloud_projects = projects.to_vec();
+        self
+    }
+
+    pub fn with_projects_snapshot(mut self, snapshot: ProjectsSnapshot) -> Self {
+        self.projects_snapshot = Some(snapshot).into();
         self
     }
 
