@@ -12,7 +12,7 @@ class Discovery: NSObject {
     private var state: NWBrowser.State? = nil
 
     override init() {
-        let parameters = NWParameters()
+        let parameters = NWParameters.tcp
         parameters.includePeerToPeer = true
 
         let descriptor = NWBrowser.Descriptor.bonjour(type: "_bloop._tcp", domain: "local.")
