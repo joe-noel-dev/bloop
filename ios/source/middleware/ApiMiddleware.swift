@@ -10,10 +10,21 @@ class ApiMiddleware: Middleware {
 
     func execute(state: AppState, action: Action) {
         if case .connect(let server) = action {
+            core.stopScan()
+            self.dispatch?(.setScanning(false))
             core.connect(server)
         }
 
+        if case .connectLocal = action {
+            core.stopScan()
+            self.dispatch?(.setScanning(false))
+        }
+
         if case .disconnect = action {
+            core.disconnect()
+        }
+
+        if case .lifecycleDisconnect = action {
             core.disconnect()
         }
 
@@ -22,6 +33,16 @@ class ApiMiddleware: Middleware {
         }
 
         if case .restartScan = action {
+            self.dispatch?(.setDiscoveredServers([]))
+            core.restartScan()
+        }
+
+        if case .pauseDiscovery = action {
+            core.stopScan()
+            self.dispatch?(.setScanning(false))
+        }
+
+        if case .resumeDiscovery = action, state.connected == nil {
             self.dispatch?(.setDiscoveredServers([]))
             core.restartScan()
         }
