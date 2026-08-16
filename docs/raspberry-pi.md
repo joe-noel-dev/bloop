@@ -1,13 +1,32 @@
-# Run server on Raspberry Pi
+# Run Bloop Core on Raspberry Pi
+
+## Current `bloopi` kiosk configuration
+
+`bloopi` runs Raspberry Pi OS with the Labwc Wayland desktop. Bloop Core is
+started after the desktop session is available, rather than by a system-wide
+systemd unit.
+
+The installed binary is `/usr/bin/bloop-core` (there is no
+`/usr/local/bloop-core` on the device). Labwc starts it from
+`/home/joe/.config/labwc/autostart`:
+
+```sh
+wlr-randr --output HDMI-A-1 --scale 1.8
+sleep 2
+export WGPU_BACKEND=vulcan
+bloop-core
+```
+
+The process uses ALSA directly: it has `/dev/snd/pcmC3D0p` (the Scarlett 4i4)
+open. `jackd` is not installed or running, so it is not required for this
+configuration. PipeWire and WirePlumber may run as part of the desktop session,
+but Bloop Core is not routing audio through them.
 
 ## Set up Linux
 
 - Use imager to enable ssh & add Wi-Fi credentials
 - Copy key using `ssh-copy-id -i ~/.ssh/key.pub user@server`
 - `sudo apt-get update`
-- `sudo apt-get install -y jackd`
-- Add user to realtime group. Much of this may have been done by jackd
-  - [https://jackaudio.org/faq/linux_rt_config.html](https://jackaudio.org/faq/linux_rt_config.html)
 - Create the configuration directory (`~/bloop`)
 - Copy settings
   - `rsync -r ~/bloop [user]@[remote]:[remote/path/to/home]`
@@ -46,53 +65,33 @@ Cross compile from Mac:
 ./scripts/cross-compile.sh
 ```
 
-Install to Raspberry Pi:
+Install the binary on the current kiosk:
 
 ```sh
-scp ./target/release/bloop-core joe@bloopi.local:/home/joe/
+scp ./target/release/bloop-core joe@bloopi.local:/home/joe/bloop-core
+ssh joe@bloopi.local 'sudo install -m 755 /home/joe/bloop-core /usr/bin/bloop-core'
 ```
 
-## `/home/joe/.config/openbox/autostart`
+Restart the desktop session or reboot to pick up the new binary.
+
+## `/home/joe/.config/labwc/autostart`
 
 ```sh
-#!/bin/bash
-
-xset -dpms
-xset s off
-xset s noblank
-
-
-cd /home/joe/bloop
-/usr/bin/bloop-core &
+wlr-randr --output HDMI-A-1 --scale 1.8
+sleep 2
+export WGPU_BACKEND=vulcan
+bloop-core
 ```
 
-## `/etc/systemd/system/jackd.service`
+Do not background the last command: Labwc keeps it as part of its session and
+will terminate it when the desktop session ends.
 
-```toml
-[Unit]
-Description=JACK Audio Server
-After=sound.target local-fs.target
+## Optional JACK configuration
 
-[Service]
-Type=simple
-User=joe
-ExecStart=/usr/bin/jackd -R -P95 -dalsa -dhw:Pro -r44100 -p512
-Restart=on-failure
-LimitRTPRIO=95
-LimitMEMLOCK=infinity
-Environment=JACK_NO_AUDIO_RESERVATION=1
-
-[Install]
-WantedBy=default.target
-```
-
-## `/etc/lightdm/lightdm.conf`
-
-```toml
-[Seat:*]
-autologin-user=joe
-autologin-session=openbox
-```
+JACK remains an optional Linux backend. Install and configure `jackd` only when
+the Bloop audio preference `useJack` is enabled. With its default value of
+`false`, Bloop Core selects CPAL's default host, which is direct ALSA on the
+current kiosk.
 
 ## Preferences `~/bloop/preferences.json`
 
