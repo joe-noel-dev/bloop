@@ -56,6 +56,9 @@ export const createBackend = () => {
     loadProject: async (projectId: string) =>
       await loadProject(pocketbase, projectId),
 
+    fetchProjectInfo: async (projectId: string) =>
+      await fetchProjectInfo(pocketbase, projectId),
+
     createProject: async () => await createProject(pocketbase),
 
     removeProject: async (projectId: string) =>
@@ -140,6 +143,14 @@ const loadProject = async (
   const project = Project.decode(new Uint8Array(projectData));
 
   return [project, projectInfo];
+};
+
+const fetchProjectInfo = async (
+  pocketbase: PocketBase,
+  projectId: string
+): Promise<DbProject> => {
+  const record = await pocketbase.collection('projects').getOne(projectId);
+  return toDbProject(record);
 };
 
 const updateProject = async (

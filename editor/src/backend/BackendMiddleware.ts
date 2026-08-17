@@ -220,13 +220,13 @@ export const backendMiddleware =
           api.dispatch(setSaveStateAction('saving'));
 
           try {
+            pendingRequests.add(requestId);
             await removeUnusedSamples(
               state.project,
               state.projectInfo,
               backend
             );
 
-            pendingRequests.add(requestId);
             await backend.updateProject(projectId, state.project);
             api.dispatch(setSaveStateAction('saved'));
 
@@ -378,26 +378,30 @@ const getTempoFromFileName = (fileName: string): number => {
   return bpm;
 };
 
-const getSamplesInProject = (project: Project): Set<ID> => {
-  const samples = new Set<ID>();
+const getSampleIdsInProject = (project: Project): Set<string> => {
+  const sampleIds = new Set<string>();
   for (const song of project.songs) {
     if (song.sample) {
-      samples.add(song.sample.id);
+      sampleIds.add(song.sample.id.toString());
     }
   }
-  return samples;
+  return sampleIds;
 };
 
-const removeUnusedSamples = async (
+export const removeUnusedSamples = async (
   project: Project,
   projectInfo: DbProject,
-  backend: Backend
+  backend: Pick<
+    Backend,
+    'fetchProjectInfo' | 'getIdFromSampleFileName' | 'removeSample'
+  >
 ) => {
-  const samplesInUse = getSamplesInProject(project);
+  const sampleIdsInUse = getSampleIdsInProject(project);
+  const currentProjectInfo = await backend.fetchProjectInfo(projectInfo.id);
 
-  for (const sampleIdString in projectInfo.samples) {
+  for (const sampleIdString of currentProjectInfo.samples) {
     const sampleId = backend.getIdFromSampleFileName(sampleIdString);
-    if (sampleId && !samplesInUse.has(sampleId)) {
+    if (sampleId && !sampleIdsInUse.has(sampleId.toString())) {
       console.debug(`Removing unused sample ${sampleId} from backend`);
       await backend.removeSample(projectInfo.id, sampleId);
     }
