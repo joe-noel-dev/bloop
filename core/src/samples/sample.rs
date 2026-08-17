@@ -4,6 +4,7 @@ use log::error;
 
 pub struct Sample {
     path: PathBuf,
+    tmp_path: PathBuf,
     name: String,
     cached: bool,
 }
@@ -12,6 +13,7 @@ impl Sample {
     pub fn new(name: &str) -> Self {
         Self {
             path: PathBuf::new(),
+            tmp_path: PathBuf::new(),
             name: String::from(name),
             cached: false,
         }
@@ -31,6 +33,14 @@ impl Sample {
 
     pub fn set_cache_location(&mut self, path: &Path) {
         self.path = PathBuf::from(path);
+    }
+
+    pub fn get_tmp_path(&self) -> &Path {
+        self.tmp_path.as_path()
+    }
+
+    pub fn set_tmp_location(&mut self, path: &Path) {
+        self.tmp_path = PathBuf::from(path);
     }
 
     pub fn get_name(&self) -> &str {
