@@ -72,7 +72,24 @@ scp ./target/release/bloop-core joe@bloopi.local:/home/joe/bloop-core
 ssh joe@bloopi.local 'sudo install -m 755 /home/joe/bloop-core /usr/bin/bloop-core'
 ```
 
-Restart the desktop session or reboot to pick up the new binary.
+Restart Bloop Core to pick up the new binary; a full Raspberry Pi reboot is not
+needed. In VS Code, run `Core | Restart on bloopi` (or `Core | Build and install
+on bloopi`, which includes the restart).
+
+## Restart Bloop Core without rebooting the Raspberry Pi
+
+Bloop Core is launched by Labwc rather than a systemd service. Restarting it
+requires retaining the running process's Wayland environment, then starting the
+replacement in that same desktop session:
+
+```sh
+ssh joe@bloopi.local 'pid=$(pgrep -xo bloop-core) || { echo "bloop-core is not running"; exit 1; }; wayland_display=$(strings /proc/$pid/environ | sed -n "s/^WAYLAND_DISPLAY=//p"); xdg_runtime_dir=$(strings /proc/$pid/environ | sed -n "s/^XDG_RUNTIME_DIR=//p"); kill $pid; while kill -0 $pid 2>/dev/null; do sleep 0.1; done; XDG_RUNTIME_DIR=$xdg_runtime_dir WAYLAND_DISPLAY=$wayland_display nohup /usr/bin/bloop-core >> /home/joe/.xsession-errors 2>&1 < /dev/null &'
+```
+
+This terminates and relaunches only `bloop-core`; it leaves Labwc, the kiosk
+session, and the Raspberry Pi itself running. The command exits with an error
+if Bloop Core is not already running, because its Wayland session details would
+not be available to reuse.
 
 ## `/home/joe/.config/labwc/autostart`
 
@@ -85,6 +102,22 @@ bloop-core
 
 Do not background the last command: Labwc keeps it as part of its session and
 will terminate it when the desktop session ends.
+
+## View kiosk logs over SSH
+
+Labwc launches Bloop Core directly, so its standard output and error are written
+to `/home/joe/.xsession-errors`, not the systemd journal. Follow the log from
+another machine with:
+
+```sh
+ssh -t joe@bloopi.local 'tail -F ~/.xsession-errors'
+```
+
+To show only Bloop-related output:
+
+```sh
+ssh -t joe@bloopi.local 'tail -F ~/.xsession-errors | grep --line-buffered -i bloop'
+```
 
 ## Optional JACK configuration
 

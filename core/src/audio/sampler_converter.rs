@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::mpsc as std_mpsc};
 
 use anyhow::Result;
 use futures_channel::mpsc;
@@ -13,26 +13,34 @@ pub struct SampleConversionResult {
     pub result: Result<OwnedAudioBuffer>,
 }
 
+struct SampleConversionJob {
+    sample_id: ID,
+    sample_path: PathBuf,
+}
+
 pub struct SampleConverter {
-    complete_tx: mpsc::Sender<SampleConversionResult>,
-    target_sample_rate: usize,
+    job_tx: std_mpsc::Sender<SampleConversionJob>,
 }
 
 impl SampleConverter {
     pub fn new(complete_tx: mpsc::Sender<SampleConversionResult>, target_sample_rate: usize) -> Self {
-        Self {
-            complete_tx,
-            target_sample_rate,
-        }
+        let (job_tx, job_rx) = std_mpsc::channel::<SampleConversionJob>();
+
+        std::thread::spawn(move || {
+            let mut complete_tx = complete_tx;
+            while let Ok(job) = job_rx.recv() {
+                let result = convert_sample(&job.sample_path, target_sample_rate);
+                let _ = complete_tx.try_send(SampleConversionResult {
+                    sample_id: job.sample_id,
+                    result,
+                });
+            }
+        });
+
+        Self { job_tx }
     }
 
     pub fn convert(&self, sample_id: ID, sample_path: PathBuf) {
-        let mut complete_tx = self.complete_tx.clone();
-        let sample_rate = self.target_sample_rate;
-
-        std::thread::spawn(move || {
-            let result = convert_sample(&sample_path, sample_rate);
-            let _ = complete_tx.try_send(SampleConversionResult { sample_id, result });
-        });
+        let _ = self.job_tx.send(SampleConversionJob { sample_id, sample_path });
     }
 }
