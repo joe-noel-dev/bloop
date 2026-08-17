@@ -17,7 +17,9 @@ use crate::{
 use futures::StreamExt;
 use futures_channel::mpsc;
 use log::{error, info, warn};
-use rawdio::{connect_nodes, create_engine_with_options, AudioBuffer, Context, EngineOptions, Mixer, Sampler};
+use rawdio::{
+    connect_nodes, create_engine_with_options, AudioBuffer, Context, EngineOptions, Gain, Level, Mixer, Sampler,
+};
 use std::{
     collections::{HashMap, HashSet},
     time::Duration,
@@ -45,6 +47,7 @@ struct AudioEngine {
     metronome: Metronome,
     samplers: HashMap<ID, Sampler>,
     main_splitters: HashMap<ID, Mixer>,
+    main_gains: HashMap<ID, Gain>,
     sequencer: Sequencer,
     #[allow(dead_code)]
     realtime_process: Box<dyn AudioProcessRunner>,
@@ -119,6 +122,7 @@ fn build_audio_engine(preferences: &AudioPreferences, use_dummy_audio: bool) -> 
             metronome,
             samplers: HashMap::new(),
             main_splitters: HashMap::new(),
+            main_gains: HashMap::new(),
             sequencer: Sequencer::default(),
             realtime_process,
             tick_interval: tokio::time::interval(Duration::from_secs_f64(1.0 / SCHEDULER_TICK_RATE_HZ)),
@@ -175,10 +179,31 @@ fn remove_samples_from_engine(engine: &mut AudioEngine, project: &Project) {
 
     for sample_id in samples_to_remove {
         if let Some(mut sampler) = engine.samplers.remove(&sample_id) {
-            sampler.node.disconnect_from_node(&engine.mixer.node);
+            if let Some(gain) = engine.main_gains.get(&sample_id) {
+                sampler.node.disconnect_from_node(&gain.node);
+            }
             sampler.stop_now();
         }
+        if let Some(gain) = engine.main_gains.remove(&sample_id) {
+            gain.node.disconnect_from_node(&engine.mixer.node);
+        }
         engine.main_splitters.remove(&sample_id);
+    }
+}
+
+fn update_song_gains(engine: &mut AudioEngine, project: &Project) {
+    let current_time = engine.context.current_time();
+
+    for song in &project.songs {
+        let Some(sample) = song.sample.as_ref() else {
+            continue;
+        };
+        let Some(gain) = engine.main_gains.get_mut(&sample.id) else {
+            continue;
+        };
+
+        gain.gain()
+            .set_value_at_time(Level::from_db(song.volume_db()).as_linear(), current_time);
     }
 }
 
@@ -472,6 +497,7 @@ impl AudioController {
                 &mut self.samples_being_converted,
             );
             remove_samples_from_engine(engine, project);
+            update_song_gains(engine, project);
         }
         self.project = project.clone();
     }
@@ -504,12 +530,13 @@ impl AudioController {
     }
 
     fn on_sample_converted(&mut self, result: SampleConversionResult) {
-        self.samples_being_converted.remove(&result.sample_id);
+        let sample_id = result.sample_id;
+        self.samples_being_converted.remove(&sample_id);
 
         let audio_data = match result.result {
             Ok(data) => data,
             Err(error) => {
-                error!("Error converting audio file {}: {}", result.sample_id, error);
+                error!("Error converting audio file {}: {}", sample_id, error);
                 return;
             }
         };
@@ -519,14 +546,11 @@ impl AudioController {
         let output_channel_count = self.output_channel_count;
 
         let Some(engine) = self.engine.as_mut() else {
-            info!(
-                "Sample converted but engine is stopped, discarding: {}",
-                result.sample_id
-            );
+            info!("Sample converted but engine is stopped, discarding: {}", sample_id);
             return;
         };
 
-        info!("Sample converted: {}", result.sample_id);
+        info!("Sample converted: {}", sample_id);
 
         let audio_channel_count = audio_data.channel_count();
         let available_output_channels = if main_offset < output_channel_count {
@@ -540,20 +564,37 @@ impl AudioController {
         };
 
         let mut sampler = Sampler::new_with_event_capacity(engine.context.as_ref(), audio_data, 1024);
+        let song_volume = self
+            .project
+            .songs
+            .iter()
+            .find(|song| song.sample.as_ref().is_some_and(|sample| sample.id == sample_id))
+            .map_or(0.0, |song| song.volume_db());
+        let gain_channel_count = if audio_channel_count == 1 && available_output_channels >= 2 {
+            2
+        } else {
+            audio_channel_count
+        };
+        let mut gain = Gain::new(engine.context.as_ref(), gain_channel_count);
+        gain.gain()
+            .set_value_at_time(Level::from_db(song_volume).as_linear(), engine.context.current_time());
+
         if audio_channel_count == 1 && available_output_channels >= 2 {
             let splitter = Mixer::mono_to_stereo_splitter(engine.context.as_ref());
             sampler.node.connect_to(&splitter.node);
-            splitter.node.connect_channels_to(&engine.mixer.node, 0, main_offset, 2);
-            engine.main_splitters.insert(result.sample_id, splitter);
+            splitter.node.connect_to(&gain.node);
+            gain.node.connect_channels_to(&engine.mixer.node, 0, main_offset, 2);
+            engine.main_splitters.insert(sample_id, splitter);
         } else {
             let channel_count = audio_channel_count.min(available_output_channels);
-            sampler
-                .node
+            sampler.node.connect_to(&gain.node);
+            gain.node
                 .connect_channels_to(&engine.mixer.node, 0, main_offset, channel_count);
         }
 
-        engine.sequencer.schedule_sampler(result.sample_id, &mut sampler);
-        engine.samplers.insert(result.sample_id, sampler);
+        engine.sequencer.schedule_sampler(sample_id, &mut sampler);
+        engine.samplers.insert(sample_id, sampler);
+        engine.main_gains.insert(sample_id, gain);
     }
 }
 
