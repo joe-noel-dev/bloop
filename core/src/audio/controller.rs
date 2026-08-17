@@ -201,6 +201,8 @@ pub struct AudioController {
     project: Project,
     preferences: AudioPreferences,
     current_sample_rate: u32,
+    /// IDs of samples whose conversion failed and whose cache entries should be invalidated.
+    failed_conversions: Vec<ID>,
 }
 
 impl AudioController {
@@ -224,6 +226,7 @@ impl AudioController {
             project: Project::empty(),
             preferences,
             current_sample_rate,
+            failed_conversions: Vec::new(),
         }
     }
 
@@ -377,6 +380,12 @@ impl AudioController {
         }
     }
 
+    /// Returns the IDs of any samples whose conversion failed since the last call.
+    /// The caller should invalidate those entries in the samples cache.
+    pub fn drain_failed_conversions(&mut self) -> Vec<ID> {
+        std::mem::take(&mut self.failed_conversions)
+    }
+
     pub fn play(&mut self) {
         let Some(engine) = self.engine.as_mut() else {
             return;
@@ -510,6 +519,7 @@ impl AudioController {
             Ok(data) => data,
             Err(error) => {
                 error!("Error converting audio file {}: {}", result.sample_id, error);
+                self.failed_conversions.push(result.sample_id);
                 return;
             }
         };
