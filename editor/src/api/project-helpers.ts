@@ -18,6 +18,7 @@ const defaultSong = (): Song => {
     tempo: {
       bpm: 120,
     },
+    volume: undefined,
     sections: [defaultSection()],
   };
 };

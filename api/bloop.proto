@@ -26,6 +26,7 @@ message Song {
     Tempo tempo = 3;
     repeated Section sections = 4;
     Sample sample = 5;
+    optional double volume = 6;
 }
 
 message Tempo {
