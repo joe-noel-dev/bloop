@@ -1,6 +1,9 @@
 use super::{random_id, Section, Song, Tempo, ID, INVALID_ID};
 
 impl Song {
+    pub const MIN_VOLUME_DB: f64 = -20.0;
+    pub const MAX_VOLUME_DB: f64 = 0.0;
+
     pub fn empty() -> Self {
         Self {
             id: random_id(),
@@ -23,6 +26,10 @@ impl Song {
         }
     }
 
+    pub fn volume_db(&self) -> f64 {
+        self.volume.unwrap_or(Self::MAX_VOLUME_DB)
+    }
+
     pub fn remove_section(mut self, section_id: ID) -> Self {
         self.sections.retain(|section| section.id != section_id);
         self
@@ -32,6 +39,9 @@ impl Song {
         self.id != INVALID_ID
             && !self.sections.is_empty()
             && self.sections.iter().is_sorted_by(|a, b| a.start <= b.start)
+            && self.volume.map_or(true, |volume| {
+                (Self::MIN_VOLUME_DB..=Self::MAX_VOLUME_DB).contains(&volume)
+            })
     }
 
     pub fn find_section(&self, section_id: ID) -> Option<&Section> {
@@ -114,5 +124,19 @@ mod tests {
         assert_relative_eq!(song.section_length(section_1.id), 25.0);
         assert_relative_eq!(song.section_length(section_2.id), 41.0);
         assert_relative_eq!(song.section_length(section_3.id), 11.0);
+    }
+
+    #[test]
+    fn defaults_volume_to_unity() {
+        let mut song = Song::empty().with_sections(vec![Section::empty()]);
+
+        assert_eq!(song.volume_db(), 0.0);
+        assert!(song.is_valid());
+
+        song.volume = Some(-20.0);
+        assert!(song.is_valid());
+
+        song.volume = Some(-20.1);
+        assert!(!song.is_valid());
     }
 }

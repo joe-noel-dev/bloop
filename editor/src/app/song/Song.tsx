@@ -71,12 +71,16 @@ export const Song = ({songId, moveSong}: SongProps) => {
   const editTempo = (newTempo: number) =>
     dispatch(updateSongAction({...song, tempo: {bpm: newTempo}}));
 
+  const editVolume = (newVolume: number) =>
+    dispatch(updateSongAction({...song, volume: newVolume}));
+
   return (
     <Stack spacing={2}>
       <SongDetails
         song={song}
         onEditName={editSongName}
         onEditTempo={editTempo}
+        onEditVolume={editVolume}
         onMoveUp={moveUp}
         onMoveDown={moveDown}
         onRemove={remove}
@@ -94,6 +98,7 @@ interface SongDetailsProps {
   song: ModelSong;
   onEditName: (newName: string) => void;
   onEditTempo: (newTempo: number) => void;
+  onEditVolume: (newVolume: number) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onRemove: () => void;
@@ -103,6 +108,7 @@ const SongDetails = ({
   song,
   onEditName,
   onEditTempo,
+  onEditVolume,
   onMoveUp,
   onMoveDown,
   onRemove,
@@ -118,6 +124,27 @@ const SongDetails = ({
           endDecorator={
             <Typography level="body-md" sx={{color: 'text.secondary'}}>
               bpm
+            </Typography>
+          }
+        />
+      </Stack>
+      <Stack direction={'row'} spacing={1} alignItems={'center'}>
+        <Typography level="body-md" sx={{color: 'text.secondary'}}>
+          Volume
+        </Typography>
+        <ClickToEdit
+          initialValue={`${song.volume ?? 0}`}
+          onSave={(value) => onEditVolume(parseFloat(value))}
+          size="medium"
+          validate={(value) => {
+            const volume = Number(value);
+            return Number.isFinite(volume) && volume >= -20 && volume <= 0
+              ? null
+              : 'Volume must be between -20 and 0 dB';
+          }}
+          endDecorator={
+            <Typography level="body-md" sx={{color: 'text.secondary'}}>
+              dB
             </Typography>
           }
         />
