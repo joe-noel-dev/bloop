@@ -1,10 +1,15 @@
-use crate::bloop::{Request, Response};
+use crate::{
+    api::{
+        client::{create_client_responses, handle_client_configuration, ClientConfigurationHandle, ClientResponses},
+        wire::{decode_request, encode_response},
+    },
+    bloop::{Request, Response},
+};
 
 use futures::SinkExt;
 use futures_util::stream::{SplitSink, SplitStream};
 use futures_util::StreamExt;
 use log::{error, info, warn};
-use protobuf::Message as ProtobufMessage;
 use std::net::SocketAddr;
 use tokio::net::TcpStream;
 use tokio::select;
@@ -13,7 +18,8 @@ use tokio_tungstenite::{accept_async, tungstenite::Error as TungsteniteError, tu
 
 struct Client {
     request_tx: mpsc::Sender<Request>,
-    response_rx: broadcast::Receiver<Response>,
+    response_rx: ClientResponses,
+    configuration: ClientConfigurationHandle,
     address: SocketAddr,
     outgoing: SplitSink<WebSocketStream<TcpStream>, Message>,
     incoming: SplitStream<WebSocketStream<TcpStream>>,
@@ -37,10 +43,12 @@ impl Client {
         };
 
         let (outgoing, incoming) = ws_stream.split();
+        let (configuration, response_rx) = create_client_responses(response_rx);
 
         Ok(Self {
             request_tx,
             response_rx,
+            configuration,
             address,
             outgoing,
             incoming,
@@ -63,7 +71,7 @@ impl Client {
             _ => return Ok(()),
         };
 
-        let api_request = match convert_bytes_to_request(&message) {
+        let api_request = match decode_request(&message) {
             Ok(request) => request,
             Err(error) => {
                 warn!("Error parsing request: {error}");
@@ -72,6 +80,11 @@ impl Client {
                 return Ok(());
             }
         };
+
+        if let Some(response) = handle_client_configuration(&api_request, &self.configuration) {
+            self.send_response(&response).await;
+            return Ok(());
+        }
 
         match self.request_tx.send(api_request).await {
             Ok(_) => Ok(()),
@@ -82,8 +95,17 @@ impl Client {
     async fn run(&mut self) {
         loop {
             select! {
-                Ok(response) = self.response_rx.recv() => {
-                    self.send_response(&response).await;
+                response = self.response_rx.recv() => {
+                    match response {
+                        Ok(response) => self.send_response(&response).await,
+                        Err(broadcast::error::RecvError::Lagged(count)) => {
+                            let response = Response::default().with_error(
+                                &format!("Response stream skipped {count} updates; request ALL to resynchronise")
+                            );
+                            self.send_response(&response).await;
+                        }
+                        Err(broadcast::error::RecvError::Closed) => break,
+                    }
                 },
                 message = self.incoming.next() => {
 
@@ -116,16 +138,11 @@ pub async fn run(socket: TcpStream, request_tx: mpsc::Sender<Request>, response_
 }
 
 fn convert_response(response: &Response) -> Option<Message> {
-    match response.write_to_bytes() {
+    match encode_response(response) {
         Ok(data) => Some(Message::binary(data)),
         Err(error) => {
             error!("Error serialising response: {error}");
             None
         }
     }
-}
-
-fn convert_bytes_to_request(message: &[u8]) -> anyhow::Result<Request> {
-    let request = Request::parse_from_bytes(message)?;
-    Ok(request)
 }

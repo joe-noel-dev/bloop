@@ -90,6 +90,7 @@ message Request {
     LogoutRequest logout = 23;
     ProjectSyncRequest project_sync = 24;
     AudioControlRequest audio_control = 25;
+    ClientConfiguration configure_client = 26;
 }
 
 message GetRequest {
@@ -214,7 +215,12 @@ message Response {
     AudioDevices audio_devices = 15;
     AudioStatus audio_status = 16;
     MidiDevices midi_devices = 17;
+    ClientConfiguration client_configuration = 18;
 } 
+
+message ClientConfiguration {
+    uint32 progress_updates_per_second = 1;
+}
 
 message WaveformResponse {
     uint64 sample_id = 1;
