@@ -4,7 +4,7 @@ use crate::{model::ID, types::extension_for_format};
 use anyhow::{anyhow, Context};
 use log::debug;
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     ffi::OsStr,
     path::{Path, PathBuf},
 };
@@ -157,6 +157,10 @@ impl SamplesCache {
 
     pub fn get_sample(&self, id: ID) -> Option<&Sample> {
         self.samples.get(&id)
+    }
+
+    pub fn retain(&mut self, sample_ids: &HashSet<ID>) {
+        self.samples.retain(|id, _| sample_ids.contains(id));
     }
 
     fn path_for_sample(&self, id: ID, format: AudioFileFormat) -> PathBuf {

@@ -9,6 +9,7 @@ import bloop.progress
 import bloop.project
 import bloop.projectInfo
 import bloop.projectSyncResponse
+import bloop.projectsSnapshot
 import bloop.response
 import bloop.uploadAck
 import bloop.user
@@ -124,5 +125,18 @@ class ResponseMiddlewareTest {
         middleware.execute(AppState(), AppAction.ReceivedResponse(response)) { dispatched += it }
 
         assertTrue(dispatched.contains(AppAction.SetMidiDevices(response.midiDevices)))
+    }
+
+    @Test
+    fun `empty projects snapshot clears both project lists`() = runTest {
+        val middleware = ResponseMiddleware()
+        val dispatched = mutableListOf<AppAction>()
+        val response = response {
+            projectsSnapshot = projectsSnapshot { cloudAvailable = false }
+        }
+
+        middleware.execute(AppState(), AppAction.ReceivedResponse(response)) { dispatched += it }
+
+        assertTrue(dispatched.contains(AppAction.SetProjectsSnapshot(emptyList(), emptyList(), false)))
     }
 }

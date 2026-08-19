@@ -8,6 +8,11 @@ object AppReducer {
             is AppAction.SetProgress -> state.copy(progress = action.progress)
             is AppAction.SetProjects -> state.copy(projects = action.projects)
             is AppAction.SetCloudProjects -> state.copy(cloudProjects = action.cloudProjects)
+            is AppAction.SetProjectsSnapshot -> state.copy(
+                projects = action.projects,
+                cloudProjects = action.cloudProjects,
+                cloudProjectsAvailable = action.cloudAvailable,
+            )
             is AppAction.SetProjectInfo -> state.copy(projectInfo = action.projectInfo)
             is AppAction.SetProjectSync -> state.copy(
                 projectSyncStatuses = state.projectSyncStatuses +

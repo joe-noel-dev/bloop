@@ -100,11 +100,25 @@ struct ProjectSyncNotificationView: View {
 struct ProjectPreview: View {
     var project: Bloop_ProjectInfo
     var selected: Bool
+    var isLocal: Bool
+    var isCloud: Bool
 
     var body: some View {
         HStack(spacing: Layout.units(2)) {
             Text(project.name)
                 .font(.headline)
+
+            if isLocal {
+                Image(systemName: "iphone")
+                    .foregroundColor(.secondary)
+                    .accessibilityLabel("Available offline")
+            }
+
+            if isCloud {
+                Image(systemName: "cloud")
+                    .foregroundColor(.secondary)
+                    .accessibilityLabel("Available in cloud")
+            }
 
             if selected {
                 Spacer()
@@ -127,30 +141,12 @@ struct ProjectPreview: View {
     }
 }
 
-enum ProjectLocation: Hashable {
-    case local(String)
-    case cloud(String)
+private struct AvailableProject: Identifiable {
+    let project: Bloop_ProjectInfo
+    let isLocal: Bool
+    let isCloud: Bool
 
-    var id: String {
-        switch self {
-        case .local(let id), .cloud(let id):
-            return id
-        }
-    }
-
-    var isLocal: Bool {
-        switch self {
-        case .local: return true
-        case .cloud: return false
-        }
-    }
-
-    var isCloud: Bool {
-        switch self {
-        case .local: return false
-        case .cloud: return true
-        }
-    }
+    var id: String { project.id }
 }
 
 struct ProjectsView: View {
@@ -160,19 +156,19 @@ struct ProjectsView: View {
     var dispatch: Dispatch
     var dismiss: () -> Void
 
-    @State private var selected: ProjectLocation?
+    @State private var selectedProjectId: String?
     @State private var selectedFileURL: URL?
 
-    private var sortedProjects: [Bloop_ProjectInfo] {
-        projects.sorted { a, b in
-            a.lastSaved > b.lastSaved
-        }
-    }
-
-    private var sortedCloudProjects: [Bloop_ProjectInfo] {
-        cloudProjects.sorted { a, b in
-            a.lastSaved > b.lastSaved
-        }
+    private var availableProjects: [AvailableProject] {
+        let localProjects = Dictionary(uniqueKeysWithValues: projects.map { ($0.id, $0) })
+        let remoteProjects = Dictionary(uniqueKeysWithValues: cloudProjects.map { ($0.id, $0) })
+        return Set(localProjects.keys).union(remoteProjects.keys).map { id in
+            AvailableProject(
+                project: remoteProjects[id] ?? localProjects[id]!,
+                isLocal: localProjects[id] != nil,
+                isCloud: remoteProjects[id] != nil
+            )
+        }.sorted { $0.project.lastSaved > $1.project.lastSaved }
     }
 
     var body: some View {
@@ -195,44 +191,34 @@ struct ProjectsView: View {
                     }
                 }
 
-                List(selection: $selected) {
-                    if !sortedProjects.isEmpty {
-                        Section("Local Projects") {
-                            ForEach(sortedProjects) { project in
-                                ProjectPreview(
-                                    project: project,
-                                    selected: selected?.id == project.id
-                                        && selected?.isLocal == true
-                                )
-                                .tag(ProjectLocation.local(project.id))
-                                .onTapGesture {
-                                    selected = .local(project.id)
-                                }
+                List(selection: $selectedProjectId) {
+                    Section("Projects") {
+                        ForEach(availableProjects) { availableProject in
+                            ProjectPreview(
+                                project: availableProject.project,
+                                selected: selectedProjectId == availableProject.id,
+                                isLocal: availableProject.isLocal,
+                                isCloud: availableProject.isCloud
+                            )
+                            .tag(availableProject.id)
+                            .onTapGesture {
+                                selectedProjectId = availableProject.id
                             }
-                            .onDelete { offsets in
-                                let projectIds = offsets.map { offset in
-                                    sortedProjects[offset].id
+                            .swipeActions {
+                                if availableProject.isCloud {
+                                    Button(role: .destructive) {
+                                        dispatch(removeProjectAction(availableProject.id, targets: [.local, .remote]))
+                                    } label: {
+                                        Label("Delete Project", systemImage: "trash")
+                                    }
                                 }
-
-                                for projectId in projectIds {
-                                    let action = removeProjectAction(projectId, targets: [.local])
-                                    dispatch(action)
-                                }
-                            }
-                        }
-                    }
-
-                    if !sortedCloudProjects.isEmpty {
-                        Section("Cloud Projects") {
-                            ForEach(sortedCloudProjects) { project in
-                                ProjectPreview(
-                                    project: project,
-                                    selected: selected?.id == project.id
-                                        && selected?.isCloud == true
-                                )
-                                .tag(ProjectLocation.cloud(project.id))
-                                .onTapGesture {
-                                    selected = .cloud(project.id)
+                                if availableProject.isLocal {
+                                    Button {
+                                        dispatch(removeProjectAction(availableProject.id, targets: [.local]))
+                                    } label: {
+                                        Label("Remove Download", systemImage: "arrow.down.circle")
+                                    }
+                                    .tint(Colours.theme1)
                                 }
                             }
                         }
@@ -242,40 +228,23 @@ struct ProjectsView: View {
                 .navigationTitle("Projects")
                 .toolbar {
 
-                    if let selected = selected {
-
-                        if selected.isCloud {
-                            Button {
-                                dispatch(pullProjectAction(selected.id))
-                            } label: {
-                                Label("Pull", systemImage: "arrow.down.circle")
-                                    .labelStyle(.titleOnly)
-                            }
+                    if let selectedProjectId = selectedProjectId,
+                       let selected = availableProjects.first(where: { $0.id == selectedProjectId }) {
+                        Button {
+                            dispatch(loadProjectAction(selected.id))
+                            dismiss()
+                        } label: {
+                            Label("Open", systemImage: "folder")
+                                .labelStyle(.titleOnly)
                         }
 
                         if selected.isLocal {
-                            Button {
-                                let action = loadProjectAction(selected.id)
-                                dispatch(action)
-                                dismiss()
-                            } label: {
-                                Label("Open", systemImage: "folder")
-                                    .labelStyle(.titleOnly)
-                            }
-
                             Button {
                                 let action = duplicateProjectAction(selected.id)
                                 dispatch(action)
                                 dismiss()
                             } label: {
                                 Label("Duplicate", systemImage: "doc.on.doc")
-                                    .labelStyle(.titleOnly)
-                            }
-
-                            Button {
-                                dispatch(pushProjectAction(selected.id))
-                            } label: {
-                                Label("Push", systemImage: "arrow.up.circle")
                                     .labelStyle(.titleOnly)
                             }
                         }

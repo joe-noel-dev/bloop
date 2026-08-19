@@ -41,11 +41,13 @@ async fn list_projects_successful() {
         .await;
 
     let response = fixture
-        .wait_for_response(|response| !response.cloud_projects.is_empty())
+        .wait_for_response(|response| response.projects_snapshot.is_some())
         .await
         .expect("Didn't receive projects");
 
-    let projects = response.cloud_projects;
+    assert!(response.projects_snapshot.as_ref().unwrap().cloud_available);
+    assert!(response.projects_snapshot.as_ref().unwrap().local_projects.is_empty());
+    let projects = response.projects_snapshot.unwrap().cloud_projects;
     assert_eq!(projects.len(), 2);
 
     assert_eq!(projects[0].id, "project-1");
