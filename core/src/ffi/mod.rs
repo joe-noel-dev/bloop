@@ -140,8 +140,13 @@ static ANDROID_CONTEXT_INIT: Once = std::sync::Once::new();
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-extern "C" fn bloop_set_android_context(vm: *mut c_void, context: *mut c_void) {
-    if vm.is_null() || context.is_null() {
+extern "C" fn bloop_set_android_context(
+    vm: *mut c_void,
+    global_context: *mut c_void,
+    env: *mut c_void,
+    context: *mut c_void,
+) {
+    if vm.is_null() || global_context.is_null() || env.is_null() || context.is_null() {
         error!("Ignoring Android context initialization with null JNI pointers");
         return;
     }
@@ -149,24 +154,26 @@ extern "C" fn bloop_set_android_context(vm: *mut c_void, context: *mut c_void) {
     ANDROID_CONTEXT_INIT.call_once(|| {
         // CPAL's Android backend requires JVM + Context to be initialized before use.
         unsafe {
-            ndk_context::initialize_android_context(vm, context);
+            ndk_context::initialize_android_context(vm, global_context);
         }
 
         // rustls-platform-verifier needs JVM + Context to call Android's TrustManager
         // for certificate verification.  Without this, the first outgoing TLS connection
         // panics and kills the core thread.
         unsafe {
-            match jni::JavaVM::from_raw(vm.cast()) {
-                Ok(jvm) => match jvm.attach_current_thread() {
-                    Ok(mut env) => {
-                        let ctx = jni::objects::JObject::from_raw(context.cast());
-                        if let Err(e) = rustls_platform_verifier::android::init_hosted(&mut env, ctx) {
-                            error!("Failed to initialize TLS verifier: {e:?}");
-                        }
-                    }
-                    Err(e) => error!("Failed to attach JVM thread for TLS init: {e}"),
-                },
-                Err(e) => error!("Failed to get JVM for TLS init: {e}"),
+            let mut env = jni::EnvUnowned::from_raw(env.cast());
+            match env
+                .with_env(|env| {
+                    let ctx = jni::objects::JObject::from_raw(env, context.cast());
+                    rustls_platform_verifier::android::init_with_env(env, ctx)
+                })
+                .into_outcome()
+            {
+                jni::Outcome::Ok(()) => {}
+                jni::Outcome::Err(e) => error!("Failed to initialize TLS verifier: {e:?}"),
+                jni::Outcome::Panic(_) => {
+                    error!("TLS verifier initialization panicked")
+                }
             }
         }
     });
