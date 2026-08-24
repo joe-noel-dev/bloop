@@ -9,9 +9,9 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'yarn'
-          cache-dependency-path: editor/yarn.lock
+          cache-dependency-path: yarn.lock
       - name: Install dependencies
         run: yarn install
         working-directory: editor
