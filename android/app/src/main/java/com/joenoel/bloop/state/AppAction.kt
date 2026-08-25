@@ -14,6 +14,11 @@ sealed interface AppAction {
     data class SetProgress(val progress: Bloop.Progress) : AppAction
     data class SetProjects(val projects: List<Bloop.ProjectInfo>) : AppAction
     data class SetCloudProjects(val cloudProjects: List<Bloop.ProjectInfo>) : AppAction
+    data class SetProjectsSnapshot(
+        val projects: List<Bloop.ProjectInfo>,
+        val cloudProjects: List<Bloop.ProjectInfo>,
+        val cloudAvailable: Boolean,
+    ) : AppAction
     data class SetProjectInfo(val projectInfo: Bloop.ProjectInfo) : AppAction
     data class SetProjectSync(val projectId: String, val syncState: Bloop.SyncStatus) : AppAction
     data class DismissProjectSync(val projectId: String) : AppAction

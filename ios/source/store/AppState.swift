@@ -6,6 +6,7 @@ struct AppState {
     var servers: [Server] = []
     var projects: [Bloop_ProjectInfo] = []
     var cloudProjects: [Bloop_ProjectInfo] = []
+    var cloudProjectsAvailable = false
     var project = emptyProject()
     var projectInfo: Bloop_ProjectInfo? = .none
     var projectSyncStatuses: [String: Bloop_SyncStatus] = [:]

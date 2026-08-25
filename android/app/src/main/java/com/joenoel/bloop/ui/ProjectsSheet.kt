@@ -20,9 +20,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -33,10 +37,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,7 +54,6 @@ import bloop.addRequest
 import bloop.duplicateProjectRequest
 import bloop.getRequest
 import bloop.loadProjectRequest
-import bloop.projectSyncRequest
 import bloop.removeProjectRequest
 import bloop.request
 import com.joenoel.bloop.state.AppAction
@@ -61,12 +61,11 @@ import com.joenoel.bloop.state.AppState
 import java.time.Instant
 import java.time.format.DateTimeParseException
 
-private sealed interface ProjectLocation {
-    val id: String
-
-    data class Local(override val id: String) : ProjectLocation
-    data class Cloud(override val id: String) : ProjectLocation
-}
+private data class AvailableProject(
+    val project: Bloop.ProjectInfo,
+    val isLocal: Boolean,
+    val isCloud: Boolean,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,25 +74,27 @@ internal fun ProjectsSheet(
     onDispatch: (AppAction) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var selected by remember { mutableStateOf<ProjectLocation?>(null) }
+    var selectedProjectId by remember { mutableStateOf<String?>(null) }
+    var projectToDelete by remember { mutableStateOf<AvailableProject?>(null) }
 
-    val sortedProjects = remember(state.projects) {
-        state.projects.sortedByDescending { it.lastSaved }
-    }
-    val sortedCloudProjects = remember(state.cloudProjects) {
-        state.cloudProjects.sortedByDescending { it.lastSaved }
+    val availableProjects = remember(state.projects, state.cloudProjects) {
+        val localProjects = state.projects.associateBy { it.id }
+        val cloudProjects = state.cloudProjects.associateBy { it.id }
+        (localProjects.keys + cloudProjects.keys).map { id ->
+            AvailableProject(
+                project = cloudProjects[id] ?: localProjects.getValue(id),
+                isLocal = localProjects.containsKey(id),
+                isCloud = cloudProjects.containsKey(id),
+            )
+        }.sortedByDescending { it.project.lastSaved }
     }
     val allProjects = remember(state.projects, state.cloudProjects) {
         state.projects + state.cloudProjects
     }
 
     LaunchedEffect(state.projects, state.cloudProjects) {
-        selected?.let { sel ->
-            val exists = when (sel) {
-                is ProjectLocation.Local -> state.projects.any { it.id == sel.id }
-                is ProjectLocation.Cloud -> state.cloudProjects.any { it.id == sel.id }
-            }
-            if (!exists) selected = null
+        selectedProjectId?.let { selectedId ->
+            if (availableProjects.none { it.project.id == selectedId }) selectedProjectId = null
         }
     }
     LaunchedEffect(Unit) {
@@ -147,88 +148,30 @@ internal fun ProjectsSheet(
             }
 
             LazyColumn {
-                if (sortedProjects.isNotEmpty()) {
+                if (availableProjects.isNotEmpty()) {
                     item {
                         Text(
-                            text = "Local",
+                            text = "Projects",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         )
                     }
-                    items(sortedProjects, key = { it.id }) { project ->
-                        val isSelected = selected?.id == project.id && selected is ProjectLocation.Local
-                        val dismissState = rememberSwipeToDismissBoxState(
-                            confirmValueChange = { value ->
-                                if (value == SwipeToDismissBoxValue.EndToStart) {
-                                    onDispatch(
-                                        AppAction.SendRequest(
-                                            request {
-                                                removeProject = removeProjectRequest {
-                                                    projectId = project.id
-                                                    targets += Bloop.ProjectRemovalTarget.PROJECT_REMOVAL_TARGET_LOCAL
-                                                }
-                                            }
-                                        )
-                                    )
-                                    true
-                                } else {
-                                    false
-                                }
-                            },
-                            positionalThreshold = { it * 0.4f },
-                        )
-                        SwipeToDismissBox(
-                            state = dismissState,
-                            backgroundContent = {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp),
-                                    contentAlignment = Alignment.CenterEnd,
-                                ) {
-                                    Icon(
-                                        Icons.Filled.Close,
-                                        contentDescription = "Delete",
-                                        tint = MaterialTheme.colorScheme.error,
-                                    )
-                                }
-                            },
-                            enableDismissFromStartToEnd = false,
-                        ) {
-                            ProjectItem(
-                                project = project,
-                                isSelected = isSelected,
-                                onClick = {
-                                    selected = if (isSelected) null else ProjectLocation.Local(project.id)
-                                },
-                            )
-                        }
-                    }
-                }
-
-                if (sortedCloudProjects.isNotEmpty()) {
-                    item {
-                        Text(
-                            text = "Cloud",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 8.dp),
-                        )
-                    }
-                    items(sortedCloudProjects, key = { "cloud_${it.id}" }) { project ->
-                        val isSelected = selected?.id == project.id && selected is ProjectLocation.Cloud
+                    items(availableProjects, key = { it.project.id }) { availableProject ->
+                        val isSelected = selectedProjectId == availableProject.project.id
                         ProjectItem(
-                            project = project,
+                            project = availableProject.project,
                             isSelected = isSelected,
+                            isLocal = availableProject.isLocal,
+                            isCloud = availableProject.isCloud,
                             onClick = {
-                                selected = if (isSelected) null else ProjectLocation.Cloud(project.id)
+                                selectedProjectId = if (isSelected) null else availableProject.project.id
                             },
                         )
                     }
                 }
 
-                if (sortedProjects.isEmpty() && sortedCloudProjects.isEmpty()) {
+                if (availableProjects.isEmpty()) {
                     item {
                         Text(
                             text = "No projects yet. Tap + to create one.",
@@ -240,65 +183,86 @@ internal fun ProjectsSheet(
                 }
             }
 
-            selected?.let { location ->
+            selectedProjectId?.let { selectedId ->
+                val availableProject = availableProjects.first { it.project.id == selectedId }
                 HorizontalDivider()
                 ProjectActionBar(
-                    location = location,
                     onOpen = {
                         onDispatch(
                             AppAction.SendRequest(
-                                request { load = loadProjectRequest { projectId = location.id } }
+                                request { load = loadProjectRequest { projectId = selectedId } }
                             )
                         )
                         onDismiss()
                     },
-                    onDuplicate = {
-                        onDispatch(
-                            AppAction.SendRequest(
-                                request {
-                                    duplicateProject = duplicateProjectRequest { projectId = location.id }
-                                }
-                            )
-                        )
-                        onDismiss()
-                    },
-                    onPush = {
-                        onDispatch(
-                            AppAction.SendRequest(
-                                request {
-                                    projectSync = projectSyncRequest {
-                                        projectId = location.id
-                                        method = Bloop.SyncMethod.SYNC_METHOD_PUSH
+                    onDuplicate = if (availableProject.isLocal) {
+                        {
+                            onDispatch(
+                                AppAction.SendRequest(
+                                    request {
+                                        duplicateProject = duplicateProjectRequest { projectId = selectedId }
                                     }
-                                }
+                                )
                             )
-                        )
-                    },
-                    onPull = {
-                        onDispatch(
-                            AppAction.SendRequest(
-                                request {
-                                    projectSync = projectSyncRequest {
-                                        projectId = location.id
-                                        method = Bloop.SyncMethod.SYNC_METHOD_PULL
-                                    }
-                                }
-                            )
-                        )
-                    },
+                            onDismiss()
+                        }
+                    } else null,
+                    onDelete = { projectToDelete = availableProject },
                 )
             }
         }
     }
+
+    projectToDelete?.let { availableProject ->
+        AlertDialog(
+            onDismissRequest = { projectToDelete = null },
+            title = { Text("Delete ${availableProject.project.name}?") },
+            text = {
+                Text(
+                    if (availableProject.isLocal && availableProject.isCloud) {
+                        "Choose whether to remove only the offline download or delete the project everywhere."
+                    } else if (availableProject.isCloud) {
+                        "This deletes the project from the cloud."
+                    } else {
+                        "This removes the project from this device."
+                    }
+                )
+            },
+            confirmButton = {
+                if (availableProject.isCloud) {
+                    Button(onClick = {
+                        onDispatch(removeProjectRequestAction(availableProject.project.id, removeCloud = true))
+                        projectToDelete = null
+                    }) { Text("Delete Project") }
+                }
+            },
+            dismissButton = {
+                if (availableProject.isLocal) {
+                    OutlinedButton(onClick = {
+                        onDispatch(removeProjectRequestAction(availableProject.project.id, removeCloud = false))
+                        projectToDelete = null
+                    }) { Text("Remove Download") }
+                }
+            },
+        )
+    }
 }
+
+private fun removeProjectRequestAction(projectId: String, removeCloud: Boolean) = AppAction.SendRequest(
+    request {
+        removeProject = removeProjectRequest {
+            this.projectId = projectId
+            targets += Bloop.ProjectRemovalTarget.PROJECT_REMOVAL_TARGET_LOCAL
+            if (removeCloud) targets += Bloop.ProjectRemovalTarget.PROJECT_REMOVAL_TARGET_REMOTE
+        }
+    }
+)
 
 @Composable
 private fun ProjectActionBar(
-    location: ProjectLocation,
     onOpen: () -> Unit,
-    onDuplicate: () -> Unit,
-    onPush: () -> Unit,
-    onPull: () -> Unit,
+    onDuplicate: (() -> Unit)?,
+    onDelete: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -306,23 +270,16 @@ private fun ProjectActionBar(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        when (location) {
-            is ProjectLocation.Local -> {
-                Button(onClick = onOpen, modifier = Modifier.weight(1f)) {
-                    Text("Open")
-                }
-                OutlinedButton(onClick = onDuplicate, modifier = Modifier.weight(1f)) {
-                    Text("Duplicate")
-                }
-                OutlinedButton(onClick = onPush, modifier = Modifier.weight(1f)) {
-                    Text("Push")
-                }
+        Button(onClick = onOpen, modifier = Modifier.weight(1f)) {
+            Text("Open")
+        }
+        if (onDuplicate != null) {
+            OutlinedButton(onClick = onDuplicate, modifier = Modifier.weight(1f)) {
+                Text("Duplicate")
             }
-            is ProjectLocation.Cloud -> {
-                Button(onClick = onPull, modifier = Modifier.weight(1f)) {
-                    Text("Pull")
-                }
-            }
+        }
+        OutlinedButton(onClick = onDelete, modifier = Modifier.weight(1f)) {
+            Icon(Icons.Filled.Delete, contentDescription = "Delete")
         }
     }
 }
@@ -331,6 +288,8 @@ private fun ProjectActionBar(
 private fun ProjectItem(
     project: Bloop.ProjectInfo,
     isSelected: Boolean,
+    isLocal: Boolean,
+    isCloud: Boolean,
     onClick: () -> Unit,
 ) {
     Surface(
@@ -342,10 +301,14 @@ private fun ProjectItem(
     ) {
         ListItem(
             headlineContent = {
-                Text(
-                    text = project.name.takeIf { it.isNotBlank() } ?: "Untitled",
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = project.name.takeIf { it.isNotBlank() } ?: "Untitled",
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                    )
+                    if (isLocal) Icon(Icons.Filled.Smartphone, contentDescription = "Available offline")
+                    if (isCloud) Icon(Icons.Filled.Cloud, contentDescription = "Available in cloud")
+                }
             },
             supportingContent = if (isSelected && project.lastSaved.isNotBlank()) {
                 {

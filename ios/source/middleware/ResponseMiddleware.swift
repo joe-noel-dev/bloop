@@ -22,11 +22,17 @@ class ResponseMiddleware: Middleware {
             self.dispatch?(.setProgress(response.progress))
         }
 
-        if !response.projects.isEmpty {
+        if response.hasProjectsSnapshot {
+            self.dispatch?(.setProjectsSnapshot(
+                response.projectsSnapshot.localProjects,
+                response.projectsSnapshot.cloudProjects,
+                response.projectsSnapshot.cloudAvailable
+            ))
+        } else if !response.projects.isEmpty {
             self.dispatch?(.setProjects(response.projects))
         }
 
-        if !response.cloudProjects.isEmpty {
+        if !response.hasProjectsSnapshot && !response.cloudProjects.isEmpty {
             self.dispatch?(.setCloudProjects(response.cloudProjects))
         }
 
