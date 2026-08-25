@@ -20,14 +20,16 @@ use tokio::{
     sync::{broadcast, mpsc},
     time,
 };
+use tokio_util::sync::CancellationToken;
 
 pub async fn run_main_controller(
     request_rx: mpsc::Receiver<Request>,
     response_tx: broadcast::Sender<Response>,
     app_config: AppConfig,
+    shutdown: CancellationToken,
 ) {
     let mut main_controller = MainController::new(request_rx, response_tx, app_config);
-    main_controller.run().await;
+    main_controller.run(shutdown).await;
 }
 
 struct MainController {
@@ -402,7 +404,7 @@ impl MainController {
         }
     }
 
-    pub async fn run(&mut self) {
+    pub async fn run(&mut self, shutdown: CancellationToken) {
         if let Err(error) = self.samples_cache.scan().await {
             warn!("Error scanning samples cache: {error}");
         }
@@ -416,6 +418,7 @@ impl MainController {
 
         loop {
             tokio::select! {
+                _ = shutdown.cancelled() => break,
                 Some(request) = self.request_rx.recv() => {
                     if let Err(error) = self.handle_request(request).await {
                         warn!("Error handling request: {error}");

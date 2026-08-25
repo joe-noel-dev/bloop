@@ -22,15 +22,21 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate, URLSessionTaskDeleg
 
     func connect(_ endpoint: NWEndpoint) {
 
+        disconnect(notifyDelegate: false)
+
         let options = NWProtocolWebSocket.Options()
         options.autoReplyPing = true
         options.maximumMessageSize = 20 * 1024 * 1024
         let params = NWParameters(tls: nil, tcp: .init())
         params.defaultProtocolStack.applicationProtocols.insert(options, at: 0)
 
-        connection = NWConnection(to: endpoint, using: params)
+        let newConnection = NWConnection(to: endpoint, using: params)
+        connection = newConnection
 
-        connection?.stateUpdateHandler = { state in
+        newConnection.stateUpdateHandler = { [weak self, weak newConnection] state in
+            guard let self, self.connection === newConnection else {
+                return
+            }
             print("Connection state: \(state)")
             switch state {
             case .ready:
@@ -60,7 +66,7 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate, URLSessionTaskDeleg
             }
         }
 
-        connection?.start(queue: queue)
+        newConnection.start(queue: queue)
         state = .connecting
 
     }
@@ -85,7 +91,11 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate, URLSessionTaskDeleg
     }
 
     func receive() {
-        connection?.receiveMessage(completion: { data, context, isComplete, error in
+        let activeConnection = connection
+        activeConnection?.receiveMessage(completion: { [weak self, weak activeConnection] data, context, isComplete, error in
+            guard let self, self.connection === activeConnection else {
+                return
+            }
 
             if let error = error {
                 print("Receive error: \(error.localizedDescription)")
@@ -103,19 +113,24 @@ class CoreConnection: NSObject, URLSessionWebSocketDelegate, URLSessionTaskDeleg
         })
     }
 
-    func disconnect() {
-        guard self.state != .disconnected else {
+    func disconnect(notifyDelegate: Bool = true) {
+        guard state != .disconnected || connection != nil else {
             return
         }
 
-        self.connection?.cancel()
+        let activeConnection = connection
+        connection = nil
+        activeConnection?.stateUpdateHandler = nil
+        activeConnection?.cancel()
 
         print("Disconnected from core")
 
         self.state = .disconnected
 
-        DispatchQueue.main.async {
-            self.delegate?.coreConnectionDidDisconnect()
+        if notifyDelegate {
+            DispatchQueue.main.async {
+                self.delegate?.coreConnectionDidDisconnect()
+            }
         }
     }
 }
