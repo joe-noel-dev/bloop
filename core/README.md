@@ -47,3 +47,8 @@ cargo run
 ## Run on Raspberry Pi
 
 See instructions in [raspberry-pi](../docs/raspberry-pi.md)
+
+## Run as a Linux kiosk
+
+See [LINUX-INSTALL.md](../docs/LINUX-INSTALL.md) for an Ubuntu Server setup
+using ALSA, optional Bluetooth MIDI, Weston, seatd, and systemd.
