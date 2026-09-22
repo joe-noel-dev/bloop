@@ -2,28 +2,28 @@ use iced::{widget::row, Element};
 
 use crate::model::{PlaybackState, PlayingState, Progress};
 
-use super::{constants::display_units, message::Message, theme};
+use super::{constants::UiMetrics, message::Message, theme};
 
-pub fn metronome(playback_state: &PlaybackState, progress: &Progress) -> Element<'static, Message> {
+pub fn metronome(playback_state: &PlaybackState, progress: &Progress, metrics: UiMetrics) -> Element<'static, Message> {
     let beat = (progress.section_beat % 4.0).floor() as i64;
     let is_playing = playback_state.playing.enum_value_or_default() == PlayingState::PLAYING;
 
     row((0..4).map(|beat_index| {
         let is_active = is_playing && beat_index == beat;
-        let size = display_units(8.0);
+        let size = metrics.beat_size();
         let color = match (is_playing, is_active) {
             (true, true) => theme::PRIMARY,
             (true, false) => theme::neutral::N4,
             (false, _) => theme::neutral::N6,
         };
-        let border_radius = display_units(1.0);
+        let border_radius = metrics.spacing(1.0);
 
         square::square(size)
             .with_color(color)
             .with_border_radius(border_radius)
             .into()
     }))
-    .spacing(display_units(2.0))
+    .spacing(metrics.spacing(2.0))
     .into()
 }
 

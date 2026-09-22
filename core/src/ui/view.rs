@@ -1,8 +1,8 @@
-use iced::widget::{button, column, row, Space};
+use iced::widget::{button, column, responsive, row, Space};
 use iced::Length::Fill;
-use iced::{Element, Theme};
+use iced::{Element, Size, Theme};
 
-use super::constants::display_units;
+use super::constants::UiMetrics;
 use super::icons::Icon;
 use super::message::Message;
 use super::project::project_view;
@@ -12,23 +12,28 @@ use super::theme;
 use super::transport::transport_view;
 
 pub fn render(state: &State) -> Element<'_, Message> {
-    let icon_dimension = display_units(3.0);
+    responsive(move |viewport| render_at_size(state, viewport)).into()
+}
+
+fn render_at_size(state: &State, viewport: Size) -> Element<'_, Message> {
+    let metrics = UiMetrics::from_viewport(viewport);
+    let utility_target = 48.0;
     let utility_row = row![
         Space::new().width(Fill),
-        button(Icon::Gear.to_svg_with_size(icon_dimension))
-            .height(display_units(4.0))
-            .width(display_units(4.0))
+        button(Icon::Gear.to_svg_with_size(metrics.utility_icon()))
+            .height(utility_target)
+            .width(utility_target)
             .on_press(Message::OpenSettings),
     ]
-    .padding([display_units(0.5), display_units(2.0)]);
+    .padding([metrics.spacing(0.5), metrics.spacing(2.0)]);
 
     let base = column![
         utility_row,
         column![
-            project_view(state),
-            transport_view(&state.playback_state, &state.progress)
+            project_view(state, metrics),
+            transport_view(&state.playback_state, &state.progress, metrics)
         ]
-        .spacing(display_units(2.0))
+        .spacing(metrics.spacing(2.0))
     ]
     .spacing(0)
     .width(Fill)
