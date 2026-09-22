@@ -8,9 +8,9 @@ use iced::{
 
 use crate::model::{Section, ID, INVALID_ID};
 
-use super::{constants::display_units, message::Message, state::State};
+use super::{constants::UiMetrics, message::Message, state::State};
 
-pub fn sections_view(song_id: ID, state: &State) -> Element<'_, Message> {
+pub fn sections_view(song_id: ID, state: &State, metrics: UiMetrics) -> Element<'_, Message> {
     let song = match state.project.song_with_id(song_id) {
         Some(song) => song,
         None => return column![].into(),
@@ -51,23 +51,23 @@ pub fn sections_view(song_id: ID, state: &State) -> Element<'_, Message> {
     let mut elements = Vec::new();
 
     if let Some(section) = previous_section {
-        elements.push(section_view(section, state));
+        elements.push(section_view(section, state, metrics));
     } else {
         elements.push(container(column![]).height(Fill).into());
     }
 
-    elements.push(section_view(section, state));
+    elements.push(section_view(section, state, metrics));
 
     if let Some(section) = next_section {
-        elements.push(section_view(section, state));
+        elements.push(section_view(section, state, metrics));
     } else {
         elements.push(container(column![]).height(Fill).into());
     }
 
-    column(elements).spacing(display_units(2.0)).into()
+    column(elements).spacing(metrics.spacing(2.0)).into()
 }
 
-fn section_view<'a>(section: &'a Section, state: &'a State) -> Element<'a, Message> {
+fn section_view<'a>(section: &'a Section, state: &'a State, metrics: UiMetrics) -> Element<'a, Message> {
     let is_playing = state.playback_state.is_playing() && state.playback_state.section_id == section.id;
     let is_selected = state.project.selections.section == section.id;
 
@@ -77,17 +77,17 @@ fn section_view<'a>(section: &'a Section, state: &'a State) -> Element<'a, Messa
     };
 
     container(row![
-        status_bar(is_selected, is_playing),
+        status_bar(is_selected, is_playing, metrics),
         column![
-            row![center(text(&section.name).size(64.0))]
-                .padding(display_units(0.5))
+            row![center(text(&section.name).size(metrics.section_text()))]
+                .padding(metrics.spacing(0.5))
                 .height(Fill),
-            progress_bar(progress, is_playing)
+            progress_bar(progress, is_playing, metrics)
         ],
     ])
     .clip(true)
     .height(Fill)
-    .style(section_background_style)
+    .style(move |_| section_background_style(metrics))
     .into()
 }
 
@@ -103,30 +103,30 @@ fn highlight_color(theme: &Theme, is_selected: bool, is_playing: bool) -> iced::
     }
 }
 
-fn section_border_radius() -> f32 {
-    display_units(0.5)
+fn section_border_radius(metrics: UiMetrics) -> f32 {
+    metrics.spacing(0.5)
 }
 
-fn section_background_style(_theme: &Theme) -> container::Style {
-    container::background(background_color()).border(border::rounded(section_border_radius()))
+fn section_background_style(metrics: UiMetrics) -> container::Style {
+    container::background(background_color()).border(border::rounded(section_border_radius(metrics)))
 }
 
-fn status_bar(is_selected: bool, is_playing: bool) -> Element<'static, Message> {
+fn status_bar(is_selected: bool, is_playing: bool, metrics: UiMetrics) -> Element<'static, Message> {
     container(column![])
         .height(Fill)
-        .width(display_units(1.0))
+        .width(metrics.spacing(1.0))
         .style(move |theme| {
             container::background(highlight_color(theme, is_selected, is_playing))
-                .border(border::rounded(border::left(section_border_radius())))
+                .border(border::rounded(border::left(section_border_radius(metrics))))
         })
         .into()
 }
 
-fn progress_bar(progress: f64, is_playing: bool) -> Element<'static, Message> {
+fn progress_bar(progress: f64, is_playing: bool, metrics: UiMetrics) -> Element<'static, Message> {
     let active_portion = (progress * u16::MAX as f64) as u16;
     let inactive_portion = u16::MAX - active_portion;
 
-    let height = display_units(1.0);
+    let height = metrics.spacing(1.0);
 
     container(row![
         container(column![])

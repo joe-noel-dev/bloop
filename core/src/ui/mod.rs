@@ -24,7 +24,7 @@ pub fn run_ui(response_tx: broadcast::Sender<Response>, request_tx: mpsc::Sender
     let _sleep_inhibitor = power::SleepInhibitor::new();
 
     let window_settings = iced::window::Settings {
-        size: Size::new(1024.0, 600.0),
+        size: initial_window_size(),
         fullscreen: cfg!(target_os = "linux"),
         maximized: cfg!(target_os = "linux"),
         resizable: !cfg!(target_os = "linux"),
@@ -46,4 +46,41 @@ pub fn run_ui(response_tx: broadcast::Sender<Response>, request_tx: mpsc::Sender
     .resizable(cfg!(target_os = "linux") == false)
     .subscription(control::subscription)
     .run()
+}
+
+fn initial_window_size() -> Size {
+    std::env::var("BLOOP_WINDOW_SIZE")
+        .ok()
+        .and_then(|value| parse_window_size(&value))
+        .unwrap_or_else(|| Size::new(800.0, 480.0))
+}
+
+fn parse_window_size(value: &str) -> Option<Size> {
+    let (width, height) = value.split_once('x')?;
+    let width = width.parse::<f32>().ok()?;
+    let height = height.parse::<f32>().ok()?;
+
+    if width.is_finite() && height.is_finite() && width > 0.0 && height > 0.0 {
+        Some(Size::new(width, height))
+    } else {
+        None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_window_size;
+    use iced::Size;
+
+    #[test]
+    fn parses_desktop_preview_window_size() {
+        assert_eq!(parse_window_size("800x480"), Some(Size::new(800.0, 480.0)));
+    }
+
+    #[test]
+    fn rejects_invalid_window_sizes() {
+        assert_eq!(parse_window_size("800"), None);
+        assert_eq!(parse_window_size("widex480"), None);
+        assert_eq!(parse_window_size("800x0"), None);
+    }
 }

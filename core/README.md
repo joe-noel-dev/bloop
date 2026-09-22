@@ -44,6 +44,12 @@ cargo test
 cargo run
 ```
 
+To preview a specific screen size in the resizable desktop window:
+
+```sh
+BLOOP_WINDOW_SIZE=800x480 cargo run
+```
+
 ## Run on Raspberry Pi
 
 See instructions in [raspberry-pi](../docs/raspberry-pi.md)

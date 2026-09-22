@@ -7,9 +7,13 @@ use iced::{
 
 use crate::model::{PlaybackState, Progress};
 
-use super::{constants::display_units, icons::Icon, message::Message, metronome::metronome, theme};
+use super::{constants::UiMetrics, icons::Icon, message::Message, metronome::metronome, theme};
 
-pub fn transport_view(playback_state: &PlaybackState, progress: &Progress) -> Element<'static, Message> {
+pub fn transport_view(
+    playback_state: &PlaybackState,
+    progress: &Progress,
+    metrics: UiMetrics,
+) -> Element<'static, Message> {
     let is_playing = playback_state.is_playing();
 
     let (play_icon, play_message) = if is_playing {
@@ -18,10 +22,13 @@ pub fn transport_view(playback_state: &PlaybackState, progress: &Progress) -> El
         (Icon::Play, Message::StartPlayback)
     };
 
-    let icon_dimension = 64.0;
+    let target_dimension = metrics.touch_target();
+    let icon_dimension = metrics.control_icon();
     let is_looping = playback_state.looping;
 
     let loop_button = button(Icon::Loop.to_svg_with_size(icon_dimension))
+        .height(target_dimension)
+        .width(target_dimension)
         .on_press(if is_looping {
             Message::ExitLoop
         } else {
@@ -30,6 +37,8 @@ pub fn transport_view(playback_state: &PlaybackState, progress: &Progress) -> El
         .style(move |theme, status| loop_button_style(theme, status, is_looping));
 
     let play_button = button(play_icon.to_svg_with_size(icon_dimension))
+        .height(target_dimension)
+        .width(target_dimension)
         .on_press(play_message)
         .style(move |theme, status| {
             if is_playing {
@@ -40,16 +49,16 @@ pub fn transport_view(playback_state: &PlaybackState, progress: &Progress) -> El
         });
 
     column![row![
-        metronome(playback_state, progress),
+        metronome(playback_state, progress, metrics),
         column![].width(Fill),
         loop_button,
         play_button
     ]
     .align_y(Center)
-    .spacing(display_units(2.0))]
+    .spacing(metrics.spacing(2.0))]
     .width(Fill)
     .align_x(Center)
-    .padding(display_units(2.0))
+    .padding(metrics.spacing(2.0))
     .into()
 }
 
