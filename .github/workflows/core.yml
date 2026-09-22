@@ -34,6 +34,7 @@ jobs:
           libssl-dev \
           libasound2-dev \
           libudev-dev \
+          libdbus-1-dev \
           jackd2 \
           libjack-jackd2-dev \
           protobuf-compiler

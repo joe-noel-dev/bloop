@@ -53,3 +53,7 @@ BLOOP_WINDOW_SIZE=800x480 cargo run
 ## Run on Raspberry Pi
 
 See instructions in [raspberry-pi](../docs/raspberry-pi.md)
+
+## Bluetooth LE peripheral
+
+Linux BLE remote control is opt-in. See [BLE peripheral](../docs/ble.md) for setup, protocol details, and the verification client.
