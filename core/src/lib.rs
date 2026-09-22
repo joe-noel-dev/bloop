@@ -27,6 +27,7 @@ use git_version::git_version;
 use log::info;
 use logger::{set_up_logger, LogOptions};
 use tokio::sync::{broadcast, mpsc};
+use tokio_util::sync::CancellationToken;
 
 #[cfg(feature = "ui")]
 use ui::run_ui;
@@ -56,7 +57,13 @@ pub fn run_main() {
     let (request_tx, request_rx) = mpsc::channel(128);
     let (response_tx, _) = broadcast::channel(128);
 
-    let core_thread = run_core(request_rx, request_tx.clone(), response_tx.clone(), app_config);
+    let core_thread = run_core(
+        request_rx,
+        request_tx.clone(),
+        response_tx.clone(),
+        app_config,
+        CancellationToken::new(),
+    );
 
     #[cfg(feature = "ui")]
     if !std::env::args().any(|arg| arg == "--headless") {

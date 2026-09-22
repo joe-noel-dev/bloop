@@ -45,4 +45,8 @@ class Discovery: NSObject {
 
         self.serviceBrowser.start(queue: queue)
     }
+
+    func stop() {
+        serviceBrowser.cancel()
+    }
 }

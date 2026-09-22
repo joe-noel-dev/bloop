@@ -32,6 +32,13 @@ class FFIMiddleware: Middleware {
             }
         }
 
+        if case .lifecycleDisconnect = action {
+            if state.connected == .local {
+                shutDownCore()
+                self.dispatch?(.setConnected(.none))
+            }
+        }
+
         if case .sendRawRequest(let request) = action {
             if state.connected == .local {
                 sendRequest(request)

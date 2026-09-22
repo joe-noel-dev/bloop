@@ -10,6 +10,7 @@ use tokio::net::TcpStream;
 use tokio::select;
 use tokio::sync::{broadcast, mpsc};
 use tokio_tungstenite::{accept_async, tungstenite::Error as TungsteniteError, tungstenite::Message, WebSocketStream};
+use tokio_util::sync::CancellationToken;
 
 struct Client {
     request_tx: mpsc::Sender<Request>,
@@ -79,9 +80,10 @@ impl Client {
         }
     }
 
-    async fn run(&mut self) {
+    async fn run(&mut self, shutdown: CancellationToken) {
         loop {
             select! {
+                _ = shutdown.cancelled() => break,
                 Ok(response) = self.response_rx.recv() => {
                     self.send_response(&response).await;
                 },
@@ -108,9 +110,14 @@ impl Client {
     }
 }
 
-pub async fn run(socket: TcpStream, request_tx: mpsc::Sender<Request>, response_rx: broadcast::Receiver<Response>) {
+pub async fn run(
+    socket: TcpStream,
+    request_tx: mpsc::Sender<Request>,
+    response_rx: broadcast::Receiver<Response>,
+    shutdown: CancellationToken,
+) {
     match Client::new(socket, request_tx, response_rx).await {
-        Ok(mut client) => client.run().await,
+        Ok(mut client) => client.run(shutdown).await,
         Err(error) => error!("Error from client: {error}"),
     }
 }

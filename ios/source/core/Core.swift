@@ -19,8 +19,6 @@ class Core: CoreConnectionDelegate {
 
     init() {
         connection.delegate = self
-
-        restartScan()
     }
 
     func connect(_ server: Server) {
@@ -38,6 +36,7 @@ class Core: CoreConnectionDelegate {
     }
 
     func restartScan() {
+        discovery?.stop()
         discovery = Discovery()
 
         discovery?.onKnownServersChanged = { servers in
@@ -52,6 +51,11 @@ class Core: CoreConnectionDelegate {
                 self?.delegate?.onScanning(scanning)
             }
         }
+    }
+
+    func stopScan() {
+        discovery?.stop()
+        discovery = nil
     }
 
     private func send(_ data: Data) {
