@@ -37,13 +37,18 @@ impl SamplesCache {
     }
 
     pub fn begin_upload(&mut self, id: ID, format: AudioFileFormat, filename: &str) {
+        self.samples.remove(&id);
         let mut sample = Sample::new(filename);
         let path = self.path_for_sample(id, format);
         let tmp_path = self.tmp_path_for_sample(id, format);
         // Remove any leftover incomplete upload from a previous interrupted attempt.
         if tmp_path.is_file() {
             if let Err(e) = std::fs::remove_file(&tmp_path) {
-                warn!("Failed to remove stale temp sample file ({}): {}", tmp_path.display(), e);
+                warn!(
+                    "Failed to remove stale temp sample file ({}): {}",
+                    tmp_path.display(),
+                    e
+                );
             }
         }
         sample.set_cache_location(&path);
@@ -80,10 +85,7 @@ impl SamplesCache {
     }
 
     pub fn invalidate_sample(&mut self, id: ID) {
-        if let Some(sample) = self.samples.get_mut(&id) {
-            sample.set_cached(false);
-            sample.delete_sample_on_disk();
-        }
+        self.samples.remove(&id);
     }
 
     fn detect_tempo(filename: &str) -> Option<f64> {
@@ -128,6 +130,7 @@ impl SamplesCache {
         format: AudioFileFormat,
         from_path: &Path,
     ) -> anyhow::Result<()> {
+        self.samples.remove(&id);
         let mut sample = Sample::new("");
         let path = self.path_for_sample(id, format);
 
@@ -172,7 +175,11 @@ impl SamplesCache {
 
                 if let Some((id_str, _ext)) = filename.split_once('.') {
                     if let Ok(id) = id_str.parse::<ID>() {
-                        if !Self::is_valid_wav(&path) {
+                        let validation_path = path.clone();
+                        let valid = tokio::task::spawn_blocking(move || Self::is_valid_wav(&validation_path))
+                            .await
+                            .context("Failed to validate cached sample")?;
+                        if !valid {
                             warn!("Removing invalid or truncated cached sample: {}", path.display());
                             if let Err(e) = tokio::fs::remove_file(&path).await {
                                 warn!("Failed to remove invalid sample ({}): {}", path.display(), e);
@@ -244,5 +251,99 @@ impl SamplesCache {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn invalidated_sample_can_be_added_again() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("source");
+        tokio::fs::write(&source, b"sample").await.unwrap();
+        let mut cache = SamplesCache::new(dir.path());
+
+        cache
+            .add_sample_from_file(1, AudioFileFormat::WAV, &source)
+            .await
+            .unwrap();
+        let path = cache.get_sample(1).unwrap().get_path().to_path_buf();
+        cache.invalidate_sample(1);
+        assert!(cache.get_sample(1).is_none());
+        assert!(!path.exists());
+
+        cache
+            .add_sample_from_file(1, AudioFileFormat::WAV, &source)
+            .await
+            .unwrap();
+        assert!(cache.get_sample(1).unwrap().is_cached());
+        cache
+            .add_sample_from_file(1, AudioFileFormat::WAV, &source)
+            .await
+            .unwrap();
+        assert_eq!(tokio::fs::read(path).await.unwrap(), b"sample");
+    }
+
+    #[tokio::test]
+    async fn interrupted_uploads_are_cleaned_up_and_can_be_retried() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut cache = SamplesCache::new(dir.path());
+        cache.begin_upload(1, AudioFileFormat::WAV, "first");
+        cache.upload(1, b"partial").await.unwrap();
+        let tmp_path = cache.get_sample(1).unwrap().get_tmp_path().to_path_buf();
+        assert!(tmp_path.exists());
+
+        cache.begin_upload(1, AudioFileFormat::WAV, "retry");
+        assert!(!tmp_path.exists());
+        cache.upload(1, b"complete").await.unwrap();
+        cache.complete_upload(1).unwrap();
+        let path = cache.get_sample(1).unwrap().get_path().to_path_buf();
+        assert_eq!(tokio::fs::read(&path).await.unwrap(), b"complete");
+        assert!(!tmp_path.exists());
+
+        cache.begin_upload(2, AudioFileFormat::WAV, "interrupted");
+        cache.upload(2, b"partial").await.unwrap();
+        let interrupted_path = cache.get_sample(2).unwrap().get_tmp_path().to_path_buf();
+        cache.invalidate_sample(2);
+        assert!(!interrupted_path.exists());
+
+        cache.begin_upload(2, AudioFileFormat::WAV, "interrupted again");
+        cache.upload(2, b"partial").await.unwrap();
+        drop(cache);
+        assert!(!interrupted_path.exists());
+    }
+
+    #[tokio::test]
+    async fn scan_keeps_valid_wavs_and_removes_truncated_and_temp_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let valid_path = dir.path().join("1.wav");
+        let truncated_path = dir.path().join("2.wav");
+        let tmp_path = dir.path().join("3.wav.tmp");
+        let spec = hound::WavSpec {
+            channels: 1,
+            sample_rate: 44100,
+            bits_per_sample: 16,
+            sample_format: hound::SampleFormat::Int,
+        };
+        let mut writer = hound::WavWriter::create(&valid_path, spec).unwrap();
+        for _ in 0..100 {
+            writer.write_sample(0i16).unwrap();
+        }
+        writer.finalize().unwrap();
+        let bytes = tokio::fs::read(&valid_path).await.unwrap();
+        tokio::fs::write(&truncated_path, &bytes[..bytes.len() - 10])
+            .await
+            .unwrap();
+        tokio::fs::write(&tmp_path, b"partial").await.unwrap();
+
+        let mut cache = SamplesCache::new(dir.path());
+        cache.scan().await.unwrap();
+        assert!(cache.get_sample(1).unwrap().is_cached());
+        assert!(valid_path.exists());
+        assert!(cache.get_sample(2).is_none());
+        assert!(!truncated_path.exists());
+        assert!(!tmp_path.exists());
     }
 }

@@ -48,10 +48,13 @@ impl Sample {
     }
 
     pub fn delete_sample_on_disk(&self) {
-        if self.path.exists() {
-            match std::fs::remove_file(&self.path) {
+        for path in [&self.path, &self.tmp_path] {
+            if !path.exists() {
+                continue;
+            }
+            match std::fs::remove_file(path) {
                 Ok(_) => (),
-                Err(error) => error!("Failed to remove sample from disk ({}): {}", self.path.display(), error),
+                Err(error) => error!("Failed to remove sample from disk ({}): {}", path.display(), error),
             }
         }
     }
