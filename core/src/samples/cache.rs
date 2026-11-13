@@ -263,6 +263,10 @@ impl SamplesCache {
             position += bytes_written;
         }
 
+        file.flush()
+            .await
+            .with_context(|| format!("Failed to flush audio file: {}", path.display()))?;
+
         Ok(())
     }
 }
@@ -270,6 +274,21 @@ impl SamplesCache {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn uploaded_bytes_are_readable_before_completion() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut cache = SamplesCache::new(dir.path());
+        cache.begin_upload(1, AudioFileFormat::WAV, "upload");
+        let tmp_path = cache.get_sample(1).unwrap().get_tmp_path().to_path_buf();
+        let mut expected = Vec::new();
+
+        for _ in 0..100 {
+            cache.upload(1, b"chunk").await.unwrap();
+            expected.extend_from_slice(b"chunk");
+            assert_eq!(std::fs::read(&tmp_path).unwrap(), expected);
+        }
+    }
 
     #[tokio::test]
     async fn stale_conversion_failure_preserves_replacement_upload() {
