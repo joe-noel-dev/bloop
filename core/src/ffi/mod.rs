@@ -5,6 +5,7 @@ use std::sync::Once;
 use log::error;
 use protobuf::Message;
 use tokio::sync::{broadcast, mpsc};
+use tokio_util::sync::CancellationToken;
 
 use crate::{
     bloop::{Request, Response},
@@ -16,10 +17,11 @@ use crate::{
 use anyhow::Result;
 
 struct BloopContext {
-    _core_thread: std::thread::JoinHandle<()>,
-    _request_tx: mpsc::Sender<Request>,
-    _response_task: tokio::task::JoinHandle<()>,
-    _runtime: tokio::runtime::Runtime,
+    core_thread: Option<std::thread::JoinHandle<()>>,
+    request_tx: mpsc::Sender<Request>,
+    response_task: Option<tokio::task::JoinHandle<()>>,
+    runtime: tokio::runtime::Runtime,
+    shutdown: CancellationToken,
 }
 
 #[repr(C)]
@@ -43,7 +45,14 @@ extern "C" fn bloop_init(
     let (response_tx, response_rx) = broadcast::channel(128);
 
     let app_config = AppConfig::default();
-    let core_thread = run_core(request_rx, request_tx.clone(), response_tx, app_config);
+    let shutdown = CancellationToken::new();
+    let core_thread = run_core(
+        request_rx,
+        request_tx.clone(),
+        response_tx,
+        app_config,
+        shutdown.child_token(),
+    );
 
     let runtime = tokio::runtime::Runtime::new().unwrap();
 
@@ -69,10 +78,11 @@ extern "C" fn bloop_init(
     });
 
     let ctx = Box::new(BloopContext {
-        _core_thread: core_thread,
-        _request_tx: request_tx,
-        _response_task: response_task,
-        _runtime: runtime,
+        core_thread: Some(core_thread),
+        request_tx,
+        response_task: Some(response_task),
+        runtime,
+        shutdown,
     });
 
     Box::into_raw(ctx)
@@ -90,8 +100,8 @@ extern "C" fn bloop_add_request(context: *mut BloopContext, request: *const u8, 
         }
     };
 
-    ctx._runtime.block_on(async {
-        if let Err(e) = ctx._request_tx.send(request).await {
+    ctx.runtime.block_on(async {
+        if let Err(e) = ctx.request_tx.send(request).await {
             error!("Error sending request: {e}");
             return BloopErrorCode::ErrorPostingRequest;
         }
@@ -103,7 +113,17 @@ extern "C" fn bloop_add_request(context: *mut BloopContext, request: *const u8, 
 #[no_mangle]
 extern "C" fn bloop_shutdown(ctx: *mut BloopContext) {
     unsafe {
-        let context = Box::from_raw(ctx);
+        let mut context = Box::from_raw(ctx);
+        context.shutdown.cancel();
+        if let Some(response_task) = context.response_task.take() {
+            response_task.abort();
+            context.runtime.block_on(async {
+                let _ = response_task.await;
+            });
+        }
+        if let Some(core_thread) = context.core_thread.take() {
+            let _ = core_thread.join();
+        }
         drop(context);
     }
 }

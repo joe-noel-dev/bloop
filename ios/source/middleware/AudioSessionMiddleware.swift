@@ -110,6 +110,10 @@ class AudioSessionMiddleware: Middleware {
         if case .disconnect = action {
             try? AVAudioSession.sharedInstance().setActive(false)
         }
+
+        if case .lifecycleDisconnect = action {
+            try? AVAudioSession.sharedInstance().setActive(false)
+        }
     }
 
 }

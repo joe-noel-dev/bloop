@@ -1,6 +1,6 @@
 import Foundation
 
-enum ConnectionType {
+enum ConnectionType: Equatable {
     case local
     case remote
 }
@@ -33,6 +33,7 @@ enum Action {
     case connect(Server)
     case connectLocal
     case disconnect
+    case lifecycleDisconnect
     case setConnected(ConnectionType?)
 
     case uploadSample((Id, URL))
@@ -43,4 +44,6 @@ enum Action {
     case removeAllServers
 
     case restartScan
+    case pauseDiscovery
+    case resumeDiscovery
 }

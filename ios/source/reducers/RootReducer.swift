@@ -47,6 +47,9 @@ func rootReducer(state: AppState, action: Action) -> AppState {
     case .setScanning(let scanning):
         state.scanning = scanning
 
+    case .pauseDiscovery:
+        state.scanning = false
+
     case .removeAllServers:
         state.servers.removeAll()
 

@@ -6,18 +6,37 @@ use mdns_sd::{ServiceDaemon, ServiceInfo};
 use std::net::IpAddr;
 use tokio::net::TcpListener;
 use tokio::sync::{broadcast, mpsc};
+use tokio::task::JoinSet;
+use tokio_util::sync::CancellationToken;
 
 const PORT: u16 = 14072;
 
-pub async fn run(request_tx: mpsc::Sender<Request>, response_tx: broadcast::Sender<Response>) {
+pub async fn run(
+    request_tx: mpsc::Sender<Request>,
+    response_tx: broadcast::Sender<Response>,
+    shutdown: CancellationToken,
+) {
     let ips = get_ips_for_responder();
+    let mut listeners = JoinSet::new();
 
     for ip in ips.iter() {
-        tokio::spawn(listen_on_ip(*ip, request_tx.clone(), response_tx.clone()));
+        listeners.spawn(listen_on_ip(
+            *ip,
+            request_tx.clone(),
+            response_tx.clone(),
+            shutdown.child_token(),
+        ));
     }
+
+    while listeners.join_next().await.is_some() {}
 }
 
-pub async fn listen_on_ip(ip: IpAddr, request_tx: mpsc::Sender<Request>, response_tx: broadcast::Sender<Response>) {
+pub async fn listen_on_ip(
+    ip: IpAddr,
+    request_tx: mpsc::Sender<Request>,
+    response_tx: broadcast::Sender<Response>,
+    shutdown: CancellationToken,
+) {
     let address = format!("{ip}:{PORT}");
     info!("Binding to: {address}");
     let listener = match TcpListener::bind(address.clone()).await {
@@ -58,12 +77,24 @@ pub async fn listen_on_ip(ip: IpAddr, request_tx: mpsc::Sender<Request>, respons
     let local_ip = local_address.ip().to_string();
     info!("Server listening on {local_ip}:{local_port}");
 
-    while let Ok((stream, _)) = listener.accept().await {
-        let tx = request_tx.clone();
-        let rx = response_tx.subscribe();
-        tokio::spawn(async move {
-            client::run(stream, tx, rx).await;
-        });
+    loop {
+        tokio::select! {
+            _ = shutdown.cancelled() => break,
+            result = listener.accept() => match result {
+                Ok((stream, _)) => {
+                    let tx = request_tx.clone();
+                    let rx = response_tx.subscribe();
+                    let client_shutdown = shutdown.child_token();
+                    tokio::spawn(async move {
+                        client::run(stream, tx, rx, client_shutdown).await;
+                    });
+                }
+                Err(error) => {
+                    warn!("Error accepting client connection: {error}");
+                    break;
+                }
+            },
+        }
     }
 
     if let Err(error) = mdns.shutdown() {
