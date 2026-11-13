@@ -5,6 +5,7 @@ use std::fs;
 mod api;
 mod audio;
 pub mod backend;
+pub mod ble;
 mod config;
 mod control;
 mod core;

@@ -3,21 +3,24 @@ use std::ffi::c_void;
 use std::sync::Once;
 
 use log::error;
-use protobuf::Message;
 use tokio::sync::{broadcast, mpsc};
 
 use crate::{
+    api::{
+        client::{create_client_responses, handle_client_configuration, ClientConfigurationHandle},
+        wire::{decode_request, encode_response},
+    },
     bloop::{Request, Response},
     core::run_core,
     logger::{set_up_logger, LogOptions},
     AppConfig,
 };
 
-use anyhow::Result;
-
 struct BloopContext {
     _core_thread: std::thread::JoinHandle<()>,
     _request_tx: mpsc::Sender<Request>,
+    configuration: ClientConfigurationHandle,
+    direct_response_tx: mpsc::Sender<Response>,
     _response_task: tokio::task::JoinHandle<()>,
     _runtime: tokio::runtime::Runtime,
 }
@@ -41,6 +44,8 @@ extern "C" fn bloop_init(
 
     let (request_tx, request_rx) = mpsc::channel(128);
     let (response_tx, response_rx) = broadcast::channel(128);
+    let (configuration, mut responses) = create_client_responses(response_rx);
+    let (direct_response_tx, mut direct_response_rx) = mpsc::channel(16);
 
     let app_config = AppConfig::default();
     let core_thread = run_core(request_rx, request_tx.clone(), response_tx, app_config);
@@ -50,9 +55,22 @@ extern "C" fn bloop_init(
     let response_callback_context = BloopResponseCallbackContext::new(response_callback_context);
 
     let response_task = runtime.spawn(async move {
-        let mut response_rx = response_rx.resubscribe();
-        while let Ok(response) = response_rx.recv().await {
-            let response_bytes = match convert_response_to_bytes(&response) {
+        loop {
+            let response = tokio::select! {
+                response = responses.recv() => match response {
+                    Ok(response) => response,
+                    Err(broadcast::error::RecvError::Lagged(count)) => Response::default().with_error(
+                        &format!("Response stream skipped {count} updates; request ALL to resynchronise")
+                    ),
+                    Err(broadcast::error::RecvError::Closed) => break,
+                },
+                response = direct_response_rx.recv() => match response {
+                    Some(response) => response,
+                    None => break,
+                },
+            };
+
+            let response_bytes = match encode_response(&response) {
                 Ok(bytes) => bytes,
                 Err(e) => {
                     error!("Error converting response to bytes: {e}");
@@ -71,6 +89,8 @@ extern "C" fn bloop_init(
     let ctx = Box::new(BloopContext {
         _core_thread: core_thread,
         _request_tx: request_tx,
+        configuration,
+        direct_response_tx,
         _response_task: response_task,
         _runtime: runtime,
     });
@@ -82,7 +102,7 @@ extern "C" fn bloop_init(
 extern "C" fn bloop_add_request(context: *mut BloopContext, request: *const u8, size: usize) -> BloopErrorCode {
     let ctx = unsafe { &*context };
     let request_bytes = unsafe { std::slice::from_raw_parts(request, size) };
-    let request = match convert_bytes_to_request(request_bytes) {
+    let request = match decode_request(request_bytes) {
         Ok(request) => request,
         Err(e) => {
             error!("Error converting bytes to request: {e}");
@@ -91,6 +111,14 @@ extern "C" fn bloop_add_request(context: *mut BloopContext, request: *const u8, 
     };
 
     ctx._runtime.block_on(async {
+        if let Some(response) = handle_client_configuration(&request, &ctx.configuration) {
+            if let Err(e) = ctx.direct_response_tx.send(response).await {
+                error!("Error sending client configuration response: {e}");
+                return BloopErrorCode::ErrorPostingRequest;
+            }
+            return BloopErrorCode::Success;
+        }
+
         if let Err(e) = ctx._request_tx.send(request).await {
             error!("Error sending request: {e}");
             return BloopErrorCode::ErrorPostingRequest;
@@ -106,15 +134,6 @@ extern "C" fn bloop_shutdown(ctx: *mut BloopContext) {
         let context = Box::from_raw(ctx);
         drop(context);
     }
-}
-
-fn convert_response_to_bytes(response: &Response) -> Result<Vec<u8>> {
-    Ok(response.write_to_bytes()?)
-}
-
-fn convert_bytes_to_request(message: &[u8]) -> Result<Request> {
-    let request = Request::parse_from_bytes(message)?;
-    Ok(request)
 }
 
 #[derive(Clone, Copy)]

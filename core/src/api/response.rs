@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
 use crate::bloop::{
-    AudioDevices, AudioStatus, MidiDevices, PlaybackState, Progress, Project, ProjectInfo, ProjectSyncResponse,
-    UploadAck, User, UserStatusResponse, WaveformResponse,
+    AudioDevices, AudioStatus, ClientConfiguration, MidiDevices, PlaybackState, Progress, Project, ProjectInfo,
+    ProjectSyncResponse, UploadAck, User, UserStatusResponse, WaveformResponse,
 };
 
 impl crate::bloop::Response {
@@ -91,6 +91,11 @@ impl crate::bloop::Response {
 
     pub fn with_midi_devices(mut self, midi_devices: &MidiDevices) -> Self {
         self.midi_devices = Some(midi_devices.clone()).into();
+        self
+    }
+
+    pub fn with_client_configuration(mut self, configuration: &ClientConfiguration) -> Self {
+        self.client_configuration = Some(configuration.clone()).into();
         self
     }
 }

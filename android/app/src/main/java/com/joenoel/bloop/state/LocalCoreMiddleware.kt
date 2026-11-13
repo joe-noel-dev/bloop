@@ -1,6 +1,7 @@
 package com.joenoel.bloop.state
 
 import bloop.Bloop
+import bloop.clientConfiguration
 import bloop.getRequest
 import bloop.request
 import com.joenoel.bloop.core.BloopCore
@@ -91,6 +92,15 @@ class LocalCoreMiddleware(
 
         if (started) {
             dispatch(AppAction.SetConnected(ConnectionType.LOCAL))
+            dispatch(
+                AppAction.SendRequest(
+                    request {
+                        configureClient = clientConfiguration {
+                            progressUpdatesPerSecond = 60
+                        }
+                    }
+                )
+            )
             dispatch(
                 AppAction.SendRequest(
                     request { get = getRequest { entity = Bloop.Entity.ALL } }

@@ -7,6 +7,7 @@ use iced::{
 };
 use tokio::sync::{broadcast, mpsc};
 
+use crate::api::client::{create_client_responses, ClientResponses};
 use crate::bloop::{AudioControlMethod, Entity, Request, Response, TransportMethod};
 
 use super::{message::Message, state::State};
@@ -156,10 +157,12 @@ impl Hash for ResponseSubscription {
 }
 
 fn build_response_stream(data: &ResponseSubscription) -> impl futures::Stream<Item = Message> {
-    unfold(data.0.subscribe(), async move |mut response_rx| {
-        match response_rx.recv().await {
-            Ok(response) => Some((Message::ApiResponse(Box::new(response)), response_rx)),
-            Err(_) => None,
+    let (_, responses) = create_client_responses(data.0.subscribe());
+    unfold(responses, async move |mut responses: ClientResponses| loop {
+        match responses.recv().await {
+            Ok(response) => return Some((Message::ApiResponse(Box::new(response)), responses)),
+            Err(broadcast::error::RecvError::Lagged(_)) => continue,
+            Err(broadcast::error::RecvError::Closed) => return None,
         }
     })
 }

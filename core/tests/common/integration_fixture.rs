@@ -51,7 +51,8 @@ impl IntegrationFixture {
             .with_api_url(mocketbase.uri())
             .with_root_directory(home_directory.path().to_path_buf())
             .with_use_dummy_audio(true)
-            .with_use_midi(false);
+            .with_use_midi(false)
+            .with_use_ble(false);
 
         let (request_tx, request_rx) = tokio::sync::mpsc::channel(100);
         let (response_tx, response_rx) = tokio::sync::broadcast::channel(100);

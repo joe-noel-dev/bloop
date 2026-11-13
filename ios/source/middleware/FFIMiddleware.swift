@@ -13,6 +13,15 @@ class FFIMiddleware: Middleware {
             self.dispatch?(
                 .sendRequest(
                     .with {
+                        $0.configureClient = .with {
+                            $0.progressUpdatesPerSecond = 60
+                        }
+                    }
+                )
+            )
+            self.dispatch?(
+                .sendRequest(
+                    .with {
                         $0.get = .with {
                             $0.entity = .all
                         }

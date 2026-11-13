@@ -5,6 +5,7 @@ pub struct AppConfig {
     pub api_url: String,
     pub use_dummy_audio: bool,
     pub use_midi: bool,
+    pub use_ble: bool,
 }
 
 impl Default for AppConfig {
@@ -14,6 +15,7 @@ impl Default for AppConfig {
             api_url: get_api_url(),
             use_dummy_audio: false,
             use_midi: true,
+            use_ble: get_ble_enabled(),
         }
     }
 }
@@ -38,6 +40,17 @@ impl AppConfig {
         self.use_midi = use_midi;
         self
     }
+
+    pub fn with_use_ble(mut self, use_ble: bool) -> Self {
+        self.use_ble = use_ble;
+        self
+    }
+}
+
+fn get_ble_enabled() -> bool {
+    std::env::var("BLOOP_BLE_ENABLED")
+        .ok()
+        .is_some_and(|value| matches!(value.to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on"))
 }
 
 fn get_api_url() -> String {

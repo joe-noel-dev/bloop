@@ -6,6 +6,7 @@ use tokio::{
 };
 
 use crate::{
+    ble,
     bloop::{Request, Response},
     config::AppConfig,
     control::run_main_controller,
@@ -21,9 +22,11 @@ pub fn run_core(
     thread::spawn(move || {
         let runtime = tokio::runtime::Runtime::new().expect("Failed to create runtime");
         runtime.block_on(async {
+            let use_ble = app_config.use_ble;
             let control = run_main_controller(request_rx, response_tx.clone(), app_config);
-            let network = run_server(request_tx, response_tx.clone());
-            join!(control, network);
+            let network = run_server(request_tx.clone(), response_tx.clone());
+            let ble = ble::run(use_ble, request_tx, response_tx.clone());
+            join!(control, network, ble);
         });
     })
 }
