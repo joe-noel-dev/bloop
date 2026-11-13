@@ -428,8 +428,8 @@ impl MainController {
                 else => break,
             }
 
-            for id in self.audio_controller.drain_failed_conversions() {
-                self.samples_cache.invalidate_sample(id);
+            for (id, generation) in self.audio_controller.drain_failed_conversions() {
+                self.samples_cache.invalidate_sample(id, generation);
             }
         }
 

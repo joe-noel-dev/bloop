@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use log::error;
 
 pub struct Sample {
+    generation: u64,
     path: PathBuf,
     tmp_path: PathBuf,
     name: String,
@@ -10,13 +11,18 @@ pub struct Sample {
 }
 
 impl Sample {
-    pub fn new(name: &str) -> Self {
+    pub fn new(name: &str, generation: u64) -> Self {
         Self {
+            generation,
             path: PathBuf::new(),
             tmp_path: PathBuf::new(),
             name: String::from(name),
             cached: false,
         }
+    }
+
+    pub fn generation(&self) -> u64 {
+        self.generation
     }
 
     pub fn is_cached(&self) -> bool {

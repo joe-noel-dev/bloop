@@ -13,6 +13,7 @@ use tokio::{fs::OpenOptions, io::AsyncWriteExt};
 pub struct SamplesCache {
     root_directory: PathBuf,
     samples: HashMap<ID, Sample>,
+    generation: u64,
 }
 
 pub struct SampleMetadata {
@@ -33,12 +34,13 @@ impl SamplesCache {
         Self {
             root_directory: PathBuf::from(root_directory),
             samples: HashMap::new(),
+            generation: 0,
         }
     }
 
     pub fn begin_upload(&mut self, id: ID, format: AudioFileFormat, filename: &str) {
         self.samples.remove(&id);
-        let mut sample = Sample::new(filename);
+        let mut sample = self.new_sample(filename);
         let path = self.path_for_sample(id, format);
         let tmp_path = self.tmp_path_for_sample(id, format);
         // Remove any leftover incomplete upload from a previous interrupted attempt.
@@ -84,8 +86,19 @@ impl SamplesCache {
         Ok(())
     }
 
-    pub fn invalidate_sample(&mut self, id: ID) {
-        self.samples.remove(&id);
+    pub fn invalidate_sample(&mut self, id: ID, generation: u64) {
+        if self
+            .samples
+            .get(&id)
+            .is_some_and(|sample| sample.generation() == generation)
+        {
+            self.samples.remove(&id);
+        }
+    }
+
+    fn new_sample(&mut self, name: &str) -> Sample {
+        self.generation = self.generation.checked_add(1).expect("Sample generation overflow");
+        Sample::new(name, self.generation)
     }
 
     fn detect_tempo(filename: &str) -> Option<f64> {
@@ -131,7 +144,7 @@ impl SamplesCache {
         from_path: &Path,
     ) -> anyhow::Result<()> {
         self.samples.remove(&id);
-        let mut sample = Sample::new("");
+        let mut sample = self.new_sample("");
         let path = self.path_for_sample(id, format);
 
         if path.is_file() {
@@ -188,7 +201,7 @@ impl SamplesCache {
                         }
 
                         debug!("Scan found sample: {id}");
-                        let mut sample = Sample::new(filename);
+                        let mut sample = self.new_sample(filename);
                         sample.set_cache_location(&path);
                         sample.set_cached(true);
                         self.samples.insert(id, sample);
@@ -259,6 +272,36 @@ mod tests {
     use super::*;
 
     #[tokio::test]
+    async fn stale_conversion_failure_preserves_replacement_upload() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut cache = SamplesCache::new(dir.path());
+        cache.begin_upload(1, AudioFileFormat::WAV, "original");
+        cache.upload(1, b"original").await.unwrap();
+        cache.complete_upload(1).unwrap();
+        let old_generation = cache.get_sample(1).unwrap().generation();
+
+        cache.begin_upload(1, AudioFileFormat::WAV, "replacement");
+        cache.upload(1, b"replacement").await.unwrap();
+        let sample = cache.get_sample(1).unwrap();
+        let generation = sample.generation();
+        let tmp_path = sample.get_tmp_path().to_path_buf();
+        assert_ne!(generation, old_generation);
+
+        cache.invalidate_sample(1, old_generation);
+        assert_eq!(tokio::fs::read(&tmp_path).await.unwrap(), b"replacement");
+        cache.complete_upload(1).unwrap();
+        let path = cache.get_sample(1).unwrap().get_path().to_path_buf();
+
+        cache.invalidate_sample(1, old_generation);
+        assert_eq!(cache.get_sample(1).unwrap().generation(), generation);
+        assert_eq!(tokio::fs::read(&path).await.unwrap(), b"replacement");
+
+        cache.invalidate_sample(1, generation);
+        assert!(cache.get_sample(1).is_none());
+        assert!(!path.exists());
+    }
+
+    #[tokio::test]
     async fn invalidated_sample_can_be_added_again() {
         let dir = tempfile::tempdir().unwrap();
         let source = dir.path().join("source");
@@ -270,7 +313,7 @@ mod tests {
             .await
             .unwrap();
         let path = cache.get_sample(1).unwrap().get_path().to_path_buf();
-        cache.invalidate_sample(1);
+        cache.invalidate_sample(1, cache.get_sample(1).unwrap().generation());
         assert!(cache.get_sample(1).is_none());
         assert!(!path.exists());
 
@@ -306,7 +349,7 @@ mod tests {
         cache.begin_upload(2, AudioFileFormat::WAV, "interrupted");
         cache.upload(2, b"partial").await.unwrap();
         let interrupted_path = cache.get_sample(2).unwrap().get_tmp_path().to_path_buf();
-        cache.invalidate_sample(2);
+        cache.invalidate_sample(2, cache.get_sample(2).unwrap().generation());
         assert!(!interrupted_path.exists());
 
         cache.begin_upload(2, AudioFileFormat::WAV, "interrupted again");

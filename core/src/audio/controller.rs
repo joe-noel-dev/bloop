@@ -165,7 +165,11 @@ fn add_samples_from_project(
             continue;
         }
         samples_being_converted.insert(sample.id);
-        sample_converter.convert(sample.id, cached_sample.get_path().to_path_buf());
+        sample_converter.convert(
+            sample.id,
+            cached_sample.generation(),
+            cached_sample.get_path().to_path_buf(),
+        );
     }
 }
 
@@ -226,8 +230,8 @@ pub struct AudioController {
     project: Project,
     preferences: AudioPreferences,
     current_sample_rate: u32,
-    /// IDs of samples whose conversion failed and whose cache entries should be invalidated.
-    failed_conversions: Vec<ID>,
+    /// IDs and cache generations of samples whose conversion failed.
+    failed_conversions: Vec<(ID, u64)>,
 }
 
 impl AudioController {
@@ -405,9 +409,9 @@ impl AudioController {
         }
     }
 
-    /// Returns the IDs of any samples whose conversion failed since the last call.
+    /// Returns the IDs and cache generations of samples whose conversion failed since the last call.
     /// The caller should invalidate those entries in the samples cache.
-    pub fn drain_failed_conversions(&mut self) -> Vec<ID> {
+    pub fn drain_failed_conversions(&mut self) -> Vec<(ID, u64)> {
         std::mem::take(&mut self.failed_conversions)
     }
 
@@ -546,7 +550,7 @@ impl AudioController {
             Ok(data) => data,
             Err(error) => {
                 error!("Error converting audio file {}: {}", sample_id, error);
-                self.failed_conversions.push(sample_id);
+                self.failed_conversions.push((sample_id, result.generation));
                 return;
             }
         };
