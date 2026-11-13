@@ -10,11 +10,13 @@ use super::convert::convert_sample;
 
 pub struct SampleConversionResult {
     pub sample_id: ID,
+    pub generation: u64,
     pub result: Result<OwnedAudioBuffer>,
 }
 
 struct SampleConversionJob {
     sample_id: ID,
+    generation: u64,
     sample_path: PathBuf,
 }
 
@@ -32,6 +34,7 @@ impl SampleConverter {
                 let result = convert_sample(&job.sample_path, target_sample_rate);
                 let _ = complete_tx.try_send(SampleConversionResult {
                     sample_id: job.sample_id,
+                    generation: job.generation,
                     result,
                 });
             }
@@ -40,7 +43,30 @@ impl SampleConverter {
         Self { job_tx }
     }
 
-    pub fn convert(&self, sample_id: ID, sample_path: PathBuf) {
-        let _ = self.job_tx.send(SampleConversionJob { sample_id, sample_path });
+    pub fn convert(&self, sample_id: ID, generation: u64, sample_path: PathBuf) {
+        let _ = self.job_tx.send(SampleConversionJob {
+            sample_id,
+            generation,
+            sample_path,
+        });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use futures::StreamExt;
+
+    #[tokio::test]
+    async fn failed_conversion_returns_cache_generation() {
+        let dir = tempfile::tempdir().unwrap();
+        let (tx, mut rx) = mpsc::channel(1);
+        let converter = SampleConverter::new(tx, 44100);
+        converter.convert(1, 42, dir.path().join("missing.wav"));
+
+        let result = rx.next().await.unwrap();
+        assert_eq!(result.sample_id, 1);
+        assert_eq!(result.generation, 42);
+        assert!(result.result.is_err());
     }
 }
